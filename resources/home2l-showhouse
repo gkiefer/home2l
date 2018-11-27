@@ -1,0 +1,280 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This file simulates a house (showhouse) with some example sensors and
+# actors in a text terminal. It is used in the Home2L tutorial and can
+# serve as an example for own Python scripts with Home2L drivers and rules.
+
+
+from home2l import *
+
+
+
+
+
+######################### Initialization #######################################
+
+
+# Init Home2L with enabled server...
+Home2lInit (server = True)
+
+
+
+
+##### Get reference(s) for remote resource(s) ...
+
+# These are resources that are used, but not defined here
+
+rcDaylight = RcGet ("/alias/daylight")
+
+
+
+
+
+############################## Driver "building" ###############################
+
+
+
+##### Define the resources ...
+
+# The following resources will be driven by our driver.
+# It is legal to create them before the driver "building" itself.
+
+
+# Daylight simulation (sensing)...
+rcSimDaylight = NewResource ("building", "simDaylight", rctBool, False)
+  # We create an own resource to simulate day or night based on a user input.
+  # Real daylight information is also available by the timer driver at
+  # '/local/timer/twiLight/day'. To allow to easily switch between simulated
+  # and real daylight, the UI accesses this property over the alias '/alias/daylight',
+  # which may be setup to point either at the real daylight or the simulated resource.
+
+
+# Motion simulation (sensing)...
+rcMotion = NewResource ("building", "motion", rctBool, False)
+
+
+# Light (acting)...
+rcLight = NewResource ("building", "light", rctBool, True)
+
+
+# Door lock (sensing)...
+rcLock = NewResource ("building", "lock", rctBool, False)
+
+
+# User input (internal).
+rcInternalInput = NewResource ("building", "internal/input", rctString, False)
+  # This is an internal resource representing a keyboard driver.
+  # We make use of the capabilities of the Resources library to deal with the
+  # standard (blocking) console input. A background thread queries the
+  # console input and passes all input characters over this resource.
+
+
+
+
+
+##### Main driver function and acting resource(s) ...
+
+# This creates the driver and registers all its previously declared resources.
+#
+# The supplied function is called whenever a value of a writable (aka "acting")
+# resource needs to be changed. It is responsible for driving new values to
+# acting resources ('rcLight' in this case).
+#
+# Value reporting for sensing resources is in herently done asynchronously, e.g
+# by a background thread or an event-triggered function.
+
+
+@newDriver ("building")
+def DriverFunc (rc, vs):
+  if rc == rcLight:
+    # Here, we would have to physically switch on or off the light, depending on 'vs'.
+    # Since we only simulate the light, there is no real code here.
+    pass
+
+
+# Set default for the light...
+rcLight.SetDefault (False);
+
+
+
+
+
+##### Sensing resource: rcInternalInput ...
+
+# The showhouse demo is implemented as a console program. We need some
+# asynchronous keyboard input which is neither blocking the main programm
+# nor requires active polling.
+#
+# We solve this here by implementing a resource driver for the keyboard input.
+# A background thread ('InputThread()') reads the keyboard with blocking stdin
+# reads and reports all keys as value changes.
+
+
+import threading
+import sys;
+import tty;
+import termios;
+
+
+def InputThread ():
+
+  # Set terminal into "cbreak" mode...
+  fd = sys.stdin.fileno ()
+  oldAttrs = termios.tcgetattr (fd)
+  tty.setcbreak (fd)
+
+  # Main loop...
+  c = ' '
+  while c != "q":
+    c = sys.stdin.read(1).lower ()
+    rcInternalInput.ReportValue (c)
+    rcInternalInput.ReportValue ('')
+
+  # Restore terminal settings. (Enter 'tset' in the shell, if that fails.)
+  termios.tcsetattr (fd, termios.TCSADRAIN, oldAttrs)
+
+
+# Start the input thread...
+inputThread = threading.Thread (target=InputThread);
+inputThread.start ()
+
+
+
+
+
+##### Sensing resources: rcLock, rcMotion, rcSimDaylight ...
+
+# These resources are handled by an event-triggered function triggered by the
+# keyboard events delivered by the 'rcInternalInput' resource.
+
+
+# Internal variables ...
+_valSimDaylight = True
+_valLock = False
+
+
+# Report initial values ...
+rcSimDaylight.ReportValue (_valSimDaylight)
+rcMotion.ReportValue (False)
+rcLock.ReportValue (_valLock)
+
+
+# User input handler...
+@onEvent (rcInternalInput)
+def OnInternalInput (ev, rc, vs):
+  global _valSimDaylight
+  global _valLock
+
+  if ev != rceValueStateChanged: return
+  c = vs.ValidValue ("?")
+
+  if c == 'q':    # Quit...
+    Home2lStop ()
+
+  if c == 'd':    # Simulate day/night change...
+    _valSimDaylight = not _valSimDaylight
+    rcSimDaylight.ReportValue (_valSimDaylight)
+
+  if c == 'm':    # Simulate motion...
+    rcMotion.ReportValue (True)
+    # Let the motion be over in 500 ms...
+    @at (500)
+    def MotionOver (): rcMotion.ReportValue (False)
+
+  if c == 'l':    # Simulate door (un-)locking...
+    _valLock = not _valLock
+    rcLock.ReportValue (_valLock)
+
+
+
+
+
+############################## Visualization ###################################
+
+# The visualization is implemented just like a normal autmation rule. It works
+# by observing all resources that can be visualized (sensing and acting, internal
+# and external). This way, we do not have to take care of regular updates
+# manually - Home2L does this for us. Also, there are mo dependences from other
+# code towards the visualization. The visualization can arbitrarily be removed,
+# replaced or left here in parallel with an eventual replacement.
+
+
+@onUpdate (rcDaylight, rcMotion, rcLight, rcLock)
+def UiDraw ():
+
+  # Predefine ASCII art...
+  img = [
+    "    Home2L  __  ShowHouse        ",
+    "         ___||_______            ",
+    "        /   ||       \\           ",
+    "       /              \\          ",
+    "      /________________\\         ",
+    "     /| ____  ____  U  |\\        ",
+    "      | |  |  |  |     |         ",
+    "      | |  |  |o |     |         ",
+    "      | ^^^^  |  |     |         ",
+    "--------------####---------------" ]
+
+  # Draw sun or moon ...
+  vs = rcDaylight.ValueState ()
+  if vs.IsValid ():   # neither sun nor moon if day time is unknown
+    if vs.Value() == True:
+      img[0] = img[0][:26] + "  \ /  "
+      img[1] = img[1][:26] + "-- O --"
+      img[2] = img[2][:26] + "  / \  "
+    else:
+      img[0] = img[0][:27] +    ".    ."
+      img[1] = img[1][:24] + ".     .  "
+      img[2] = img[2][:24] + "     ) . "
+      img[3] = img[3][:24] + "    .    "
+
+  # Draw person in motion...
+  val = rcMotion.ValidValue (False);
+  img[6] = img[6][:27-val] + " O  "
+  img[7] = img[7][:27-val] + "/I\\ "
+  img[8] = img[8][:27-val] + "/ \\ "
+
+  # Draw light...
+  if rcLight.ValidValue (False) == True:
+    img[6] = img[6][:19] + "/|\\" + img[6][22:]
+
+  # Draw door lock...
+  if rcLock.ValidValue (False) == True:
+    img[7] = img[7][:14] + "====" + img[7][18:]
+
+  # Re-draw the screen...
+  print ("\033[2J\033[H")
+  for s in img: print (s)
+  print ("\n(D)aylight (M)otion (L)ock (Q)uit")
+
+
+
+
+
+#################### Run main loop & finish ####################################
+
+
+# Main event loop ...
+Home2lRun ()
+
+# Finish ...
+inputThread.join ();    # Wait for the input thread to complete
+Home2lDone ()           # Shutdown Home2l (not really necessary here, just added to make it look correct)

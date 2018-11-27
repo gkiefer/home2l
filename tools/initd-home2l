@@ -1,0 +1,144 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          home2l-daemon
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Home2l master daemon
+# Description:       Manage all background tasks of the Home2L suite.
+### END INIT INFO
+
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+
+
+
+##### Setup environment #####
+
+
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin
+export LC_ALL=C.UTF-8
+
+# Home2L environment. To choose a different Home2L location, create a file
+# '/etc/default/home2l' with a line:
+#
+#   HOME2L_ENV=<your path to the 'env.sh' file>
+#
+# Run 'home2l -e' to obtain this path for your installation.
+#
+HOME2L_ENV=/opt/home2l/env.sh
+test -r /etc/default/home2l && . /etc/default/home2l
+. $HOME2L_ENV
+
+
+
+##### Preset and read configuration #####
+
+
+RUN_ADB=0
+SETUP_GPIO=0
+
+test -r  $HOME2L_ROOT/etc/init.conf && . $HOME2L_ROOT/etc/init.conf
+
+
+
+##### Set daemon variables #####
+
+
+NAME=home2l-daemon
+DESC="Home2L master daemon"
+PIDFILE=/var/run/$NAME.pid
+
+DAEMON=$HOME2L_ROOT/bin/$HOME2L_ARCH/$NAME
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+export HOME2L_EXTRA="daemon.pidFile=$PIDFILE sys.syslog=1 debug=0"
+
+
+
+##### Operate #####
+
+
+case "$1" in
+  start)
+        log_daemon_msg "Starting $DESC" "$NAME"
+
+        # Create 'tmp' directory at the destination if it is a link in HOME2L_ROOT ...
+        TMP_DST=`readlink $HOME2L_ROOT/tmp`
+        if [[ "$TMP_DST" != "" ]]; then
+           mkdir -p -m 775 $TMP_DST
+           chown home2l:home2l $TMP_DST
+        fi
+
+        # Setup GPIO if enabled and set permissions for LEDs ...
+        if [[ "$SETUP_GPIO" == "1" ]]; then
+          h2l-setup_gpio.sh > /dev/null
+          chown root:home2l /sys/class/leds/*/*
+          chmod g+w /sys/class/leds/*/*
+        fi
+
+        # (Re-)Start ADB if enabled...
+        if [[ "$RUN_ADB" == "1" ]]; then
+          # Kill an eventually running ADB, remove an eventually left-over socket file and then start the ADB server...
+          killall -q adb
+          rm -fr /tmp/5037
+          su home2l -c "adb start-server" > /dev/null
+        fi
+
+        # Start the daemon...
+        start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON
+        case "$?" in
+                0) log_end_msg 0 ;;
+                1) log_progress_msg "already running"
+                   log_end_msg 0 ;;
+                *) log_end_msg 1 ;;
+        esac
+        ;;
+  stop)
+        log_daemon_msg "Stopping $DESC" "$NAME"
+        start-stop-daemon --stop --quiet --retry=5 --remove-pidfile --pidfile $PIDFILE --exec $DAEMON
+        case "$?" in
+                0) log_end_msg 0 ;;
+                1) log_progress_msg "not running"
+                   log_end_msg 0 ;;
+                *) log_end_msg 1 ;;
+        esac
+
+        # Stop ADB if enabled...
+        if [[ "$RUN_ADB" == "1" ]]; then
+          su home2l -c "adb kill-server"
+        fi
+        ;;
+  restart|reload|force-reload)
+        $0 stop
+        $0 start
+        ;;
+  status)
+        status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart|reload|force-reload|status}" >&2
+        exit 3
+        ;;
+esac

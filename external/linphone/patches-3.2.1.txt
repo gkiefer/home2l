@@ -1,0 +1,72 @@
+########################################################################
+.../src/submodules/linphone> git diff
+########################################################################
+
+diff --git a/coreapi/linphonecall.c b/coreapi/linphonecall.c
+index bcbba4d..d1f5150 100644
+--- a/coreapi/linphonecall.c
++++ b/coreapi/linphonecall.c
+@@ -2626,6 +2626,7 @@ void linphone_call_init_audio_stream(LinphoneCall *call){
+                        char *statestr=ms_malloc0(EC_STATE_MAX_LEN);
+                        if (lp_config_relative_file_exists(lc->config, EC_STATE_STORE)
+                                 && lp_config_read_relative_file(lc->config, EC_STATE_STORE, statestr, EC_STATE_MAX_LEN) == 0) {
++                               ms_message("###echo### Reading echo canceler state, %i bytes",(int)strlen(statestr));
+                                ms_filter_call_method(audiostream->ec, MS_ECHO_CANCELLER_SET_STATE_STRING, statestr);
+                        }
+                        ms_free(statestr);
+diff --git a/coreapi/lpconfig.c b/coreapi/lpconfig.c
+index 9c69b93..af0f9d1 100644
+--- a/coreapi/lpconfig.c
++++ b/coreapi/lpconfig.c
+@@ -984,6 +984,8 @@ int lp_config_read_relative_file(const LpConfig *lpconfig, const char *filename,
+        char *filepath = NULL;
+        bctbx_vfs_file_t* pFile = NULL;
+ 
++  ms_message("###echo### lp_config_read_relative_file (%s, max_length = %i)", filename, (int) max_length);
++
+        char* realfilepath = NULL;
+ 
+        if (lpconfig->filename == NULL) return -1;
+@@ -997,13 +999,16 @@ int lp_config_read_relative_file(const LpConfig *lpconfig, const char *filename,
+                goto err;
+        }
+ 
++  ms_message("###echo###   -> filepath = '%s', realfilepath = '%s'", filepath, realfilepath);
++
+        pFile = bctbx_file_open(lpconfig->g_bctbx_vfs,realfilepath,"r");
+        if (pFile == NULL) {
+                ms_error("Could not open %s for read.", realfilepath);
+                goto err;
+        }
+ 
+-       if(bctbx_file_read(pFile, data, 1, (off_t)max_length) < 0){
++       //~ if(bctbx_file_read(pFile, data, 1, (off_t)max_length) < 0){
++       if(bctbx_file_read(pFile, data, max_length, 0) < 0){
+                ms_error("%s could not be loaded.", realfilepath);
+                goto err;
+                
+diff --git a/mediastreamer2 b/mediastreamer2
+--- a/mediastreamer2
++++ b/mediastreamer2
+@@ -1 +1 @@
+-Subproject commit 08211cc48d94708aa7d7dcf208f8351c20669b43
++Subproject commit 08211cc48d94708aa7d7dcf208f8351c20669b43-dirty
+
+
+
+########################################################################
+.../src/submodules/linphone/mediastreamer2> git diff
+########################################################################
+
+diff --git a/src/audiofilters/devices.c b/src/audiofilters/devices.c
+index 690fdb3..3d9bd41 100644
+--- a/src/audiofilters/devices.c
++++ b/src/audiofilters/devices.c
+@@ -106,6 +106,7 @@ static SoundDeviceDescription devices[]={
+        {       "samsung",                              "GT-I9250",                             "",                             DEVICE_HAS_BUILTIN_AEC|DEVICE_HAS_UNSTANDARD_LIBMEDIA, 0 }, /*galaxy nexus (maguro)*/
+        {       "samsung",                              "GT-S5570I",                    "",                             0,      250},
+        {       "samsung",                              "GT-P3100",                             "",                             DEVICE_HAS_BUILTIN_AEC, 0 }, /* Galaxy Tab*/
++       {       "samsung",                              "GT-P3110",                             "omap4",                                DEVICE_HAS_BUILTIN_AEC_CRAPPY, 0 }, /* Galaxy Tab 2 7.0 (GK) */
+        {       "samsung",                              "GT-P7500",                             "",                             DEVICE_HAS_BUILTIN_AEC, 0 }, /* Galaxy Tab*/
+        {       "samsung",                              "GT-P7510",                             "",                             DEVICE_HAS_BUILTIN_AEC, 0 }, /* Galaxy Tab*/
+        {       "samsung",                              "GT-I915",                              "",                             DEVICE_HAS_BUILTIN_AEC, 0 }, /* Verizon Tab*/

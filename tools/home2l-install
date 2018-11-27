@@ -1,0 +1,269 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is the working horse to update a Home2L installation on the local host.
+# It requires root priviledges, and it is required that a line like
+#
+#  "<admin user name> ALL=NOPASSWD:/opt/home2l/bin/home2l-install"
+#
+# is added to /etc/sudoers.
+#
+# Also, it is necessary, that 'root' can login via ssh to the master host
+# as user 'home2l'.
+
+
+
+
+
+#################### Helper functions ################################
+
+
+usage () {
+  echo "Usage: ${0##*/} [-y] [-e] [-b] [-a] [<rsync url>]"
+  echo "       ${0##*/} -i | --init"
+  echo "  -e | --etc:   Update the configuration data from master host"
+  echo "  -b | --blob:  Update the big blob from master host"
+  echo "  -a | --apk:   Update the Android APK file from master host"
+  echo "  -i | --init:  Initialize a new Home2L installation"
+  echo
+  echo "  <rsync url>:  rsync-compatible path specification to the blob on the master host"
+  echo
+  echo "If none of -e, -b and -a are given and HOME_ROOT is defined and exists, everything is updated."
+}
+
+
+error () {
+  echo "$1"
+  echo
+  usage
+  exit
+}
+
+
+
+
+######################### Init #######################################
+
+
+SELF=`realpath $0`
+HOME2L_ROOT=${SELF%/bin/*}
+
+
+do_init () {
+  EXEC_LINK=/usr/local/bin
+  WITH_INIT=0
+  CONF=$HOME2L_ROOT/etc/install.conf
+
+  #~ echo "### HOME2L_ROOT = $HOME2L_ROOT, CONF=$CONF"
+
+  test -e $CONF && . $CONF
+
+  echo
+  echo "##### Home2L Initialization #####"
+  echo
+  echo "About to install:"
+  echo "  $EXEC_LINK/home2l"
+  if [[ "$VAR_DIR" != "" ]]; then
+    echo "  $VAR_DIR"
+  fi
+  if [[ "$TMP_DIR" != "" ]]; then
+    echo "  $TMP_DIR"
+  fi
+  if [[ "$WITH_INIT" == "1" ]]; then
+    echo "  /etc/init.d/home2l - and start the service"
+  fi
+  echo
+  read -p "Continue? (y/N) " ANS
+
+  if [[ "$ANS" == "y" ]]; then
+    rm -f $EXEC_LINK/home2l
+    ln -s $HOME2L_ROOT/bin/home2l $EXEC_LINK/home2l
+
+    if [[ "$VAR_DIR" != "" ]]; then
+      mkdir -p $VAR_DIR
+      chown home2l.home2l $VAR_DIR
+    fi
+    if [[ "$TMP_DIR" != "" ]]; then
+      mkdir -p $TMP_DIR
+      chown home2l.home2l $TMP_DIR
+    fi
+
+
+    if [[ "$WITH_INIT" == "1" ]]; then
+      cp $HOME2L_ROOT/install/initd-home2l /etc/init.d/home2l
+      update-rc.d home2l defaults
+      which service >/dev/null   && service home2l start    # SYS-V
+      which systemctl >/dev/null && systemctl start home2l  # SystemD
+    fi
+  fi
+}
+
+
+
+
+
+######################### Main program ###############################
+
+
+if [[ "$1" == "" ]]; then
+  usage
+  exit
+fi
+
+
+# Become root...
+if [[ "$UID" != "0" ]]; then
+   echo "Becoming 'root'..."
+   exec sudo $0 $@
+fi
+
+
+# Set environment ...
+HOSTNAME=`hostname`
+if ! which home2l >/dev/null; then
+  do_init
+  exit 0
+fi
+. `home2l -e`
+
+# Load configuration ...
+CONF=$HOME2L_ROOT/etc/install.conf
+test -e $CONF || error "Cannot find configuration file $CONF"
+. $CONF
+
+# Sanity checks ...
+set -e
+if [[ "$HOME2L_ROOT" == "" ]]; then
+  error "HOME2L_ROOT not set properly."
+fi
+if [[ "$HOSTNAME" == "$MASTER" ]]; then
+  error "This tool cannot be run on the master '$MASTER'."
+fi
+
+# Evaluate command line...
+DO_ETC=0
+DO_BLOB=0
+DO_APK=0
+ASK_CONFIRM=1
+SOURCE=$MASTER_URL
+for ARG in $@; do
+  case $ARG in
+    -e | --etc)
+      DO_ETC=1
+      ;;
+    -b | --blob)
+      DO_BLOB=1
+      ;;
+    -a | --apk)
+      DO_APK=1
+      ;;
+    -y)
+      ASK_CONFIRM=0
+      ;;
+    -i)
+      do_init
+      exit
+      ;;
+    *)
+      SOURCE="$ARG"
+      ;;
+  esac
+done
+if [[ $DO_ETC == 0 && $DO_BLOB == 0 && $DO_APK == 0 ]]; then
+  DO_ETC=1
+  DO_BLOB=1
+fi
+if [[ $DO_BLOB == 1 ]]; then
+  DO_APK=0
+fi
+if [[ "$SOURCE" == "" ]]; then
+  error "Source specification is missing."
+fi
+
+
+# Update main blob...
+if [[ $DO_BLOB == 1 ]]; then
+  ARGS=""
+  for X in $EXCLUDE; do ARGS="$ARGS --exclude=$X"; done
+  echo
+  echo "# Updating '$HOME2L_ROOT' (without 'etc') from '$SOURCE'..."
+  echo "#   extra args = '$ARGS'"
+  #~ echo rsync -va --perms --chown=root:home2l --delete --exclude='etc' --exclude='tmp' --exclude='var' $ARGS $SOURCE/ $HOME2L_ROOT/
+  rsync -va --perms --chown=root:home2l --delete --exclude='etc' --exclude='tmp' --exclude='var' $ARGS $SOURCE/ $HOME2L_ROOT/
+fi
+
+
+# Update 'etc'...
+if [[ $DO_ETC == 1 ]]; then
+  echo
+  echo "# Updating '$HOME2L_ROOT/etc' from '$SOURCE/etc'..."
+  rsync -va --perms --chown=root:home2l --delete $SOURCE/etc/ $HOME2L_ROOT/etc
+fi
+
+
+# Update APK file...
+APK_FILE=install/Home2lApp.apk
+if [[ $DO_APK == 1 ]]; then
+  echo
+  echo "# Updating '$HOME2L_ROOT/$APK_FILE' from '$SOURCE/$APK_FILE'..."
+  rsync -va --perms --chown=root:home2l --delete $SOURCE/$APK_FILE $HOME2L_ROOT/$APK_FILE
+fi
+
+
+# Fix ownership & permissions...
+echo
+HAVE_APP=1
+APP_UID=`stat -c %u /data/data/org.home2l.app 2>/dev/null` || HAVE_APP=0
+if [[ $HAVE_APP == 1 ]]; then
+  echo "# Fixing permissions for an Android host ..."
+  chown -R $APP_UID $HOME2L_ROOT/etc/secrets
+  chmod 550 $HOME2L_ROOT/etc/secrets        2>/dev/null || echo "#   (no '$HOME2L_ROOT/etc/secrets' folder found)"
+  chmod 440 $HOME2L_ROOT/etc/secrets/*      2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets' seems to be empty)"
+  chmod 500 $HOME2L_ROOT/etc/secrets/ssh    2>/dev/null || echo "#   (no '$HOME2L_ROOT/etc/secrets/ssh' folder found)"
+  chmod 400 $HOME2L_ROOT/etc/secrets/ssh/*  2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets/ssh/' seems to be empty)"
+  mkdir -p $HOME2L_ROOT/var $HOME2L_ROOT/tmp
+  chmod 2777  $HOME2L_ROOT/var $HOME2L_ROOT/tmp
+else
+  echo "# Fixing permissions for a Non-Android host ..."
+  chmod 550 $HOME2L_ROOT/etc/secrets    2>/dev/null || echo "#   (no '$HOME2L_ROOT/etc/secrets' folder found)"
+  chmod 440 $HOME2L_ROOT/etc/secrets/*  2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets' seems to be empty)"
+fi
+if [[ $HAVE_APP == 0 && $HOME2L_ROOT == /data/home2l ]]; then
+  echo
+  echo "WARNING: According to HOME2L_ROOT, this seems to be an Android machine."
+  echo "  However, I could not find the Home2l App. You should now install"
+  echo "  the app and must then run this script again. Otherwise, the app may"
+  echo "  not work properly."
+fi
+
+
+# Restart daemon (if active) and other house-keeping...
+if [[ $DO_BLOB == 1 || $DO_ETC == 1 ]]; then
+  # Restart daemon...
+  if [ -e /etc/init.d/home2l ]; then
+    echo
+    echo "# Updating '/etc/init.d/home2l' and eventually restarting daemon..."
+    cp $HOME2L_ROOT/install/initd-home2l /etc/init.d/home2l
+    service home2l status && service home2l reload
+  fi
+fi
+
+# Exit successfully...
+exit 0

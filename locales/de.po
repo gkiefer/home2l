@@ -1,0 +1,303 @@
+# German translations for Home2L package
+# German translation for Home2L.
+# Copyright (C) 2018 Gundolf Kiefer
+# This file is distributed under the same license as the Home2L package.
+# Gundolf Kiefer, 2018.
+#
+msgid   ""
+msgstr  "Project-Id-Version: Home2L\n"
+        "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
+        "POT-Creation-Date: 2018-11-26 18:45+0100\n"
+        "PO-Revision-Date: 2018-06-02 03:24+0200\n"
+        "Last-Translator: Gundolf Kiefer\n"
+        "Language-Team: German\n"
+        "Language: de\n"
+        "MIME-Version: 1.0\n"
+        "Content-Type: text/plain; charset=UTF-8\n"
+        "Content-Transfer-Encoding: 8bit\n"
+        "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. TRANSLATORS: Set the first character to the locale's numerical decimal point. All other characters are ignored.
+#: ../common/base.C:385
+msgid   ". (decimal point)"
+msgstr  ","
+
+#: ../common/base.C:1608
+msgid   "January"
+msgstr  "Januar"
+
+#: ../common/base.C:1608
+msgid   "February"
+msgstr  "Februar"
+
+#: ../common/base.C:1608
+msgid   "March"
+msgstr  "März"
+
+#: ../common/base.C:1608
+msgid   "April"
+msgstr  "April"
+
+#: ../common/base.C:1608 ../common/base.C:1609
+msgid   "May"
+msgstr  "Mai"
+
+#: ../common/base.C:1608
+msgid   "June"
+msgstr  "Juni"
+
+#: ../common/base.C:1608
+msgid   "July"
+msgstr  "Juli"
+
+#: ../common/base.C:1608
+msgid   "August"
+msgstr  "August"
+
+#: ../common/base.C:1608
+msgid   "September"
+msgstr  "September"
+
+#: ../common/base.C:1608
+msgid   "October"
+msgstr  "Oktober"
+
+#: ../common/base.C:1608
+msgid   "November"
+msgstr  "November"
+
+#: ../common/base.C:1608
+msgid   "December"
+msgstr  "Dezember"
+
+#: ../common/base.C:1609
+msgid   "Jan"
+msgstr  "Jan"
+
+#: ../common/base.C:1609
+msgid   "Feb"
+msgstr  "Feb"
+
+#: ../common/base.C:1609
+msgid   "Mar"
+msgstr  "Mär"
+
+#: ../common/base.C:1609
+msgid   "Apr"
+msgstr  "Apr"
+
+#: ../common/base.C:1609
+msgid   "Jun"
+msgstr  "Jun"
+
+#: ../common/base.C:1609
+msgid   "Jul"
+msgstr  "Jul"
+
+#: ../common/base.C:1609
+msgid   "Aug"
+msgstr  "Aug"
+
+#: ../common/base.C:1609
+msgid   "Sep"
+msgstr  "Sep"
+
+#: ../common/base.C:1609
+msgid   "Oct"
+msgstr  "Okt"
+
+#: ../common/base.C:1609
+msgid   "Nov"
+msgstr  "Nov"
+
+#: ../common/base.C:1609
+msgid   "Dec"
+msgstr  "Dez"
+
+#: ../common/base.C:1610
+msgid   "Monday"
+msgstr  "Montag"
+
+#: ../common/base.C:1610
+msgid   "Tuesday"
+msgstr  "Dienstag"
+
+#: ../common/base.C:1610
+msgid   "Wednesday"
+msgstr  "Mittwoch"
+
+#: ../common/base.C:1610
+msgid   "Thursday"
+msgstr  "Donnerstag"
+
+#: ../common/base.C:1610
+msgid   "Friday"
+msgstr  "Freitag"
+
+#: ../common/base.C:1610
+msgid   "Saturday"
+msgstr  "Samstag"
+
+#: ../common/base.C:1610
+msgid   "Sunday"
+msgstr  "Sonntag"
+
+#: ../common/base.C:1611
+msgid   "Mon"
+msgstr  "Mo"
+
+#: ../common/base.C:1611
+msgid   "Tue"
+msgstr  "Di"
+
+#: ../common/base.C:1611
+msgid   "Wed"
+msgstr  "Mi"
+
+#: ../common/base.C:1611
+msgid   "Thu"
+msgstr  "Do"
+
+#: ../common/base.C:1611
+msgid   "Fri"
+msgstr  "Fr"
+
+#: ../common/base.C:1611
+msgid   "Sat"
+msgstr  "Sa"
+
+#: ../common/base.C:1611
+msgid   "Sun"
+msgstr  "So"
+
+#: ../wallclock/alarmclock.C:589
+msgid   "Setup Alarm Clock"
+msgstr  "Wecker einstellen"
+
+#: ../wallclock/alarmclock.C:589
+msgid   "Alarm Clock is Disabled"
+msgstr  "Wecker ist abgeschaltet"
+
+#. TRANSLATORS: Format string for the day header in the calendar event list (de_DE: "%s   %i.%i.%i")
+#. Arguments are: <week day name>, <day>, <month>, <year>
+#: ../wallclock/app_calendar.C:632
+#, c-format
+msgid   "%1$s   %3$i/%2$i/%4$i"
+msgstr  "%s   %i.%i.%i"
+
+#: ../wallclock/app_calendar.C:756
+msgid   "Discard changes?"
+msgstr  "Sollen die Änderungen im Eintrag\n"
+        "verworfen werden?"
+
+#: ../wallclock/app_calendar.C:768
+msgid   "Really remove the current entry?"
+msgstr  "Bist Du sicher, dass Du\n"
+        "den Eintrag löschen möchtest?"
+
+#: ../wallclock/app_calendar.C:933
+msgid   "Today"
+msgstr  "Heute"
+
+#: ../wallclock/app_calendar.C:1431
+msgid   "Calendar"
+msgstr  "Kalender"
+
+#: ../wallclock/app_home.C:337
+msgid   "Mail"
+msgstr  "Mail"
+
+#: ../wallclock/app_home.C:342
+msgid   "WWW"
+msgstr  "WWW"
+
+#: ../wallclock/app_home.C:347
+msgid   "Android"
+msgstr  "Android"
+
+#. TRANSLATORS: Format string for the "<weekday>, <full date>" display on the home screen (de_DE: "%s, %i. %s %i")
+#. Arguments are: <week day name>, <day>, <month name>, <year>
+#: ../wallclock/app_home.C:505
+#, c-format
+msgid   "%1$s, %3$s %2$i, %4$i"
+msgstr  "%s, %i. %s %i"
+
+#: ../wallclock/app_home.C:833
+msgid   "Quit Home2L"
+msgstr  "Home2l beenden"
+
+#: ../wallclock/app_music.C:980
+msgid   "Connecting ..."
+msgstr  "Verbinde ..."
+
+#: ../wallclock/app_music.C:1267
+msgid   "* Music Collection *"
+msgstr  "* Musik-Sammlung *"
+
+#: ../wallclock/app_music.C:1271
+msgid   "* Current Queue *"
+msgstr  "* Aktuelle Liste *"
+
+#: ../wallclock/app_music.C:1272
+msgid   "* Playlists *"
+msgstr  "* Abspiellisten *"
+
+#: ../wallclock/app_music.C:1273
+msgid   "* Main *"
+msgstr  "* Hauptmenü *"
+
+#: ../wallclock/app_music.C:1422
+msgid   "Music Collection"
+msgstr  "Musik-Sammlung"
+
+#: ../wallclock/app_music.C:1933
+msgid   "Music"
+msgstr  "Musik"
+
+#: ../wallclock/app_phone.C:973
+msgid   "Phone"
+msgstr  "Telefon"
+
+#. TRANSLATORS: Standard buttons for message boxes
+#: ../wallclock/ui_widgets.C:938
+msgid   "Cancel"
+msgstr  "Abbrechen"
+
+#: ../wallclock/ui_widgets.C:938
+msgid   "OK"
+msgstr  "OK"
+
+#: ../wallclock/ui_widgets.C:938
+msgid   "No"
+msgstr  "Nein"
+
+#: ../wallclock/ui_widgets.C:938
+msgid   "Yes"
+msgstr  "Ja"
+
+#: ../wallclock/ui_widgets.C:1041
+msgid   "Information"
+msgstr  "Information"
+
+#: ../wallclock/ui_widgets.C:1051
+msgid   "Warning"
+msgstr  "Warnung"
+
+#: ../wallclock/ui_widgets.C:1061
+msgid   "Error"
+msgstr  "Fehler"
+
+#: ../wallclock/ui_widgets.C:1071
+msgid   "Sure?"
+msgstr  "Sicher?"
+
+#: ../wallclock/ui_widgets.C:1081
+msgid   "Question"
+msgstr  "Frage"
+
+#~ msgid        "Push the 'Home2L' icon\n"
+#~      "to return here after\n"
+#~      "your Android activities."
+#~ msgstr       "Drücke das 'Home2L'-Symbol,\n"
+#~      "um die Android-Aktivitäten\n"
+#~      "zu beenden."

@@ -1,0 +1,235 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+
+
+
+#################### Helper functions ################################
+
+
+usage () {
+  echo "Usage: ${0##*/} [-e] [-b] [-a] [<host 1> <host 2> ...]"
+  echo "  -e | --etc:   Update the configuration data on all (given) hosts"
+  echo "  -b | --blob:  Update the big blob on all (given) hosts"
+  echo "  -a | --apk:   (Re-)Install the Android app on all Android hosts"
+  echo "  -y:           Do not ask for confirmation"
+  echo
+  echo "If none of -e, -b and -a are given, everything is updated."
+  echo "If no host is given, all known hosts are updated."
+}
+
+
+error () {
+  echo "$1"
+  echo
+  usage
+  exit
+}
+
+
+banner () {
+  echo
+  echo
+  echo
+  echo "######################################################################"
+  echo "#"
+  echo "#   $1"
+  echo "#"
+  echo "######################################################################"
+  echo
+}
+
+
+intersect () {
+  RET=""
+  for X in $1; do
+    for Y in $2; do
+      if [[ "$X" == "$Y" ]]; then
+        RET="$RET $X"
+      fi
+    done
+  done
+  echo $RET
+}
+
+
+without () {
+  RET=""
+  for X in $1; do
+    HIT=0
+    for Y in $2 $RET; do
+      #~ echo "### X='"$X"' Y='"$Y"' RET='"$RET"'"
+      if [[ "$X" == "$Y" ]]; then
+        HIT=1
+      fi
+    done
+    if [[ $HIT == 0 ]]; then
+      RET="$RET $X"
+      #~ echo "### RET='"$RET"'"
+    fi
+  done
+  echo $RET
+}
+
+
+
+
+
+#################### Main program ####################################
+
+
+# Read configuration & do some sanity checks...
+set -e
+CONF=$HOME2L_ROOT/etc/rollout.conf
+test -e $CONF || error "Cannot find configuration file $CONF"
+. $CONF
+if [[ "$HOSTNAME" != "$MASTER" ]]; then
+  exec ssh -t $MASTER home2l ${0##*-} $@
+fi
+
+
+# Evaluate command line...
+DO_ETC=0
+DO_BLOB=0
+DO_APK=0
+ASK_CONFIRM=1
+HOSTS=""
+for ARG in $@; do
+  case $ARG in
+    -e | --etc)
+      DO_ETC=1
+      ;;
+    -b | --blob)
+      DO_BLOB=1
+      ;;
+    -a | --apk)
+      DO_APK=1
+      ;;
+    -y)
+      ASK_CONFIRM=0
+      ;;
+    *)
+      HOSTS="$HOSTS $ARG"
+      ;;
+  esac
+done
+if [[ $DO_ETC == 0 && $DO_BLOB == 0 && $DO_APK == 0 ]]; then
+  DO_ETC=1
+  DO_BLOB=1
+  DO_APK=1
+fi
+
+
+# Filter hosts...
+if [[ "$HOSTS" == "" ]]; then
+  SEL_LINUX="$HOSTS_LINUX"
+  SEL_LINUX_NOETC="$HOSTS_LINUX_NOETC"
+  SEL_APK="$HOSTS_APK"
+else
+  SEL_LINUX=`intersect "$HOSTS" "$HOSTS_LINUX"`
+  SEL_LINUX_NOETC=`intersect "$HOSTS" "$HOSTS_LINUX_NOETC"`
+  SEL_APK=`intersect "$HOSTS" "$HOSTS_APK"`
+fi
+if [[ $DO_ETC == 1 ]]; then
+  SEL_ETC="$SEL_LINUX"
+else
+  SEL_ETC=""
+fi
+if [[ $DO_BLOB == 1 ]]; then
+  SEL_BLOB="$SEL_LINUX $SEL_LINUX_NOETC"
+else
+  SEL_BLOB=""
+fi
+SEL_BLOB_AND_ETC=`intersect "$SEL_BLOB" "$SEL_ETC"`
+SEL_BLOB=`without "$SEL_BLOB" "$SEL_BLOB_AND_ETC"`
+SEL_ETC=`without "$SEL_ETC" "$SEL_BLOB_AND_ETC"`
+if [[ $DO_APK == 1 ]]; then
+  SEL_APK_MASTERS=`without "$ANDROID_MASTERS" "$SEL_BLOB_AND_ETC $SEL_BLOB"`
+else
+  SEL_APK=""
+  SEL_APK_MASTERS=""
+fi
+
+# "Are you sure"?
+if [[ "$ASK_CONFIRM" == 1 ]]; then
+  echo "You selected to do the following:"
+  if [[ "$SEL_BLOB_AND_ETC" ]]; then
+    echo "- Update blob and configuration on: $SEL_BLOB_AND_ETC"
+  fi
+  if [[ "$SEL_BLOB" != "" ]]; then
+    echo "- Update the big blob on:           $SEL_BLOB"
+  fi
+  if [[ "$SEL_ETC" != "" ]]; then
+    echo "- Update configuration files on:    $SEL_ETC"
+  fi
+  if [[ "$SEL_APK_MASTERS" != "" ]]; then
+    echo "- Update 'Home2lApp.apk' on:        $SEL_APK_MASTERS"
+  fi
+  if [[ "$SEL_APK" != "" ]]; then
+    echo "- Update the Android app on:        $SEL_APK"
+  fi
+  echo
+  echo "All data will be replicated from: $MASTER:$HOME2L_ROOT"
+  echo
+  read -p "Continue? (y/N) " ANS
+  if [[ "$ANS" != "y" ]]; then
+    exit
+  fi
+fi
+
+# Rollout blob + etc...
+for HOST in $SEL_BLOB_AND_ETC; do
+  banner "Updating blob and configuration on '$HOST' ..."
+  ssh $HOST home2l install -b -e home2l@$MASTER:$HOME2L_ROOT
+done
+
+# Rollout blob ...
+for HOST in $SEL_BLOB; do
+  banner "Updating the big blob on '$HOST' ..."
+  ssh $HOST home2l install -b home2l@$MASTER:$HOME2L_ROOT
+done
+
+# Rollout etc ...
+for HOST in $SEL_ETC; do
+  banner "Updating configuration files on '$HOST' ..."
+  ssh $HOST home2l install -e home2l@$MASTER:$HOME2L_ROOT
+done
+
+# Rollout APK file ...
+for HOST in $SEL_APK_MASTERS; do
+  banner "Updating 'Home2lApp.apk' on '$HOST' ..."
+  ssh $HOST home2l install -a home2l@$MASTER:$HOME2L_ROOT
+done
+
+# (Re-)Install and restart the Android app ...
+for HOST in $SEL_APK; do
+  banner "Updating the Android app on '$HOST' ..."
+  home2l adb $HOST install -r $HOME2L_ROOT/install/Home2lApp.apk
+  home2l adb $HOST x-start
+    # Note: HOME2L_ROOT must be equivalent on all Android masters
+done
+
+# Restart Android app where appropriate...
+RESTART_APK=`without "$SEL_ETC $SEL_BLOB_AND_ETC" "$SEL_APK"`
+RESTART_APK=`intersect "$RESTART_APK" "$HOSTS_APK"`
+for HOST in $RESTART_APK; do
+  banner "Restarting Android app on '$HOST' ..."
+  sudo -u home2l home2l adb $HOST x-restart
+done

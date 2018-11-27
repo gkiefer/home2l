@@ -1,3 +1,17 @@
+The following directories contain files copied or derived from external
+sources, which are NOT part of the Home2L project:
+
+  wallclock/icons
+  wallclock/sounds
+  wallclock/fonts
+
+To these files, the terms and conditions of their respective original license
+apply.
+
+Details can be found in the LICENSE file inside the respective directory.
+
+------------------------------------------------------------------------------
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

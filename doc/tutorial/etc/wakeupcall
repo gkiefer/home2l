@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# Usage: wakeupcall [-i <id>] [<yyyy><mm><dd><hh><mm>]
+#        wakeupcall [-i <id>] -
+#
+# Issue a wakeup call to asterisk for the given date and time.
+
+
+# Configuration ...
+ASTERISK_OUTGOING=/var/spool/asterisk/outgoing
+  # directory to place asterisk call files in
+ASTERISK_TMP=/var/spool/asterisk/tmp
+  # temporary directory on the same file system as ASTERISK_OUTGOING ...
+ASTERISK_DIAL="Local/bedroom"
+
+
+# ASTERISK has to be set up in two ways (both in extensions.conf):
+#
+# a) Define an identity of the wakeup caller:
+#
+#    ; Wakeup service...
+#    [service]
+#    exten => wakeup,1,Answer()
+#    exten => wakeup,n,Wait(1)
+#    exten => wakeup,n,Espeak("Guten Moorgen. Ich bin ^Asterix, und ich wünsche Dir einen schöönen tag.", any)
+#    exten => wakeup,n,Wait(1)
+#    exten => wakeup,n,Hangup()
+#
+# b) Define an extension redirected to the set of phones to ring (optional, recommended)
+#
+#    [default]
+#    exten => bedroom,1,Dial(...)
+
+
+
+# Parse options...
+ID=""
+if [[ "$1" == "-i" ]]; then
+  ID="-$2"
+  shift 2
+fi
+T="$1"
+
+# Remove previously set call file ...
+rm -f $ASTERISK_OUTGOING/wakeup$ID-*.call
+
+# Go ahead...
+if [[ "$T" != "-" ]]; then
+
+  # Create call file ...
+  ( echo "Channel: $ASTERISK_DIAL";
+    echo "MaxRetries: 0";
+    echo "RetryTime: 60";
+    echo "WaitTime: 300";
+    echo "Context: service";
+    echo "Extension: wakeup";
+    echo "Callerid: Wakeup Service"
+  ) > $ASTERISK_TMP/wakeup$ID.call
+
+  # Set its date and move it in place ...
+  if [[ "$T" != "" ]]; then
+    touch -t "$T" $ASTERISK_TMP/wakeup$ID.call
+    #~ touch -m -d "$1 $2" $ASTERISK_TMP/wakeup$ID.call
+  fi
+  mv $ASTERISK_TMP/wakeup$ID.call $ASTERISK_OUTGOING/wakeup$ID-$T.call
+fi

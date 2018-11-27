@@ -1,0 +1,347 @@
+/*
+ *  This file is part of the Home2L project.
+ *
+ *  (C) 2015-2018 Gundolf Kiefer
+ *
+ *  Home2L is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Home2L is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
+
+#include "env.H"
+
+#include <syslog.h>
+#include <unistd.h>   // for 'daemon(3)'
+#include <sys/types.h>
+#include <pwd.h>
+#include <errno.h>
+#include <sys/select.h>
+#include <grp.h>      // for 'initgroups(3)'
+
+
+ENV_PARA_INT ("daemon.minRunTime", envMinRunTime, 3000);
+  /* Minimum run time below which a process is restarted only with a delay
+   */
+ENV_PARA_INT ("daemon.retryWait", envRetryWait, 60000);
+  /* Restart wait time if a processes crashed quickly
+   */
+ENV_PARA_STRING ("daemon.pidFile", envPidFile, NULL);
+  /* PID file for use with 'start-stop-daemon'
+   */
+ENV_PARA_SPECIAL ("daemon.run.<script>", const char *, NULL);
+  /* Define a script to be started and controlled by the daemon
+   */
+
+
+/* Notes on job management
+ * -----------------------
+ *
+ * For each task, a new process group is created. If this daemon process is killed or
+ * crashes, all tasks must be shut down by this process (eventually in a signal handler).
+ *
+ * Command to show the process tree:
+ *
+ * > ps -u home2l -jfH
+ *
+ * Behavior if a sub-task crashes:
+ * - If it ran longer than 'envMinRunTime', it will be restarted immediately.
+ * - If it ran shorter than that time, it will be restarted after a waiting of 'envRetryWait'.
+ *
+ * If the daemon process is killed, all sub-tasks are killed, too. The respective
+ * signals are caught and handled accordingly.
+ *
+ * A crash of the daemon (e.g. SEGV or ABRT) is not handled, the children keep on running.
+ * The code should be hardened and bug-free, so that such crashes do not happen.
+ *
+ */
+
+
+class CTask: public CShellBare {
+  public:
+    CTask () { startTime = 0; SetNewProcessGroup (); }
+    virtual ~CTask ();
+
+    void Setup (const char *_id, const char *_cmd);
+
+    virtual void Kill (int sig = SIGTERM);
+
+    void Process ();
+    void RetryNow () { if (startTime < 0) startTime = 0; Process (); }
+
+    const char *ToStr () { return id.Get (); }
+
+  protected:
+    CString id, cmd;
+    TTicks startTime;
+    CTimer retryTimer;
+};
+
+
+static bool foregroundMode = false;
+static bool running = true;
+static CSleeper sleeper;
+static CDictFast<CTask> taskMap;
+
+
+
+
+
+// ***************** Helpers *******************************
+
+
+static void LogF (int priority, const char *format, ...) {
+  char c;
+
+  va_list ap;
+  va_start (ap, format);
+
+  if (LoggingToSyslog ())
+    vsyslog (priority, format, ap);
+  else {
+    switch (priority) {
+      case LOG_INFO:    c = 'I'; break;
+      case LOG_WARNING: c = 'W'; break;
+      case LOG_ERR:     c = 'E'; break;
+      default: c = 'D';
+    }
+    printf ("%s [%c] ", TicksToString (TicksNow ()), c);
+    vprintf (format, ap);
+    putchar ('\n');
+  }
+  va_end (ap);
+}
+
+
+
+
+
+// ***************** CTask *********************************
+
+
+static void CbRetryTimer (CTimer *, void *data) {
+  //~ INFO ("### CbRetryTimer ()");
+  ((CTask *) data)->RetryNow ();
+}
+
+
+CTask::~CTask () {
+  retryTimer.Clear ();
+  CShellBare::Done ();
+}
+
+
+void CTask::Setup (const char *_id, const char *_cmd) {
+  id.Set (_id);
+  cmd.Set (_cmd);
+  Process ();
+}
+
+
+void CTask::Kill (int sig) {
+  retryTimer.Clear ();
+  CShellBare::Kill (sig);
+}
+
+
+void CTask::Process () {
+  CString line;
+  TTicksMonotonic now, lifeTime;
+
+  // Check and log task's stdout (and stderr)...
+  if (!ReadClosed ()) {
+    while (ReadLine (&line))
+      LogF (LOG_INFO, "From '%s': %s", id.Get (), line.Get ());
+  }
+
+  // Handle a non-running task...
+  //~ INFOF (("# CTask::Process ('%s')", id.Get ()));
+  if (!IsRunning ()) {
+    now = TicksMonotonicNow ();
+    if (startTime > 0) {  // Task was running and has stopped somehow...
+      lifeTime = now - startTime;
+        /* NOTE: The type 'TTicksMonotonic' is signed and has just 32 bits and thus wraps around every 2^32 milliseconds (~= 50 days).
+         *       This has two implications here:
+         *       1. After multiples of the turnaround time, the 'lifeTime' may be small, so that a restart happens
+         *          only after a delay of 'envRetryWait', although it should be restarted immediately. Both the
+         *          probability and the damage of this is small. Hence we live with this little flaw.
+         *       2. After half the turnaround time (~25 days) the calculated 'lifeTime' may become negative.
+         *          Hence, we must check for negative numbers to avoid unappropriate and very long retry waiting.
+         */
+      if (lifeTime >= envMinRunTime || lifeTime < 0) {
+        LogF (LOG_INFO, "Task '%s' has died (exit code %i) - restarting now.", id.Get (), ExitCode ());
+        startTime = 0;  // -> mark to restart now
+      }
+      else {
+        LogF (LOG_INFO, "Task '%s' has died (exit code %i) after only %i second(s) - restarting in %i seconds.",
+            id.Get (), ExitCode (),
+            (int) SECONDS_FROM_TICKS (lifeTime), (int) SECONDS_FROM_TICKS (envRetryWait - lifeTime));
+        retryTimer.Set (startTime + envRetryWait, 0, CbRetryTimer, this);   // -> restart later
+        startTime = -1; // -> suspend
+      }
+    }
+    if (startTime == 0) {
+      // (Re-)Start the task...
+      LogF (LOG_INFO, "Starting task '%s'...", id.Get ());
+      Start (cmd.Get ());
+      startTime = now;
+      retryTimer.Clear ();
+    }
+  }
+}
+
+
+
+
+
+// ***************** Signal Handler ***********************
+
+
+void SigToSelfPipe (int sig) {
+  sleeper.PutCmd (&sig);
+}
+
+
+
+
+
+// ***************** Main **********************************
+
+
+int main (int argc, char **argv) {
+  static const char *envKeyPrefix = "daemon.run.";
+  const char *key, *id, *cmd;
+  struct passwd *pwEntry;
+  struct sigaction sigAction;
+  TTicksMonotonic delay;
+  FILE *f;
+  CTask *task;
+  int n, sig, n0, n1, prefixLen;
+
+  // Startup...
+  for (n = 1; n < argc; n++) if (argv[n][0] == '-')
+    if (argv[n][1] == 'd') foregroundMode = true;
+  if (!foregroundMode) LogToSyslog ();
+  EnvInit (argc, argv,
+           "  -d : stay in the foreground (prepend 'debug=1' to enable debugging messages)\n");
+
+  // Daemonize...
+  if (!foregroundMode) {
+    if (daemon (0, 0) != 0) ERRORF (("Cannot daemonize: %s", strerror (errno)));
+  }
+
+  // Write PID file if set...
+  //   Note: The PID file will not be removed afterwards, since we drop privileges. To stop the
+  //         daemon, 'start-stop-daemon' must be called with the '--remove-pidfile' option.
+  if (envPidFile) {
+    f = fopen (envPidFile, "wt");
+    if (!f) {
+      WARNINGF(("Cannot open PID file '%s'", envPidFile));
+    }
+    else {
+      fprintf (f, "%i\n", getpid ());
+      fclose (f);
+    }
+  }
+
+  // Drop privileges...
+  if (getuid () == 0) {
+    // Program was started by root => change identity to 'home2l:home2l'...
+    pwEntry = getpwnam (HOME2L_USER);
+    if (!pwEntry) ERRORF (("Cannot identify user '" HOME2L_USER "': %s", strerror (errno)));
+    if (initgroups (HOME2L_USER, pwEntry->pw_gid) != 0) ERRORF (("initgroups () failed: %s", strerror (errno)));
+    if (setgid (pwEntry->pw_gid) != 0) ERRORF (("setgid(%i) failed: %s", pwEntry->pw_gid, strerror (errno)));
+    if (setuid (pwEntry->pw_uid) != 0) ERRORF (("setuid(%i) failed: %s", pwEntry->pw_uid, strerror (errno)));
+  }
+  LogF (LOG_INFO, "Daemon started (uid = %i, gid = %i).", getuid (), getgid ());
+
+  // Setup sleeper and signal handler...
+  sleeper.EnableCmds (sizeof (int));
+  sigAction.sa_handler = SigToSelfPipe;
+  sigemptyset (&sigAction.sa_mask);
+  sigAction.sa_flags = 0;
+  sigaction (SIGTERM, &sigAction, NULL);    // 'kill'
+  sigaction (SIGINT, &sigAction, NULL);     // keyboard interrupt (Ctrl-C)
+  sigaction (SIGCHLD, &sigAction, NULL);    // Child stopped or terminated
+
+  // Read config and setup 'taskMap'...
+  EnvGetPrefixInterval (envKeyPrefix, &n0, &n1);
+  prefixLen = strlen (envKeyPrefix);
+  for (n = n0; n < n1; n++) {
+    key = EnvGetKey (n);
+    cmd = EnvGetVal (n);
+    id = key + prefixLen;
+    ASSERT (id && cmd);
+    //~ INFOF(("Registering task '%s': '%s'", key, cmd));
+    task = new CTask ();
+    task->Setup (id, cmd);
+    taskMap.Set (id, task);
+  }
+
+  // Main loop...
+  running = true;
+  if (!taskMap.Entries ()) {
+    LogF (LOG_INFO, "No tasks defined: Exiting...");
+    running = false;
+  }
+  while (running) {
+
+    // Iterate timer...
+    TimerIterate ();
+    delay = TimerGetDelay ();
+    //~ INFOF(("### TimerGetDelay () -> %i", delay))
+
+    // Prepare & run 'select'...
+    sleeper.Clear ();
+    for (n = 0; n < taskMap.Entries (); n++) sleeper.AddReadable (taskMap [n]->ReadFd ());
+    sleeper.Sleep (delay);
+
+    // Handle signals...
+    if (sleeper.GetCmd (&sig)) {
+      LogF (LOG_INFO, "Received signal '%s' (%i)", strsignal (sig), sig);
+      switch (sig) {
+        case SIGTERM:
+        case SIGINT:
+          running = false;
+          break;
+        case SIGCHLD:
+          // Some child exited: Process all tasks...
+          for (n = 0; n < taskMap.Entries (); n++) taskMap[n]->Process ();
+          sleeper.Clear ();   // we do not have to process them later again
+          break;
+        default: break;
+      }
+    }
+
+    // Process tasks...
+    if (running) for (n = 0; n < taskMap.Entries (); n++) {
+      task = taskMap.Get (n);
+      if (sleeper.IsReadable (task->ReadFd ())) taskMap[n]->Process ();
+    }
+  }
+
+  // Kill all tasks...
+  if (taskMap.Entries ()) {
+    for (n = 0; n < taskMap.Entries (); n++) {
+      LogF (LOG_INFO, "Killing task '%s'...", taskMap.GetKey (n));
+      taskMap.Get (n)->Kill (SIGTERM);   // send kill signal to all first, ...
+    }
+    taskMap.Clear ();    // ... then clear the 'taskMap', which implies a 'wait' on all child processes
+  }
+  sleeper.Done ();
+
+  // Shutdown...
+  EnvDone ();
+  LogF (LOG_INFO, "Daemon shut down.");
+  return 0;
+}

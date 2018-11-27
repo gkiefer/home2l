@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is a wrapper script for all activities initiated by the user
+# 'home2l' requiring root priviledges. To make it work, a line like the
+# following must be added to /etc/sudoers:
+#
+#   home2l ALL=NOPASSWD:/opt/home2l/bin/home2l-sudo
+
+
+
+# Usage...
+if [[ "$1" == "" ]]; then
+  echo "Usage: ${0##*/} <command>"
+  echo
+  echo "Run a command with root privileges. Available commands are:"
+  echo "  restart-openvpn : Restart the OpenVPN system service"
+  echo "  restart-usb     : Restart the USB subsystem (reload USB kernel modules)"
+  exit 3
+fi
+
+
+# Become root...
+if [[ "$UID" != "0" ]]; then
+  exec sudo $0 $@
+fi
+
+
+# Set environment...
+SELF=`realpath $0`
+source ${SELF%/bin/*}/env.sh
+
+
+
+############################## Internal commands ###############################
+
+
+do_restart_openvpn () {
+  echo "home2l-sudo: Restartung OpenVPN ..."
+  service openvpn restart
+}
+
+
+do_restart_usb () {
+  echo "home2l-sudo: Restartung USB system ..."
+  modprobe -r ehci_platform
+  modprobe ehci_platform
+}
+
+
+
+############################## Main ############################################
+
+#~ echo "### home2l-sudo"
+
+# Run the command if allowed...
+CMD="$1"
+shift
+case "$CMD" in
+  restart-openvpn)
+    do_restart_openvpn $@
+    ;;
+  restart-usb)
+    do_restart_usb $@
+    ;;
+  # legal external commands...
+  #install)    # 'home2l-install' should only be allowed for the admin user, not home2l.
+  #  exec home2l-$CMD $@
+  #  ;;
+esac

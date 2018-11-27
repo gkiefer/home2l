@@ -1,0 +1,24 @@
+# Output files...
+home2l-book.pdf
+home2l-api_c/
+home2l-api_python/
+
+# Latex outputs...
+home2l-*.aux
+home2l-*.idx
+home2l-*.ind
+home2l-*.out
+home2l-*.ilg
+home2l-*.synctex*
+home2l-*.toc
+_markdown_*
+home2l-book.markdown.*
+
+# Own intermediate files...
+figs/*.eps
+figs/*-eps-converted-to.pdf
+/*-web.png
+ref_*.tex
+api_c/
+api_python/
+home2l.py

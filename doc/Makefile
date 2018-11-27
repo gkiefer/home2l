@@ -1,0 +1,308 @@
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+
+
+
+######################### Setup and local targets ##############################
+
+
+# Web browser for the 'view_api' target...
+BROWSER := chromium --new-window
+
+
+# Identify myself inside the Home2L source tree ...
+#   (values may be overwritten by some custom build system)
+HOME2L_SRC ?= ..
+HOME2L_MOD ?= doc
+
+
+# Setup...
+include $(HOME2L_SRC)/Setup.mk
+
+
+BOOK := home2l-book
+API_C := home2l-api_c
+API_PYTHON := home2l-api_python
+
+
+.PHONY: all
+all: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+
+
+.PHONY: book
+book: $(BOOK).pdf
+
+
+.PHONY: api
+api: $(API_C) $(API_PYTHON)
+
+
+.PHONY: view_book
+view_book: book
+	evince $(BOOK).pdf
+
+
+.PHONY: view_api
+view_api: api
+	$(BROWSER) $(API_C)/index.html $(API_PYTHON)/index.html &
+
+
+.PHONY: readme
+readme: ../README.pdf
+
+
+
+
+
+######################### README & Checked-in Top-Level Doc ####################
+
+# The targets in this section generate doc files which are checked into the repository,
+# even if they are binary files. These files are removed by the 'veryclean' target.
+#
+# The update policy is as follows:
+#
+# 1. The normal 'build-indep' target generates/updates:
+#      README.pdf
+#      home2l-figs/*
+#
+# 2. The following files/dirs consume much disk space and would be updated very frequently
+#    on small code changes. Hence, they are NOT updated with 'build*', but only explicitly
+#    with the 'commit' target:
+#
+#      home2l-book.pdf
+#      home2l-api_c/
+#      home2l-api_python/
+
+
+../README.md: ../home2l-figs/readme-title-web.png ../home2l-figs/home2l-components-web.png
+../README.pdf: ../README.md
+	cd ..; \
+	pandoc README.md -f markdown_github -V fontfamily=arev -V fontsize=12pt -V geometry:margin=2.5cm -V urlcolor=blue -o README.pdf
+
+
+../home2l-figs/home2l-icon-web.png: figs/home2l-icon.svg
+	mkdir -p ../home2l-figs
+	inkscape -z -C $< -e $@ -b white -w 96 -h 96
+	mogrify $@ -colors 256 # -quality 90
+
+../home2l-figs/readme-title-web.png: figs/readme-title.svg
+	mkdir -p ../home2l-figs
+	inkscape -z -C $< -e $@ -b white -w 768
+	mogrify $@ -colors 256 # -quality 90
+
+../home2l-figs/home2l-components-web.png: figs/home2l-components.svg
+	mkdir -p ../home2l-figs
+	inkscape -z -C $< -e $@ -b white -w 768
+	mogrify $@ -colors 256 # -quality 90
+
+
+.PHONY: commit
+commit:  $(API_C) $(API_PYTHON) $(BOOK).pdf
+	mv $(API_C) $(API_PYTHON) $(BOOK).pdf ..
+
+
+
+
+
+######################### Home2L Book: Automated parts #########################
+
+# The source files for the following sub-projects are set and must be
+# updated manually!
+
+
+# Module 'common'...
+ref_env_common.tex: ../common/base.C ../common/env.C ../common/phone.C
+	@echo EXCODE $@
+	@./excode.py e debug:home2l:sys:phone $^ > $@ || (rm $@; exit 7)
+
+
+# Module 'resources'...
+ref_env_resources.tex: ../resources/rc_core.C ../resources/resources.C ../resources/rc_drivers.C \
+	       ../resources/home2l-server.C ../resources/home2l-shell.C
+	@echo EXCODE $@
+	@./excode.py e rc:drv:shell:location $^ > $@ || (rm $@; exit 7)
+
+ref_rc_resources.tex: ../resources/rc_drivers.C
+	@echo EXCODE $@
+	@./excode.py r : $^ > $@ || (rm $@; exit 7)
+
+
+# Module 'tools'...
+ref_env_daemon.tex: ../tools/home2l-daemon.C
+	@echo EXCODE $@
+	@./excode.py e daemon $^ > $@ || (rm $@; exit 7)
+
+
+# Module 'wallclock'...
+ref_env_wallclock.tex: ../wallclock/system.C \
+	       ../wallclock/ui_base.C ../wallclock/ui_widgets.C ../wallclock/ui_screen.C \
+	       ../wallclock/alarmclock.C ../wallclock/apps.C ../wallclock/alarmclock.C ../wallclock/app_home.C ../wallclock/home2l-wallclock.C \
+	       ../wallclock/app_phone.C ../wallclock/app_calendar.C ../wallclock/app_music.C
+	@echo EXCODE $@
+	@./excode.py e ui:alarm:var.alarm:phone:calendar:music:var.music $^ > $@ || (rm $@; exit 7)
+
+ref_rc_wallclock.tex: ../wallclock/system.C
+	@echo EXCODE $@
+	@./excode.py r : $^ > $@ || (rm $@; exit 7)
+
+
+# Module 'doorman'...
+ref_env_doorman.tex: ../doorman/home2l-doorman.C
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
+ref_rc_doorman.tex: ../doorman/home2l-doorman.C
+	@echo EXCODE $@
+	@./excode.py r : $^ > $@ || (rm $@; exit 7)
+
+
+# Drivers ...
+ref_env_drv_gpio.tex: ../drivers/gpio/home2l-drv-gpio.C
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
+ref_env_drv_weather.tex: ../drivers/weather/home2l-drv-weather
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
+	@echo EXCODE $@
+	@./excode.py r : $^ > $@ || (rm $@; exit 7)
+
+
+
+
+
+######################### Home2L Book: Main document ###########################
+
+
+.PHONY: figs
+figs:
+	@grep '\includegraphics.*%%%' < $(BOOK).tex \
+	| sed 's#.*{\(.*\)}.*%%% \(.*\): *\(.*\)#\1 \2 \3#' \
+	| while read -r LINE; do \
+	    L=($$LINE); \
+	    BASE=$${L[0]};  unset L[0]; \
+	    EXT=$${L[1]};   unset L[1]; \
+	    CMD=$${L[@]//\$$BASE/$$BASE}; \
+	    # echo "### BASE=$$BASE EXT=$$EXT CMD=$$CMD"; \
+	    if [ "$$BASE.$$EXT" -ot "$$BASE.svg" ]; then \
+	       echo "Generating $$BASE.$$EXT ..."; \
+	       $$CMD 2>&1 | sed 's#^#  #'; \
+	    fi; \
+	  done
+
+
+REFS_ENV := ref_env_common.tex ref_env_resources.tex ref_env_daemon.tex \
+	          ref_env_wallclock.tex ref_env_doorman.tex \
+	          ref_env_drv_gpio.tex ref_env_drv_weather.tex
+
+REFS_RC  := ref_rc_resources.tex  \
+	          ref_rc_wallclock.tex ref_rc_doorman.tex \
+	          ref_rc_drv_weather.tex
+
+
+$(BOOK).pdf: $(REFS_ENV) $(REFS_RC) $(BOOK).tex
+	$(MAKE) figs
+	@echo "PDFLaTeX: $(BOOK).pdf (1st run - draft)"
+	@pdflatex -draftmode --shell-escape -interaction=nonstopmode "\def\version{$(GIT_VERSION)} \input{$(BOOK).tex}" >/dev/null 2>&1
+	@echo "PDFLaTeX: $(BOOK).pdf (2nd run - draft)"
+	@pdflatex -draftmode --shell-escape -interaction=nonstopmode "\def\version{$(GIT_VERSION)} \input{$(BOOK).tex}" >/dev/null 2>&1
+	@echo "makeindex $(BOOK).idx"
+	@makeindex $(BOOK).idx >/dev/null 2>&1
+	@echo "PDFLaTeX: $(BOOK).pdf (3rd run - final)"
+	@pdflatex --shell-escape -interaction=nonstopmode "\def\version{$(GIT_VERSION)} \input{$(BOOK).tex}" >/dev/null 2>&1
+
+
+.PHONY: draft
+draft:
+	TEXINPUTS=.:./c_api/latex: pdflatex -synctex=1 -shell-escape -interaction=nonstopmode "\def\pub{0} \input{$(BOOK).tex}"
+
+
+
+
+
+#######################  Doxygen: C API, Python API ##########################
+
+
+# To improve layout:
+# - see https://stackoverflow.com/questions/19831837/documenting-with-doxygen-put-details-on-top
+# - generate layout file template: doxygen -l layoutFileName.xml
+
+
+API_C_SRC = $(wildcard api_c.H ../common/*.H ../resources/resources.H ../wallclock/*.H )
+
+$(API_C): api_c.doxygen ../home2l-figs/home2l-icon-web.png $(API_C_SRC)
+	@echo DOXY $@
+	@rm -fr $@
+	@( cat api_c.doxygen ; echo 'PROJECT_NUMBER="$(GIT_VERSION) ($(BUILD_DATE))"' ; echo 'INPUT=$(API_C_SRC)' ) | doxygen - >/dev/null
+	@mv api_c/html $@
+
+
+
+API_PYTHON_SRC = ../common/env.H ../resources/resources.H ../resources/home2l-python.i
+
+HOST_ARCH := $(shell dpkg --print-architecture)
+
+SWIG_PY := $(HOME2L_BUILD)/$(HOST_ARCH)/resources/home2l.py
+
+
+$(SWIG_PY): $(API_PYTHON_SRC)
+	@make -C ../resources ARCH=$(HOST_ARCH) $(SWIG_PY)
+
+
+$(API_PYTHON): api_python.doxygen ../home2l-figs/home2l-icon-web.png api_python.py $(SWIG_PY)
+	@echo DOXY $@
+	@rm -fr $@
+	@cp -a $(SWIG_PY) home2l.py
+	@( cat api_python.doxygen ; echo 'PROJECT_NUMBER="$(GIT_VERSION) ($(BUILD_DATE))"' ) | doxygen - >/dev/null
+	@mv api_python/html $@
+
+
+
+
+
+####################### Build system targets #################################
+
+# The 'clean' target cleans up this directory.
+#
+# The 'veryclean' target removes all generated files from .. (the root folder),
+# which are checked into the repo.
+
+
+clean:
+	rm -fr api_c api_python figs/*.eps figs/*-eps-converted-to.pdf texput.log home2l.py
+	rm -fr $(BOOK).aux $(BOOK).idx $(BOOK).ilg $(BOOK).ind $(BOOK).log $(BOOK).out $(BOOK).toc $(BOOK).tex.bak
+	rm -fr _markdown_* $(BOOK).markdown.*
+	rm -fr $(BOOK).pdf $(API_C) $(API_C).pdf $(API_PYTHON) $(API_PYTHON).pdf
+	rm -fr ref_*.tex
+
+
+veryclean: clean
+	rm -fr ../README.pdf ../home2l-*
+
+
+build-indep: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+
+
+install-indep:
+	install -Dp -m 644 -t $(HOME2L_INSTALL)/doc/ home2l-book.pdf
+	install -Dp -m 644 -t $(HOME2L_INSTALL)/doc/home2l-api_c/ $(API_C)/*.*
+	install -Dp -m 644 -t $(HOME2L_INSTALL)/doc/home2l-api_c/search/ $(API_C)/search/*.*
+	install -Dp -m 644 -t $(HOME2L_INSTALL)/doc/home2l-api_python/ $(API_PYTHON)/*.*
+	install -Dp -m 644 -t $(HOME2L_INSTALL)/doc/home2l-api_python/search/ $(API_PYTHON)/search/*.*

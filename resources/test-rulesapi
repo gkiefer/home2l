@@ -1,0 +1,186 @@
+#!/usr/bin/python3 -i
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# Testbench for testing new features of the Python API.
+
+from home2l import *
+
+import os
+
+
+
+
+print ("### Init...")
+Home2lInit ("test-rulesapi", True)
+    # Init Home2l-Resources: Pass full instance name and enable the server
+
+
+
+
+
+############################## Driver definitions ##############################
+
+
+RcNewResource ("pytest", "pyInt", rctInt, True)   # writeable resource
+
+@newDriver ("pytest", rcsBusy)
+def DrivePytest (rc, vs):
+  print ("DrivePytest: ", vs, " -> ", rc)
+  rc.ReportValueState (vs)      # ", rcsValid" is not necessary
+
+#~ NewDriver ("pytest", DrivePytest, rcsBusy)
+
+
+
+
+
+############################## Rules ###########################################
+
+
+@onUpdate ("/local/timer/now")
+def PrintTime (rc, vs):
+  #~ print ("###", rc, "#", vs.ToStr (True), "#")
+  #~ print ("# type = ", vs.Type ())
+  #~ print ("# value = ", vs.Value ())
+  print ("The time is: " + vs.ToStr ())
+  #~ try:
+    #~ tRec = CRcTime (vs.Value () * 1000)
+  #~ except (AttributeError, TypeError):
+    #~ print ("The time is unknown.")
+  #~ else:
+    #~ if tRec.ts % 10 == 3:
+      #~ print ("  -> requesting testInt...")
+      #~ RcSetRequest ("/host/lilienthal/signal/testInt", "timer", tRec.ts)
+    #~ if tRec.ts % 5 == 3:
+      #~ print ("  -> requesting testFloat...")
+      #~ RcSetRequest ("/host/lilienthal/signal/testFloat", "timer", tRec.ts / 10.0)
+
+#~ RcRunOnEvent (PrintTime, "/local/timer/now")
+
+
+@onEvent ([ "/host/lilienthal/signal/testInt", "/host/lilienthal/signal/testFloat", "/local/pytest/*" ])
+def TestEvents (evType, rc, vs):
+  #~ if not rc: return [ "/host/lilienthal/signal/testInt", "/host/lilienthal/signal/testFloat", "/local/pytest/*" ]
+  print ("Event:", CRcEvent (evType, rc, vs))
+
+#~ RcRunOnEvent (TestEvents, [ "/host/lilienthal/signal/testInt", "/host/lilienthal/signal/testFloat", "/local/pytest/*" ] )
+#~ RcRunOnEvent ([ PrintTime, TestEvents ])
+
+
+##### Timer #####
+
+
+@at (0.5 * SECS_FROM_NOW)
+def TimerSoon ():
+  print ("Timer 1: soon")
+
+@at (1500 * MS_FROM_NOW)
+def TimerLater ():
+  print ("Timer 2: later")
+  RcSetRequest ("/local/pytest/pyInt", "timer", 42)
+
+@at (dt = 3.5 * SECS)
+def TimerOften ():
+  print ("Timer 3: often")
+
+
+
+def TimerWithData (data):
+  print ("Timer 4: data = '" + data + "'")
+
+RcRunAt (TimerWithData, TicksNow () + 2 * SECS, 0, "my data")
+
+
+
+##### Daily preparation #####
+
+
+#~ DefOnUpdate (Daily, [ "/local/timer/minutely" ])
+#~ def Daily (rc = None, vs = None):
+  #~ today = CRcTime ().DateTicks ();
+  #~ RcSetRequest ("/host/inf001/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
+  #~ RcSetRequest ("/host/inf834/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
+
+
+#~ class RuleDaily (CRcRule):
+  #~ triggers = [ "/local/timer/minutely" ]
+#~
+  #~ def OnUpdate (rc, vs):
+    #~ today = CRcTime ().DateTicks ();
+    #~ RcSetRequest ("/host/inf001/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
+    #~ RcSetRequest ("/host/inf834/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
+
+
+
+#~ DefOnEvent (Watchdog834, "/host/inf834/timer/daily");
+#~ def Watchdog834 (evType, rc, vs):
+  #~ if evType == rceDisconnected:
+    #~ os.system ("sudo -u home2l home2l adb inf834 shell am start org.home2l.app/.Home2lActivity");
+  #~ if evType == rceConnected:
+    #~ Daily (None, None)
+
+
+#~ class RuleWatchdog834 (CRcRule):
+  #~ rcDaily = Subscribe ("/host/inf834/timer/daily")
+#~
+  #~ def OnEvent (evType, rc, vs):
+    #~ if evType == rceDisconnected:
+      #~ os.system ("sudo -u home2l home2l adb inf834 shell am start org.home2l.app/.Home2lActivity");
+    #~ if evType == rceConnected:
+      #~ RuleDaily.OnUpdate (None, None)
+
+
+
+
+############################## Random Sensors ##################################
+
+# TBD: Update (was from previous showhouse)
+
+#~ rcSensor1 = RcDefResource ("showhouse", "sensor1", rctBool, False)   # read-only resource
+#~ rcSensor2 = RcDefResource ("showhouse", "sensor2", rctBool, False)   # read-only resource
+#~ rcSensor3 = RcDefResource ("showhouse", "sensor3", rctBool, False)   # read-only resource
+#~ rcSensor4 = RcDefResource ("showhouse", "sensor4", rctBool, False)   # read-only resource
+
+
+#~ drvCounter = 0
+
+#~ def IterateDrivers (data):
+  #~ global drvCounter
+  #~ rcSensor1.ReportValue (drvCounter % 2);
+  #~ rcSensor2.ReportValue ((drvCounter // 2) % 2);
+  #~ rcSensor3.ReportValue ((drvCounter // 3) % 2);
+  #~ rcSensor4.ReportValue ((drvCounter // 4) % 2);
+  #~ drvCounter += 1
+
+#~ RcRunAt (IterateDrivers, 0, 1000)
+
+
+
+
+
+
+
+
+############################## Go ahead ########################################
+
+print ("### Run...")
+
+Home2lRun ()           # Run main event loop...
+Home2lDone ()          # Shutdown Home2l-Resources (sometimes we never get here)

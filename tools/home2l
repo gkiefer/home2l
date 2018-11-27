@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is a wrapper script to invoke any "home2l-*" utility from the Home2l
+# software suite. It searches for a Home2l installation, and sets the environment
+# accordingly (using the 'env.sh' script of the installation).
+#
+# To use the Home2l suite, it is sufficient to create a link to this file from
+# some directory in the search path.
+
+
+# Directories searched for a Home2l installation (adapt if necessary)...
+INSTALL_DIRS="/opt/home2l /data/home2l /usr/local/share"
+
+
+if [[ "$1" == "" ]]; then
+  echo "Usage: home2l <cmd> [ <arg1> ... ]"
+  echo "Options:"
+  echo "  -r : show HOME2L_ROOT and quit"
+  echo "  -e : show the full pathname of the environnment file and quit"
+else
+
+  # Guess installation directory and set environment...
+  HOME2L_ROOT=""
+  SELF=`realpath $0`
+  for DIR in ${SELF%/bin/*} $INSTALL_DIRS; do
+    ENV="$DIR/env.sh"
+    if [ -e "$ENV" ]; then
+      . $ENV
+      break
+    fi
+  done
+  if [[ "$HOME2L_ROOT" == "" ]]; then
+    echo "ERROR: No Home2l installation found!"
+    exit 3
+  fi
+
+  # Execute command...
+  if [[ "$1" == "-r" ]]; then
+    echo $HOME2L_ROOT
+  elif [[ "$1" == "-e" ]]; then
+    echo $ENV
+    #~ export | grep " HOME2L_"
+  else
+    CMD="home2l-"$1
+    shift
+    $CMD "$@"
+  fi
+fi

@@ -1,0 +1,90 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is an example rules script for the tutorial.
+
+
+from home2l import *
+
+
+
+
+
+######################### Initialization #######################################
+
+
+# Init Home2L, passing custom instance name ...
+Home2lInit (instance = "rules")
+
+
+# Get resources (building) ...
+rcMotion = RcGet ("/host/showhouse/building/motion")
+rcLight = RcGet ("/host/showhouse/building/light")
+
+
+# Get resources (wallclock) ...
+rcWallClockActive = RcGet ("/host/wallclock/ui/active")
+rcWallClockStandby = RcGet ("/host/wallclock/ui/standby")
+
+
+# Get resources (other) ...
+rcDaylight = RcGet ("/alias/daylight")
+
+
+
+
+
+######################### Rules ################################################
+
+
+@daily ("wallclock")
+def PermanentRules (host):
+  # Keep the WallClock display always on in active mode.
+  # This is useful for the first steps of the tutorial - later this line may be
+  # removed.
+  rcWallClockActive.SetRequestFromStr ("1")
+  # Switch and keep on the WallClock display at day time (from 7:00 until 23:00).
+  rcWallClockStandby.SetRequestFromStr ("1 +7:00 -23:00")
+
+
+@onUpdate (rcMotion)
+def LightOnMotion ():
+  # If the motion sensor shows activity, turn on the light for 5 seconds.
+  if rcMotion.ValidValue (False):
+    rcLight.SetRequestFromStr ("1 #motion -5000")
+
+
+@onUpdate (rcDaylight)
+def LightOffDuringDay ():
+  # (Only) At day time, switch off the light. This gets an increased priority,
+  # so that eventual #motion requests have no effect.
+  if rcDaylight.ValidValue (False):
+    rcLight.SetRequestFromStr ("0 #daytime *6")
+  else:
+    rcLight.DelRequest ("#daytime")
+
+
+
+
+
+######################### Run main event loop ##################################
+
+
+Home2lRun ()

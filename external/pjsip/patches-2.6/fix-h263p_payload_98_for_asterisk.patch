@@ -1,0 +1,11 @@
+--- src/pjproject-2.6/pjmedia/include/pjmedia-codec/types.h.orig	2017-09-17 15:19:51.855713070 +0200
++++ src/pjproject-2.6/pjmedia/include/pjmedia-codec/types.h	2017-09-17 15:37:35.667108345 +0200
+@@ -110,7 +110,7 @@
+ {
+      /* Video payload types */
+      PJMEDIA_RTP_PT_VID_START = (PJMEDIA_RTP_PT_DYNAMIC-1),
+-     PJMEDIA_RTP_PT_H263P,
++     PJMEDIA_RTP_PT_H263P = 98,   // [GK] WORKAROUND 2017-09-17: asterisk appears to accept 98 only.
+      PJMEDIA_RTP_PT_H264,
+      PJMEDIA_RTP_PT_H264_RSV1,
+      PJMEDIA_RTP_PT_H264_RSV2,

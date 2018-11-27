@@ -1,0 +1,10 @@
+--- src/pjproject-2.6/pjmedia/src/pjmedia/vid_codec_util.c.orig	2017-09-16 18:05:00.099741051 +0200
++++ src/pjproject-2.6/pjmedia/src/pjmedia/vid_codec_util.c	2017-09-16 17:29:42.282403470 +0200
+@@ -128,6 +128,7 @@
+ 		unsigned mpi;
+ 
+ 		mpi = pj_strtoul(&fmtp->param[i].val);
++		if (mpi == 0) continue;   /* [GK] This refers to a "<format>=0" entry in the SDP/fmtp attribute - we should probably ignore it. */
+ 		if (mpi<1 || mpi>32)
+ 		    return PJMEDIA_SDP_EINFMTP;
+ 

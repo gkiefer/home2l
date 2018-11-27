@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# ADB appears to have problems when started by different users/groups. For this
+# reason, it is always started by user 'home2l' by sudo. To let this work
+# properly, for an adminstration user, the following line should be added
+# to /etc/sudoers:
+#
+#  <admin user> ALL=(home2l) NOPASSWD:/usr/bin/adb
+#
+
+
+if [[ "$1" == "" ]]; then
+  echo "Usage: ${0##*/} <hostname> <adb command with args>"
+  echo
+  echo "Besides the usual adb commands, the following extended commands are supported:"
+  echo "  x-start <host>    : Start Home2L app on <host>"
+  echo "  x-stop <host>     : Stop Home2L app on <host>"
+  echo "  x-restart <host>"
+  echo "  x-reload <host>   : Restart Home2L app on <host>"
+  echo "  x-connect <host>  : (Re-)Connect Android host <host>"
+  exit 3
+fi
+
+#~ uname -a
+#~ echo $@
+
+# Determine coordinates of target device...
+HOSTNAME=`hostname`
+DEV_NAME="$1"         # Given name (can be anything of hostname, device ID or port)
+
+REC=( `grep "^[^#]" $HOME2L_ROOT/etc/androidb.conf | grep $DEV_NAME` )
+DEV_NAME=${REC[0]}    # (Host)name of the Android device
+DEV_HOST=${REC[1]}    # (Host)name of the hosting machine, to which the Android device is connected
+DEV_ID=${REC[2]}      # ADB device ID
+DEV_PORT=${REC[3]}    # Forwarding port
+
+# Re-run the script on the correct hosting machine...
+if [[ "$HOSTNAME" != "$DEV_HOST" ]]; then
+  #~ echo HOSTNAME=-$HOSTNAME- DEV_HOST=-$DEV_HOST-
+  exec ssh -t $DEV_HOST home2l ${0##*-} $@
+fi
+
+# Determine actual command...
+shift
+CMD_START="am start org.home2l.app/.Home2lActivity"
+CMD_STOP="am force-stop org.home2l.app"
+case "$1" in
+  x-stop)
+    echo "Stopping Home2l app on $DEV_NAME ..."
+    CMD="shell $CMD_STOP"
+    ;;
+  x-start)
+    echo "Starting Home2l app on $DEV_NAME ..."
+    CMD="shell $CMD_START"
+    ;;
+  x-restart | x-reload)
+    echo "Restarting Home2l app on $DEV_NAME ..."
+    CMD="shell ($CMD_STOP; $CMD_START)"
+    ;;
+  x-connect)
+    CMD="forward tcp:$DEV_PORT tcp:1194"
+    echo "Connecting $DEV_NAME ($CMD) ..."
+    ;;
+  x-logcat)
+    CMD="logcat -v time home2l:D SDL:V *:E *:W"
+    ;;
+  *)
+    CMD="$@"    # default: pass command from command line
+    ;;
+esac
+
+# Invoke ADB with the desired device...
+#~ sg adb -c "adb -s $DEV_ID $CMD"  # does not work
+if [[ "`whoami`" == "home2l" ]]; then
+  adb -s $DEV_ID $CMD | sed 's#^#  [adb] #'
+else
+  sudo -u home2l adb -s $DEV_ID $CMD | sed 's#^#  [adb] #'
+fi

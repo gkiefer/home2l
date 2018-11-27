@@ -1,0 +1,491 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2018 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# "weather" driver for the Home2l suite.
+#
+# Failure report delay: 90 Minutes (local observation data) / 15 Minutes (radar data)
+#
+
+
+import os
+import sys
+import math
+import time
+import home2l
+
+
+
+#################### Configuration #########################
+
+
+# a) Init 'home2l'...
+
+home2l.Home2lInit()
+
+
+# b) User-definable parameters...
+
+# WGS84 coordinates of the target point for the radar eye...
+optLatN, optLonE = 48.371667, 10.898333   # Default (see rc_driver.C)
+s = home2l.EnvGet ("location.latitudeN")
+  # This variable is documented in 'rc_drivers.C'.
+if s: optLatN = float (s)
+s = home2l.EnvGet ("location.longitudeE")
+  # This variable is documented in 'rc_drivers.C'.
+if s: optLonE = float (s)
+
+# Station ID according to the DWD list "MOS + POI-Stationskatalog"
+optStationID = 10852   # Default = Augsburg
+s = home2l.EnvGet ("weather.stationID")
+  # ENV_PARA_INT("weather.stationID", none, NULL)
+  #  /* Station ID according to the DWD station table
+  #   *
+  #   * See ''MOSMIX-Stationskatalog'', available for download
+  #   * at https://www.dwd.de/opendata .
+  #   */
+if s: optStationID = s
+
+# Suppress radar...
+debug = home2l.EnvGet ("weather.debug")
+  # ENV_PARA_INT("weather.debug", none, False)
+  #  /* Run the driver in debug mode
+  #   *
+  #   * In debug mode, radar eye images are not exported as a resource,
+  #   * but written into a local image file. This facilitates to run the
+  #   * driver directly on the command line for debugging purposes.
+  #   */
+if debug == '1': debug = True
+else: debug = False
+
+
+# c) Some constants...
+
+# Local data: URL to the opendata server of the DWD (german weather service)...
+urlLocalData = "https://opendata.dwd.de/weather/weather_reports/poi/" + str (optStationID) + "-BEOB.csv"
+
+# Radar: URL to the opendata server of the DWD (german weather service)...
+urlRadar = "https://opendata.dwd.de/weather/radar/composit/pg/raa00-pc_10015-latest-dwd---bin"
+
+
+
+
+
+#################### Local data ############################
+
+
+class LocalData:
+  lastTimeStamp = None  # HTTP time stamp to check if the remote file has changed
+  rcDesc = (
+      ( "temp",       "temp",     "dry_bulb_temperature_at_2_meter_above_ground"),
+      ( "pressure",   "float",    "pressure_reduced_to_mean_sea_level"),
+      ( "humidity",   "percent",  "relative_humidity"),
+      ( "windDir",    "int",      "mean_wind_direction_during_last_10_min_at_10_meters_above_ground"),
+      ( "windSpeed",  "float",    "mean_wind_speed_during_last_10_min_at_10_meters_above_ground"),
+      ( "windMax",    "float",    "maximum_wind_speed_last_hour"),
+      ( "weather",    "int",      "present_weather")
+    )
+    # For the automatic documentation system:
+    #
+    #   RcRegisterResource (drv, "temp", rctTemp, false);
+    #     /* [RC:weather] Outside temperature
+    #      */
+    #   RcRegisterResource (drv, "pressure", rctFloat, false);
+    #     /* [RC:weather] Outside air presssure reduced to mean sea level
+    #      */
+    #   RcRegisterResource (drv, "humidity", rctPercent, false);
+    #     /* [RC:weather] Relative humidity
+    #      */
+    #   RcRegisterResource (drv, "windDir", rctInt, false);
+    #     /* [RC:weather] Mean wind direction during last 10 min. at 10 meters above ground
+    #      */
+    #   RcRegisterResource (drv, "windSpeed", rctFloat, false);
+    #     /* [RC:weather] Mean wind speed during last 10 min at 10 meters above ground
+    #      */
+    #   RcRegisterResource (drv, "windMax", rctFloat, false);
+    #     /* [RC:weather] Maximum wind speed last hour
+    #      */
+    #   RcRegisterResource (drv, "weather", rctInt, false);
+    #     /* [RC:weather] Present weather condition according to a table provided by the DWD.
+    #      *
+    #      * See file 'poi\_present\_weather\_zuordnung.pdf', available for download
+    #      * at https://www.dwd.de/opendata .
+    #      */
+    #
+  rcObsValues = {}
+  rcObsTime = None   # date and time from observation record
+
+  def declare ():
+    for desc in LocalData.rcDesc:
+      print ("d %-9s %-7s r" % (desc[0], desc[1]))
+    print ("d obsTime   time    r", flush = True)
+
+  def invalidate ():
+    for desc in LocalData.rcDesc:
+      LocalData.rcObsValues[desc[0]] = "?"
+
+  def update ():
+    """Check if new radar data is available and eventually update the data from server.
+    """
+    # Check time stamp on web server...
+    with os.popen("curl -sI " + urlLocalData + "| grep ^last-modified") as f:
+      timeStamp = f.read ().strip ()
+    #~ print ("\n### LocalData.update (): timeStamp = '" + timeStamp + "'", file = sys.stderr, flush=True)
+    if LocalData.lastTimeStamp and timeStamp == LocalData.lastTimeStamp:
+      return False    # no change
+    LocalData.lastTimeStamp = timeStamp
+    #~ print ("### LocalData.update ():   -> read new\n", file = sys.stderr, flush=True)
+
+    # Get local observation data from server...
+    LocalData.invalidate ()
+    try:
+      with os.popen ("curl -s " + urlLocalData) as f:
+        lines = f.readlines ()
+      obsKeys = lines[0].strip ().lower ().replace (' ', '_').split (';')
+      obsVals = lines[3].strip ().split (';')
+    except:
+      print ("WARNING: Failed to read from '" + urlLocalData + "'", file=sys.stderr, flush=True)
+      return True
+    if len(obsKeys) != len(obsVals):
+      print ("WARNING: Local data format error (keys/vals do not match)", file=sys.stderr, flush=True)
+      return True
+    obsMap = {}
+    for i in range (len (obsKeys)):
+      obsMap[obsKeys[i]] = obsVals[i]
+
+    # Store time stamp from data set
+    d, t = obsVals[0], obsVals[1]
+    #~ print ("### d = '" + str(d) + "', t = '" + str(t) + "'")
+    LocalData.rcObsTime = home2l.TicksOf ("20" + d[6:8] + '-' + d[3:5] + '-' + d[0:2] + "-" + t[0:2] + t[3:5])
+    LocalData.rcObsTime = home2l.TicksStr (home2l.TicksFromUTC (LocalData.rcObsTime))
+
+    # Assign observation data to 'rcObsValues'...
+    for desc in LocalData.rcDesc:
+      try:
+        LocalData.rcObsValues[desc[0]] = obsMap[desc[2]].replace (',', '.')
+      except KeyError: pass
+
+    # Done...
+    return True
+
+  def output ():
+    for desc in LocalData.rcDesc:
+      typeExt = ""
+      key = desc[0]
+      val = LocalData.rcObsValues[key]
+      if val != "?":
+        if desc[1] == "percent": typeExt = "%"
+        if desc[1] == "temp": typeExt = "°C"
+      print ("v %-9s %s%s" % (key, val, typeExt))
+    print ("v obsTime   " + str (LocalData.rcObsTime), flush = True)
+
+  def getWindDir ():
+    #~ print ("### windDir = '" + LocalData.rcObsValues["windDir"] + "'", file = sys.stderr, flush=True)
+    try:
+      return int (LocalData.rcObsValues["windDir"])
+    except:
+      return None
+
+  def getWindSpeed ():
+    try:
+      return int (LocalData.rcObsValues["windSpeed"])
+    except:
+      return None
+
+
+
+
+
+######################### Radar ############################
+
+
+class Radar:
+  lastTimeStamp = None  # HTTP time stamp to check if the remote file has changed
+  fullMap = None
+  rcRainWarning = "?"
+
+  # For the automatic documentation system:
+  #
+  #   RcRegisterResource (drv, "radarEye", rctString, false);
+  #     /* [RC:weather] Radar Eye
+  #      *
+  #      * An .pgm-encoded image of 128x128 pixels showing the weather radar
+  #      * around the own position configured by as configured by the 'location.*'
+  #      * settings together with the wind direction and strength.
+  #      *
+  #      * The cross indicates the ego position and is shifted away from the center
+  #      * such that the wheather indicated in the center of the radar eye will
+  #      * reach the own position in 2 hours. The cross has a radius of 50 km.
+  #      */
+  #
+  #   RcRegisterResource (drv, "radarWarning", rctBool, false);
+  #     /* [RC:weather] Radar Warning (NOT IMPLEMENTED YET)
+  #      *
+  #      * Flag indicating that it may be raining and any roof windows should be closed.
+  #      */
+
+  def declare ():
+    print ("d radarEye        string  r")
+    print ("d radarWarning    bool    r")
+
+  def invalidate ():
+    Radar.pixmap = None
+    Radar.rcRainWarning = '?'
+
+  def readFullMap (fd):
+    """Read and return a full radar map from the stream previously opened as 'fd'.
+
+    The input stream must be text with one hexadecimal byte per line as, e.g. generated
+    by:  hexdump -v -e '/1 \"%02X\n\"'
+    The output is a list of byte arrays with 512 elements each.
+    """
+    mapX = mapY = -1
+    retMap = []
+    for line in fd:
+      b = int (line, 16)
+      #~ print ("{0:02x} ".format (b), end='')
+      #~ if b == 3 or b == 10: print ("")
+
+      if b == 3:
+        mapY = 0
+        mapX = -1
+        linePos = -1
+      elif b == 10:
+        #~ print ("# mapX = {:d}, offset = {:d}, mapY = {:d}".format (int (mapX), int (offset), int (mapY)))
+        for i in range (mapX, 460): rowData[i] = 9
+        retMap += [ rowData ]
+        mapY += 1
+        mapX = 0
+        linePos = -1
+      elif mapY >= 0:
+        linePos += 1
+        if linePos == 0:
+          rowData = bytearray (460)
+          lineNo = b
+        elif linePos == 1:
+          mapX = b - 16
+          #~ offset = mapX # for 'print' only
+          for i in range (0, mapX): rowData[i] = 9
+        else:
+          mapX0 = mapX
+          mapX = mapX + int (b / 16)
+          for i in range (mapX0, mapX): rowData[i] = b % 16
+    if mapY < 1:
+      print ("WARNING: Unable to read radar map.", file=sys.stderr, flush=True)
+      return None  # something went wrong
+    return retMap
+
+  def markPixel (pixmap, x, y):
+    #~ print ("### markPixel ({:d}, {:d})".format (x, y))
+    if y >= 0 and y < len (pixmap):
+      if x >= 0 and x < len (pixmap[y]):
+        pixmap[y][x] = 0xff # - pixmap[y][x]
+        #~ pixmap[y][x] = pixmap[y][x] ^ 0x80
+
+  def makePixmap (fullMap, mapX, mapY, w, h, windDir, windSpeed):
+    """Create a nice grey-level pixmap of size 'w' x 'h' from the full radar map 'fullMap'.
+
+    'mapX', 'mapY' define the location in map coordinates.
+    'windDir' is the wind direction in degree, 'windSpeed' is the wind speed in km/h.
+    """
+
+    # Preparations...
+    windDirRad = ((270 - windDir) / 180.0 * math.pi)
+    windX =  math.cos (windDirRad) * windSpeed * 1   # Vector where the wind blows towards
+    windY = -math.sin (windDirRad) * windSpeed * 1
+      # There is a hard-coded factor of '1' to map wind km/h to pixels. A pixel has a size of 2 km,
+      # so the factor of 1 means, that the rain in the center of the picture will travel 2 hours
+      # until it reaches the local position.
+    ext = max (abs (windX + 0.5), abs (windY + 0.5))
+    if ext > (w / 2) - 8:
+      scale = ((w / 2) - 8) / ext
+      windX *= scale
+      windY *= scale
+    windX = int (windX)
+    windY = int (windY)
+
+    # Radar image...
+    retPixmap = []
+    for y in range (0, h):
+      rowData = bytearray (w)
+      try:
+        srcRow = fullMap[mapY - windY - int (h/2) + y]
+        for x in range (0, w):
+          try:
+            rowData[x] = (0, 0x40, 0x70, 0x90, 0xb0, 0xd0, 0xf0, 0xff, 0, 0, 0, 0, 0, 0, 0, 0) [ srcRow[mapX - windX - int (w/2) + x] ]
+          except IndexError:      # x out of range
+            rowData[x] = 0x20
+      except IndexError:          # y out of range
+        for x in range (0, w): rowData[x] = 0x20
+      retPixmap += [ rowData ]
+
+    # Draw frame...
+    for i in range (0, w):
+      Radar.markPixel (retPixmap, i, 0)
+      Radar.markPixel (retPixmap, i, h-1)
+    for i in range (1, h-1):
+      Radar.markPixel (retPixmap, 0, i)
+      Radar.markPixel (retPixmap, w-1, i)
+    for i in range (1, 9):
+      Radar.markPixel (retPixmap, int (w / 2), i)
+      Radar.markPixel (retPixmap, int (w / 2), h - 1 - i)
+      Radar.markPixel (retPixmap, i, int (h / 2))
+      Radar.markPixel (retPixmap, w - 1 - i, int (h / 2))
+
+    # Draw marker...
+    markI = 5     # inner mark radius (5 corresponds to 10 km)
+    markO = 25    # outer mark radius (25 corresponds to 50 km)
+    markX = int (w / 2) + windX
+    markY = int (h / 2) + windY
+    for i in range (markI, markO):
+      Radar.markPixel (retPixmap, markX - i, markY)
+      Radar.markPixel (retPixmap, markX + i, markY)
+      Radar.markPixel (retPixmap, markX, markY - i)
+      Radar.markPixel (retPixmap, markX, markY + i)
+
+    # Done...
+    return retPixmap
+
+  def writePixmap (pixmap, fd=sys.stdout):
+    if not pixmap: return
+    print ("P2\n{:d} {:d}\n255".format (len (pixmap[0]), len (pixmap)), file=fd)
+    for y in range (0, len (pixmap)):
+      row = pixmap[y]
+      for x in range (0, len (row) - 1):
+        print ("{:d}".format (row[x]), end=' ', file=fd)
+      print ("{:d}".format (row[-1]), file=fd)
+
+  def writePixmapEscaped (pixmap, fd=sys.stdout):
+    if not pixmap:
+      print ("?")
+      return
+    print ("P2\\n{:d}\\s{:d}\\n255".format (len (pixmap[0]), len (pixmap)), end="\\n", file=fd)
+    for y in range (0, len (pixmap)):
+      row = pixmap[y]
+      for x in range (0, len (row) - 1):
+        print ("{:d}".format (row[x]), end="\\s", file=fd)
+      print ("{:d}".format (row[-1]), end="\\n", file=fd)
+    print ("", file=fd)
+
+  def fullMapCoordsFromWGS84 (latN, lonE):
+    """Calculate full map image coordinates from the WGS84 (lattitude N, longitude E) system."""
+    # The calculation scheme is taken from the following DWD documents:
+    #   ftp://ftp-outgoing2.dwd.de/gds/help/legend_radar_products_radolan_rw_sf.pdf
+    #     -> General calculations
+    #   ftp://ftp-outgoing2.dwd.de/gds/help/legend_radar_products_pg_coordinates.pdf
+    #     -> Corner values for the present 460x460 files
+    latNRad = latN / 180.0 * math.pi
+    lonERad = (lonE - 10) / 180.0 * math.pi
+    RMlatN = 6370.04 * (1 + math.sin (60.0/180.0 * math.pi)) / (1 + math.sin (latNRad))
+    x =  RMlatN * math.cos (latNRad) * math.sin (lonERad)
+    y = -RMlatN * math.cos (latNRad) * math.cos (lonERad)
+
+    x0 =  -532.46354741717
+    x1 =   385.54360614232
+    y1 = -4667.65052822906
+    y0 = -3749.64477299284
+    ix = (x - x0) / (x1 - x0) * 459
+    iy = (y - y0) / (y1 - y0) * 459
+    #~ print (latN, lonE, x, y, ix, iy)
+    return (ix, iy)
+
+  def update ():
+    """Check if new radar data is available and eventually update the data from server.
+    """
+    # Check time stamp on web server...
+    with os.popen("curl -sI " + urlRadar + "| grep ^last-modified") as f:
+      timeStamp = f.read ().strip ()
+    #~ print ("\n### Radar.update (): timeStamp = '" + timeStamp + "'", file = sys.stderr, flush=True)
+    if Radar.lastTimeStamp and timeStamp == Radar.lastTimeStamp:
+      return False    # no change
+    Radar.lastTimeStamp = timeStamp
+    #~ print ("### Radar.update ():    -> read new\n", file = sys.stderr, flush=True)
+
+    # Get radar image from server...
+    with os.popen ("curl -s " + urlRadar + " | hexdump -v -e '/1 \"%02X\n\"'") as f:
+      Radar.fullMap = Radar.readFullMap (f)
+
+    # Render radar eye...
+    if not Radar.fullMap:
+      Radar.pixmap = None   # clear pixmap on error
+    else:
+      locX, locY = Radar.fullMapCoordsFromWGS84 (optLatN, optLonE)
+      windDir = LocalData.getWindDir ()
+      windSpeed = LocalData.getWindSpeed ()
+      if not windDir or not windSpeed:
+        windDir = windSpeed = 0
+      Radar.pixmap = Radar.makePixmap (Radar.fullMap, int (locX), int (locY), 128, 128, windDir, windSpeed)
+
+      if debug: Radar.writePixmap (Radar.pixmap, open ("radarEye.pgm", 'w'))
+
+    # Done...
+    return True
+
+  def output ():
+    print ("v radarEye     ", end = "")
+    if debug:
+      print ("[Output written to 'radarEye.pgm']")
+    else:
+      Radar.writePixmapEscaped (Radar.pixmap)
+    print ("v radarWarning " + Radar.rcRainWarning, flush = True)
+
+
+
+
+
+######################### Main program #####################
+
+# Initialization...
+LocalData.declare ()
+Radar.declare ()
+print (":", flush = True)
+
+# Main loop...
+updatesLocalData = 0    # number of local data updates (only if changed), limited to 99
+updatesRadar = 0        # number of radar updates (only if changed), limited to 99
+waitLocalData = 0   # minutes to wait for the next local data update
+waitRadar = 0       # minutes to wait for the next radar update
+while True:
+
+  # Handle local weather data ...
+  waitLocalData -= 1
+  #~ print ("### waitLocalData = " + str (waitLocalData));
+  if (waitLocalData <= 0 or updatesLocalData < 2):
+    if LocalData.update ():
+      if updatesLocalData < 100: updatesLocalData += 1
+      LocalData.output ()
+      waitLocalData = 58    # server updates every 60 minutes, try again in 58 minutes
+  if (waitLocalData == -30):
+    LocalData.invalidate ()
+    LocalData.output ()
+
+  # Handle radar ...
+  waitRadar -= 1
+  #~ print ("### waitRadar = " + str (waitRadar));
+  if (waitRadar <= 0 or updatesRadar < 2):
+    if Radar.update ():
+      if updatesRadar < 100: updatesRadar += 1
+      Radar.output ()
+      waitRadar = 4         # server updates every 5 minutes, try again in 4 minutes
+  if (waitRadar == -10):
+    Radar.invalidate ()
+    Radar.output ()
+
+  # Sleep for 1 minute...
+  time.sleep (60)

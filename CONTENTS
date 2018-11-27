@@ -1,0 +1,44 @@
+Home2L - Organization of the Source Tree
+----------------------------------------
+
+Gundolf Kiefer, 2018-11-21
+
+
+1. General Information
+
+  CONTENTS
+  LICENSE
+  README.md
+
+
+2. Documentation (generated)
+
+  README.pdf          - PDF version of README.md
+  home2l-book.pdf     - The Home2L Book
+  home2l-api_python   - Python API
+  home2l-api_c        - C/C++ API
+  home2l-figs         - Some nice figures (mainly for README.md)
+
+
+3. Main Modules
+
+  resources/
+  wallclock/
+  doorman/
+
+  tools/      - Collection of core tools
+  doc/        - Documentation source files
+  locales/    - Translations
+
+
+4. Build System
+
+  Makefile
+  Setup.mk
+
+
+5. Other Source Files
+
+  common/     - Common C source files (base, env, phone, streamer)
+  drivers/    - Resource drivers (gpio, weather)
+  external/   - Scripts and notes for external dependencies
