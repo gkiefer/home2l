@@ -23,30 +23,7 @@
 core
 __pycache__
 
-config.[hcHC]
-
-etc/secrets
-
-#doc/*.pdf
-#README.pdf
-
-tools/home2l-daemon
-
-wallclock/home2l-wallclock
-
-wallclock/android/bin
-wallclock/android/gen
-wallclock/android/libs
-wallclock/android/obj
-wallclock/android/src/org/home2l/app/Home2lConfig.java
-wallclock/icons.build
-
-resources/home2l-shell
-resources/home2l-server
-resources/home2l_wrap.C
-resources/home2l.py*
-
-doorman/home2l-doorman
+!home2l-showcase.tar.gz
 
 external/archive
 external/*/archive
@@ -57,4 +34,12 @@ external/*/debs
 external/*/usr.new
 external/*/usr
 
-# to be removed later ...
+wallclock/icons.build
+#wallclock/android/bin
+#wallclock/android/gen
+#wallclock/android/libs
+#wallclock/android/obj
+#wallclock/android/src/org/home2l/app/Home2lConfig.java
+
+#resources/home2l_wrap.C
+#resources/home2l.py*
