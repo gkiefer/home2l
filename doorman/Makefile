@@ -111,8 +111,6 @@ install:
 
 clean: clean-build
 
-#~ 	rm -f *.[do] ../common/*.[do] ../resources/*.[do] *.so $(CONFIG) $(DOORMAN) core *~
-
 
 build-arch: $(DOORMAN_BIN)
 

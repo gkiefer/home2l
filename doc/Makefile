@@ -22,8 +22,9 @@
 ######################### Setup and local targets ##############################
 
 
-# Web browser for the 'view_api' target...
-BROWSER := chromium --new-window
+# Web browser and PDF viewer for the 'view_*' targets...
+BROWSER ?= firefox --new-window
+PDFVIEWER ?= evince
 
 
 # Identify myself inside the Home2L source tree ...
@@ -42,7 +43,7 @@ API_PYTHON := home2l-api_python
 
 
 .PHONY: all
-all: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+all: build-indep
 
 
 .PHONY: book
@@ -55,7 +56,7 @@ api: $(API_C) $(API_PYTHON)
 
 .PHONY: view_book
 view_book: book
-	evince $(BOOK).pdf
+	$(PDFVIEWER) $(BOOK).pdf
 
 
 .PHONY: view_api
@@ -80,6 +81,7 @@ readme: ../README.pdf
 # 1. The normal 'build-indep' target generates/updates:
 #      README.pdf
 #      home2l-figs/*
+#      home2l-showcase.tar.gz
 #
 # 2. The following files/dirs consume much disk space and would be updated very frequently
 #    on small code changes. Hence, they are NOT updated with 'build*', but only explicitly
@@ -115,6 +117,26 @@ readme: ../README.pdf
 .PHONY: commit
 commit:  $(API_C) $(API_PYTHON) $(BOOK).pdf
 	mv $(API_C) $(API_PYTHON) $(BOOK).pdf ..
+
+
+
+
+
+########## Tutorial: ShowCase VM ##########
+
+
+.PHONY: tutorial
+tutorial: ../home2l-showcase.tar.gz
+
+
+../home2l-showcase.tar.gz:
+	@echo CREATE $@
+	@mkdir -p $(HOME2L_BUILD)
+	@rm -fr $(HOME2L_BUILD)/home2l-showcase
+	@cp -a tutorial/home2l-showcase $(HOME2L_BUILD)
+	@gunzip $(HOME2L_BUILD)/home2l-showcase/system.vdi.gz
+	@tar czf $@ -C $(HOME2L_BUILD) home2l-showcase
+	@rm -fr $(HOME2L_BUILD)/home2l-showcase
 
 
 
@@ -277,7 +299,7 @@ $(API_PYTHON): api_python.doxygen ../home2l-figs/home2l-icon-web.png api_python.
 
 
 
-####################### Build system targets #################################
+####################### Build system targets ###################################
 
 # The 'clean' target cleans up this directory.
 #
@@ -297,7 +319,7 @@ veryclean: clean
 	rm -fr ../README.pdf ../home2l-*
 
 
-build-indep: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+build-indep: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf ../home2l-showcase.tar.gz
 
 
 install-indep:

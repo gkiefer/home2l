@@ -169,7 +169,8 @@ help:
 	@echo "  help:      Print this help"
 	@echo "  build:     Build everything (default target)"
 	@echo "  install:   Install to \$$HOME2L_INSTALL [ /opt/home2l ]"
-	@echo "  clean:     Clean everything"
+	@echo "  clean:     Clean everything (except binary doc files to be checked into the repository)"
+	@echo "  veryclean: Clean really everything"
 	@echo "  uninstall: Remove \$$HOME2L_INSTALL [ /opt/home2l ]"
 	@echo
 	@echo "Variables:"
@@ -263,12 +264,16 @@ install-clean:
 	rm -fr README VERSION env.sh bin/ lib/ share/ install/ locale/ doc/
 
 
-clean:
+clean: clean-build
 	@for P in $(MODS) $(PREP_DRVS); do       \
 		echo -e "\n\n#### Cleaning '$$P'...\n"; \
 		$(MAKE) -C $$P HOME2L_MOD=$$P clean || exit 1; \
 		echo; \
 	done
+
+
+veryclean:
+	$(MAKE) -C doc veryclean
 
 
 uninstall:
