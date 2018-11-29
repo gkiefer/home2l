@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2018-11-26 18:45+0100\n"
+        "POT-Creation-Date: 2018-11-27 19:08+0100\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -254,7 +254,7 @@ msgstr  "Musik-Sammlung"
 msgid   "Music"
 msgstr  "Musik"
 
-#: ../wallclock/app_phone.C:973
+#: ../wallclock/app_phone.C:954
 msgid   "Phone"
 msgstr  "Telefon"
 

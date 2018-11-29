@@ -116,6 +116,7 @@ readme: ../README.pdf
 
 .PHONY: commit
 commit:  $(API_C) $(API_PYTHON) $(BOOK).pdf
+	rm -fr ../$(API_C) ../$(API_PYTHON)
 	mv $(API_C) $(API_PYTHON) $(BOOK).pdf ..
 
 

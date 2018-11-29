@@ -275,7 +275,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The \emph{Home2L} \texttt{[houmtu:l]} suite is a framework, library and set of tools 
+The \emph{Home2L} \texttt{[houmtu:l]} suite is a framework, library and set of tools
 for automation in private smart homes. Its main features and design goals are:
 
 
@@ -365,10 +365,10 @@ Consulting the API documentation is particularly helpful for writing own resourc
 sophisticated automation rules or applications using some \emph{Home2L} library.
 
 Presently, the \textit{Home2L Book} is still under construction and primarily targets readers with computer skills. Not all existing features are already documented in this book.
-Extending the book to provide good end-user documentation is subject to future work 
+Extending the book to provide good end-user documentation is subject to future work
 (see Section~\ref{sec:helping}).
 
-Chapter~\ref{ch:tutorial} contains a step-by-step tutorial covering the installation, 
+Chapter~\ref{ch:tutorial} contains a step-by-step tutorial covering the installation,
 concepts and all core tools of the suite. This should be the starting point for any new user.
 
 Chapters~\ref{ch:installing} and ~\ref{ch:managing} describe the installation and management
@@ -377,8 +377,8 @@ of the \emph{Resources} library, the core component of the \emph{Home2L} suite.
 This is followed by instructions on writing automation rules (Chapter~\ref{ch:rules}) and
 drivers (Chapter~\ref{ch:drvdev}).
 Chapter~\ref{ch:drvlib} documents the drivers contained in the \emph{Home2L} base distribution.
-The remaining chapters cover the main user applications, presently 
-the \emph{Home2L WallClock} (Chapter~\ref{ch:wallclock}) and 
+The remaining chapters cover the main user applications, presently
+the \emph{Home2L WallClock} (Chapter~\ref{ch:wallclock}) and
 the \emph{Home2L DoorMan} (Chapter~\ref{ch:doorman}).
 
 
@@ -412,7 +412,7 @@ Great contributions for the community would be, for example:
 
   \item \textbf{Bridges to other home automation frameworks:} Implement drivers to interface
     with other open home automation frameworks.
-    
+
   \item \textbf{Report and help fixing bugs.}
 
   \item \textbf{Translations} and internationalization.
@@ -420,7 +420,7 @@ Great contributions for the community would be, for example:
   \item Write an \textbf{HTML frontend}.
 \end{enumerate}
 
-For any questions on how to participate, do not hesitate to contact the author 
+For any questions on how to participate, do not hesitate to contact the author
 via the project page.
 
 
@@ -449,7 +449,7 @@ via the project page.
 \subsection{Overview}
 
 This step-by-step tutorial aims to give an exhaustive introduction to the
-\emph{Home2L} suite covering the installation and all core tools and concepts of the suite. 
+\emph{Home2L} suite covering the installation and all core tools and concepts of the suite.
 It should be the starting point for anybody new to the software.
 
 During the tutorial, you will
@@ -472,7 +472,7 @@ During the tutorial, you will
 
   \item learn how to write automation rules.
 
-  \item obtain and understand a sample installation, which can be the starting point for 
+  \item obtain and understand a sample installation, which can be the starting point for
     your own home installation.
 
   \item get references to further information.
@@ -480,7 +480,7 @@ During the tutorial, you will
 \end{itemize}
 
 The tutorial is carried out on a virtual machine (VM) running Debian Linux, which will
-be created as the first step. This just takes very few minutes and makes the \emph{Home2L} 
+be created as the first step. This just takes very few minutes and makes the \emph{Home2L}
 installation process fully transparent, since no pre-configured boot image is necessary.
 
 Sections \ref{sec:tutorial-vm} - \ref{sec:tutorial-install} deal with the installation.
@@ -535,10 +535,14 @@ The tutorial uses the following conventions in notation:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\emph{Estimated Time: 45 Minutes (in large parts unattended)}
+
+
 \infobox{
-  If you already have a machine (physical or virtual) running Debian Linux 
-  or some derivative (other distributions should work as well, but has not been tested), 
-  you can skip the VM creation and use your existing machine -- at your choice.
+  If you already have a machine (physical or virtual) running Debian Linux
+  or some derivative (other distributions should work as well, but has not been tested),
+  you can skip the VM creation and continue with Section~\ref{sec:tutorial-prerequisites}
+  on your existing machine -- at your choice.
 }
 
 
@@ -553,6 +557,11 @@ The following instructions have been tested with \textit{VirtualBox 5.2.10} and 
 \textit{Debian 9.6 (Stretch)} guest system.
 
 Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
+
+\infobox{
+  The VM installations steps are \emph{much} faster if the VM
+  is stored on RAM disk or an SSD instead of a mechanical hard disk.
+}
 
 
 
@@ -583,9 +592,8 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   Download and unpack the virtual machine:
 
   \begin{lstlisting}[language=bash]
-    TBD
-    $ wget https://github.com/gkiefer/home2l/raw/master/doc/tutorial/home2l-showcase.tar.gz
-        # or copy that file from a <home2l source>/doc/tutorial/home2l-showcase.tar.gz
+    $ wget https://github.com/gkiefer/home2l/raw/master/home2l-showcase.tar.gz
+        # or copy that file from a <home2l source>/home2l-showcase.tar.gz
     $ tar xzf home2l-showcase.tar.gz
   \end{lstlisting}
 
@@ -595,6 +603,8 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   \begin{lstlisting}[language=bash]
     $ wget https://cdimage.debian.org/debian-cd/current/i386/iso-cd/debian-9.6.0-i386-netinst.iso
         # Adapt the path as necessary. We need an i386 "netinst" image.
+        # More information can be found on the Debian download page at
+        # https://cdimage.debian.org.
     $ ln -s debian-*.iso install.iso
         # or rename the file (if your OS does not support symbolic links)
   \end{lstlisting}
@@ -603,8 +613,7 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   to have the CD/DVD image \texttt{'install.iso'} inserted in its optical drive.
 
 \item
-  Start \textit{VirtualBox}, select ''Machine $\rightarrow$ Add...''
-  and navigate to
+  Start \textit{VirtualBox}, select ''Machine $\rightarrow$ Add...'' and navigate to
   \begin{lstlisting}
   home2l-showcase/home2l-showcase.vbox
   \end{lstlisting}
@@ -617,6 +626,7 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
 \subsection{Installing Debian Linux}
 \label{sec:tutorial-vm-debian}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \begin{itemize}[$\blacktriangleright$]
 
@@ -631,18 +641,29 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   The VM automatically boots from the Debian installation medium and runs the installer.
 
 \item
-  During the installation, accept all default settings or leave fields
-  empty, except for the following options:
+  During the installation, \emph{accept all default settings or leave fields empty},
+  except for the following options:
 
   \begin{enumerate}
-    \item Select your home country, language and keyboard layout as convenient for you.
-    \item As a computer name, enter: \texttt{home2l-showcase}.
+    \item Select your country, language and keyboard layout as convenient for you.
+    \item As a computer name, enter: \lst{home2l-showcase}.
     \item Leave the root password empty (will allow \texttt{home2l} to use \texttt{sudo} for root access).
-    \item As the name for the first normal user enter: \texttt{home2l}
+    \item As the name for the first normal user enter: \lst{home2l}
     \item For user '\texttt{home2l}' enter a password at your choice (and do not forget it!).
-    \item After the hard disk partitioning dialog (where you can accept all defaults), do not forget to explicitly select ''yes'' to write the partition table to disk.
-    \item In the software selection dialog (aka ''\texttt{tasksel}''), select ''\texttt{Xfce}'' and ''standard system utilities'' and uncheck everything else.
-    \item Install the GRUB bootloader to \texttt{/dev/sda}.
+    \item In the hard disk partitioning dialog you can accept all defaults. Only in the last step, you need to
+      explicitly select ''yes'' to write the partition table to disk.
+
+      \emph{The installer now requires approx. 5 minutes (or $<1$ minute when using a RAM disk.)
+        without interaction to install the base system.}
+
+    \item In the software selection dialog (aka ''\texttt{tasksel}''), select ''\lst{Xfce}'' and the
+      \lst{standard system utilities} (the latter may appear translated to your language) and
+      \emph{uncheck everything else}.
+
+      \emph{The installer now requires approx. 30 minutes  (or 10 minutes when using a RAM disk.)
+        without interaction (depending on your internet bandwidth and hard disk model).}
+
+    \item Install the GRUB bootloader to \lst{/dev/sda}.
   \end{enumerate}
 
 \item
@@ -651,17 +672,95 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   The installation medium is ''ejected'' automatically, the system reboots and you can log in as user
   \texttt{home2l} and use the system.
 
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Logging in to the Virtual Machine}
+\label{sec:tutorial-vm-login}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+You should now open this book inside the virtual machine.
+This will allow you to copy and paste terminal commands from this document into the terminal
+by marking with the left mouse button and pasting with the middle button.
+
+
+\begin{itemize}[$\blacktriangleright$]
+
 \item
-  For the following steps, you should maximize your \emph{VirtualBox} window.
-  For optimum experience, the guest display should have at least 1600x900 pixels.
-  Make sure that the \emph{''Auto-resize Guest Display''} option in \emph{VirtualBox}
-  is active before logging into the VM.
+  Log in as user \texttt{home2l} and start a terminal window.
+
+\item
+  Get the \emph{Home2L} source tree:
+  \begin{lstlisting}[language=bash]
+    $ sudo apt install git    # install git
+    $ git clone https://github.com/gkiefer/home2l.git
+  \end{lstlisting}
+
+\item
+  Open the \emph{Home2L Book}:
+  \begin{lstlisting}
+    $ evince ~/home2l/home2l-book.pdf &
+  \end{lstlisting}
+  Navigate to the tutorial section, page~\thepage.
+
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Finalizing the Virtual Machine}
+\label{sec:tutorial-vm-guestadditions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+For optimum experience, the guest display should have at least 1600x900 pixels.
+To allow such a resolution, the \emph{Virtual Box Guest Additions} must be installed in the VM.
+
+\begin{itemize}[$\blacktriangleright$]
+
+\item
+  Add the \emph{Debian backports} repository to \texttt{etc/apt/sources.list}:
+  \begin{lstlisting}
+  $ echo -e "\n\n# Debian backports" \
+      "\ndeb http://ftp.debian.org/debian stretch-backports main contrib non-free" \
+      | sudo tee -a /etc/apt/sources.list
+  \end{lstlisting}
+
+\item
+  Update the \texttt{apt} databas und install pending security and other updates:
+  \begin{lstlisting}[language=bash]
+    $ sudo apt -y purge pulseaudio   # pulseaudio has no use here and may cause problems
+    $ sudo apt update
+    $ sudo apt upgrade
+  \end{lstlisting}
+
+\item
+  Then install the guest additions:
+  \begin{lstlisting}[language=bash]
+    $ sudo apt install linux-headers-686   # This must be installed before!
+    $ sudo apt install virtualbox-guest-source virtualbox-guest-dkms \
+        virtualbox-guest-utils
+  \end{lstlisting}
+
+\item
+  Maximize your \emph{VirtualBox} window and reboot the VM to activate the guest additions.
+  Then make sure that the \emph{''Auto-resize Guest Display''} option is on in \emph{VirtualBox}
+  and login again.
+
+  If the VM's desktop does not auto-resize properly to fill the window, you may either
+  reboot once more or try to run:
+  \begin{lstlisting}
+    $ xrandr --output VGA-1 --preferred
+  \end{lstlisting}
+  (Run \texttt{xrandr} without parameters to list the exact name of the output and available resolutions.)
 
 \end{itemize}
 
 
 \begin{center}
-\textbf{Your done!}
+\textbf{Your done -- Your VM is ready for the \emph{Home2L} installation!}
 \end{center}
 
 
@@ -669,52 +768,19 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   \begin{enumerate}
 
   \item
+    The \emph{VirtualBox Guest Additions} are \emph{only} required for optimizing the screen
+    resolution of the VM. If their installation fails, you can continue without them.
+    In this case, you should move the PDF viewer to a second virtual desktop in the VM.
+    Without it on the main desktop, a resolution of 1024x768 pixels is sufficient to run the tutorial.
+
+  \item
     The VM has been pre-configured to use ''NAT'' networking. This is the most fail-safe setting and
     allows the VM to share the internet connection with your host. If you want to contact the VM from
     your host or some other machine in your LAN, you may change the network setting to ''bridged''.
     Please consult the \textit{VirtualBox} documentation for details.
 
-  \item
-    The \emph{VirtualBox} guest additions are \emph{not} required for this tutorial.
-
   \end{enumerate}
 }
-
-
-
-%\subsection{Install the VirtualBox Guest Additions (optional)}
-%
-%In order to be able to access files and folder shared by your host, the
-%VirtualBox guest must be installed.
-%
-%Start a terminal and start a root shell:
-%
-%\begin{lstlisting}
-%sudo -i
-%\end{lstlisting}
-%
-%Add the Debian backports repository to \texttt{etc/apt/sources.list}:
-%
-%\begin{lstlisting}[commentstyle=]
-%cat << EOF >> /etc/apt/sources.list
-%
-%# Debian backports
-%deb http://ftp.debian.org/debian stretch-backports main contrib non-free
-%EOF
-%\end{lstlisting}
-%
-%Then install the guest additions:
-%
-%\begin{lstlisting}
-%apt update
-%apt upgrade
-%apt install virtualbox-guest-dkms virtualbox-guest-utils
-%\end{lstlisting}
-%
-%\textbf{Notes:} - If the kernel modules do not compile, try to install
-%the latest Linux kernel image and headers. - The VM is configured to run
-%''*-686" images, ''*-686-pae" images do not work.
-
 
 
 
@@ -726,68 +792,53 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\emph{Estimated Time: 5 Minutes}
+
+
 \begin{itemize}[$\blacktriangleright$]
 
 \item
-  Log in as user \texttt{home2l} and start a terminal window.
-
-\item
-  Download this book into the virtual machine and open it there.
-  This will allow you to copy and paste terminal commands from this document into the terminal 
-  by marking with the left mouse button and pasting with the middle button.
-  \begin{lstlisting}
-    $ wget TBD
-    $ evince home2l-book.pdf
-  \end{lstlisting}
-  Navigate to the tutorial section. 
-
-\item
-  Install pending security or other updates:
-  \begin{lstlisting}[language=bash]
-    $ sudo aptitude purge pulseaudio   # pulseaudio has no use and may cause problems
-    $ sudo aptitude update
-    $ sudo aptitude upgrade
-  \end{lstlisting}
+  If not done yet: Log in as user \texttt{home2l}, start a terminal window,
+  and open this book inside the VM as described in Section~\ref{sec:tutorial-vm-login}.
 
 \item
   Install all required packages for building and running the tutorial:
   \begin{lstlisting}
-    $ sudo aptitude install git g++ \
+    $ sudo apt install make g++ \
         python3 python3-dev swig libreadline-dev curl \
         libsdl2-dev libsdl2-ttf-dev libmpdclient-dev gettext imagemagick inkscape \
         net-tools remind patch mpd mpc
   \end{lstlisting}
 
-  \infobox{
-    \textbf{What are all these packages required for?}
-
-    \begin{description}
-      \item[\texttt{git g++}] ~ \\
-        is all you need for downloading (\texttt{git}) and a minimum configuration
-        (\texttt{make CFG=minimal}) -- a C++ compiler together with the standard C
-        library and \texttt{make(1)}.
-      \item[\texttt{python3 python3-dev swig libreadline-dev}] ~ \\
-        are required for the Python API and additional comfort with the \emph{Home2L Shell}
-        command line.
-      \item[\texttt{curl}] ~ \\
-        is required for the \emph{Weather} driver (\toolref{home2l-drv-weather}).
-      \item[\texttt{\footnotesize libsdl2-dev libsdl2-ttf-dev libmpdclient-dev gettext imagemagick inkscape}] ~ \\
-        are the build requirements the \emph{WallClock} (\toolref{home2l-wallclock}) in the demo
-        configuration (with calendar and music applets).
-      \item[\texttt{net-tools}] ~ \\
-        are used by the \emph{WallClock} info screen (and useful for system maintenance anyway).
-      \item[\texttt{remind patch mpd mpc}] ~ \\
-        are run-time requirements for the \emph{WallClock} calendar and music applets.
-    \end{description}
-  }
-
 \item
   Disable \texttt{mpd} as a system service (will later be started by the \emph{Home2L} daemon):
   \begin{lstlisting}
-    $ systemctl disable mpd
+    $ sudo systemctl disable mpd
+    $ sudo systemctl stop mpd
   \end{lstlisting}
 
 \end{itemize}
+
+
+\infobox{
+  \textbf{What are the installed packages required for?}
+
+  \begin{description}
+    \item[\texttt{make g++}] ~ \\
+      are needed for compiling a minimum configuration (\texttt{make CFG=minimal}).
+    \item[\texttt{python3 python3-dev swig libreadline-dev}] ~ \\
+      are required for the Python API and additional comfort with the \emph{Home2L Shell}.
+    \item[\texttt{curl}] ~ \\
+      is required for the \emph{Weather} driver (\toolref{home2l-drv-weather}).
+    \item[\texttt{\footnotesize libsdl2-dev libsdl2-ttf-dev libmpdclient-dev gettext imagemagick inkscape}] ~ \\
+      are the build requirements the \emph{WallClock} (\toolref{home2l-wallclock}) in the demo
+      configuration (with calendar and music applets).
+    \item[\texttt{net-tools}] ~ \\
+      is used by the \emph{WallClock} info screen (and useful for system maintenance anyway).
+    \item[\texttt{remind patch mpd mpc}] ~ \\
+      are run-time requirements for the \emph{WallClock} calendar and music applets.
+  \end{description}
+}
 
 
 
@@ -799,34 +850,43 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\emph{Estimated Time: 2 Minutes}
+
+
 \begin{itemize}[$\blacktriangleright$]
+
 \item
-  Get the source code:
-  \begin{lstlisting}
-    $ git clone ssh://gundolf@192.168.2.2/home/gundolf/prog/home2l/src  # TBD
-    $ cd home2l
-  \end{lstlisting}
+  If not done yet: Log in as user \texttt{home2l}, start a terminal window,
+  download the source tree and open this book inside the VM as described
+  in Section~\ref{sec:tutorial-vm-login}.
+
 \item
   Compile:
   \begin{lstlisting}
+    $ cd ~/home2l
     $ make CFG=demo
   \end{lstlisting}
+
 \item
   Install and setup:
   \begin{lstlisting}
     $ sudo make CFG=demo install
     $ sudo /opt/home2l/bin/home2l-install -i
   \end{lstlisting}
+  Confirm to make the changes as proposed by \texttt{home2l-install}.
+
 \item
   Copy some tutorial files to the \emph{Home2L} 'var' directory:
   \begin{lstlisting}
     $ cp -a doc/tutorial/var/* /var/opt/home2l/
   \end{lstlisting}
+
 \item
   Open a file browser, navigate to \lst{/opt/home2l/share/home2l.desktop}
   and drag that file to the launcher panel at the bottom of the desktop.
   This will create a launcher button to quickly start the graphical
-  \emph{WallClock} application (see Figure~\ref{fig:screen-layout}).
+  \emph{WallClock} application.
+
 \end{itemize}
 
 
@@ -834,7 +894,7 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{First Steps into the \emph{ShowHouse}}
+\section{Exploring the \emph{ShowHouse}}
 \label{sec:tutorial-firststeps}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -845,24 +905,22 @@ Up to 16 GB of disk space and 512 MB RAM will be needed for the virtual machine.
   Click on the \emph{Home2L} launcher button to start an instance of the
   \emph{WallClock}.
 
-\end{itemize}
-
-The \emph{WallClock} (\toolref{home2l-wallclock}) is the main end user interface -- a universal information display to be mounted on the wall of rooms or installed on mobile devices.
-We will explore its capabilities later.
-
-\infobox{
-  The \emph{WallClock} window can be resized arbitrarily, and the UI automatically
-  scales to fit into the window. Alternatively, the window can quickly be resized to
-  reasonable sizes by pushing \textit{F9} (half size), \textit{F10} (normal) and
-  \textit{F11} (fullscreen), respectively.
-}
-
-
-\begin{itemize}[$\blacktriangleright$]
+  \infobox{
+    The \emph{WallClock} (\toolref{home2l-wallclock}) is the main end user interface --
+    a universal information display to be mounted on the wall of rooms or installed on mobile devices.
+    We will explore its capabilities later.
+  }
 
 \item
   Push \emph{F9} to reduce the window size. (If nothing happens: Make
   sure that the window is focussed -- click on its title bar.)
+
+  \infobox{
+    The \emph{WallClock} window can be resized arbitrarily, and the UI automatically
+    scales to fit into the window. Alternatively, the window can quickly be resized to
+    reasonable sizes by pushing \textit{F9} (half size), \textit{F10} (normal) and
+    \textit{F11} (fullscreen), respectively.
+  }
 
 \item
   Open a new, second terminal window, in which you run:
@@ -873,6 +931,10 @@ We will explore its capabilities later.
 \item
   Place and resize the two terminal windows and the \emph{WallClock} window
   as shown in Figure~\ref{fig:screen-layout}.
+
+  \infobox{
+    The font sizes in the terminal windows can be adapted by pushing \textit{Ctrl--} or \textit{Ctrl+}.
+  }
 
 \end{itemize}
 
@@ -886,25 +948,20 @@ We will explore its capabilities later.
 
 
 From now on, the terminal window on the upper right is referred to as
-the \emph{ShowHouse window}. The lower terminal is referred to as the
-\emph{Shell window}.
-
-\infobox{
-  The font sizes in the terminal windows can be adapted by pushing \textit{Ctrl--} or \textit{Ctrl+}.
-}
+the \emph{\textbf{ShowHouse window}}. The lower terminal is referred to as the
+\emph{\textbf{Shell window}}.
 
 The \emph{Home2L} suite follows a highly distributed design paradigm. At
-this point, there are 4 tools (called \emph{Home2L instances}) running
-in your VM -- 2 visible, 2 running in the background. Altogether, they
-simulate a typical, simple smart home setup.
-
-The following subsections explain the running instances and their functionalities.
+this point, there are 4 tools (\emph{Home2L instances}) running
+on your machine -- the \emph{ShowHouse}, the \emph{WallClock}, and two background
+processes. Together, they simulate a typical, yet simple smart home setup.
+The following subsections explain the four instances and their functionalities.
 
 \infobox{
   \textbf{For experienced users:}
 
   To keep this tutorial simple, all 4 instances are running on the same (virtual) machine.
-  Of course, they can arbitrarily be installed on multiple machines. To achieve this, the
+  Of course, they can arbitrarily be installed on multiple machines. To this end, the
   following configuration settings have be adapted:
   \begin{enumerate}
     \item
@@ -927,9 +984,9 @@ The following subsections explain the running instances and their functionalitie
 \toollabel{home2l-showhouse}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The \emph{ShowHouse} is a simulator for everything which for physical reasons cannot be
-provided for download: Your house and the sun.
-The virtual house as the following gadgets:
+The \emph{ShowHouse} script is a simulator for all physical components
+of your tutorial installation: The house and the sun.
+The virtual house has the following gadgets:
 
 \begin{enumerate}
 \item
@@ -947,7 +1004,7 @@ driver providing exactly the same interface internally, but lets the
 user simulate physical actions by key presses and visualizes the gadgets
 with a little ASCII art picture.
 
-In addition to the physical gadgets, \emph{ShowHouse} provides
+In addition to the physical gadgets, the \emph{ShowHouse} script provides
 a resource to indicate day/night time. In a real world, this information can
 be obtained from the timer driver (see Section~\ref{sec:drvlib-timer})
 based on the real time.
@@ -987,8 +1044,8 @@ It is automatically turned on for some time if motion is detected, but only at n
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\toolref{home2l-wallclock} is the main end user interface -- a universal information display
-to be mounted on the wall of rooms or installed on mobile devices.
+The \emph{WallClock} (\toolref{home2l-wallclock}) is the main end user interface --
+a universal information display to be mounted on the wall of rooms or installed on mobile devices.
 
 The \emph{WallClock} shows the current time and date in its upper area.
 The bottom row contains launcher buttons to access the integrated
@@ -997,7 +1054,6 @@ calendar and music applets (to be explored later).
 Most relevant for this part of the tutorial is the lower part of the
 display between the date and the launcher buttons, in which the values of
 several sensors -- \emph{Home2L resources} -- are visualized.
-
 These are -- from left to right (referring to Figure~\ref{fig:screen-layout}):
 
 \begin{enumerate}
@@ -1018,10 +1074,10 @@ Each of these fields visualizes some \emph{Home2L resource} as
 selected in the ''WallClock'' section of \texttt{/opt/home2l/etc/home2l.conf}.
 The resources are provided from different sources.
 
-The \emph{Resources} library can transparently deal with the
-absence of resource data. For example, if the weather driver is absent
-or cannot establish an internet connection to the weather data server,
-the weather-related displays will simply disappear.
+%The \emph{Resources} library can transparently deal with the
+%absence of resource data. For example, if the weather driver is absent
+%or cannot establish an internet connection to the weather data server,
+%the weather-related displays will simply disappear.
 
 \infobox{
   \textbf{Troubleshooting}
@@ -1065,7 +1121,7 @@ the weather-related displays will simply disappear.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{A Server (\texttt{home2l-server})}
+\subsection{The Server (\texttt{home2l-server})}
 \label{sec:tutorial-firststeps-server}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1082,26 +1138,20 @@ which in this tutorial hosts the weather driver (\toolref{home2l-drv-weather}).
   \emph{Home2L} server instances to improve failure resilience, to connect sensors/actors
   to different machines, or for maintenance reasons.
 
-  The assignment of the \emph{weather} driver to the \emph{server} instance in
+  The assignment of the \emph{weather} driver to the \emph{server} instance is
   configured in the \toolref{home2l.conf} configuration file and may be changed there.
 }
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{A Rules Script (\texttt{rules-showhouse})}
+\subsection{The Rules Script (\texttt{rules-showhouse})}
 \label{sec:tutorial-firststeps-rules}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-There is presently one automation script active with rules to
-\begin{enumerate}[a)]
-\item
-  automate the outdoor light,
-\item
-  keep the \emph{WallClock} on, preventing it from auto-switching off.
-\end{enumerate}
-
+There is presently one automation script active with a rule to
+automate the outdoor light.
 This script will be explored later in Section \ref{sec:tutorial-rules}.
 
 \begin{itemize}[$\blacktriangleright$]
@@ -1146,7 +1196,7 @@ tested its basic functionality. Next, we will take a look behind the scenes.
 This section gives an introduction to the \emph{Home2L Shell} (\toolref{home2l-shell}),
 the main command line interface, which we will now use to take a look behind the
 scenes. Im particular, we will use the shell to check the status of all
-\emph{Home2L} hosts, explore the directory tree, manipulate and monitor
+\emph{Home2L} instances, explore the directory tree, manipulate and monitor
 resources, and use the shell for logging purposes.
 
 \begin{itemize}[$\blacktriangleright$]
@@ -1188,6 +1238,7 @@ resources, and use the shell for logging purposes.
 \begin{itemize}[$\blacktriangleright$]
 \item
   Use the commands 'c' and 'l' to explore the available resources and the namespace.
+  Tab-completion is available.
   List the root directory of the namespace:
   \begin{lstlisting}
     home2l> l /
@@ -1197,7 +1248,7 @@ resources, and use the shell for logging purposes.
     local
   \end{lstlisting}
 
-  The directory \texttt{/host} contains all hosts:
+  The directory \texttt{/host} contains an entry for each host:
   \begin{lstlisting}
     home2l> l /host/
     home2l-showcase<shell:2254>
@@ -1222,8 +1273,7 @@ resources, and use the shell for logging purposes.
   \emph{Home2L} host ID.
 
 \item
-  With the 'c' command, you can navigate in the tree. Of course,
-  tab-completion is available, too.
+  With the 'c' command, you can navigate in the tree.
   \begin{lstlisting}
     home2l> c /alias/light
     /alias/light
@@ -1306,7 +1356,7 @@ We now manipulate the light by placing requests manually.
 
 \item
   Enter (\emph{Note: the second command is the digit ''one'', not a
-  lower-case''L''})
+  lower-case ''L''})
   \begin{lstlisting}
     home2l> c /alias/light
     home2l> 1
@@ -1422,7 +1472,7 @@ The shell allows to subscribe to any resources using the ''s+'' and ''s-'' comma
   subscriber. The \emph{Home2L} suite follows a very precise event model.
   Immediately after the subscription, the locally known values are
   reported (''unknown'' in this case). However, in the background,
-  the server(s) contacted. By the time you have read this text,
+  the server(s) are contacted. By the time you have read this text,
   the actual values have been delivered from the server(s) to the shell.
 
 \item
@@ -1542,8 +1592,8 @@ installed and started during the previous steps.
   \end{lstlisting}
 
 \item
-  Put the \emph{WallClock} window into fullscreen mode (push \emph{F10}
-  or \emph{F11}) and push the \emph{''Music''} button.
+  Increase the size of the \emph{WallClock} (\emph{F10} or \emph{F11})
+  and push the \emph{''Music''} button.
 
 \item
   With the player selection button on the bottom, select
@@ -1584,6 +1634,14 @@ installed and started during the previous steps.
   \lstbox{
     \$ mpc -h localhost update
   }
+
+  Make sure that the \emph{MPD} instance with the \emph{Home2L} configuration has been started properly
+  and that the default instance is off:
+  \lstbox{
+    \$ sudo systemctl disable mpd \\
+    \$ sudo systemctl stop mpd \\
+    \$ sudo systemctl restart home2l
+  }
 }
 
 
@@ -1601,7 +1659,7 @@ supports its syntax for specifying events.
 
 \begin{itemize}[$\blacktriangleright$]
 \item
-  Put the \emph{WallClock} window into fullscreen mode (\emph{F11} or \emph{F10})
+  Increase the size of the \emph{WallClock} (\emph{F10} or \emph{F11})
   and start the applet by pushing ''Calendar'' on the main screen.
 \item
   Explore the calendar UI by navigating to different dates (e.g.~your wife's
@@ -1613,7 +1671,7 @@ supports its syntax for specifying events.
   Select a day in the left pane and add a new one-time appointment for
   Julian, for example (enter/keep your own date at the beginning):
   \begin{lstlisting}
-    2018-12-23 at 19:00 dur 2:00 REM Meet Henry; Murphy's Pub
+    2018-12-23 at 19:00 dur 2:00 MSG Meet Henry; Murphy's Pub
   \end{lstlisting}
 \end{itemize}
 
@@ -1661,18 +1719,18 @@ existing rules files and later be merged into them.
   and deactivated it by commenting out the first line with the
   \texttt{@daily} decorator:
   \begin{lstlisting}
-    # \@daily("wallclock")
+    # @daily("wallclock")
     def PermanentRules (host):
       ...
   \end{lstlisting}
-  Finally, exit \texttt{nano} and save the file (\emph{Ctrl-X}).
+  Exit \texttt{nano} and save the file (\emph{Ctrl-X}).
 
 \item
   To make this change effective, restart the modified rules script
   \texttt{rules-showhouse} and remove its permanent request:
   \begin{lstlisting}
     $ pkill rules-showhouse
-    $ home2l shell -e "c /host/wallclock/ui; r- active python; r- standby rules"
+    $ home2l shell -e "c /host/wallclock/ui; r- active rules; r- standby rules"
   \end{lstlisting}
 
 \end{itemize}
@@ -1710,7 +1768,7 @@ active/standby state the \emph{WallClock} application.
   Python commands of the following instructions into the \texttt{rules-showhouse}
   file or into a new file. A new file can be generated as follows:
   \lstbox{
-    \$ echo '\#!/usr/bin/python3' > myrules
+    \$ echo '\#!/usr/bin/python3' > myrules \\
     \$ chmod a+x myrules
   }
   This is particularly useful if you intend to experiment with the rules and change them.
@@ -1718,7 +1776,7 @@ active/standby state the \emph{WallClock} application.
 
 Enter all following instructions at the Python command prompt
 (\lst{\mbox{\textgreater}\mbox{\textgreater}\mbox{\textgreater}}).
-(The prompt is not always printed in the following instructions to facilitate copy-and-paste.)
+The prompt is not always printed in the following instructions to facilitate copy-and-paste.
 
 \begin{itemize}[$\blacktriangleright$]
 
@@ -1765,15 +1823,17 @@ Enter all following instructions at the Python command prompt
   Define a rule which switches on the display whenever the door is unlocked at night
   (mind the indentation!):
   \begin{lstlisting}
-  @onUpdate(rcDaylight, rcLock)
-  def UpdateUiState ():
-    print ("\#\#\# daylight = " + str (rcDaylight.ValueState ()) + ", lock = " + str (rcLock.ValueState ()))
-    daylight = rcDaylight.ValidValue (False)
-    doorLocked = rcLock.ValidValue (False)
-    if not daylight and not doorLocked:
-      rcUiActive.SetRequest (value = True)
-    else:
-      rcUiActive.DelRequest ()
+  >>> @onUpdate(rcDaylight, rcLock)
+  ... def UpdateUiState ():
+  ...   print ("### daylight = " + str (rcDaylight.ValueState ())
+  ...              + ", lock = " + str (rcLock.ValueState ()))
+  ...   daylight = rcDaylight.ValidValue (False)
+  ...   doorLocked = rcLock.ValidValue (False)
+  ...   if not daylight and not doorLocked:
+  ...     rcUiActive.SetRequest (value = True)
+  ...   else:
+  ...     rcUiActive.DelRequest ()
+  ...
   \end{lstlisting}
 
   The first line (''\texttt{@update()}''), a Python \emph{decorator},
@@ -1789,10 +1849,11 @@ Enter all following instructions at the Python command prompt
   (Optional) Define another rule to mute the music player for 5 seconds
   if motion is detected in front of the house:
   \begin{lstlisting}
-    @onEvent ("/alias/motion")    # TBD: Test
-    def MuteOnMotion (ev, rc, vs, data):
-      if ev == rceValueStateChanged and vs.ValidValue (False) == True:
-        RcSetRequestFromStr ("/host/wallclock/ui/mute", "1 -5000")
+    >>> @onEvent ("/alias/motion")
+    ... def MuteOnMotion (ev, rc, vs):
+    ...   if ev == rceValueStateChanged and vs.ValidValue (False) == True:
+    ...     RcSetRequestFromStr ("/host/wallclock/ui/mute", "1 -5000")
+    ...
   \end{lstlisting}
 
   For demonstration purposes, this example uses some other API functions
@@ -1805,7 +1866,7 @@ Enter all following instructions at the Python command prompt
       The resources are directly identified by their URI without first getting
       an object reference by \texttt{RcGet()}.
     \item
-      The request is set by \texttt{RcSetRequestFromStr ()}, which allows to describe the request
+      The request is set by \texttt{RcSetRequestFromStr()}, which allows to describe the request
       by a string with the same syntax as already known from the \emph{Home2L Shell}.
   \end{itemize}
   Details can be found in the \refapipython{} and in Section~\ref{sec:resources-syntax}.
@@ -2856,7 +2917,7 @@ load any of the existing drivers (see Chapter~\ref{ch:drvdev}). This includes
 automation rules scripts (see Chapter~\ref{ch:rules}), which may themselves implement
 drivers or execute external ones.
 
-In order to ''just'' load driver(s) and export their resources to the cluster, 
+In order to ''just'' load driver(s) and export their resources to the cluster,
 the tool \toolref{home2l-server} can be used.
 This is basically an empty application without any functionality besides operate
 the \emph{Resources} library.
@@ -3624,9 +3685,9 @@ is used instead of a decorator.
 
 \subsection{Daily Requests}
 
-Often, static requests need to be set that are re-calculated on a daily basis. 
+Often, static requests need to be set that are re-calculated on a daily basis.
 For example, an outdoor light might need to be switched on at night depending on the current
-sunset and sunrise times. In this case, a \emph{daily rule} my be defined, which 
+sunset and sunrise times. In this case, a \emph{daily rule} my be defined, which
 calculates the light-on times at midnight and then sets a request for the light resource
 accordingly.
 
@@ -3641,8 +3702,8 @@ def MyFunc (host):
 As an argument, the decorator expects a set of host IDs, which is a list or tuple of
 strings. The host ID list is used to monitor the availability of the hosts and
 eventually also run the user function after a host has crashed or being restarted
-and becomes reachable (again). 
-Besides that, the user function \texttt{MyFunc()} is called with the host ID as an argument on each day, shortly after midnight. It is called once per host, so that it should only 
+and becomes reachable (again).
+Besides that, the user function \texttt{MyFunc()} is called with the host ID as an argument on each day, shortly after midnight. It is called once per host, so that it should only
 set requests for the host identified by the argument.
 
 
@@ -3750,7 +3811,7 @@ configuration entry.
 The driver must contain a single entry function declared as follows:
 
 \begin{lstlisting}
-HOME2L_DRIVER(<name>) 
+HOME2L_DRIVER(<name>)
 (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcValueState *vs) {
   switch (op) {
     case rcdOpInit:
@@ -3772,36 +3833,36 @@ As outlined here, the driver must provide up to three operations:
 
 \begin{description}
 
-\item[The ''Init'' operation] 
+\item[The ''Init'' operation]
   registers all resources and initializes the driver itself.
 
 \item[The ''Stop'' operation]
-  is called just before the driver gets unloaded. It must stop/join all own background 
-  threads and shut down its own operations. 
-  Resources (\texttt{CResource} objects) do \emph{not} have to be unregistered, 
+  is called just before the driver gets unloaded. It must stop/join all own background
+  threads and shut down its own operations.
+  Resources (\texttt{CResource} objects) do \emph{not} have to be unregistered,
   this will be done automatically later.
-  
+
 \item[The ''DriverValue'' operation]
-  is only called and required for writable resources. It must drive a new value 
+  is only called and required for writable resources. It must drive a new value
   to the real device (e.g.~some actor) to make something happen.
   It is \emph{neither necessary nor allowed} to call any \texttt{CResource} method here.
-  The sole task of the driver is to operate its hardware, the driven value with 
+  The sole task of the driver is to operate its hardware, the driven value with
   a state ''valid'' will be reported automatically.
 
   If it is not appropriate to report the passed value and a ''valid'' state back this
   time
   (e.g. due to an error or if the actor requires some time to fulfill the requested action),
   the passed \texttt{vs} object should be modified accordingly.
-  
+
   \infobox{
     For example, a driver for window shades which is requested to close the shades
-    would now modify the \texttt{vs} object and set its state to ''busy'' to indicate 
+    would now modify the \texttt{vs} object and set its state to ''busy'' to indicate
     that the shades are now moving down.
     Later, when they are actually closed, the driver calls \texttt{CResource::ReportValue()}
     with a value/state of ''1/valid'' (assuming the value for closed shades is ''1'')
     to report the action was completed successfully.
   }
-  
+
 \end{description}
 
 \textbf{The reporting of values} for sensor-like hardware is typically done
@@ -3854,7 +3915,7 @@ The script is called by the \emph{Resources} library with the following argument
 <script> -restart  # Restart driver (only after abnormal stop in keep-running mode);
                    # The driver does not need to report anything.
 
-<script> -poll     # Driver is polled for new readable values 
+<script> -poll     # Driver is polled for new readable values
                    # (only in polling mode)
 
 <script> -drive <resource LID> <value>
@@ -3875,9 +3936,9 @@ to output a series of lines with the following contents:
 
 \begin{lstlisting}[language=bash]
 d <resource LID> <options>  # Declare a resource
-p <poll interval>           # Define the polling interval 
+p <poll interval>           # Define the polling interval
                             # (0 = no polling; Default = no polling)
-                            
+
 .                           # Initialization complete - enter polling mode
 :                           # initialization complete - enter "keep running" mode
 \end{lstlisting}
@@ -3906,8 +3967,8 @@ p <poll interval>               # Change the polling interval (polling mode only
 As a third option, drivers can be defined as part of a Python script.
 
 \infobox{
-  The demo \toolref{home2l-showhouse} implements a driver for a) a set of (simulated) 
-  sensors and actors for a virtual building, but also 
+  The demo \toolref{home2l-showhouse} implements a driver for a) a set of (simulated)
+  sensors and actors for a virtual building, but also
   b) an asynchronous keyboard driver for its own UI operation.
   The latter demonstrates how to work with background threads.
 }
@@ -3971,7 +4032,7 @@ The \emph{GPIO} driver is a universal driver leveraging the Linux \texttt{sysfs}
 GPIO capabilities to access general purpose inputs and outputs (GPIO).
 
 In order to allow GPIOs to be used from a normal user application, they
-must be set up properly beforehand. 
+must be set up properly beforehand.
 
 This preparation requires \texttt{root} privileges and is therefore
 done by the \emph{Home2L} init script at boot time.
@@ -4120,9 +4181,9 @@ Ideally, a \emph{WallClock} device is installed in each room in the
 house. Due to its resource-aware implementation, low-cost hardware
 such as cheap or older second-hand Android tablets should be sufficient.
 
-The \emph{WallClock} is implemented in native code (C/C++) and uses \emph{SDL2} for its UI. 
-This makes it portable and efficient. So far, the \emph{WallClock} has been tested on 
-(PC) Linux and on Android, but ports of \emph{SDL2} to many other environments exist 
+The \emph{WallClock} is implemented in native code (C/C++) and uses \emph{SDL2} for its UI.
+This makes it portable and efficient. So far, the \emph{WallClock} has been tested on
+(PC) Linux and on Android, but ports of \emph{SDL2} to many other environments exist
 (see \url{libsdl.org}).
 
 \infobox{
@@ -4143,8 +4204,8 @@ This makes it portable and efficient. So far, the \emph{WallClock} has been test
 
 
 The \emph{Phone} applet implements a SIP-based VoIP phone with video
-fumctionality and the ability to act as a door phone in conjunction 
-with \toolref{home2l-doorman}. For example, the applet can offer a door 
+fumctionality and the ability to act as a door phone in conjunction
+with \toolref{home2l-doorman}. For example, the applet can offer a door
 opener button if its peer is a door phone.
 
 Together with a private branch exchange (PBX) software such as
@@ -4179,20 +4240,20 @@ complete calendar is maintained in one \emph{reminders} file with one
 event per line. The file is human-readable and can easily be
 edited by hand. Synchonization, merging and even
 revision control can easily be accomplished by standard tools such as
-\texttt{diff(1)}, \texttt{meld(1)} and \texttt{git(1)}. 
+\texttt{diff(1)}, \texttt{meld(1)} and \texttt{git(1)}.
 Several frontends exist for \texttt{remind} (\texttt{tkremind(1)}, for example),
 the \emph{WallClock Calendar} is a new one with special support for multiple
 calendars.
 
 The calendar files can be stored wherever the user likes -- locally, on
-a home server or somewhere else. 
+a home server or somewhere else.
 For any editing operation, \emph{WallClock Calender} generates a
 \texttt{patch(1)} fragment and passes it to a user-configurable script, which
 is usually a \texttt{patch} command (see \envref{calendar.cmdPatch}).
-The operation for reading a calendar file (usually defined as \texttt{cat <filename>}) 
+The operation for reading a calendar file (usually defined as \texttt{cat <filename>})
 is also user-configurable (see \envref{calendar.cmdRead}).
 
-This method for accessing calendar files allows a high degree of flexibility 
+This method for accessing calendar files allows a high degree of flexibility
 for where and how they are stored, and the use of \texttt{patch(1)} supports
 concurrent editing operations from multiple \emph{WallClock} instances.
 
@@ -4219,7 +4280,7 @@ get it transformed into acoustic air waves by any device he likes:
 hifi speakers in the living room, other speakers in the kitchen,
 earphones connected to the local device, or bluetooth speakers
 coupled with the \emph{WallClock} device. Of course, a user can switch
-between them anytime and ''take'' the currently playing music with him as 
+between them anytime and ''take'' the currently playing music with him as
 he moves to another room.
 
 Technically, a ''virtual stereo system'' is an installed \emph{MPD}
@@ -4233,7 +4294,7 @@ must be compiled with \emph{GStreamer} support for this).
 
 Figure~\ref{fig:screen-wallclock-music} shows a screenshot
 with the usual \emph{MPD} controls on the left and a database and
-playlist browser on the right (the title bar can be pushed to navigate 
+playlist browser on the right (the title bar can be pushed to navigate
 up or switch between the local collection and playlists).
 
 
@@ -4251,7 +4312,7 @@ With the buttons in the bottom line you can (from left to right)
 \item
   select the ''virtual stereo system'' (\emph{MPD} instance).
 \item
-  take the currently playing music from one \emph{MPD} instance to another 
+  take the currently playing music from one \emph{MPD} instance to another
   (e.g.~to seamlessly continue listening a song when moving from one room to another).
 \item
   select the output device (any output configured with \emph{MPD} or
@@ -4264,10 +4325,10 @@ With the buttons in the bottom line you can (from left to right)
   navigate to the currently playing song.
 \end{itemize}
 
-The \rcref{ui/mute} resource allows to mute the music player by automation 
+The \rcref{ui/mute} resource allows to mute the music player by automation
 rules, for example, if the doorbell rings.
 
-A long push on the ''Music'' launcher on the main screen (Fig.~\ref{fig:screen-wallclock-home}) 
+A long push on the ''Music'' launcher on the main screen (Fig.~\ref{fig:screen-wallclock-home})
 switches the music player on or off without switching to the music screen.
 
 
@@ -4283,12 +4344,12 @@ The alarm clock can be enabled by pushing the clock display on the main screen.
 For each weekday, an individual alarm time can be programmed.
 
 By default, the music player is activated on alarm. If the music player fails
-or the music is not loud enough (see \envref{alarm.minLevelDb}), a ringing 
+or the music is not loud enough (see \envref{alarm.minLevelDb}), a ringing
 sound is played as a fallback.
 
-For the case that the alarm clock fails completely, a dead-man script can 
-be submitted to another computer, which can then wake you up with some 
-other means (e.g.~by a wakeup call to your mobile phone). 
+For the case that the alarm clock fails completely, a dead-man script can
+be submitted to another computer, which can then wake you up with some
+other means (e.g.~by a wakeup call to your mobile phone).
 See \envref{alarm.extAlarmHost}, \envref{alarm.extAlarmCmd} and \envref{alarm.extAlarmDelay}
 for details.
 
