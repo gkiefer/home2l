@@ -1,0 +1,9 @@
+<map id="Resources" name="Resources">
+<area shape="rect" id="node1" href="$group__resources__general.html" title="Top&#45;level functionality of this library &#45; most commonly used functions can be found here..." alt="" coords="195,5,273,32"/>
+<area shape="rect" id="node2" href="$group__resources__subscribe.html" title="Subscribing to resources to read their values. " alt="" coords="181,56,287,83"/>
+<area shape="rect" id="node3" href="$group__resources__directory.html" title="Querying local metadata directories (for shells or service tools) " alt="" coords="165,107,303,133"/>
+<area shape="rect" id="node4" href="$group__resources__drivers.html" title="Defining custom drivers. " alt="" coords="201,157,267,184"/>
+<area shape="rect" id="node6" href="$group__resources__values.html" title="Basic definitions for values and their types and state. " alt="" coords="143,208,325,235"/>
+<area shape="rect" id="node7" href="$group__resources__requests.html" title="Placing requests to change resource values. " alt="" coords="193,259,275,285"/>
+<area shape="rect" id="node8" href="$group__resources__rc.html" title="Accessing resource objects. " alt="" coords="167,309,301,336"/>
+</map>

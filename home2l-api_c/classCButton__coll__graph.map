@@ -1,0 +1,5 @@
+<map id="CButton" name="CButton">
+<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="142,5,218,32"/>
+<area shape="rect" id="node3" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="101,95,181,121"/>
+<area shape="rect" id="node4" href="$classCScreen.html" title="Screen object. " alt="" coords="324,95,401,121"/>
+</map>

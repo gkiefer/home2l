@@ -1,0 +1,6 @@
+<map id="Home2L" name="Home2L">
+<area shape="rect" id="node1" href="$group__home2l__drivers.html" title="Defining custom drivers for resources. " alt="" coords="131,5,198,32"/>
+<area shape="rect" id="node2" href="$group__home2l__general.html" title="General functions of the Home2L package. " alt="" coords="128,56,201,83"/>
+<area shape="rect" id="node3" href="$group__home2l__time.html" title="Date and time helpers. " alt="" coords="138,107,191,133"/>
+<area shape="rect" id="node5" href="$group__home2l__rules.html" title="Running functions on resource events/updates or at certain times. " alt="" coords="136,157,193,184"/>
+</map>

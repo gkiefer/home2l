@@ -1,0 +1,5 @@
+<map id="CRcEvent" name="CRcEvent">
+<area shape="rect" id="node2" href="$classCResource.html" title="Home2L Resource. " alt="" coords="5,95,97,121"/>
+<area shape="rect" id="node3" href="$classCRcValueState.html" title="Typed value tagged with a state and a time stamp. " alt="" coords="122,95,239,121"/>
+<area shape="rect" id="node4" href="$unionURcValue.html" title="Union for an untyped value. " alt="" coords="139,5,223,32"/>
+</map>

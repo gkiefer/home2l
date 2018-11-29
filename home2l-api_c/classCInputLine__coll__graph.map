@@ -1,0 +1,7 @@
+<map id="CInputLine" name="CInputLine">
+<area shape="rect" id="node2" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="51,5,131,32"/>
+<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="109,95,185,121"/>
+<area shape="rect" id="node4" href="$classCScreen.html" title="Screen object. " alt="" coords="36,184,113,211"/>
+<area shape="rect" id="node5" href="$classCCursorWidget.html" title="Widget with an additional rectangular cursor. " alt="" coords="249,184,367,211"/>
+<area shape="rect" id="node6" href="$classCString.html" title="Dynamically allocated string. " alt="" coords="392,184,461,211"/>
+</map>

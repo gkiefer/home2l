@@ -1,0 +1,4 @@
+<map id="CShell" name="CShell">
+<area shape="rect" id="node2" href="$classCShellBare.html" title="Normal shell: Execute commands individually. " alt="" coords="5,80,99,107"/>
+<area shape="rect" id="node3" href="$classCShellSession.html" title="Session shell: Execute multiple commands through one shell. " alt="" coords="123,80,237,107"/>
+</map>

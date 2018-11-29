@@ -1,0 +1,7 @@
+<map id="Environment" name="Environment">
+<area shape="rect" id="node1" href="$group__env__declaration.html" title="Declaring environment parameters used in your code with automatic documentation. " alt="" coords="173,5,267,32"/>
+<area shape="rect" id="node2" href="$group__env__settings.html" title="Global compile&#45;time settings. " alt="" coords="164,56,276,83"/>
+<area shape="rect" id="node4" href="$group__env__dictionary.html" title="Accessing and managing the environment dictionary. " alt="" coords="155,107,285,133"/>
+<area shape="rect" id="node5" href="$group__env__general.html" title="Init/done and persistence. " alt="" coords="183,157,257,184"/>
+<area shape="rect" id="node6" href="$group__env__helpers.html" title="Direct access to basic environment properties and pathname helpers. " alt="" coords="185,208,255,235"/>
+</map>

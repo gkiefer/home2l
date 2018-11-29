@@ -1,0 +1,5 @@
+<map id="CCursorWidget" name="CCursorWidget">
+<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="177,5,253,32"/>
+<area shape="rect" id="node3" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="147,95,227,121"/>
+<area shape="rect" id="node4" href="$classCScreen.html" title="Screen object. " alt="" coords="359,95,437,121"/>
+</map>

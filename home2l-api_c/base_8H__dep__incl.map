@@ -1,0 +1,12 @@
+<map id="common/base.H" name="common/base.H">
+<area shape="rect" id="node2" href="$env_8H.html" title="common/env.H" alt="" coords="190,80,305,107"/>
+<area shape="rect" id="node10" href="$streamer_8H_source.html" title="common/streamer.H" alt="" coords="329,80,477,107"/>
+<area shape="rect" id="node11" href="$app__music_8H.html" title="wallclock/app_music.H" alt="" coords="502,80,665,107"/>
+<area shape="rect" id="node3" href="$resources_8H.html" title="resources/resources.H" alt="" coords="78,155,241,181"/>
+<area shape="rect" id="node4" href="$ui__base_8H.html" title="wallclock/ui_base.H" alt="" coords="265,155,408,181"/>
+<area shape="rect" id="node5" href="$ui__screen_8H.html" title="wallclock/ui_screen.H" alt="" coords="8,229,164,256"/>
+<area shape="rect" id="node7" href="$system_8H.html" title="wallclock/system.H" alt="" coords="189,229,327,256"/>
+<area shape="rect" id="node8" href="$apps_8H.html" title="wallclock/apps.H" alt="" coords="352,229,479,256"/>
+<area shape="rect" id="node9" href="$alarmclock_8H.html" title="wallclock/alarmclock.H" alt="" coords="503,229,666,256"/>
+<area shape="rect" id="node6" href="$ui__widgets_8H.html" title="wallclock/ui_widgets.H" alt="" coords="5,304,167,331"/>
+</map>

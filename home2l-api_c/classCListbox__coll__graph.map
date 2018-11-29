@@ -1,0 +1,6 @@
+<map id="CListbox" name="CListbox">
+<area shape="rect" id="node2" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="79,5,159,32"/>
+<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="156,95,232,121"/>
+<area shape="rect" id="node4" href="$classCScreen.html" title="Screen object. " alt="" coords="221,184,298,211"/>
+<area shape="rect" id="node5" href="$classCListboxItem.html" title="Listbox item. " alt="" coords="23,95,125,121"/>
+</map>

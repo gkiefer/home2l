@@ -1,0 +1,10 @@
+<map id="Widgets" name="Widgets">
+<area shape="rect" id="node1" href="$group__ui__widgets__listbox.html" title="Listbox widget. " alt="" coords="278,5,345,32"/>
+<area shape="rect" id="node3" href="$group__ui__widgets__messagebox.html" title="Message box widget and functions. " alt="" coords="257,56,365,83"/>
+<area shape="rect" id="node4" href="$group__ui__widgets__button.html" title="Push&#45;button widget. " alt="" coords="280,107,343,133"/>
+<area shape="rect" id="node5" href="$group__ui__widgets__menu.html" title="Menu widget and function. " alt="" coords="283,157,340,184"/>
+<area shape="rect" id="node6" href="$group__ui__widgets__slider.html" title="Horizontal or vertical slider. " alt="" coords="282,208,341,235"/>
+<area shape="rect" id="node7" href="$group__ui__widgets__inputline.html" title="Input line widget. " alt="" coords="269,259,353,285"/>
+<area shape="rect" id="node8" href="$group__ui__widgets__extensions.html" title="Widget Extensions. " alt="" coords="266,309,357,336"/>
+<area shape="rect" id="node9" href="$group__ui.html" title="Lightweight UI toolkit based on SDL2. " alt="" coords="5,157,88,184"/>
+</map>

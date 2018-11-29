@@ -1,0 +1,5 @@
+<map id="CModalWidget" name="CModalWidget">
+<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="174,5,250,32"/>
+<area shape="rect" id="node3" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="144,95,224,121"/>
+<area shape="rect" id="node4" href="$classCScreen.html" title="Screen object. " alt="" coords="356,95,433,121"/>
+</map>
