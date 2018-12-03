@@ -9,7 +9,7 @@ The *Home2L `[houmtu:l]`* suite is a framework, library and set of tools for aut
 
 ## Efficient and Lightweight Design
 
-All core components are written in C/C++, with a very minimum set of external dependencies beyond *libc* - ideally suited for small embedded devices and microcontrollers. There is no need for a Java runtime environment or heavy web frameworks. Starting up a server and command shell and shutting them down again takes less than one second altogether - on an ARM-based minicomputer running at 144 MHz!
+All core components are written in C/C++, with a very minimum set of external dependencies beyond *libc* - ideally suited for small embedded devices and microcontrollers. There is no need for a Java runtime environment or a heavy web framework. Starting up a server and a command shell and shutting both down again takes less than a second altogether - on an ARM-based minicomputer running at 144 MHz!
 
 
 ## Ambient Intelligence, No Need for a Central Server
@@ -19,7 +19,7 @@ Central servers are single points of failure. *Home2L* follows a completely dist
 
 ## Automation Rules Written in Python - But not Limited to That
 
-There is no new language or tool to learn to formulate automation rules. *Home2L* rules are typically formulated in Python, they profit from the both the simplicity and the power of the Python language. There can be multiple rules scripts, they may run on any machine, and they may by combined with other software routines.
+There is no new language or tool to learn to formulate automation rules. *Home2L* rules are typically formulated in Python, they profit from the simplicity and power of the Python language. There can be multiple rules scripts, they may run on any machine, and they may be combined with other software routines or be part of a larger application.
 
 Other ways to interact with *Home2L* resources is via the C/C++ API from any application or by shell scripts using the *Home2L Shell* in non-interactive mode.
 
@@ -28,9 +28,11 @@ Other ways to interact with *Home2L* resources is via the C/C++ API from any app
 
 An API for *resource* drivers allows to easily add support for new hardware. A driver can be implemented
 
-- in native C/C++ code (e.g. *GPIO*).
-- as a shell script (e.g. *Weather*).
-- in Python (examples can be found in the tutorial).
+- in native C/C++ code,
+- as a shell script,
+- in Python.
+
+For all three cases, documented examples are available in the source tree.
 
 
 ## Privacy

@@ -206,7 +206,7 @@ BUILD_DATE := $(shell date +%Y-%m-%d)
 
 # Author ...
 HOME2L_AUTHOR := "Gundolf Kiefer"
-HOME2L_URL := "https://github.com/gkiefer/home2l"
+HOME2L_URL := "https://gkiefer.github.io/home2l"
 
 
 # Directory of .o files
