@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,5 +20,10 @@
 MYDIR := $(HOME2L_SRC)/resources
 
 CFLAGS_RC := -I$(MYDIR)
-SRC_RC := $(MYDIR)/rc_core.C $(MYDIR)/rc_drivers.C $(MYDIR)/resources.C
 LDFLAGS_RC := -ldl
+
+SRC_RC := $(MYDIR)/rc_core.C $(MYDIR)/rc_drivers.C $(MYDIR)/resources.C
+
+CFLAGS += $(CFLAGS_RC)
+LDFLAGS += $(LDFLAGS_RC)
+SRC += $(SRC_RC)

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "system.H"
 #include "apps.H"
 
+#include "floorplan.H"
 #include "alarmclock.H"
 
 #include <resources.H>
@@ -53,8 +54,17 @@
 // *************************** Environment variables ***************************
 
 
-ENV_PARA_STRING ("ui.daytimeRc", envDayTimeRc, "/local/timer/twilight/day");
-  /* Resource (boolean) indicating daylight time
+ENV_PARA_STRING ("ui.sysinfoCmd", envSysinfoCmd, "bin/h2l-sysinfo.sh");
+  /* Name of the sytem information script
+   *
+   * This script is executed repeatedly and its out displayed when the
+   * user opens the "about" screen.
+   */
+
+ENV_PARA_STRING ("ui.sysinfoHost", envSysinfoHost, NULL);
+  /* Host on which the system information script is executed
+   *
+   * If set, the system information script is executed on the given remote host.
    */
 
 ENV_PARA_STRING ("ui.accessPointRc", envAccessPointRc, "/local/accessPoint");
@@ -64,14 +74,24 @@ ENV_PARA_STRING ("ui.bluetoothRc", envBluetoothRc, "/local/ui/bluetooth");
   /* Resource (boolean) for local bluetooth status display
    */
 
-ENV_PARA_STRING ("ui.weatherTempRc", envWeatherTempRc, "/alias/weather/temp");
-  /* Resource (temp) representing the outside temperature for the right info area (weather)
+ENV_PARA_STRING ("ui.outdoorTempRc", envOutdoorTempRc, "/alias/weather/temp");
+  /* Resource (temp) representing the outside temperature for the right info area (outdoor)
    */
-ENV_PARA_STRING ("ui.weatherData1Rc", envWeatherData1Rc, "/alias/ui/weatherData1");
-  /* Resource for the upper data field of the right info area (weather)
+ENV_PARA_STRING ("ui.outdoorData1Rc", envOutdoorData1Rc, "/alias/ui/outdoorData1");
+  /* Resource for the upper data field of the right info area (outdoor)
    */
-ENV_PARA_STRING ("ui.weatherData2Rc", envWeatherData2Rc, "/alias/ui/weatherData2");
-  /* Resource for the lower data field of the right info area (weather)
+ENV_PARA_STRING ("ui.outdoorData2Rc", envOutdoorData2Rc, "/alias/ui/outdoorData2");
+  /* Resource for the lower data field of the right info area (outdoor)
+   */
+
+ENV_PARA_STRING ("ui.indoorTempRc", envIndoorTempRc, NULL);
+  /* Resource (temp) representing the outside temperature for the right info area (indoor)
+   */
+ENV_PARA_STRING ("ui.indoorData1Rc", envIndoorData1Rc, "/alias/ui/indoorData1");
+  /* Resource for the upper data field of the right info area (indoor)
+   */
+ENV_PARA_STRING ("ui.indoorData2Rc", envIndoorData2Rc, "/alias/ui/indoorData2");
+  /* Resource for the lower data field of the right info area (indoor)
    */
 
 ENV_PARA_STRING ("ui.radarEyeRc", envRadarEyeRc, "/alias/weather/radarEye");
@@ -88,7 +108,7 @@ ENV_PARA_STRING ("ui.motionDetectorRc", envMotionRc, "/alias/ui/motionDetector")
   /* Resource (bool) for the motion detector display in the left info area (building)
    */
 ENV_PARA_INT ("ui.motionDetectorRetention", envMotionRetention, 300000);
-  /* Retention time (ms) of the motion detector display
+  /* Retention time (ms) of the motion detector display (OBSOLETE)
    */
 
 
@@ -118,66 +138,225 @@ static SDL_Surface *surfDroids = NULL, *surfDroidsGrey = NULL;
 
 
 
+// *************************** Helpers for Home Screen *************************
 
 
-// ***************** CFlatButton ***************************
-
-
-class CFlatButton: public CButton {
+class CWidgetMultiData: public CFlatButton {
+  // Widget cleverly display a temparature and/or two supplemental data values.
   public:
-    CFlatButton () { SetColor (BLACK, ToColor (0x600000)); }
+    CWidgetMultiData ();
+
+    void SetResources (CResource *_rcMain, CResource *_rcSub1, CResource *_rcSub2);
+
+    void SubscribeAll (CRcSubscriber *subscr);
+
+    void Iterate ();
+
+    void OnRcEvent (CResource *rc);    // To be called on any 'rceValueStateChanged' event
+    virtual void OnPushed (bool longPushed);
 
   protected:
-    virtual SDL_Surface *GetSurface ();
+    CResource *rcData[3];
+    bool rcChanged[3];
+    bool showSub;
+    TTicksMonotonic tLastPushed;
 };
 
 
-SDL_Surface *CFlatButton::GetSurface () {
-  if (changed) {
-    SurfaceSet (&surface, CreateSurface (area.w, area.h));
-    SDL_FillRect (surface, NULL, ToUint32 (isDown ? colDown : colNorm));
-    if (surfLabel) SurfaceBlit (surfLabel, NULL, surface, NULL, 0, 0, SDL_BLENDMODE_BLEND);
-    changed = false;
+static void MultiDataFormat (char *buf, int bufSize, CRcValueState *val) {
+  // TBD: Merge with floorplan.C:TextFormatData()?
+  switch (RcTypeGetBaseType (val->Type ())) {
+    case rctFloat:
+      sprintf (buf, "%.1f%s", val->GenericFloat (), RcTypeGetUnit (val->Type ()));
+      LangTranslateNumber (buf);
+      break;
+    default:
+      strncpy (buf, val->ToStr (), bufSize - 1); buf[bufSize - 1] = '\0';
   }
-  return surface;
+}
+
+
+CWidgetMultiData::CWidgetMultiData () {
+  rcData[0] = rcData[1] = rcData[2] = NULL;
+  rcChanged[0] = rcChanged[1] = rcChanged[2] = false;
+  showSub = false;
+  tLastPushed = NEVER;
+}
+
+
+void CWidgetMultiData::SetResources (CResource *_rcMain, CResource *_rcSub1, CResource *_rcSub2) {
+  rcData[0] = _rcMain;
+  rcData[1] = _rcSub1;
+  rcData[2] = _rcSub2;
+  rcChanged[0] = rcChanged[1] = rcChanged[2] = true;
+
+  //~ SetLabelAlignment (1);    // right-justify labels
+}
+
+
+void CWidgetMultiData::SubscribeAll (CRcSubscriber *subscr) {
+  for (int n = 0; n < 3; n++) if (rcData[n]) subscr->AddResource (rcData[n]);
+}
+
+
+void CWidgetMultiData::Iterate () {
+  CRcValueState vs[3];
+  char buf[32];
+  SDL_Surface *surf = NULL, *surf2 = NULL;
+  SDL_Rect r;
+  TTF_Font *font;
+  bool valid[3], viewMain;
+  int n, temp;
+
+  // Return if nothing may have changed...
+  if (!rcChanged[0] && !rcChanged[1] && !rcChanged[2]) {
+    if (TicksMonotonicIsNever (tLastPushed)) return;
+    if (TicksMonotonicNow () < tLastPushed) return;
+  }
+
+  // Capture resources...
+  for (n = 0; n < 3; n++) {
+    if (rcData[n]) {
+      rcData[n]->GetValueState (&vs[n]);
+      valid[n] = vs[n].IsKnown ();
+    }
+    else valid[n] = false;
+  }
+  if (vs[0].Type () != rctTemp) valid[0] = false;   // main field must be a temperature
+
+  // Determine view to present...
+  viewMain = true;    // Default: Main view
+  if (!valid[1] || !valid[2]) viewMain = false;   // One of the sub values is invalid => show the problem
+  if (!TicksMonotonicIsNever (tLastPushed)) {     // Button was pushed => swap view
+    viewMain = !viewMain;
+    if (TicksMonotonicNow () > tLastPushed + 3000) tLastPushed = NEVER;
+  }
+  if (!valid[0]) viewMain = false;                // Nothing to see in main view => force sub view
+  if (!valid[1] && !valid[2]) viewMain = true;    // Nothing to see in sub view => force main view
+
+  // Draw the (main) view...
+  surf = NULL;
+  if (viewMain) {
+    if (valid[0]) {
+
+      // Main text...
+      font = FontGet (fntLight, 96);
+      temp = (int) round (vs[0].UnitFloat (rctTemp) * 10);
+      sprintf (buf, (temp < -9 || temp >= 0) ? "%i°C" : "-%i°C", temp / 10);
+      surf = FontRenderText (font, buf, WHITE);
+
+      // Add fractional part in smaller font...
+      sprintf (buf, ".%i", (temp < 0 ? -temp : temp) % 10);
+      LangTranslateNumber (buf);
+      r = Rect (surf);
+      r.x = r.w - FontGetWidth (font, "°C") - 4;
+      r.h -= 12;
+      font = FontGet (fntLight, 32);
+      surf2 = FontRenderText (font, buf, WHITE);
+      SurfaceBlit (surf2, NULL, surf, &r, -1, 1);
+      SurfaceFree (surf2);
+    }
+  }
+
+  // Draw the (sub) view...
+  else {
+    font = FontGet (fntLight, 32);
+    surf = CreateSurface (area.w - BUTTON_LABEL_BORDER, 96);
+    SDL_FillRect (surf, NULL, ToUint32 (TRANSPARENT));
+
+    if (valid[1]) {
+      MultiDataFormat (buf, sizeof (buf), &vs[1]);
+      surf2 = FontRenderText (font, buf, WHITE); // LIGHT_GREY);
+      SurfaceBlit (surf2, NULL, surf, NULL, 0, -1);
+      SurfaceFree (surf2);
+    }
+
+    if (valid[2]) {
+      MultiDataFormat (buf, sizeof (buf), &vs[2]);
+      surf2 = FontRenderText (font, buf, WHITE); // LIGHT_GREY);
+      SurfaceBlit (surf2, NULL, surf, NULL, 0, 1);
+      SurfaceFree (surf2);
+    }
+  }
+
+  // Pass label with ownership ...
+  SetLabel (surf, NULL, true);
+}
+
+
+void CWidgetMultiData::OnRcEvent (CResource *rc) {
+  for (int n = 0; n < 3; n++) if (rcData[n] == rc) rcChanged[n] = true;
+}
+
+
+void CWidgetMultiData::OnPushed (bool longPushed) {
+  if (TicksMonotonicIsNever (tLastPushed)) tLastPushed = TicksMonotonicNow ();
+  else tLastPushed = NEVER;
+  Iterate ();
 }
 
 
 
 
 
-// ***************** CScreenHome ***************************
+// *************************** CScreenHome *************************************
 
-#define RADAR_H 128
-#define RADAR_W 128
-
-#define WEATHER_H RADAR_H
-#define WEATHER_Y (UI_RES_Y - UI_BUTTONS_HEIGHT - WEATHER_H - 16)
-#define WEATHER_X (UI_RES_X/2 + RADAR_W/2 + 16)
-#define WEATHER_W (UI_RES_X - WEATHER_X - 32)
-
-#define INFO_H RADAR_H
+#define INFO_H 128    // must match height of radar eye and floorplan (FP_HEIGHT)
 #define INFO_Y (UI_RES_Y - UI_BUTTONS_HEIGHT - INFO_H - 16)
-#define INFO_X 16
-#define INFO_W (UI_RES_X/2 - RADAR_W/2 - 32)
 
 #define CLOCK_Y 0
-#define CLOCK_H (WEATHER_Y - 32 - CLOCK_Y)
-#define CLOCK_W 1024        // clock is centred (so there is no parameter 'CLOCK_X')
+#define CLOCK_H (INFO_Y - 32 - CLOCK_Y)
+#define CLOCK_W 1024        // clock is centered (so there is no parameter 'CLOCK_X')
 
 #define ALARM_H 160
 #define ALARM_W 160
 #define ALARM_X (UI_RES_X - ALARM_W - 16)
 #define ALARM_Y 32
 
-#define RADIOS_X INFO_X
-#define RADIOS_Y INFO_X
+#define RADIOS_X 16
+#define RADIOS_Y 16
 #define RADIO_W 72
 #define RADIO_H 72
 
 
-#define RADAREYE_DIRECT 1   // 0 = read radar eye from file (OBSOLETE); 1 = read from string resource
+#define RADAR_W 128             // must match INFO_H!
+#define RADAR_H 128
+#define RADAR_Y INFO_Y
 
+#define FLOORPLAN_W FP_WIDTH    // must match INFO_H!
+#define FLOORPLAN_H INFO_H
+#define FLOORPLAN_Y INFO_Y
+
+#define OUTDOOR_W ((UI_RES_X - RADAR_W - FLOORPLAN_W - 32) / 2)
+#define OUTDOOR_H INFO_H
+#define OUTDOOR_Y INFO_Y
+
+#define INDOOR_W ((UI_RES_X - RADAR_W - FLOORPLAN_W - 32) / 2)
+#define INDOOR_H INFO_H
+#define INDOOR_Y INFO_Y
+
+//~ // Layout: radar - outdoor - floorplan - indoor ...
+//~ #define RADAR_X 32
+//~ #define OUTDOOR_X (RADAR_X + RADAR_W)
+//~ #define FLOORPLAN_X (OUTDOOR_X + OUTDOOR_W)
+//~ #define INDOOR_X (FLOORPLAN_X + FLOORPLAN_W)
+
+//~ // Layout: outdoor - radar - indoor - floorplan ...
+//~ #define OUTDOOR_X 0
+//~ #define RADAR_X (OUTDOOR_X + OUTDOOR_W)
+//~ #define INDOOR_X (RADAR_X + RADAR_W)
+//~ #define FLOORPLAN_X (INDOOR_X + INDOOR_W)
+
+// Layout: outdoor - radar - indoor - floorplan ...
+#define OUTDOOR_X 0
+#define RADAR_X (OUTDOOR_X + OUTDOOR_W)
+#define FLOORPLAN_X (RADAR_X + RADAR_W + 32)
+#define INDOOR_X (FLOORPLAN_X + FLOORPLAN_W)
+
+
+
+
+#define RADAREYE_DIRECT 1   // 0 = read radar eye from file (OBSOLETE); 1 = read from string resource
 
 
 class CScreenHome: public CScreen {
@@ -200,7 +379,6 @@ class CScreenHome: public CScreen {
 
     // General...
     CRcSubscriber subscr;
-    CResource *rcDayTime;
 #if SUBSCRIBE_WHEN_SCREEN_ON && !SUBSCRIBE_PERMANENTLY
     ESystemMode lastSystemMode;
 #endif
@@ -220,9 +398,8 @@ class CScreenHome: public CScreen {
     CFlatButton btnAccessPoint, btnBluetooth;
     CResource *rcAccessPoint;
 
-    // Right info display (weather)...
-    CFlatButton btnWeather;
-    CResource *rcTempOutside, *rcWeatherData1, *rcWeatherData2;
+    // Data displays (outdoor/left, indoor/right)...
+    CWidgetMultiData wdgDataOutdoor, wdgDataIndoor;
 
     // Radar eye...
     CFlatButton btnRadarEye;
@@ -233,10 +410,8 @@ class CScreenHome: public CScreen {
     bool radarEyePending;
 #endif
 
-    // Left info display (building / doors)...
-    CWidget wdgLock1, wdgLock2, wdgMotion;
-    CResource *rcLockSensor1, *rcLockSensor2, *rcMotion;
-    TTicks tMotionOff;    // -1 = sensor is '1'; 0 = sensor is '0' or new & no retention
+    // Mini floorplan...
+    CWidgetFloorplan wdgFloorplan;
 };
 
 
@@ -275,9 +450,8 @@ BUTTON_TRAMPOLINE (CbScreenHomeOnButtonPushed, CScreenHome, OnButtonPushed);
 
 
 CScreenHome::CScreenHome () {
-  rcTempOutside = rcWeatherData1 = rcWeatherData2 = rcRadarEye = rcLockSensor1 = rcLockSensor2 = rcMotion = rcDayTime = NULL;
+  rcRadarEye = NULL;
   surfTime = surfSecs = surfDate = NULL;
-  tMotionOff = 0;
 #if SUBSCRIBE_WHEN_SCREEN_ON && !SUBSCRIBE_PERMANENTLY
   lastSystemMode = smNone;
 #endif
@@ -293,19 +467,10 @@ CScreenHome::~CScreenHome () {
 
 
 void CScreenHome::SubscribeAll () {
-  subscr.Subscribe (rcDayTime);
-
-  subscr.Subscribe (rcAccessPoint);
-
-  subscr.Subscribe (rcTempOutside);
-  subscr.Subscribe (rcWeatherData1);
-  subscr.Subscribe (rcWeatherData2);
-
+  wdgDataOutdoor.SubscribeAll (&subscr);
+  wdgDataIndoor.SubscribeAll (&subscr);
   subscr.Subscribe (rcRadarEye);
-
-  subscr.Subscribe (rcLockSensor1);
-  subscr.Subscribe (rcLockSensor2);
-  subscr.Subscribe (rcMotion);
+  subscr.Subscribe (rcAccessPoint);
 }
 
 
@@ -315,9 +480,6 @@ void CScreenHome::Setup () {
   SDL_Rect *layout;
   const char *str;
   int n, buttons;
-
-  // General ...
-  rcDayTime = CResource::Get (envDayTimeRc);
 
   // Button bar: System button...
   buttons = 0;
@@ -379,20 +541,19 @@ void CScreenHome::Setup () {
   btnBluetooth.SetLabel (IconGet ("ic-bluetooth-48", COL_APP_LABEL_LIVE));
   btnBluetooth.SetCbPushed (CbScreenHomeOnButtonPushed, this);
 
-  // Lower right info (weather) ...
-  btnWeather.SetArea (Rect (WEATHER_X, WEATHER_Y, WEATHER_W, WEATHER_H));
-  btnWeather.SetCbPushed (CbAndroidLaunch, (void *) EnvGet (envLaunchWeatherKey));
-  btnWeather.SetHotkey (SDLK_w);
-  AddWidget (&btnWeather);
+  // Data displays ...
+  wdgDataOutdoor.SetArea (Rect (OUTDOOR_X, OUTDOOR_Y, OUTDOOR_W, OUTDOOR_H));
+  wdgDataOutdoor.SetResources (RcGet (envOutdoorTempRc), RcGet (envOutdoorData1Rc), RcGet (envOutdoorData2Rc));
+  AddWidget (&wdgDataOutdoor);
 
-  rcTempOutside = CResource::Get (envWeatherTempRc);
-  rcWeatherData1 = CResource::Get (envWeatherData1Rc);
-  rcWeatherData2 = CResource::Get (envWeatherData2Rc);
+  wdgDataIndoor.SetArea (Rect (INDOOR_X, INDOOR_Y, INDOOR_W, INDOOR_H));
+  wdgDataIndoor.SetResources (RcGet (envIndoorTempRc), RcGet (envIndoorData1Rc), RcGet (envIndoorData2Rc));
+  AddWidget (&wdgDataIndoor);
 
   // Radar eye ...
-  btnRadarEye.SetArea (Rect ((UI_RES_X-RADAR_W) / 2, WEATHER_Y, RADAR_W, RADAR_H));
+  btnRadarEye.SetArea (Rect (RADAR_X, RADAR_Y, RADAR_W, RADAR_H));
+  btnRadarEye.SetHotkey (SDLK_w);
   btnRadarEye.SetCbPushed (CbAndroidLaunch, (void *) EnvGet (envLaunchWeatherKey));
-
 #if RADAREYE_DIRECT
   rcRadarEye = CResource::Get (envRadarEyeRc);
 #else
@@ -400,33 +561,18 @@ void CScreenHome::Setup () {
   radarEyePending = true;     // Try to load a radar eye right in the beginning.
 #endif
 
-  // Lower left info (building) ...
-  wdgLock1.SetArea (Rect (INFO_X + 32, INFO_Y + (INFO_H-48)/2, 48, 48));
-  wdgLock2.SetArea (Rect (INFO_X + 96, INFO_Y + (INFO_H-48)/2, 48, 48));
-  wdgMotion.SetArea (Rect (INFO_X + 192, INFO_Y + (INFO_H-96)/2, 96, 96));
-
-  rcLockSensor1 = CResource::Get (envLockSensor1Rc);
-  rcLockSensor2 = CResource::Get (envLockSensor2Rc);
-  rcMotion = CResource::Get (envMotionRc);
+  // Mini floorplan ...
+  wdgFloorplan.Setup (FLOORPLAN_X, FLOORPLAN_Y);
+  wdgFloorplan.SetHotkey (SDLK_f);
+  if (wdgFloorplan.IsOk ()) AddWidget (&wdgFloorplan);
 
   // Subscribe to resources ...
   subscr.Register ("ScreenHome");
 
 #if SUBSCRIBE_PERMANENTLY
   SubscribeAll ();
+  wdgFloorplan.Activate ();
 #endif
-}
-
-
-static void ScreenHomeFormatData (char *buf, int bufSize, CRcValueState *val) {
-  switch (RcTypeGetBaseType (val->Type ())) {
-    case rctFloat:
-      sprintf (buf, "%.1f%s", val->GenericFloat (), RcTypeGetUnit (val->Type ()));
-      LangTranslateNumber (buf);
-      break;
-    default:
-      strncpy (buf, val->ToStr (), bufSize - 1); buf[bufSize - 1] = '\0';
-  }
 }
 
 
@@ -436,24 +582,25 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   TTicks now;
   TDate dt;
   TTime tm;
-  SDL_Surface *surf = NULL, *surf2 = NULL;
   SDL_Rect frame, r;
   TTF_Font *font;
   TColor col;
   CRcEvent ev;
   CResource *rc;
   CRcValueState *vs;
-  CRcValueState val;
-  int tempOutside;
-  bool isDay = false, lock1Closed, lock1Valid = false, lock2Closed, lock2Valid = false, doorRadarWeak, doorRadarStrong;
-  bool changedWeather, changedLock1, changedLock2, changedMotion;
 
   // (Un-)subscribe to resources if appropriate...
 #if SUBSCRIBE_WHEN_SCREEN_ON && !SUBSCRIBE_PERMANENTLY
   ESystemMode systemMode = SystemGetMode ();
   if (systemMode != lastSystemMode) {
-    if (systemMode >= smStandby && lastSystemMode < smStandby) SubscribeAll ();
-    else if (systemMode < smStandby && lastSystemMode >= smStandby) subscr.Clear ();
+    if (systemMode >= smStandby && lastSystemMode < smStandby) {
+      SubscribeAll ();
+      wdgFloorplan.Activate ();
+    }
+    else if (systemMode < smStandby && lastSystemMode >= smStandby) {
+      subscr.Clear ();
+      FloorplanUnsubscribeAll ();
+    }
     lastSystemMode = systemMode;
   }
 #endif
@@ -520,13 +667,15 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   else DelWidget (&btnBluetooth);
 
   // Poll resources to see what has changed...
-  changedWeather = changedLock1 = changedLock2 = changedMotion = false;
-  doorRadarStrong = doorRadarWeak = false;
   while (subscr.PollEvent (&ev)) {
     //~ INFOF(("### Event: '%s'", ev.ToStr ()));
     if (ev.Type () == rceValueStateChanged) {
       rc = ev.Resource ();
       vs = ev.ValueState ();
+
+      // Notify sub-objects...
+      wdgDataOutdoor.OnRcEvent (rc);
+      wdgDataIndoor.OnRcEvent (rc);
 
       // Radio display(s)...
       if (rc == rcAccessPoint) {
@@ -539,19 +688,13 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
         }
       }
 
-      // Right info display (weather)...
-      //   Actual processing is deferred due to combined widget.
-      else if (rc == rcTempOutside || rc == rcWeatherData1 || rc == rcWeatherData2) {
-        changedWeather = true;
-      }
-
       // Radar eye...
       else if (rc == rcRadarEye) {
 #if RADAREYE_DIRECT
         // Update radar eye ...
         if (vs->IsValid ()) {
           radarEyeReader.Put (vs->String ());
-          btnRadarEye.SetLabel (radarEyeReader.Surface ());
+          btnRadarEye.SetLabel (SurfaceDup (radarEyeReader.Surface ()), NULL, true);
           radarEyeReader.Clear ();
           AddWidget (&btnRadarEye);
         }
@@ -561,121 +704,12 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
         radarEyePending = true;
 #endif
       }
-
-      // Left info display (building)...
-      //   Actual processing is deferred due to account for day time highlighting.
-      else if (rc == rcLockSensor1 || rc == rcLockSensor2 || rc == rcDayTime) {
-        if (rc == rcLockSensor1 || rc == rcDayTime) {
-          changedLock1 = true;
-          lock1Valid = (rcLockSensor1->GetValue (&lock1Closed) == rcsValid);
-        }
-        if (rc == rcLockSensor2 || rc == rcDayTime) {
-          changedLock2 = true;
-          lock2Valid = (rcLockSensor2->GetValue (&lock2Closed) == rcsValid);
-        }
-        isDay = rcDayTime->ValidBool (false);
-      }
-      else if (rc == rcMotion) {
-        changedMotion = true;
-      }
     }
   }
 
-  // Deferred processing: Redraw 'btnWeather' if changed...
-  if (changedWeather) {
-
-    // Outside (main) temperature...
-    font = FontGet (fntLight, 96);
-    rcTempOutside->GetValueState (&val);
-    if (val.IsValid ()) {
-      tempOutside = (int) round (val.UnitFloat (rctTemp) * 10);
-      sprintf (buf, (tempOutside < -9 || tempOutside >= 0) ? "%i°C" : "-%i°C", tempOutside / 10);
-      surf = FontRenderText (font, buf, WHITE, BLACK);
-      r = Rect (surf);
-      r.x = r.w - FontGetWidth (font, "°C") - 4;
-      r.h -= 12;
-      font = FontGet (fntLight, 32);
-      sprintf (buf, ".%i", (tempOutside < 0 ? -tempOutside : tempOutside) % 10);
-      LangTranslateNumber (buf);
-      surf2 = FontRenderText (font, buf, WHITE, BLACK);
-      SurfaceBlit (surf2, NULL, surf, &r, -1, 1);
-      SurfaceFree (&surf2);
-    }
-    else surf = NULL; // FontRenderText (font, "-°C", WHITE, BLACK);   // no valid temperature
-
-    // Create frame surface and put temperature into it...
-    surf2 = surf;
-    frame = *btnWeather.GetArea ();
-    surf = CreateSurface (frame.w - 16, frame.h - 16);
-    frame = Rect (surf);
-    SDL_FillRect (surf, NULL, ToUint32 (BLACK)); // ToUint32 (TRANSPARENT));
-    SurfaceBlit (surf2, NULL, surf, &frame, 1, 0);
-    SurfaceFree (&surf2);
-
-    // Add data1 and data2...
-    font = FontGet (fntLight, 32);
-    RectGrow (&frame, 0, -8);
-    rcWeatherData1->GetValueState (&val);
-    if (val.IsValid ()) {
-      ScreenHomeFormatData (buf, sizeof (buf), &val);
-      surf2 = FontRenderText (font, buf, LIGHT_GREY);
-      r = Rect (frame.x, frame.y, WEATHER_W * 5/16, frame.h / 2);
-      SurfaceBlit (surf2, NULL, surf, &r, 1, 0, SDL_BLENDMODE_BLEND);
-      SurfaceFree (&surf2);
-    }
-    rcWeatherData2->GetValueState (&val);
-    if (val.IsValid ()) {
-      ScreenHomeFormatData (buf, sizeof (buf), &val);
-      surf2 = FontRenderText (font, buf, LIGHT_GREY);
-      r = Rect (frame.x, frame.y + frame.h / 2, WEATHER_W * 5/16, frame.h / 2);
-      SurfaceBlit (surf2, NULL, surf, &r, 1, 0, SDL_BLENDMODE_BLEND);
-      SurfaceFree (&surf2);
-    }
-
-    // Update label...
-    SurfaceMakeTransparentMono (surf);
-    btnWeather.SetLabel (surf);
-    SurfaceFree (&surf);
-  }
-
-  // Deferred processing: Redraw 'wdgLock1' / 'wdgLock2' if changed...
-  //~ if (changedLock1 || changedLock2) INFOF (("### changedLock1/2 = %i/%i, lock1Valid1/2 = %i/%i, lockClosed1/2 = %i/%i", changedLock1, changedLock2, lock1Valid, lock2Valid, lock1Closed, lock2Closed));
-  if (changedLock1) {
-    if (lock1Valid) {
-      //~ INFOF(("### isDay = %i", isDay));
-      wdgLock1.SetSurface (IconGet (lock1Closed ? "ic-padlock-48" : "ic-padlock-open-48", (!isDay && !lock1Closed) ? WHITE : GREY, BLACK));
-      AddWidget (&wdgLock1);
-    }
-    else DelWidget (&wdgLock1);
-  }
-  if (changedLock2) {
-    if (lock2Valid) {
-      wdgLock2.SetSurface (IconGet (lock2Closed ? "ic-padlock-48" : "ic-padlock-open-48", (!isDay && !lock2Closed) ? WHITE : GREY, BLACK));
-      AddWidget (&wdgLock2);
-    }
-    else DelWidget (&wdgLock2);
-  }
-
-  // Deferred processing: Redraw 'wdgMotion' if changed...
-  if (tMotionOff > 0 && now >= tMotionOff) changedMotion = true;
-  if (changedMotion) {
-    // Determine 'doorRadarStrong' and 'doorRadarWeak'...
-    //~ INFO (("### changedMotion"));
-    doorRadarStrong = rcMotion->ValidBool (false);
-    if (!doorRadarStrong && (tMotionOff == -1 || now < tMotionOff)) doorRadarWeak = true;
-    else doorRadarWeak = false;
-    // Draw icon...
-    if (doorRadarStrong || doorRadarWeak) {
-      wdgMotion.SetSurface (IconGet ("ic-walk-96", doorRadarStrong ? WHITE : GREY, BLACK));
-      AddWidget (&wdgMotion);
-    }
-    else DelWidget (&wdgMotion);
-    // Reset retention timer if appropriate...
-    if (doorRadarStrong) tMotionOff = -1;      // Sensor is '1' now => go to that state
-    else if (doorRadarWeak) tMotionOff = now + envMotionRetention; // Sensor was '1' and switched to '0' now => start retention
-    //~ INFOF (("### tMotionOff == %lli", tMotionOff));
-  }
-
+  // Deferred processing: Update data displays ...
+  wdgDataOutdoor.Iterate ();
+  wdgDataIndoor.Iterate ();
 
 #if !RADAREYE_DIRECT
   // Radar eye file reader (OBSOLETE) ...
@@ -687,7 +721,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     // If the image is complete: Show it...
     if (radarEyeReader.Success () || radarEyeReader.Error ()) {
       //~ INFOF(("### radarEye: Done"));
-      btnRadarEye.SetLabel (radarEyeReader.Surface ());
+      btnRadarEye.SetLabel (SurfaceDup (radarEyeReader.Surface ()), NULL, true);
       radarEyeReader.Clear ();
     }
   }
@@ -727,9 +761,15 @@ void CScreenHome::Activate (bool on) {
   CScreen::Activate (on);
 
 #if !SUBSCRIBE_PERMANENTLY && !SUBSCRIBE_WHEN_SCREEN_ON
-  if (on) SubscribeAll ();
-  else subscr.Clear ();
+  if (on) {
+    SubscribeAll ();
+  }
+  else {
+    subscr.Clear ();
+    FloorplanUnsubscribeAll ();
+  }
 #endif
+  wdgFloorplan.Activate (on);
   //~ subscr.PrintInfo (); rcTempOutside->PrintInfo ();
 }
 
@@ -737,7 +777,7 @@ void CScreenHome::Activate (bool on) {
 
 
 
-// ***************** CScreenInfo ***************************
+// *************************** CScreenInfo *************************************
 
 
 class CScreenInfo: public CScreen {
@@ -767,7 +807,7 @@ static CThread sysinfoThread;
 
 
 static void SysinfoComplete (void *) {
-  // printf ("### Output follows...\n%s\n### END of output\n", sysinfoText.c_str ());
+  //~ INFO ("### SysinfoComplete ()...");
   scrInfo->DisplayText (sysinfoText.Get ());
   sysinfoThread.Join ();
   sysinfoInProgress = false;
@@ -775,30 +815,42 @@ static void SysinfoComplete (void *) {
 
 
 static void *SysinfoThreadRoutine (void *) {
-  static const char scriptName[] = "h2l-sysinfo.sh 2>&1";
+  //~ static const char scriptName[] = "h2l-sysinfo.sh 2>&1";
   CShellBare shell;
-  CString line;
+  CString cmd, line;
+
+  //~ INFO ("### SysinfoThreadRoutine (): Starting");
 
   // Run script...
   sysinfoText.Clear ();
-  shell.Start (scriptName);
-  while (!shell.ReadClosed ()) {
-    shell.WaitUntilReadable ();
-    if (shell.ReadLine (&line)) {
-      sysinfoText.Append (line);
-      sysinfoText.Append ("\n");
+  if (!envSysinfoCmd) sysinfoText.SetF ("No system info cmmand defined (%s)", envSysinfoCmdKey);
+  else {
+    EnvGetHome2lRootPath (&cmd, envSysinfoCmd);
+    shell.SetHost (envSysinfoHost);
+    shell.Start (cmd.Get (), true);
+    while (!shell.ReadClosed ()) {
+      shell.WaitUntilReadable ();
+      if (shell.ReadLine (&line)) {
+        sysinfoText.Append (line);
+        sysinfoText.Append ("\n");
+      }
     }
+    //~ INFO ("### SysinfoThreadRoutine (): shell.ReadClosed ()!");
   }
-  if (sysinfoText.IsEmpty ()) sysinfoText.SetF ("Failed to run '%s'!", scriptName);
+
+  // Handle error...
+  if (sysinfoText.IsEmpty ()) sysinfoText.SetF ("Failed to run '%s'!", cmd.Get ());
 
   // Let main thread do the rest...
   MainThreadCallback (SysinfoComplete, NULL);
+  //~ INFO ("### SysinfoThreadRoutine (): Ending");
   return NULL;
 }
 
 
 static void StartSysinfo () {
   ASSERT (!sysinfoInProgress && !sysinfoThread.IsRunning ());
+  //~ INFO ("### StartSysinfo ()...");
   sysinfoInProgress = true;
   sysinfoThread.Start (SysinfoThreadRoutine);
 }
@@ -881,6 +933,7 @@ void CScreenInfo::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     // Sysinfo update...
     curTime = (int) SDL_GetTicks ();
     if (!sysinfoInProgress && curTime > lastSysinfoTime + 1000) {
+      //~ INFO ("### Starting sysinfo");
       StartSysinfo ();
       lastSysinfoTime = curTime;
     }
@@ -891,13 +944,14 @@ void CScreenInfo::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
 void CScreenInfo::DisplayText (const char *text) {
   SDL_Rect *cr, *wr;
 
-  surfSysinfo = TextRender (text, CTextFormat (FontGet (fntMono, 12), WHITE, BLACK, -1, 0), surfSysinfo);
+  SurfaceFree (&surfSysinfo);
+  surfSysinfo = TextRender (text, CTextFormat (FontGet (fntMono, 12), WHITE, BLACK, -1, 0));
   wdgSysinfo.SetArea (Rect (surfSysinfo));
   wdgSysinfo.SetSurface (surfSysinfo);
   wr = wdgSysinfo.GetArea ();
   cr = cvsSysinfo.GetVirtArea ();
-  if (wr->w != cr->w || wr->h != cr->h)
-    cvsSysinfo.SetVirtArea (Rect (cvsSysinfo.GetArea ()->x, cvsSysinfo.GetArea ()->y, wr->w, wr->h));
+  if (wr->w != cr->w || wr->h != cr->h)   // widget size changed? (different dimensions than current virtual area?)
+    cvsSysinfo.SetVirtArea (Rect (cr->x, cr->y, wr->w, wr->h));
 }
 
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ ENV_PARA_SPECIAL ("doorman.<ID>.buttonRc", const char *, NULL);
    *
    * There are two options to connect to a door button, which is either by defining
    * an external resource using this parameter or by using the internal
-   * resource \rcref{doorman-ID/button}. If the external resource is defined,
+   * resource \refrc{doorman-ID/button}. If the external resource is defined,
    * both resources are logically OR'ed internally.
    */
 ENV_PARA_SPECIAL ("doorman.<ID>.buttonInertia", int, 2000); static const int envButtonInertiaDefault = 2000;
@@ -104,7 +104,7 @@ class CDoorPhone: public CPhone {
     TTicks openerDuration, openerHangup, buttonInertia;
 
     // Work variables...
-    CRcEventProcessor *driver;
+    CRcEventDriver *driver;
     CResource *rcDial, *rcButton /*, *rcOpener */;
     CRcSubscriber subscriber;   // deprecated
     TTicks tHangup;         // time for auto-hangup (-1 = no auto-hangup)
@@ -120,7 +120,7 @@ void CDoorPhone::Setup (const char *_id) {
 
   // Read phone-specific configuration settings...
   fmt.SetF ("doorman.%s.%%s", id);
-  lpLinphoneRcFileName = EnvGetPath (StringF (&s, fmt.Get (), "linphonerc"), true);
+  lpLinphoneRcFileName = EnvGetPath (StringF (&s, fmt.Get (), "linphonerc"), NULL, true);
   identity = EnvGetString (StringF (&s, fmt.Get (), "register"), true);
   secret = EnvGetString (StringF (&s, fmt.Get (), "secret"), true);
   camRotation = EnvGetInt (StringF (&s, fmt.Get (), "rotation"), 0);
@@ -154,8 +154,8 @@ void CDoorPhone::Setup (const char *_id) {
 
   // Setup resources...
   s.SetF ("doorman-%s", _id);
-  driver = RcRegisterDriver (s.Get ());
-  rcButton = RcRegisterResource (s.Get (), "button", rctBool, true);
+  driver = RcRegisterDriver (s.Get (), rcsValid);
+  rcButton = RcRegisterResource (driver, "button", rctBool, true);
   rcButton->SetDefault (false);
     /* [RC:doorman-ID] Virtual bell button of the specified doorphone
      *
@@ -166,21 +166,21 @@ void CDoorPhone::Setup (const char *_id) {
      *
      * There are two options to connect to a door button, which is either by defining
      * an external resource using this parameter or by using the internal
-     * resource \envref{doorman.<ID>.buttonRc}.
+     * resource \refenv{doorman.<ID>.buttonRc}.
      * Internally, both resources are logically OR'ed.
      */
-  rcDial = RcRegisterResource (s.Get (), "dial", rctString, true);
+  rcDial = RcRegisterResource (driver, "dial", rctString, true);
     /* [RC:doorman-ID] Number to dial for the specified doorphone
      *
      * This is the number dialed if the door button is pushed. The default value
-     * is set to the configuration parameter \envref{doorman.<ID>.dial}.
+     * is set to the configuration parameter \refenv{doorman.<ID>.dial}.
      * This resource allows to change the number to dial dynamically, for example,
      * in order to temporarily redirect door bell calls to a mobile phone when
      * out of home.
      * The "ID" in the driver name is replaced by the name of the declared phone.
      */
   if (envDial) rcDial->SetDefault (envDial);
-  //~ rcOpener = RcRegisterResource (s.Get (), "opener", rctBool, true);  // [RC:UNDOCUMENTED]
+  //~ rcOpener = RcRegisterResource (s.Get (), "opener", rctBool, true);  // [RC:-]
   //~ rcOpener->SetDefault (false);
 
   // Setup subscriber...
@@ -202,7 +202,7 @@ void CDoorPhone::Iterate () {
   while (driver->PollEvent (&ev)) {
     //~ INFOF (("# Driver event: %s", ev.ToStr ()));
     if (ev.Type () == rceDriveValue && ev.Resource ()->Is (rcButton)) {
-      if (ev.ValueState ()->Bool () == true) buttonPushed = true;
+      if (ev.ValueState ()->ValidBool (false) == true) buttonPushed = true;
     }
   }
 

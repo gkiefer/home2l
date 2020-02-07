@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,14 +21,12 @@
 echo `uname -n`" ("`uname -m`") up since "`uptime -s`
 echo
 uname -srv
-echo
-if [ -f /sys/class/sensors/light_sensor/lux -a -f /sys/class/backlight/panel/brightness ]; then
-  echo "Light: "`cat /sys/class/sensors/light_sensor/lux`" Lux, Display: "`cat /sys/class/backlight/panel/brightness`"/255"
-  echo
-fi
+
 top -bn 1 -o "%CPU" | head -15
 top -bn 1 -o "%MEM" | head -15 | tail -10
+
 echo
 netstat -i
+
 echo
 /sbin/route

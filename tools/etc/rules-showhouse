@@ -1,0 +1,187 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2020 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is an example rules script for the tutorial.
+
+
+
+
+
+################################################################################
+#                                                                              #
+#                         Initialization                                       #
+#                                                                              #
+################################################################################
+
+
+# Import the Home2L library ...
+from home2l import *
+
+
+# Init Home2L, passing custom instance name ...
+Home2lInit (instance = "rules")
+
+
+# Get common resources ...
+rcUse = RcGet ("/alias/use")
+rcDaylight = RcGet ("/alias/daylight")
+rcWeatherWarning = RcGet ("/alias/weatherWarning")
+
+
+
+
+
+################################################################################
+#                                                                              #
+#                             Rules                                            #
+#                                                                              #
+################################################################################
+
+
+
+
+######################### Front Light ##########################################
+
+# At night, the front light is switched on automatically for 5 seconds when the
+# motion sensor is triggered. At day time, the light is off permanently.
+# BTW: These rules can be overridden and the light manually be switched on and
+# off in the WallClock UI. Try it!
+
+
+rcMotion = RcGet ("/host/showhouse/world/motion")
+rcLight  = RcGet ("/alias/frontLight")
+
+
+@onUpdate (rcMotion)
+def LightOnIfMotion ():
+  # If the motion sensor shows activity, turn on the light for 5 seconds.
+  if rcMotion.Value () == True:
+    rcLight.SetRequest ("1 #motion -5000")
+
+
+@onUpdate (rcDaylight)
+def LightOffDuringDay ():
+  # (Only) At day time, switch off the light. This gets a higher priority
+  # than #motion requests to have the light off.
+  if rcDaylight.Value () == True:
+    rcLight.SetRequest ("0 #daytime *4")
+  else:
+    rcLight.DelRequest ("#daytime")
+
+
+
+
+
+######################### Windows and Shades ###################################
+
+# This section contains two example rules to control windows and shades.
+
+
+# Internal resource to represent the maximum outside temperature over the day.
+#   Change this to a value of 25 degrees or higher to try the 'RoofWindowCooling' rule.
+rcTempDayMaxOutside = NewSignal ("tempDayMaxOutside", rctTemp, 20.0)
+
+rcRoofWindow = RcGet ("/alias/floorplan/living-roofwin/actuator")
+rcRoofShades = RcGet ("/alias/floorplan/living-roofwin/shades")
+
+
+@onUpdate (rcDaylight)
+def ShadesAtNight ():
+  # Automatically close window shades over night. The set of shades actually
+  # controlled by this rule is defined by the below "for" loop.
+  if rcDaylight.ValidValue (True):
+    value = 0     # day time or daylight status unknown: leave shades open
+  else:
+    value = 100   # night time: close the shades
+  for room in ( "dining", "kitchen", "bedroom", "bath" ):    # iterate over the windows
+    RcGet ("/alias/floorplan/" + room + "-shades/shades").SetRequest (value);
+      # The resources URIs can be looked up in the floorplan / resources.conf.
+
+
+@onUpdate (rcTempDayMaxOutside, rcDaylight, rcWeatherWarning)
+def RoofWindowCooling ():
+  # On hot days, the house can be cooled by opening the roof window over night
+  # to let fresh, cool air get in. At day time, the window is closed as well as
+  # the shades to keep warm air and sun rays outside.
+  # Of course, in case of rain or other sorts of bad weather, the roof window
+  # must be closed in any case...
+  if rcTempDayMaxOutside.ValidValue (0.0) < 25.0:   # outside temperature < 25 degrees?
+    valWindow = 0       # default (not a hot day): do not open the window, ...
+    valShades = 0       # ... and do not close the shades
+  else:
+    if rcDaylight.ValidValue (False):
+      valWindow = 0     # day time: close window ...
+      valShades = 100   # ... and close shades as a heat protection
+    else:
+      valWindow = 100   # night time: open window ...
+      valShades = 0     # ... and shades get let the warm air leave the building
+  if rcWeatherWarning.ValidValue (True):
+    valWindow = 0       # Safety: if 'rcWeatherWarning' is true or unknown: Close the roof window!
+  rcRoofWindow.SetRequest (valWindow)
+  rcRoofShades.SetRequest (valShades)
+
+
+
+
+
+######################### WallClock Display ####################################
+
+# The display state (on/off, active/standby) can be controlled by means of
+# resources. This is demonstrated by the following rule.
+
+
+rcWallClockActive  = RcGet ("/host/wallclock/ui/active")
+rcWallClockStandby = RcGet ("/host/wallclock/ui/standby")
+
+
+@daily ("wallclock")
+def WallClockDisplay ():
+  # Keep the WallClock display always on in active mode.
+  # This is useful for the first steps of the tutorial - later this line may be
+  # removed.
+  rcWallClockActive.SetRequest (True)
+  # Switch and keep on the WallClock display at day time (from 7:00 until 23:00).
+  rcWallClockStandby.SetRequest (True, "+7:00 -23:00")
+
+
+
+
+
+######################### Use State ############################################
+
+# This rule sets the default use state according to the day/night time.
+
+
+@onUpdate (rcDaylight)
+def SetDefaultUseState ():
+  rcUse.SetRequest ((rcvUseNight, rcvUseDay) [rcDaylight.ValidValue (False)], priority = 1)
+
+
+
+
+
+################################################################################
+#                                                                              #
+#                         Run Main Event Loop                                  #
+#                                                                              #
+################################################################################
+
+
+Home2lRun ()

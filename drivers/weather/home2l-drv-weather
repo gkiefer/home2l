@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,10 +78,10 @@ else: debug = False
 # c) Some constants...
 
 # Local data: URL to the opendata server of the DWD (german weather service)...
-urlLocalData = "https://opendata.dwd.de/weather/weather_reports/poi/" + str (optStationID) + "-BEOB.csv"
+urlLocalData = "http://opendata.dwd.de/weather/weather_reports/poi/" + str (optStationID) + "-BEOB.csv"
 
 # Radar: URL to the opendata server of the DWD (german weather service)...
-urlRadar = "https://opendata.dwd.de/weather/radar/composit/pg/raa00-pc_10015-latest-dwd---bin"
+urlRadar = "http://opendata.dwd.de/weather/radar/composit/pg/raa00-pc_10015-latest-dwd---bin"
 
 
 

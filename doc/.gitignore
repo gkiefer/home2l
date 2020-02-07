@@ -15,8 +15,7 @@ _markdown_*
 home2l-book.markdown.*
 
 # Own intermediate files...
-figs/*.eps
-figs/*-eps-converted-to.pdf
+svg-inkscape
 /*-web.png
 ref_*.tex
 api_c/

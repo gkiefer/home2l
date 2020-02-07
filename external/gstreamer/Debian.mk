@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2019 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,10 +24,20 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 # Version under Debian Stretch (2018-01-13):
 #   libgstreamer1.0-dev         1.10.4-1
 #   libglib2.0-dev              2.50.3-2
-#	  
+#
 
-CFLAGS += $(shell pkg-config --cflags gstreamer-1.0 glib-2.0)
-LDFLAGS += $(shell pkg-config --libs gstreamer-1.0 glib-2.0)
+ifeq ($(ARCH),amd64)
+	PKG_ENV := PKG_CONFIG_LIBDIR=/usr/lib/x86_64-linux-gnu/pkgconfig
+else ifeq ($(ARCH),i386)
+	PKG_ENV := PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig
+else ifeq ($(ARCH),armhf)
+	PKG_ENV := PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabihf/pkgconfig
+else
+	PKG_ENV :=
+endif
+
+CFLAGS += $(shell $(PKG_ENV) pkg-config --cflags gstreamer-1.0)
+LDFLAGS += $(shell $(PKG_ENV) pkg-config --libs gstreamer-1.0)
 
 
 
@@ -38,7 +48,7 @@ LDFLAGS += $(shell pkg-config --libs gstreamer-1.0 glib-2.0)
 # glib
 # ----
 # ...> wget https://download.gnome.org/sources/glib/2.55/glib-2.55.1.tar.xz
-# ...> tar Jxf glib-2.55.1.tar.xz 
+# ...> tar Jxf glib-2.55.1.tar.xz
 # .../glib-2.55.1> ./configure --prefix=$PWD/../../usr.new/i386 --disable-shared --enable-static --disable-libmount --disable-fam
 # .../glib-2.55.1>  make -j 8 install
 #

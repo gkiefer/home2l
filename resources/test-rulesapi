@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,14 +38,12 @@ Home2lInit ("test-rulesapi", True)
 ############################## Driver definitions ##############################
 
 
-RcNewResource ("pytest", "pyInt", rctInt, True)   # writeable resource
+NewResource ("pytest", "pyInt", rctInt, True)   # writeable resource
 
 @newDriver ("pytest", rcsBusy)
 def DrivePytest (rc, vs):
   print ("DrivePytest: ", vs, " -> ", rc)
   rc.ReportValueState (vs)      # ", rcsValid" is not necessary
-
-#~ NewDriver ("pytest", DrivePytest, rcsBusy)
 
 
 
@@ -55,10 +53,11 @@ def DrivePytest (rc, vs):
 
 
 @onUpdate ("/local/timer/now")
-def PrintTime (rc, vs):
+def PrintTime ():
   #~ print ("###", rc, "#", vs.ToStr (True), "#")
   #~ print ("# type = ", vs.Type ())
   #~ print ("# value = ", vs.Value ())
+  vs = RcGet ("/local/timer/now").ValueState ()
   print ("The time is: " + vs.ToStr ())
   #~ try:
     #~ tRec = CRcTime (vs.Value () * 1000)
@@ -72,31 +71,27 @@ def PrintTime (rc, vs):
       #~ print ("  -> requesting testFloat...")
       #~ RcSetRequest ("/host/lilienthal/signal/testFloat", "timer", tRec.ts / 10.0)
 
-#~ RcRunOnEvent (PrintTime, "/local/timer/now")
-
 
 @onEvent ([ "/host/lilienthal/signal/testInt", "/host/lilienthal/signal/testFloat", "/local/pytest/*" ])
 def TestEvents (evType, rc, vs):
   #~ if not rc: return [ "/host/lilienthal/signal/testInt", "/host/lilienthal/signal/testFloat", "/local/pytest/*" ]
   print ("Event:", CRcEvent (evType, rc, vs))
 
-#~ RcRunOnEvent (TestEvents, [ "/host/lilienthal/signal/testInt", "/host/lilienthal/signal/testFloat", "/local/pytest/*" ] )
-#~ RcRunOnEvent ([ PrintTime, TestEvents ])
 
 
 ##### Timer #####
 
 
-@at (0.5 * SECS_FROM_NOW)
+@at (TicksOfSeconds (0.5))
 def TimerSoon ():
   print ("Timer 1: soon")
 
-@at (1500 * MS_FROM_NOW)
+@at (1500)
 def TimerLater ():
   print ("Timer 2: later")
-  RcSetRequest ("/local/pytest/pyInt", "timer", 42)
+  RcSetRequest ("/local/pytest/pyInt", 42, id = "timer")
 
-@at (dt = 3.5 * SECS)
+@at (dt = TicksOfSeconds (3.5))
 def TimerOften ():
   print ("Timer 3: often")
 
@@ -105,47 +100,7 @@ def TimerOften ():
 def TimerWithData (data):
   print ("Timer 4: data = '" + data + "'")
 
-RcRunAt (TimerWithData, TicksNow () + 2 * SECS, 0, "my data")
-
-
-
-##### Daily preparation #####
-
-
-#~ DefOnUpdate (Daily, [ "/local/timer/minutely" ])
-#~ def Daily (rc = None, vs = None):
-  #~ today = CRcTime ().DateTicks ();
-  #~ RcSetRequest ("/host/inf001/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
-  #~ RcSetRequest ("/host/inf834/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
-
-
-#~ class RuleDaily (CRcRule):
-  #~ triggers = [ "/local/timer/minutely" ]
-#~
-  #~ def OnUpdate (rc, vs):
-    #~ today = CRcTime ().DateTicks ();
-    #~ RcSetRequest ("/host/inf001/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
-    #~ RcSetRequest ("/host/inf834/ui/standby", "rules", 1, rcPrioNormal, today + TicksOfTime (7, 0, 0), today + TicksOfTime (23, 0, 0));
-
-
-
-#~ DefOnEvent (Watchdog834, "/host/inf834/timer/daily");
-#~ def Watchdog834 (evType, rc, vs):
-  #~ if evType == rceDisconnected:
-    #~ os.system ("sudo -u home2l home2l adb inf834 shell am start org.home2l.app/.Home2lActivity");
-  #~ if evType == rceConnected:
-    #~ Daily (None, None)
-
-
-#~ class RuleWatchdog834 (CRcRule):
-  #~ rcDaily = Subscribe ("/host/inf834/timer/daily")
-#~
-  #~ def OnEvent (evType, rc, vs):
-    #~ if evType == rceDisconnected:
-      #~ os.system ("sudo -u home2l home2l adb inf834 shell am start org.home2l.app/.Home2lActivity");
-    #~ if evType == rceConnected:
-      #~ RuleDaily.OnUpdate (None, None)
-
+RunAt (TimerWithData, TicksNow () + TicksOfSeconds (2), 0, "my data")
 
 
 

@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ SHELL := /bin/bash
 
 
 # Python (used in 'resources') ...
-PYTHON_INCLUDE := /usr/include/python3.5
+PYTHON_INCLUDE := /usr/include/python3.7
 
 
 # C/C++ Compiler & strip option for 'install'...
@@ -92,13 +92,17 @@ else
     #
     #       Under Debian Stretch, things appear to be similar. Here, 'g++-6-multilib'
     #       has been installed manually.
+    #
+    #       Under Debian Buster, things appear to be similar again. Here,
+    #       'g++-8-multilib' has been installed manually. The same holds for
+    #       compiling 'i386' binaries on an 'amd64' machine.
     ifeq ($(HOST_ARCH),i386)
       CC := g++ -m64 -no-pie
       STRIP := -s
     endif
   endif
   ifeq ($(ARCH),i386)
-    # Note: Cross-building for 'i386' on 'amd64' is not tested!
+    # Note: Cross-building for 'i386' on 'amd64' is only rarely tested.
     ifeq ($(HOST_ARCH),amd64)
       CC := g++ -m32 -no-pie
       STRIP := -s
@@ -154,9 +158,6 @@ WITH_MUSIC ?= 1
 WITH_GSTREAMER ?= $(WITH_MUSIC)
 	# Build music applet with the capability to stream audio back to the local device
 	# (requires 'GStreamer' to build)
-ifeq ($(ARCH),amd64)               # TBD: FIXME
-  WITH_GSTREAMER := 0
-endif
 
 
 # Default compiler and linker settings ...
@@ -165,6 +166,7 @@ CFLAGS := -MMD -g -Wall -pthread -I.
   # -I.  : Make sure that includes are first searched in the local directory (config.H!)
   #  -DBUILD_OS=\"Debian\" -DBUILD_ARCH=\"$(ARCH)\"
 LDFLAGS := -pthread
+SRC :=
 
 
 # Release settings modifications ...
@@ -172,7 +174,7 @@ ifeq ($(RELEASE),1)     # Optimize for speed, but do not sacrifice code size too
 CFLAGS += -O2
 CC_SUFF :=
 else    # Optimize debugging experience
-CFLAGS += -Og
+CFLAGS += # -Og
 CC_SUFF := '*'
 endif
 
@@ -200,7 +202,9 @@ endif
 
 
 # Version ...
-GIT_VERSION := $(shell git describe --tags --long --dirty='*' --abbrev=4 --always)
+ifeq ($(BUILD_VERSION),)
+BUILD_VERSION := $(shell git describe --tags --long --dirty='*' --abbrev=4 --always || echo dev)
+endif
 BUILD_DATE := $(shell date +%Y-%m-%d)
 
 
@@ -225,6 +229,8 @@ build-arch:
 
 install-indep: build-indep
 install-arch: build-arch
+
+veryclean:
 
 
 # Common compilation rules ...
@@ -287,7 +293,7 @@ config:
 	    | sed 's/[[:space:]]*$$//g' > config-new.H; \
 	diff -q config.H config-new.H > /dev/null 2>&1 || mv config-new.H config.H; \
 	rm -f config-new.H; \
-	echo -e "const char *buildVersion = \""$(GIT_VERSION)"\";\nconst char *buildDate = \""$(BUILD_DATE)"\";" \
+	echo -e "const char *buildVersion = \""$(BUILD_VERSION)"\";\nconst char *buildDate = \""$(BUILD_DATE)"\";" \
 	    "\nconst char *home2lAuthor = \""$(HOME2L_AUTHOR)"\";\nconst char *home2lUrl = \""$(HOME2L_URL)"\";" \
 	    | sed 's/[[:space:]]*$$//g' > config-new.C; \
 	diff -q config.C config-new.C > /dev/null 2>&1 || mv config-new.C config.C; \

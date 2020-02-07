@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -268,7 +268,7 @@ enum EPhoneAction {
 
 class CScreenPhone: public CScreen {
   public:
-    CScreenPhone () { surfImage = surfInfo = surfInput = NULL; imageBlinkTime = -1; peerIsDoor = openDoor = false; tHangup = -1; }
+    CScreenPhone ();
     virtual ~CScreenPhone () { Done (); }
     void Done ();
 
@@ -292,6 +292,9 @@ class CScreenPhone: public CScreen {
     void OnDialButton (char c);
     void OnFavButton (int favId);
 
+    // High-level actions...
+    bool Dial (const char *url, CScreen *_returnScreen = NULL) { returnScreen = _returnScreen; return phone.Dial (url); }
+
   protected:
     void SetMicOn (bool on);
     void SetCamOn (bool on);
@@ -301,6 +304,7 @@ class CScreenPhone: public CScreen {
 
     // Phone...
     CPhone phone;
+    CScreen *returnScreen;                // if != NULL: Screen to activate when idle
 
     // UI elements...
     CButton btnHangup, btnCall,           // general
@@ -319,7 +323,6 @@ class CScreenPhone: public CScreen {
     char favNames[10][MAX_FAVNAME+1], favUrls[10][MAX_URL+1];
 
     // Ringing view...
-    CScreen *lastActiveScreen = NULL;
     SDL_Surface *surfImage;
     bool imageEnabled;
     TTicksMonotonic imageBlinkTime;
@@ -372,6 +375,15 @@ static void CbShowInfo (void *, const char *msg) {
 // ***** Init/Done/Iterate *****
 
 
+CScreenPhone::CScreenPhone () {
+  returnScreen = NULL;
+  surfImage = surfInfo = surfInput = NULL;
+  imageBlinkTime = -1;
+  peerIsDoor = openDoor = false;
+  tHangup = -1;
+}
+
+
 void CScreenPhone::Done () {
   phone.Done ();
   wdgInfo.SetSurface (NULL);
@@ -390,6 +402,7 @@ void CScreenPhone::Setup () {
   char key[30], digit[2];
 
   // Setup phone (without callbacks, they may not work at this time)...
+  //   TBD: Use the 'var' dir for the echo cancelation state?
   EnvGetHome2lTmpPath (&tmpDir, EnvInstanceName ());
   //~ INFOF (("### tmpDir = '%s'", tmpDir.Get ()));
   EnvMkTmpDir (tmpDir.Get ());
@@ -633,9 +646,9 @@ void CScreenPhone::OnPhoneStateChanged (EPhoneState oldState) {
       for (n = 0; n < 10; n++) AddWidget (&btnsFavorites[n]);
 
       // Return to last active screen if some activity was interrupted by a call...
-      if (lastActiveScreen) {
-        lastActiveScreen->Activate ();
-        lastActiveScreen = NULL;
+      if (returnScreen) {
+        returnScreen->Activate ();
+        returnScreen = NULL;
       }
       break;
 
@@ -682,7 +695,7 @@ void CScreenPhone::OnPhoneStateChanged (EPhoneState oldState) {
       AddWidget (&wdgImage);
 
       // Activate screen...
-      lastActiveScreen = ActiveScreen ();
+      returnScreen = ActiveScreen ();
       Activate ();
 
       break;
@@ -959,4 +972,13 @@ void *AppFuncPhone (int appOp, void *data) {
       break;
   }
   return NULL;
+}
+
+
+void AppPhoneDial (const char *url, CScreen *returnScreen) {
+  if (scrPhone) {
+    scrPhone->Activate ();
+    scrPhone->Dial (url, returnScreen);
+  }
+  else WARNING ("AppPhoneDial(): No phone available.");
 }

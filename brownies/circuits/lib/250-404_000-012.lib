@@ -1,0 +1,39 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# 250-404/000-012
+#
+DEF 250-404/000-012 X 0 40 Y N 1 L N
+F0 "X" -142 478 50 H V L BNN
+F1 "250-404/000-012" -142 -518 50 H V L BNN
+F2 "P-250-404" 0 0 50 H I L BNN
+F3 "PCB terminal block" 0 0 50 H I L BNN
+F4 "Unavailable" 0 0 50 H I L BNN
+F5 "WAGO" 0 0 50 H I L BNN
+F6 "None" 0 0 50 H I L BNN
+F7 "None" 0 0 50 H I L BNN
+F8 "250-404/000-012" 0 0 50 H I L BNN
+DRAW
+P 2 0 0 8 -150 -400 150 -400 N
+P 2 0 0 8 150 200 150 400 N
+P 2 0 0 8 150 400 -150 400 N
+P 2 0 0 8 -150 400 -150 200 N
+P 2 0 0 8 -150 200 -150 0 N
+P 2 0 0 8 -150 200 150 200 N
+P 2 0 0 8 150 -400 150 -200 N
+P 2 0 0 8 150 -200 150 0 N
+P 2 0 0 8 150 0 150 200 N
+P 2 0 0 8 150 0 -150 0 N
+P 2 0 0 8 -150 0 -150 -200 N
+P 2 0 0 8 -150 -200 -150 -400 N
+P 2 0 0 8 -150 -200 150 -200 N
+X P4 L4 -100 -300 100 R 40 40 0 0 B I
+X P3 L3 -100 -100 100 R 40 40 0 0 B I
+X P2 L2 -100 100 100 R 40 40 0 0 B I
+X P1 L1 -100 300 100 R 40 40 0 0 B I
+ENDDRAW
+ENDDEF
+#
+# End Library

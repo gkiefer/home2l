@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "env.H"
 #include "system.H"
 #include "apps.H"
+#include "floorplan.H"
 #include "alarmclock.H"
 
 #include <resources.H>
@@ -30,13 +31,12 @@
 #include <stdio.h>
 
 
-ENV_PARA_STRING ("sys.androidGateway", envAndroidGateway, NULL);
-  /* Gateway IP adress for Android app
+ENV_PARA_BOOL ("home2l.unconfigured", envUnconfigured, false);
+  /* Print information for new users
    *
-   * If set, a default route is set with the given IP adress as a gateway
-   * by the Android app. This is useful if the device is conntected to the
-   * LAN in a way not directly supported by the Android UI, such as an OpenVPN
-   * tunnel over the USB cable.
+   * If set, the WallClock app shows an info box on startup indicating that
+   * this installation is still unconfigured and how it should be configured.
+   * This option should only be set by the factory config file.
    */
 
 
@@ -70,7 +70,7 @@ void PrintRendererInfo () {
 }
 
 
-void TestDefaultPixelTypes () {
+static inline void TestDefaultPixelTypes () {
   SDL_Renderer *ren;
   SDL_RendererInfo renInfo;
   //SDL_Texture *tex;
@@ -87,8 +87,8 @@ void TestDefaultPixelTypes () {
     INFOF(("  SDL_Renderer [%i]:         %s", n, SDL_GetPixelFormatName (renInfo.texture_formats[n])));
 
   // Image...
-  surf = IconGet ("ic_volume_up-96");
-  INFOF(("  IconGet ('ic_volume_up'): %s", SDL_GetPixelFormatName (surf->format->format)));
+  surf = IconGet ("ic-home2l-96");
+  INFOF(("  IconGet ('ic-home2l'): %s", SDL_GetPixelFormatName (surf->format->format)));
 
   // Font...
   font = FontGet (fntNormal, 24);
@@ -112,36 +112,60 @@ void TestDefaultPixelTypes () {
 */
 
 
+static inline void ShowUnconfiguredInfo () {
+  RunMessageBox (
+    _("Welcome!"),
+    StringF (
+      _("The Home2L %s is successfully installed an running,\n"
+        "but still unconfigured on this device. To use all its great features,\n"
+        "it should be integrated into a Home2L building installation.\n"
+        "Please consult the Home2L Book available at\n"
+        "\n"
+        "%s\n"
+        "\n"
+        "for further information. To disable this message, remove\n"
+        "the line 'home2l.unconfigured = 1' from 'etc/home2l.conf'.\n"
+      ), WALLCLOCK_NAME, HOME2L_URL
+    ),
+    mbmOk,
+    IconGet ("ic-home2l-96")
+  );
+}
+
+
 int main (int argc, char **argv) {
 
+  // Pre-Initialization ...
+  //   These are initializations that must not depend on any other module,
+  //   but 'Env...' depends on them.
 #if ANDROID
-  INFO ("Home2L started");
+  INFO ("Home2L (native) started");
   argv[0] = (char *) "home2l-wallclock";
+  SystemPreInit ();
 #endif
 
+  // Initialization ...
   EnvInit (argc, argv);
-  EnvInitPersistence ();    // This is presently needed by: APP_MUSIC
-#if ANDROID
-  CString s;
-  const char *gw = EnvGet (envAndroidGatewayKey);
-  //~ INFOF (("### envAndroidGateway = '%s'", gw));
-  s.SetF ("test -e /debian/home || su -c '%s/bin/android-init.sh %s' &", EnvHome2lRoot (), gw ? gw : "");
-  system (s.Get ());
-#endif
+  EnvInitPersistence ();    // This is presently needed by: APP_MUSIC, ALARMCLOCK
   RcInit (true);
   UiInit ("Home2L - " WALLCLOCK_NAME);
   ScreenInit ();
   //~ TestDefaultPixelTypes ();
   SystemInit ();
-  AppsInit ();
   RcStart ();
+  FloorplanInit ();
   AlarmClockInit ();
+  AppsInit ();
 
+  // Main loop ...
   AppCall (appIdHome, appOpActivate);
+  if (envUnconfigured) ShowUnconfiguredInfo ();
   while (!UiIsClosed ()) UiIterate ();
 
-  AlarmClockDone ();
+  // Done ...
   AppsDone ();
+  AlarmClockDone ();
+  FloorplanDone ();
   SystemDone ();
   ScreenDone ();
   UiDone ();

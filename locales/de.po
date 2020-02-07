@@ -1,13 +1,13 @@
 # German translations for Home2L package
 # German translation for Home2L.
-# Copyright (C) 2018 Gundolf Kiefer
+# Copyright (C) 2020 Gundolf Kiefer
 # This file is distributed under the same license as the Home2L package.
 # Gundolf Kiefer, 2018.
 #
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2018-11-27 19:08+0100\n"
+        "POT-Creation-Date: 2020-01-31 19:48+0100\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -18,286 +18,358 @@ msgstr  "Project-Id-Version: Home2L\n"
         "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. TRANSLATORS: Set the first character to the locale's numerical decimal point. All other characters are ignored.
-#: ../common/base.C:385
+#: ../common/base.C:637
 msgid   ". (decimal point)"
 msgstr  ","
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "January"
 msgstr  "Januar"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "February"
 msgstr  "Februar"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "March"
 msgstr  "März"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "April"
 msgstr  "April"
 
-#: ../common/base.C:1608 ../common/base.C:1609
+#: ../common/base.C:1961 ../common/base.C:1962
 msgid   "May"
 msgstr  "Mai"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "June"
 msgstr  "Juni"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "July"
 msgstr  "Juli"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "August"
 msgstr  "August"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "September"
 msgstr  "September"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "October"
 msgstr  "Oktober"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "November"
 msgstr  "November"
 
-#: ../common/base.C:1608
+#: ../common/base.C:1961
 msgid   "December"
 msgstr  "Dezember"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Jan"
 msgstr  "Jan"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Feb"
 msgstr  "Feb"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Mar"
 msgstr  "Mär"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Apr"
 msgstr  "Apr"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Jun"
 msgstr  "Jun"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Jul"
 msgstr  "Jul"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Aug"
 msgstr  "Aug"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Sep"
 msgstr  "Sep"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Oct"
 msgstr  "Okt"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Nov"
 msgstr  "Nov"
 
-#: ../common/base.C:1609
+#: ../common/base.C:1962
 msgid   "Dec"
 msgstr  "Dez"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Monday"
 msgstr  "Montag"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Tuesday"
 msgstr  "Dienstag"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Wednesday"
 msgstr  "Mittwoch"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Thursday"
 msgstr  "Donnerstag"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Friday"
 msgstr  "Freitag"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Saturday"
 msgstr  "Samstag"
 
-#: ../common/base.C:1610
+#: ../common/base.C:1963
 msgid   "Sunday"
 msgstr  "Sonntag"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Mon"
 msgstr  "Mo"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Tue"
 msgstr  "Di"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Wed"
 msgstr  "Mi"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Thu"
 msgstr  "Do"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Fri"
 msgstr  "Fr"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Sat"
 msgstr  "Sa"
 
-#: ../common/base.C:1611
+#: ../common/base.C:1964
 msgid   "Sun"
 msgstr  "So"
 
 #: ../wallclock/alarmclock.C:589
-msgid   "Setup Alarm Clock"
-msgstr  "Wecker einstellen"
+msgid   "Enabled"
+msgstr  "Ein"
 
 #: ../wallclock/alarmclock.C:589
-msgid   "Alarm Clock is Disabled"
-msgstr  "Wecker ist abgeschaltet"
+msgid   "Disabled"
+msgstr  "Aus"
+
+#: ../wallclock/app_calendar.C:283
+#, c-format
+msgid   "Failed to load calendar file '%s/%s.rem':\n"
+msgstr  "Kann die Kalenderdatei '%s/%s.rem' nicht laden:\n"
 
 #. TRANSLATORS: Format string for the day header in the calendar event list (de_DE: "%s   %i.%i.%i")
 #. Arguments are: <week day name>, <day>, <month>, <year>
-#: ../wallclock/app_calendar.C:632
+#: ../wallclock/app_calendar.C:684
 #, c-format
 msgid   "%1$s   %3$i/%2$i/%4$i"
 msgstr  "%s   %i.%i.%i"
 
-#: ../wallclock/app_calendar.C:756
+#: ../wallclock/app_calendar.C:814
 msgid   "Discard changes?"
 msgstr  "Sollen die Änderungen im Eintrag\n"
         "verworfen werden?"
 
-#: ../wallclock/app_calendar.C:768
+#: ../wallclock/app_calendar.C:826
 msgid   "Really remove the current entry?"
 msgstr  "Bist Du sicher, dass Du\n"
         "den Eintrag löschen möchtest?"
 
-#: ../wallclock/app_calendar.C:933
+#: ../wallclock/app_calendar.C:996
 msgid   "Today"
 msgstr  "Heute"
 
-#: ../wallclock/app_calendar.C:1431
+#: ../wallclock/app_calendar.C:1498
 msgid   "Calendar"
 msgstr  "Kalender"
 
-#: ../wallclock/app_home.C:337
+#: ../wallclock/app_home.C:499
 msgid   "Mail"
 msgstr  "Mail"
 
-#: ../wallclock/app_home.C:342
+#: ../wallclock/app_home.C:504
 msgid   "WWW"
 msgstr  "WWW"
 
-#: ../wallclock/app_home.C:347
+#: ../wallclock/app_home.C:509
 msgid   "Android"
 msgstr  "Android"
 
 #. TRANSLATORS: Format string for the "<weekday>, <full date>" display on the home screen (de_DE: "%s, %i. %s %i")
 #. Arguments are: <week day name>, <day>, <month name>, <year>
-#: ../wallclock/app_home.C:505
+#: ../wallclock/app_home.C:652
 #, c-format
 msgid   "%1$s, %3$s %2$i, %4$i"
 msgstr  "%s, %i. %s %i"
 
-#: ../wallclock/app_home.C:833
+#: ../wallclock/app_home.C:885
 msgid   "Quit Home2L"
 msgstr  "Home2l beenden"
 
-#: ../wallclock/app_music.C:980
+#: ../wallclock/app_music.C:989
 msgid   "Connecting ..."
 msgstr  "Verbinde ..."
 
-#: ../wallclock/app_music.C:1267
+#: ../wallclock/app_music.C:1276
 msgid   "* Music Collection *"
 msgstr  "* Musik-Sammlung *"
 
-#: ../wallclock/app_music.C:1271
+#: ../wallclock/app_music.C:1280
 msgid   "* Current Queue *"
 msgstr  "* Aktuelle Liste *"
 
-#: ../wallclock/app_music.C:1272
+#: ../wallclock/app_music.C:1281
 msgid   "* Playlists *"
 msgstr  "* Abspiellisten *"
 
-#: ../wallclock/app_music.C:1273
+#: ../wallclock/app_music.C:1282
 msgid   "* Main *"
 msgstr  "* Hauptmenü *"
 
-#: ../wallclock/app_music.C:1422
+#: ../wallclock/app_music.C:1431
 msgid   "Music Collection"
 msgstr  "Musik-Sammlung"
 
-#: ../wallclock/app_music.C:1933
+#: ../wallclock/app_music.C:1953
 msgid   "Music"
 msgstr  "Musik"
 
-#: ../wallclock/app_phone.C:954
+#: ../wallclock/app_phone.C:967
 msgid   "Phone"
 msgstr  "Telefon"
 
+#: ../wallclock/floorplan.C:514 ../wallclock/floorplan.C:2369
+msgid   "Auto"
+msgstr  "Auto"
+
+#: ../wallclock/floorplan.C:683
+msgid   "  0% = Up"
+msgstr  "  0% = Oben"
+
+#: ../wallclock/floorplan.C:684
+msgid   "100% = Down"
+msgstr  "100% = Unten"
+
+#: ../wallclock/floorplan.C:686
+msgid   "Shades"
+msgstr  "Rolladen"
+
+#: ../wallclock/floorplan.C:702
+msgid   "100% = Open"
+msgstr  "100% = Auf"
+
+#: ../wallclock/floorplan.C:703
+msgid   "  0% = Closed"
+msgstr  "  0% = Zu"
+
+#: ../wallclock/floorplan.C:705
+msgid   "Window"
+msgstr  "Fenster"
+
+#: ../wallclock/floorplan.C:710
+msgid   "   On"
+msgstr  "   Ein"
+
+#: ../wallclock/floorplan.C:710
+msgid   "   Off"
+msgstr  "   Aus"
+
+#: ../wallclock/floorplan.C:1670
+msgid   "Wifi Access Point"
+msgstr  "WLAN Access Point"
+
+#: ../wallclock/floorplan.C:1671
+msgid   "Light"
+msgstr  "Licht"
+
+#: ../wallclock/floorplan.C:1672
+msgid   "Service"
+msgstr  "Service"
+
+#: ../wallclock/home2l-wallclock.C:117
+msgid   "Welcome!"
+msgstr  "Willkommen!"
+
+#: ../wallclock/home2l-wallclock.C:119
+#, c-format
+msgid   "The Home2L %s is successfully installed an running,\n"
+        "but still unconfigured on this device. To use all its great "
+        "features,\n"
+        "it should be integrated into a Home2L building installation.\n"
+        "Please consult the Home2L Book available at\n"
+        "\n"
+        "%s\n"
+        "\n"
+        "for further information. To disable this message, remove\n"
+        "the line 'home2l.unconfigured = 1' from 'etc/home2l.conf'.\n"
+msgstr  "Home2L %s ist installiert und funktioniert, wurde aber auf\n"
+        "diesem Gerät noch nicht eingerichtet. Um alle Möglichkeiten\n"
+        "nutzen zu können, sollten Sie es in eine Home2L-Gebäudeinstallation\n"
+        "integrieren. Wie das geht, ist in 'The Home2L Book' auf\n"
+        "\n"
+        "%s\n"
+        "\n"
+        "beschrieben. Um diese Nachricht nicht mehr zu zeigen, löschen Sie\n"
+        "bitte den Eintrag 'home2l.unconfigured = 1' in 'etc/home2l.conf'.\n"
+
 #. TRANSLATORS: Standard buttons for message boxes
-#: ../wallclock/ui_widgets.C:938
+#: ../wallclock/ui_widgets.C:1013
 msgid   "Cancel"
 msgstr  "Abbrechen"
 
-#: ../wallclock/ui_widgets.C:938
+#: ../wallclock/ui_widgets.C:1013
 msgid   "OK"
 msgstr  "OK"
 
-#: ../wallclock/ui_widgets.C:938
+#: ../wallclock/ui_widgets.C:1013
 msgid   "No"
 msgstr  "Nein"
 
-#: ../wallclock/ui_widgets.C:938
+#: ../wallclock/ui_widgets.C:1013
 msgid   "Yes"
 msgstr  "Ja"
 
-#: ../wallclock/ui_widgets.C:1041
+#: ../wallclock/ui_widgets.C:1112
 msgid   "Information"
 msgstr  "Information"
 
-#: ../wallclock/ui_widgets.C:1051
+#: ../wallclock/ui_widgets.C:1122
 msgid   "Warning"
 msgstr  "Warnung"
 
-#: ../wallclock/ui_widgets.C:1061
+#: ../wallclock/ui_widgets.C:1132
 msgid   "Error"
 msgstr  "Fehler"
 
-#: ../wallclock/ui_widgets.C:1071
+#: ../wallclock/ui_widgets.C:1142
 msgid   "Sure?"
 msgstr  "Sicher?"
 
-#: ../wallclock/ui_widgets.C:1081
+#: ../wallclock/ui_widgets.C:1152
 msgid   "Question"
 msgstr  "Frage"
-
-#~ msgid        "Push the 'Home2L' icon\n"
-#~      "to return here after\n"
-#~      "your Android activities."
-#~ msgstr       "Drücke das 'Home2L'-Symbol,\n"
-#~      "um die Android-Aktivitäten\n"
-#~      "zu beenden."

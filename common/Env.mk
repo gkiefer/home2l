@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,3 +24,6 @@ MYDIR := $(HOME2L_SRC)/common
 
 CFLAGS_ENV := -I$(MYDIR)
 SRC_ENV := $(MYDIR)/base.C $(MYDIR)/env.C
+
+CFLAGS += $(CFLAGS_ENV)
+SRC += $(SRC_ENV)

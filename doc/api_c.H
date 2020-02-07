@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,7 +56,8 @@
  *    - classes with constructors, destructors, methods, either virtual or not
  *    - operators 'new' and 'delete'
  *    - no reference arguments to methods (unless for copy constructors)
- * 4. Only in module @ref base, the following additional constructs may occur:
+ * 4. Only in modules @ref common_strings and @ref common_containers, the
+ *    following additional constructs may occur:
  *    - overloaded operator []
  *    - templates (to be used very carefully)
  */

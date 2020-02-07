@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -144,7 +144,7 @@ static CTimer acTimer;
 static TTicks tSnooze = NEVER;      // time up to which to snooze
 static TTicks tAlarm = NEVER;       // currently effective alarm time
 static TTicks tInState = NEVER;     // time of the last state change
-static TTicks tExtAlarm = 0;        // last set external alarm time; default = neither 'NEVER' nor a valid time
+static TTicks tExtAlarm = -1;       // last set external alarm time; default = neither 'NEVER' nor a valid time
 
 
 
@@ -440,7 +440,7 @@ static void Iterate (CTimer *timer = NULL, void *data = NULL) {
       else {
         t = TicksNow () - tInState;
         if (t >= 1000) AppMusicPlayerOn ();     // Try to restart music player once
-        if (t >= envTryTime) {               // Give up...
+        if (t >= envTryTime) {                  // Give up...
           AppMusicPlayerOff ();
           AudioStart (envAlarmRingFile, AUDIO_FOREVER, envAlarmRingGap);
           _acState = acsAlarmRinging;
@@ -586,7 +586,7 @@ void CScreenSetAlarmClock::UpdateVisibility () {
   int n;
 
   // Set main button contents ...
-  btnEnable.SetLabel (IconGet ("ic-alarm-48"), enabled ? _("Setup Alarm Clock") : _("Alarm Clock is Disabled"));
+  btnEnable.SetLabel (IconGet ("ic-alarm-48"), enabled ? _("Enabled") : _("Disabled"));
   btnEnable.SetColor (enabled ? COL_AC_MAIN : DARK_GREY);
 
   // Add/delete widgets as appropriate ...
@@ -690,12 +690,12 @@ CScreenSetAlarmClock::CScreenSetAlarmClock () {
   layoutMain = LayoutCol (RectScreen (), UI_SPACE,
                   -1,
                   UI_ROW_HEIGHT,      // [1] day time display
-                  UI_ROW_HEIGHT,  // [2] day buttons
+                  UI_ROW_HEIGHT,      // [2] day buttons
                   -1,
-                  UI_ROW_HEIGHT,  // [4] hour slider
-                  UI_ROW_HEIGHT,  // [5] minute slider
+                  UI_ROW_HEIGHT,      // [4] hour slider
+                  UI_ROW_HEIGHT,      // [5] minute slider
                   -1,
-                  UI_BUTTONS_HEIGHT,  // [9>7] button bar
+                  UI_BUTTONS_HEIGHT,  // [7] button bar
                   0);
   //~ layoutMain = LayoutCol (RectScreen (), UI_SPACE,
                   //~ UI_BUTTONS_HEIGHT,      // [0] title
@@ -713,12 +713,10 @@ CScreenSetAlarmClock::CScreenSetAlarmClock () {
   //    button and title bar...
   layoutRow = LayoutRowEqually (layoutMain[7], 2);
 
-  //~ btnBack.Set (layoutMain[9], COL_AC_MAIN, IconGet ("ic-back-48"));
   btnBack.Set (layoutRow[0], COL_AC_MAIN, IconGet ("ic-back-48"));
   btnBack.SetCbPushed (CbOnButtonPushed, this);
   btnBack.SetHotkey (SDLK_ESCAPE);
 
-  //~ btnEnable.Set (layoutMain[0], COL_AC_MAIN);
   btnEnable.Set (layoutRow[1], COL_AC_MAIN);
   btnEnable.SetCbPushed (CbOnButtonPushed, this);
   btnEnable.SetHotkey (SDLK_SPACE);

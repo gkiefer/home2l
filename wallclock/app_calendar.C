@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,8 +27,6 @@
 
 #define MAX_CALS 10   // maximum number of distinct calendars
 
-static CShellSession shellLocal, shellRemote;
-
 
 
 
@@ -36,27 +34,36 @@ static CShellSession shellLocal, shellRemote;
 // *************************** Environment options *****************************
 
 
-
 ENV_PARA_NOVAR ("calendar.enable", bool, envCalendarEnable, false);
   /* Enable calendar applet
    */
-ENV_PARA_NOVAR ("calendar.host", const char *, envCalendarHost, NULL);
+ENV_PARA_STRING ("calendar.host", envCalendarHost, NULL);
   /* Host with calendar files (local if unset)
+   *
+   * On the storage host, the tools \texttt{GNU patch}, \texttt{cat}, and
+   * \texttt{remind} must be installed. The latter is not needed if
+   * \refenv{calendar.nearbyHost} is defined.
+   *
+   * If a host is set, the application will use \texttt{ssh} to run any commands
+   * on the host as user \texttt{'home2l'}. Hence, to access the calendars
+   * as a unified user on the local machine, it is advisable to enter
+   * \texttt{'localhost'} here.
    */
-ENV_PARA_STRING ("calendar.dir", envCalendarDir, NULL);
+ENV_PARA_STRING ("calendar.nearbyHost", envCalendarNearbyHost, NULL);
+  /* (Optional) Nearby host to accelerate calendar browsing
+   *
+   * If set, calendar files are cached locally (in RAM), and for processing,
+   * \texttt{remind} is invoked on the machine passed here.
+   * This improves the UI responsiveness if the network connection to the storage
+   * host or the storage host itself is slow.
+   *
+   * On the nearby machine, \texttt{remind} must be installed.
+   */
+
+ENV_PARA_STRING ("calendar.dir", envCalendarDir, "var/calendars");
   /* Storage directory for calendar (reminder) files.
-   */
-ENV_PARA_STRING ("calendar.cmdRead", envCalendarCmdRead, "cat %s.rem");
-  /* Command to read out a calendar
    *
-   * The command may contain a ''%s'' placeholder, which will be replaced by the
-   * calendar name.
-   */
-ENV_PARA_STRING ("calendar.cmdPatch", envCalendarCmdPatch, "patch -ubNp1");
-  /* Command to apply (patch) calendar changes
-   *
-   * The command will be executed on the host in the given dir, and the patch
-   * will be passed to its STDIN.
+   * The path may be either absolute or relative to HOME2L\_ROOT.
    */
 ENV_PARA_SPECIAL ("calendar.<n>.name", const char *, NULL);
   /* Name for calendar $\#n$
@@ -87,26 +94,26 @@ ENV_PARA_SPECIAL ("calendar.<n>.color", int, NODEFAULT);
 class CCalFile {
 public:
   CCalFile () { isDefined = false; lineArr = NULL; lines = 0; }
-  ~CCalFile () { Done (); }
-  void Done ();
+  ~CCalFile () { Invalidate (); }
 
-  bool IsDefined () { return isDefined; }
-
+  // Definition (always valid) ...
   void SetNames (int _idx, TColor _color, const char *_name);
 
-  int GetLines () { return lines; }
-  char *GetLine (int n) { return lineArr[n]; }
-
+  bool IsDefined () { return isDefined; }
   const char *GetName () { return name; }
   int GetIdx () { return idx; }
   TColor GetColor () { return color; }
 
-  // I/O commands...
-  bool ReadFile ();
-  static bool PatchFiles (CString *patch, CString *ret);
-    // Applies the patch containes in 'patch'. On error, 'false' is returned and 'ret'
-    // is filled with the output of the patch command.
-    // This method does NOT reload any modified files.
+  // Data (loaded on demand) ...
+  bool IsLoaded () { return lineArr != NULL; }
+
+  void Invalidate ();      // Invalidate loaded data
+  bool Load (CShellSession *shell);
+    // Load if not yet loaded. Before GetLines() or GetLine() are used, this must
+    // be called. To invalidate loaded data, Clear() must be called.
+
+  int GetLines () { return lines; }
+  char *GetLine (int n) { return lineArr[n]; }
 
 protected:
   bool isDefined;
@@ -149,21 +156,27 @@ protected:
 
 class CCalViewData {
 public:
-  CCalViewData () { weeks = 0; firstEntry = NULL; errorFile = -1; firstDate = refDate = 0; }
-  ~CCalViewData () { DelCalEntries (); }
+  CCalViewData ();
+  ~CCalViewData ();
 
   void Clear () { DelCalEntries (); }
 
   void SetFile (int fileNo, TColor color, const char *name);
   CCalFile *GetFile (int fileNo) { return &calFileArr[fileNo]; }
 
+  void InvalidateFile (int fileNo) { calFileArr[fileNo].Invalidate (); }
+    // Invalidate a single file and removes all cal entries related to it.
   bool LoadFile (int fileNo);
-    // (Re-)loads a single file and removes all cal entries related to it;
-    // returns 'true' on success and 'false' on error
+
   void LoadCalEntries (int fileNo);
     // (re-)loads cal entries related to a file
   void LoadAllCalEntries ();
     // (re-)loads cal entries related to all files (e.g. after a reference date change)
+
+  bool PatchFiles (CString *patch, CString *ret);
+    // Applies the patch containes in 'patch'. On error, 'false' is returned and 'ret'
+    // is filled with the output of the patch command.
+    // This method does NOT reload any modified files.
 
   bool SetRefDate (TDate _refDate, int _weeks = 7);
      // Sets the current reference date and (re-)invokes remind if necessary.
@@ -193,6 +206,8 @@ protected:
   CCalFile calFileArr[MAX_CALS];
   CCalEntry *firstEntry;
 
+  CShellSession shellRemote, *shellNearby;
+
   int errorFile, errorLine;
   CString errorMsg;
 
@@ -207,9 +222,10 @@ protected:
 // ***************** CCalFile ******************************
 
 
-void CCalFile::Done () {
+void CCalFile::Invalidate () {
   int n;
 
+  //~ INFOF (("### Invalidating '%s' ...", name.Get ()));
   if (lineArr) {
     for (n = 0; n < lines; n++) if (lineArr[n]) free (lineArr[n]);
     free (lineArr);
@@ -226,30 +242,30 @@ void CCalFile::SetNames (int _idx, TColor _color, const char *_name) {
 }
 
 
-bool CCalFile::ReadFile () {
+bool CCalFile::Load (CShellSession *shell) {
   CString s, cmd, line;
   char **_lineArr;
   int n, lineArrSize;
-  bool canRead;
 
-  // Cleanup...
-  Done ();
+  // Sanity...
+  if (IsLoaded ()) return true;
+  //~ INFOF (("### Loading '%s' ...", name.Get ()));
 
   // Open file...
-  cmd.SetF (envCalendarCmdRead, name.Get ());
-  //~ INFOF(("Running '%s'...", cmd.Get ()));
-  shellRemote.Start (StringF (&s, "cd %s; %s", envCalendarDir, cmd.Get ()));
-  shellRemote.WriteClose ();   // we are not going to write anything
+  cmd.SetF ("cat %s/%s.rem", envCalendarDir, name.Get ());
+  DEBUGF (1, ("Running '%s' on '%s' ...", cmd.Get (), shell->Host ()));
+  shell->Start (cmd.Get (), true);
+  shell->WriteClose ();   // we are not going to write anything
 
   // Read loop...
   lines = lineArrSize = 0;
-  while (!shellRemote.ReadClosed ()) {
-    shellRemote.CheckIO (NULL, &canRead);
-    if (canRead) while (shellRemote.ReadLine (&line)) {
+  while (!shell->ReadClosed ()) {
+    shell->WaitUntilReadable ();
+    while (shell->ReadLine (&line)) {
       //~ INFOF(("# Read '%s'.", line.Get ()));
       // realloc buffer if necessary...
       if (lines >= lineArrSize) {
-        lineArrSize = lineArrSize ? lineArrSize << 1 : 64;
+        lineArrSize = lineArrSize ? (lineArrSize << 1) : 64;
         _lineArr = MALLOC(char *, lineArrSize);
         for (n = 0; n < lines; n++) _lineArr[n] = lineArr[n];
         SETP(lineArr, _lineArr);
@@ -261,23 +277,22 @@ bool CCalFile::ReadFile () {
   }
 
   // Complete...
-  shellRemote.Wait ();
-  if (shellRemote.ExitCode ()) {
-    WARNINGF (("Command '%s' returned with error (%i)", cmd.Get (), shellRemote.ExitCode ()));
-    //~ return false;
+  shell->Wait ();
+  if (shell->ExitCode ()) {
+    WARNINGF (("Command '%s' exited with error (%i)", cmd.Get (), shell->ExitCode ()));
+    StringF (&s, _("Failed to load calendar file '%s/%s.rem':\n"),
+                   envCalendarDir, name.Get ());
+    if (!lines) s.AppendF ("\n(no output)");
+    else {
+      for (n = 0; n < lines && n < 10; n++) s.AppendF ("\n%s", lineArr[n]);
+      if (n < lines) s.Append ("\n...");
+    }
+    Invalidate ();
+    RunErrorBox (s, NULL, -1, FontGet (fntMono, 20));
+    return false;
   }
   //~ INFOF (("Done with command '%s'", cmd.Get ()));
   return true;
-}
-
-
-bool CCalFile::PatchFiles (CString *patch, CString *ret) {
-  CString s;
-  int exitCode;
-
-  //~ ASSERT (shellRemote.Run (StringF ("cd %s", envCalendarDir)) == 0);    // TBD: Move to l. 222
-  exitCode = shellRemote.Run (StringF (&s, "cd %s; %s", envCalendarDir, envCalendarCmdPatch), patch->Get (), ret);
-  return (exitCode == 0);
 }
 
 
@@ -287,6 +302,28 @@ bool CCalFile::PatchFiles (CString *patch, CString *ret) {
 // ***************** CCalViewData **************************
 
 
+CCalViewData::CCalViewData () {
+  weeks = 0;
+  firstEntry = NULL;
+  errorFile = -1;
+  firstDate = refDate = 0;
+  shellRemote.SetHost (envCalendarHost);
+  if (!envCalendarNearbyHost) shellNearby = NULL;
+  else if (!envCalendarNearbyHost[0]) shellNearby = NULL;
+  else {
+    DEBUGF (1, ("Enabling nearby session on '%s'...", envCalendarNearbyHost));
+    shellNearby = new CShellSession ();
+    if (ANDROID || strcmp (envCalendarNearbyHost, "localhost") != 0)    // On Linux, skip ssh if 'localhost' is entered.
+      shellNearby->SetHost (envCalendarNearbyHost);
+  }
+}
+
+
+CCalViewData::~CCalViewData () {
+  Clear ();
+  FREEO(shellNearby);
+}
+
 
 void CCalViewData::SetFile (int fileNo, TColor color, const char *name) {
   calFileArr[fileNo].SetNames (fileNo, color, name);
@@ -294,28 +331,24 @@ void CCalViewData::SetFile (int fileNo, TColor color, const char *name) {
 
 
 bool CCalViewData::LoadFile (int fileNo) {
-  if (!calFileArr[fileNo].IsDefined ()) return false;
-
-  // Delete all cal entries related to this file...
-  DelCalEntries (&calFileArr[fileNo]);
-
-  // (Re-)load the file...
-  if (!calFileArr[fileNo].ReadFile ()) return false;
-
-  return true;
+  ASSERT (fileNo >= 0 && fileNo < MAX_CALS);
+  return calFileArr[fileNo].Load (&shellRemote);
 }
 
 
 void CCalViewData::LoadCalEntries (int fileNo) {
+  //~ INFOF (("### LoadCalEntries(%i)", fileNo));
   DelCalEntries (&calFileArr[fileNo]);
   if (weeks) AddCalEntries (RunRemind (fileNo));
 }
 
 
-void CCalViewData::LoadAllCalEntries () {
-  DelCalEntries ();
-  if (weeks) for (int n = 0; n < MAX_CALS; n++) if (calFileArr[n].IsDefined ())
-    AddCalEntries (RunRemind (n));
+bool CCalViewData::PatchFiles (CString *patch, CString *ret) {
+  CString s;
+  int exitCode;
+
+  exitCode = shellRemote.Run (StringF (&s, "cd %s; patch -ubNp1", envCalendarDir), patch->Get (), ret);
+  return (exitCode == 0);
 }
 
 
@@ -385,28 +418,45 @@ void CCalViewData::DelCalEntries (CCalFile *calFile) {
 CCalEntry *CCalViewData::RunRemind (int fileNo) {
   CCalEntry *first, **pLast, *ce;
   CString cmd, line;
+  CShellSession *shell;
   char strTime[8], strDur[8];
   int sendLine, lineNo, n, msgPos, year, mon, day;
   bool canSend, canReceive;
 
-  // Build command line for remind & open process pipe...
-  cmd.SetF ("remind -l -ms+%i -b2 -gaaad - %i-%02i-%02i 2>&1",
-            weeks, YEAR_OF(firstDate), MONTH_OF(firstDate), DAY_OF(firstDate));
-  //~ INFOF (("For calendar #%i, running '%s'...", fileNo, cmd.Get ()));
-  shellLocal.Start (cmd);
+  // Build command line for remind & start ...
+  shell = shellNearby ? shellNearby : &shellRemote;
+  if (shellNearby) {
+    // Nearby shell: Load file locally and pipe it through remind ...
+    if (!LoadFile (fileNo)) return NULL;
+    cmd.SetF ("remind -l -ms+%i -b2 -gaaad - %i-%02i-%02i",
+              weeks,
+              YEAR_OF(firstDate), MONTH_OF(firstDate), DAY_OF(firstDate));
+  }
+  else {
+    // Remote shell: Let remind load the file on the remote machine ...
+    cmd.SetF ("remind -l -ms+%i -b2 -gaaad %s/%s.rem %i-%02i-%02i",
+              weeks,
+              envCalendarDir, calFileArr[fileNo].GetName (),
+              YEAR_OF(firstDate), MONTH_OF(firstDate), DAY_OF(firstDate));
+  }
+  DEBUGF (1, ("For calendar #%i, running '%s' on '%s'...", fileNo, cmd.Get (), shell->Host () ? shell->Host () : "<localhost>"));
+  shell->Start (cmd.Get (), true);
 
+  // Communication loop ... l
   first = NULL;
   pLast = &first;
   sendLine = 0;
+  canSend = false;      // will remain 'false' in remote mode
   lineNo = -1;
   if (errorFile == fileNo) ClearError ();
-  while (!shellLocal.ReadClosed ()) {
-    shellLocal.CheckIO (&canSend, &canReceive);
-    if (canSend) {
-      if (sendLine >= calFileArr[fileNo].GetLines ()) shellLocal.WriteClose ();
-      else shellLocal.WriteLine (calFileArr[fileNo].GetLine (sendLine++));
+  if (!shellNearby) shell->WriteClose ();     // we won't send input in remote mode
+  while (!shell->ReadClosed ()) {
+    shell->CheckIO (shellNearby ? &canSend : NULL, &canReceive);
+    if (canSend) {      // only effective in "nearby" mode
+      if (sendLine >= calFileArr[fileNo].GetLines ()) shell->WriteClose ();
+      else shell->WriteLine (calFileArr[fileNo].GetLine (sendLine++));
     }
-    if (canReceive) if (shellLocal.ReadLine (&line)) {
+    if (canReceive) if (shell->ReadLine (&line)) {
 
       // Check for file/line number information...
       if (sscanf (line.Get (), "# fileinfo %d", &lineNo) == 1) { lineNo--; }
@@ -449,7 +499,9 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
                      calFileArr[fileNo].GetName (), line.Get ()));
     }
   }
-  shellLocal.Wait ();
+  shell->Wait ();
+  if (shell->ExitCode ())
+    WARNINGF (("Command '%s' exited with error (%i)", cmd.Get (), shell->ExitCode ()));
   return first;
 }
 
@@ -530,7 +582,7 @@ class CScreenCalEdit: public CScreen {
     CScreenCalEdit () { fileNo = 0; }
     ~CScreenCalEdit () {}
 
-    void Setup (CCalViewData *_viewData, int _fileNo = -1, int _lineNo = -1);
+    bool Setup (CCalViewData *_viewData, int _fileNo = -1, int _lineNo = -1);
       // 'fileNo = -1' => last file, 'lineNo = -1' => new entry (for given file)
 
   protected:
@@ -557,8 +609,8 @@ class CScreenCalMain: public CScreen {
 
     void Setup ();
 
-    void LoadFile (int fileNo);   // (re-)load a calendar file
-    void LoadAllFiles ();         // (re-)load all calendar files
+    void UpdateFile (int fileNo);   // (re-)load a calendar file
+    void UpdateAllFiles ();         // (re-)load all calendar files
 
     void SetRefDate (TDate d, bool scrollEventList = true);
     TDate GetRefDate () { return viewData.GetRefDate (); }
@@ -579,7 +631,7 @@ class CScreenCalMain: public CScreen {
 
     CCalViewData viewData;
 
-    void DoLoadFile (int fileNo);
+    void DoUpdateFile (int fileNo);
 
     void DrawCalendar ();
     void EventListUpdate ();
@@ -673,7 +725,7 @@ SDL_Surface *CEventsBox::RenderItem (CListboxItem *item, int idx, SDL_Surface *s
 #define INPUT_HEIGHT 96
 
 
-void CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
+bool CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
   SDL_Rect *layout;
   CCalFile *calFile;
   int n;
@@ -684,6 +736,9 @@ void CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
   origLineNo = lineNo = _lineNo;
   if (origFileNo >= 0) fileNo = origFileNo;    // else: take last file number
   date = _viewData->GetRefDate ();
+
+  // Load file...
+  if (!viewData->LoadFile (fileNo)) return false;
 
   // Input line...
   SetKeyboard (true);   // enable on-screen keyboard
@@ -737,6 +792,9 @@ void CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
 
   // Output ...
   for (n = 0; n < (int) (sizeof (extraLines) / sizeof (CString)); n++) extraLines[n].Clear ();
+
+  // Done...
+  return true;
 }
 
 
@@ -824,6 +882,9 @@ void CScreenCalEdit::Commit (bool deleteCurrent) {
   CCalFile *calFile;
   int n, oldLines, newLines;
 
+  // Load new (current) file ...
+  if (!viewData->LoadFile (fileNo)) return;
+
   // Patch for new file...
   if (!deleteCurrent) wdgInput.GetResult (&input);
   //   ... count lines to replace...
@@ -851,23 +912,25 @@ void CScreenCalEdit::Commit (bool deleteCurrent) {
 
   // Patch for old file (if applicable)...
   if (origFileNo != fileNo && origLineNo >= 0) {
-    calFile = viewData->GetFile (origFileNo);
-    s.SetF ("\n--- old/%s.rem\n+++ new/%s.rem\n@@ -%i,1 +%i,0 @@\n-%s",
-              calFile->GetName (), calFile->GetName (),
-              origLineNo + 1, origLineNo + 1,
-              calFile->GetLine (origLineNo));
-    patch.Append (s);
+    if (viewData->LoadFile (origFileNo)) {
+      calFile = viewData->GetFile (origFileNo);
+      s.SetF ("\n--- old/%s.rem\n+++ new/%s.rem\n@@ -%i,1 +%i,0 @@\n-%s",
+                calFile->GetName (), calFile->GetName (),
+                origLineNo + 1, origLineNo + 1,
+                calFile->GetLine (origLineNo));
+      patch.Append (s);
+    }
   }
 
   // Output/apply patch...
   //~ INFOF (("##### Created calendar patch:\n%s", patch.Get ()));
-  if (CCalFile::PatchFiles (&patch, &s)) {
+  if (viewData->PatchFiles (&patch, &s)) {
     Return ();
     UiIterateNoWait ();
-    scrCalMain->LoadFile (fileNo);
+    scrCalMain->UpdateFile (fileNo);
     if (origFileNo != fileNo && origLineNo >= 0) {
       UiIterateNoWait ();
-      scrCalMain->LoadFile (origFileNo);
+      scrCalMain->UpdateFile (origFileNo);
     }
   }
   else {
@@ -994,9 +1057,6 @@ void CScreenCalMain::Setup () {
     //~ CCalFile *calFile = viewData.GetFile (n);
     //~ INFOF (("# %2i. %i, '%s'", n, calFile->IsDefined (), calFile->GetName ()));
   //~ }
-
-  // Init with today's data...
-  SetRefDate (Today ());
 }
 
 
@@ -1004,35 +1064,40 @@ void CScreenCalMain::Setup () {
 // ***** Data (re-)loading *****
 
 
-void CScreenCalMain::DoLoadFile (int fileNo) {
-  if (viewData.LoadFile (fileNo)) {
+void CScreenCalMain::DoUpdateFile (int fileNo) {
+
+  // Sanity...
+  if (!viewData.GetFile (fileNo)->IsDefined ()) return;
+
+  // Invalidate data...
+  viewData.InvalidateFile (fileNo);
+
+  // Load entries...
+  viewData.LoadCalEntries (fileNo);
+  while (viewData.HaveError ()) {
+    RunErrorBox (viewData.GetErrorMsg (), NULL, -1, FontGet (fntMono, 20));
+    RunEditScreen (viewData.GetErrorFile (), viewData.GetErrorLine ());
     viewData.LoadCalEntries (fileNo);
-    while (viewData.HaveError ()) {
-      RunErrorBox (viewData.GetErrorMsg (), NULL, -1, FontGet (fntMono, 20));
-      RunEditScreen (viewData.GetErrorFile (), viewData.GetErrorLine ());
-      viewData.LoadFile (fileNo);
-      viewData.LoadCalEntries (fileNo);
-    }
-    DrawCalendar ();
-    UiIterateNoWait ();
   }
+  DrawCalendar ();
+  UiIterateNoWait ();
 }
 
 
-void CScreenCalMain::LoadFile (int fileNo) {
-  DoLoadFile (fileNo);
+void CScreenCalMain::UpdateFile (int fileNo) {
+  DoUpdateFile (fileNo);
   EventListUpdate ();
   EventListSetRefDate (viewData.GetRefDate ());
 }
 
 
-void CScreenCalMain::LoadAllFiles () {
+void CScreenCalMain::UpdateAllFiles () {
   // visual feedback in the beginning and after each file
   wdgEvents.SetItems (0);
   viewData.Clear ();
   DrawCalendar ();
   UiIterateNoWait ();
-  for (int n = 0; n < MAX_CALS; n++) DoLoadFile (n);
+  for (int n = 0; n < MAX_CALS; n++) DoUpdateFile (n);
   EventListUpdate ();
   EventListSetRefDate (viewData.GetRefDate ());
 }
@@ -1071,8 +1136,11 @@ void CScreenCalMain::SetRefDate (TDate d, bool scrollEventList) {
     EventListUpdate ();
     UiIterateNoWait ();
     // Load the data...
-    viewData.LoadAllCalEntries ();
-    DrawCalendar ();
+    for (int n = 0; n < MAX_CALS; n++) if (viewData.GetFile (n)->IsDefined ()) {
+      viewData.LoadCalEntries (n);
+      DrawCalendar ();
+      UiIterateNoWait ();
+    }
     EventListUpdate ();
   }
 
@@ -1296,7 +1364,7 @@ void CScreenCalMain::OnButtonPushed (CButton *b) {
     SetRefDate (Today ());
   }
   else if (b == &btnReload) {
-    LoadAllFiles ();
+    UpdateAllFiles ();
   }
   else if (b == &btnNew) {
     RunEditScreen ();
@@ -1393,16 +1461,17 @@ void CScreenCalMain::RunEditScreen (int _fileNo, int _lineNo) {
 
   SystemActiveLock ("_calendar");
   if (!scrCalEdit) scrCalEdit = new CScreenCalEdit ();
-  scrCalEdit->Setup (&viewData, _fileNo, _lineNo);
-  if (_lineNo < 0) {
-    d = GetRefDate ();
-    s = scrCalEdit->wdgInput.GetInput ();
-    s->SetF ("%i-%02i-%02i AT 8:00 DUR 1:00 *1 *7 UNTIL %i-%02i-%02i MSG ",
-             YEAR_OF(d), MONTH_OF(d), DAY_OF(d), YEAR_OF(d), MONTH_OF(d), DAY_OF(d));
-    scrCalEdit->wdgInput.ChangedInput ();
-    scrCalEdit->wdgInput.SetMark (14, 4);
+  if (scrCalEdit->Setup (&viewData, _fileNo, _lineNo)) {
+    if (_lineNo < 0) {
+      d = GetRefDate ();
+      s = scrCalEdit->wdgInput.GetInput ();
+      s->SetF ("%i-%02i-%02i AT 8:00 DUR 1:00 *1 *7 UNTIL %i-%02i-%02i MSG ",
+               YEAR_OF(d), MONTH_OF(d), DAY_OF(d), YEAR_OF(d), MONTH_OF(d), DAY_OF(d));
+      scrCalEdit->wdgInput.ChangedInput ();
+      scrCalEdit->wdgInput.SetMark (14, 4);
+    }
+    scrCalEdit->Run ();
   }
-  scrCalEdit->Run ();
   SystemActiveUnlock ("_calendar");
 }
 
@@ -1417,14 +1486,12 @@ void *AppFuncCalendar (int appOp, void *data) {
   switch (appOp) {
 
     case appOpInit:
-      shellRemote.SetHost (EnvGet (envCalendarHostKey));
+      envCalendarDir = EnvGetPath (envCalendarDirKey);   // make path absolute
       return APP_INIT_OK;
 
     case appOpDone:
       FREEO(scrCalMain);
       FREEO(scrCalEdit);
-      shellRemote.Done ();
-      shellLocal.Done ();
       break;
 
     case appOpLabel:
@@ -1436,7 +1503,7 @@ void *AppFuncCalendar (int appOp, void *data) {
         scrCalMain = new CScreenCalMain ();
         scrCalMain->Setup ();
         scrCalMain->Activate ();
-        scrCalMain->LoadAllFiles ();
+        scrCalMain->SetRefDate (Today ());
       }
       else
         scrCalMain->Activate ();

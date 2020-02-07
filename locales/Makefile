@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,5 +89,5 @@ clean:
 build-indep: de.mo
 
 
-install-indep:
+install-indep: de.mo
 	install -Dp -m 644 de.mo $(HOME2L_INSTALL)/locale/de_DE/LC_MESSAGES/home2l.mo

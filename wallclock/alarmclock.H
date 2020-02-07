@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@
 
 
 /** @file
+ *
  * @addtogroup wallclock
  * @{
  *
- * @defgroup wallclock_alarmclock Alarm Clock
- * Interacting with the integrated alarm clock.
+ * @addtogroup wallclock_alarmclock
  *
  * @{
  */
@@ -49,36 +49,38 @@ enum TAlarmClockState {
 };
 
 static inline bool AlarmClockStateIsAlarm (TAlarmClockState state) { return state >= acsAlarmPreRinging; }
-TAlarmClockState AlarmClockGetState ();   ///< Get the state
+TAlarmClockState AlarmClockGetState ();     ///< @brief Get the current alarm clock state.
 /// @}
 
 
 /// @name Init/done ...
 /// @{
-void AlarmClockInit ();   ///< Initialize the alarm clock.
-void AlarmClockDone ();   ///< Shutdown the alarm clock.
+void AlarmClockInit ();   ///< @brief @brief Initialize the alarm clock.
+void AlarmClockDone ();   ///< @brief Shutdown the alarm clock.
 /// @}
 
 
 /// @name Direct actions ...
 /// @{
-void AlarmClockEnableDisable (bool enable);    ///< Enable/disable alarm clock as a whole.
-void AlarmClockOff ();              ///< "Off" button of the alarm clock => go to standby state.
-void AlarmClockSnooze ();           ///< "Snooze" button of the alarm clock.
+void AlarmClockEnableDisable (bool enable);    ///< @brief Enable/disable alarm clock as a whole.
+void AlarmClockOff ();              ///< @brief "Off" button of the alarm clock => go to standby state.
+void AlarmClockSnooze ();           ///< @brief "Snooze" button of the alarm clock.
 /// @}
 
 
 /// @name High-level actions / UI integration ...
 /// @{
 void AlarmClockSetButton (class CButton *btn);
-  ///< Define a main button. Its surface is set to indicate the alarm state.
+  ///< @brief Define a main button. Its surface is set to indicate the alarm state.
+  ///
   /// When pushed in a non-alarm state, the setup dialog is run.
   /// When pushed during an alarm, the alarm is snoozed on a short pushed and
   /// switched off on a long push.
   /// The push behaviour is identical to calling 'AlarmClockHandlePushed' with
   /// 'enableOff = true'.
 void AlarmClockHandlePushed (bool enableOff, bool longPush);
-  ///< Handle a push on (one of) the alarm clock button(s) in the interface.
+  ///< @brief Handle a push on (one of) the alarm clock button(s) in the interface.
+  ///
   /// In off/standby state, a push opens the setup dialog.
   /// If allowed ('enableOff == true'), a long push switches of alarm during alarm.
   /// Any other push during alarm
@@ -87,7 +89,7 @@ void AlarmClockHandlePushed (bool enableOff, bool longPush);
 
 /// @name Setup dialog ...
 /// @{
-void AlarmClockRunSetDialog ();     ///< Run the setup screen to edit alarm times.
+void AlarmClockRunSetDialog ();     ///< @brief Run the setup screen to edit alarm times.
 /// @}
 
 

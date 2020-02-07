@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ public class Home2lService extends Service {
       // Put service into the foreground...
       startForeground (NOTFICATION_ID, new Notification.Builder (Home2l.TheActivity ())
           .setContentTitle("Home2l")
-          .setContentText("Push to activate the Home2l screen.")
+          .setContentText("Push to activate the Home2L screen.")
           .setSmallIcon (R.drawable.home2l_icon)
           .setContentIntent (
               PendingIntent.getActivity (

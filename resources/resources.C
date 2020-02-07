@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,41 @@
 #include "rc_drivers.H"
 
 #include <fnmatch.h>
+
+
+
+
+// ********************* Environment Settings **********************************
+
+
+ENV_PARA_STRING ("rc.userReqId", envRcUserReqId, "user");
+  /* Request ID for user interactions, e.g. with the WallClock floorplan or with physical gadgets
+   */
+
+ENV_PARA_STRING("rc.userReqAttrs", envRcUserReqAttrs, "-31:00");
+  /* Request attributes for for user interactions
+   *
+   * This parameter defines the attributes of requests generated on user
+   * interactions, e.g. with the WallClock floorplan or with physical gadgets.
+   *
+   * The probably most useful attribute is the off-time. For example, if the
+   * attribute string is "-31:00" and a user pushes a button to close the shades,
+   * this overrides automatic rules until 7 a.m. on the next morning. Afterwards,
+   * automatic rules may open them again.
+   *
+   * The request ID must be defined by setting \refenv{rc.userReqId} .
+   * Adding an ID field to the attributes here has no effect.
+   */
+
+
+const char *RcGetUserRequestId () { return envRcUserReqId; }
+const char *RcGetUserRequestAttrs () { return envRcUserReqAttrs; }
+
+
+
+
+
+// *************************** Helpers *****************************************
 
 
 static bool rcInitCompleted = false;
@@ -76,34 +111,43 @@ typedef struct {
 typedef struct {
   const char *id;
   int values;
-#if ANDROID
-  const char *valueList[64];   // [2018-09-15] Android NDK compiler appears to not accept unbound arrays here
-#else
-  const char *valueList[];
-#endif
+//~ #if ANDROID
+  //~ const char *valueList[64];   // [2018-09-15] Android NDK compiler appears to not accept unbound arrays here
+//~ #else
+  const char **valueList;
+//~ #endif
 } TRcEnumType;
 
 
-#define rcBaseTypes ((int) (sizeof (rcTypeNames) / sizeof (rcTypeNames[0])))
-#define rcUnitTypes ((int) (sizeof (rcUnitTypeList) / sizeof (TRcUnitType)))
-#define rcEnumTypes ((int) (sizeof (rcEnumTypeList) / sizeof (TRcEnumType)))
 
 
 
+// ***** Built-in unit types *****
 
 
-// ***** Custom types *****
-
-
-static TRcUnitType rcUnitTypeList[] = {
+static const TRcUnitType rcUnitTypeList[rctUnitTypesEND - rctUnitTypesBase] = {
   { "percent", rctFloat, "%" },
   { "temp", rctFloat, "°C" }
   // --> New unit types may be added here. <--
 };
 
 
-static TRcEnumType rcEnumTypeList[] = {
-  { "window", 4,  { "closed", "tilted", "open", "openOrTilted" } }
+
+
+
+// ***** Built-in enum types *****
+
+
+#define ENUM_VALUES(T) sizeof (T##Values) / sizeof (const char *), T##Values
+
+static const char *rctUseStateValues [] = { "day", "night", "away", "vacation" };
+static const char *rctWindowStateValues [] = { "closed", "tilted", "open", "openOrTilted" };
+static const char *rctPhoneStateValues [] = { "idle", "ringing", "call" };
+
+static const TRcEnumType rcEnumTypeList[rctEnumTypesEND - rctEnumTypesBase] = {
+  { "use",    ENUM_VALUES(rctUseState) },
+  { "window", ENUM_VALUES(rctWindowState) },
+  { "phone",  ENUM_VALUES(rctPhoneState) }
   // --> New enum types may be added here. <--
   //
   // Values may only contain letters, digits and underscores:
@@ -117,6 +161,11 @@ static TRcEnumType rcEnumTypeList[] = {
 
 
 // ***** Functions *****
+
+
+#define rcBaseTypes ((int) (sizeof (rcTypeNames) / sizeof (rcTypeNames[0])))
+#define rcUnitTypes ((int) (sizeof (rcUnitTypeList) / sizeof (TRcUnitType)))
+#define rcEnumTypes ((int) (sizeof (rcEnumTypeList) / sizeof (TRcEnumType)))
 
 
 const char *RcTypeGetName (ERcType t) {
@@ -199,7 +248,7 @@ const char *RcTypeGetEnumValue (ERcType t, int idx, bool warn) {
 
 
 int RcTypeGetEnumIdx (ERcType t, const char *value, bool warn) {
-  TRcEnumType *enumType;
+  const TRcEnumType *enumType;
   int n;
 
   // Weak sanity...
@@ -222,6 +271,7 @@ int RcTypeGetEnumIdx (ERcType t, const char *value, bool warn) {
 // Writing to string...
 static void AppendValue (CString *ret, URcValue val, ERcType type, bool precise, int stringChars) {
   CString s;
+  char *p, *q, buf[64];
   ERcType baseType = RcTypeGetBaseType (type);
 
   if (precise && baseType == rctFloat) {
@@ -240,7 +290,15 @@ static void AppendValue (CString *ret, URcValue val, ERcType type, bool precise,
       }
       break;
     case rctFloat:
-      ret->AppendF ("%f", val.vFloat);
+      snprintf (buf, sizeof (buf), "%f", val.vFloat);
+      q = strrchr (buf, '.');
+      if (q) {
+        // Remove trailing '0's...
+        p = q + strlen (q);
+        while (p > q + 2 && p[-1] == '0') p--;
+        *p = '\0';
+      }
+      ret->Append (buf);
       if (RcTypeIsUnitType (type)) ret->Append (RcTypeGetUnit (type));
       break;
     case rctString:
@@ -273,6 +331,7 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
 
   if (!p) return false;     // sanity
 
+  URcValueClear (&val);
   baseType = RcTypeGetBaseType (type);
   if (p[0] == '$' && baseType == rctFloat) {    // precise value?
     val.vInt = (uint32_t) strtoll (p + 1, &q, 16);         // parse as hexadecimal
@@ -330,7 +389,7 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
       if (ok) val.vString = str.Disown ();
       break;
     case rctTime:
-      ok = TicksFromString (p, &val.vTime);
+      ok = TicksFromString (p, &val.vTime, true);
       break;
     default:
       ok = false;
@@ -502,6 +561,28 @@ TTicks CRcValueState::ValidTime (TTicks defaultVal) const {
 }
 
 
+int CRcValueState::ValidUnitInt (ERcType _type, int defaultVal) const {
+  if (state == rcsUnknown || type != _type) return defaultVal;
+  if (RcTypeGetBaseType (_type) == rctFloat) return (int) val.vFloat;
+  return val.vInt;
+}
+
+
+float CRcValueState::ValidUnitFloat (ERcType _type, float defaultVal) const {
+  if (state == rcsUnknown || type != _type) return defaultVal;
+  if (RcTypeGetBaseType (_type) == rctInt) return (float) val.vInt;
+  return val.vFloat;
+}
+
+
+int CRcValueState::ValidEnumIdx (ERcType _type, int defaultVal) const {
+  if (state == rcsUnknown || type != _type) return defaultVal;
+  return val.vInt;
+}
+
+
+
+
 
 // ***** Attributes *****
 
@@ -551,7 +632,7 @@ bool CRcValueState::Convert (ERcType _type) {
 
   // Anything from string...
   if (baseType == rctString) {
-    vs.SetType (_type);
+    vs.Clear (_type);
     if (!vs.SetFromStr (val.vString)) return false;
     if (vs.type != _type) return false;   // The string may have contained type information incompatible with what we want.
     Set (_type, vs.val);
@@ -674,7 +755,7 @@ bool CRcValueState::SetFromStr (const char *str) {
         break;
       case '@':
         // Read time stamp...
-        ok = TicksFromString (p + 1, &_timeStamp);
+        ok = TicksFromString (p + 1, &_timeStamp, true);
         break;
       default:
         // This must be the value (+ state)...
@@ -816,8 +897,8 @@ CResource *CResource::Get (const char *uri, bool allowWait) {
   CResource *rc;
   ERcPathDomain domain;
 
-  ASSERT (uri != NULL);
-  RcGetRealPath (&realUri, uri);
+  if (!uri) return NULL;
+  RcGetRealPath (&realUri, uri, "/alias");
   domain = RcAnalysePath (realUri.Get (), NULL, NULL, NULL, &rc, allowWait);
   if (!rc && (domain == rcpResource || domain == rcpDriver || domain == rcpAlias)) {
     // Only domains of type 'rcpResource' get the chances to become registered some time later.
@@ -1275,6 +1356,35 @@ TTicks CResource::ValidTime (TTicks defaultVal, TTicks *retTimeStamp) {
 }
 
 
+int CResource::ValidUnitInt (ERcType _type, int defaultVal, TTicks *retTimeStamp) {
+  Lock ();
+  int ret = valueState.ValidUnitInt (_type, defaultVal);
+  if (retTimeStamp) *retTimeStamp = valueState.timeStamp;
+  Unlock ();
+  return ret;
+}
+
+
+float CResource::ValidUnitFloat (ERcType _type, float defaultVal, TTicks *retTimeStamp) {
+  Lock ();
+  float ret = valueState.ValidUnitFloat (_type, defaultVal);
+  if (retTimeStamp) *retTimeStamp = valueState.timeStamp;
+  Unlock ();
+  return ret;
+}
+
+
+int CResource::ValidEnumIdx (ERcType _type, int defaultVal, TTicks *retTimeStamp) {
+  Lock ();
+  int ret = valueState.ValidEnumIdx (_type, defaultVal);
+  if (retTimeStamp) *retTimeStamp = valueState.timeStamp;
+  Unlock ();
+  return ret;
+}
+
+
+
+
 
 
 
@@ -1315,14 +1425,17 @@ void CResource::ClearRequestsAL () {
 }
 
 
-bool CResource::DoDelRequest (CRcRequest **pList, const char *reqGid) {
+bool CResource::DoDelRequest (CRcRequest **pList, const char *reqGid, TTicks t1) {
   CRcRequest *oldReq, **pp;
 
   for (pp = pList; *pp; pp = &((*pp)->next))
     if (strcmp ((*pp)->Gid (), reqGid) == 0) {
       oldReq = *pp;
-      ATOMIC_WRITE (*pp, oldReq->next);
-      delete oldReq;
+      if (!t1) {
+        ATOMIC_WRITE (*pp, oldReq->next);
+        delete oldReq;
+      }
+      else oldReq->t1 = t1;
       return true;    // there can be only one request with that ID
     }
   return false;
@@ -1343,6 +1456,8 @@ void CResource::SetRequestFromObj (CRcRequest *_request) {
     delete _request;
     return;
   }
+  if (_request->Repeat () && !_request->TimeOn ())
+    WARNINGF (("Ignoring repeat attribute for request without an on-time to '%s': '%s'", Uri (),  _request->ToStr ()));
 
   // Lock...
   Lock ();
@@ -1360,7 +1475,7 @@ void CResource::SetRequestFromObj (CRcRequest *_request) {
     rcHost->RemoteSetRequest (this, _request);
   }
   else {
-    DoDelRequest (&requestList, _request->Gid ());
+    DoDelRequest (&requestList, _request->Gid (), 0);   // avoid duplicates: remove the old request, if it exists
     _request->next = requestList;
     ATOMIC_WRITE (requestList, _request);
     Unlock ();
@@ -1369,33 +1484,33 @@ void CResource::SetRequestFromObj (CRcRequest *_request) {
 }
 
 
-void CResource::SetRequest (CRcValueState *value, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks hysteresis) {
-  SetRequestFromObj (new CRcRequest (value, reqGid, priority, t0, t1, hysteresis));
+void CResource::SetRequest (CRcValueState *value, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks repeat, TTicks hysteresis) {
+  SetRequestFromObj (new CRcRequest (value, reqGid, priority, t0, t1, repeat, hysteresis));
 }
 
 
-void CResource::SetRequest (bool valBool, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks hysteresis) {
-  SetRequestFromObj (new CRcRequest (valBool, reqGid, priority, t0, t1, hysteresis));
+void CResource::SetRequest (bool valBool, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks repeat, TTicks hysteresis) {
+  SetRequestFromObj (new CRcRequest (valBool, reqGid, priority, t0, t1, repeat, hysteresis));
 }
 
 
-void CResource::SetRequest (int valInt, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks hysteresis) {
-  SetRequestFromObj (new CRcRequest (valInt, reqGid, priority, t0, t1, hysteresis));
+void CResource::SetRequest (int valInt, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks repeat, TTicks hysteresis) {
+  SetRequestFromObj (new CRcRequest (valInt, reqGid, priority, t0, t1, repeat, hysteresis));
 }
 
 
-void CResource::SetRequest (float valFloat, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks hysteresis) {
-  SetRequestFromObj (new CRcRequest (valFloat, reqGid, priority, t0, t1, hysteresis));
+void CResource::SetRequest (float valFloat, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks repeat, TTicks hysteresis) {
+  SetRequestFromObj (new CRcRequest (valFloat, reqGid, priority, t0, t1, repeat, hysteresis));
 }
 
 
-void CResource::SetRequest (const char *valString, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks hysteresis) {
-  SetRequestFromObj (new CRcRequest (valString, reqGid, priority, t0, t1, hysteresis));
+void CResource::SetRequest (const char *valString, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks repeat, TTicks hysteresis) {
+  SetRequestFromObj (new CRcRequest (valString, reqGid, priority, t0, t1, repeat, hysteresis));
 }
 
 
-void CResource::SetRequest (TTicks valTime, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks hysteresis) {
-  SetRequestFromObj (new CRcRequest (valTime, reqGid, priority, t0, t1, hysteresis));
+void CResource::SetRequest (TTicks valTime, const char *reqGid, int priority, TTicks t0, TTicks t1, TTicks repeat, TTicks hysteresis) {
+  SetRequestFromObj (new CRcRequest (valTime, reqGid, priority, t0, t1, repeat, hysteresis));
 }
 
 
@@ -1414,8 +1529,7 @@ void CResource::SetTriggerFromStr (const char *reqDef) {
 }
 
 
-
-void CResource::DelRequest (const char *reqGid) {
+void CResource::DelRequest (const char *reqGid, TTicks t1) {
   CRcRequest *req;
   bool reEvaluate, isRegistered;
 
@@ -1425,7 +1539,7 @@ void CResource::DelRequest (const char *reqGid) {
 
   // Remove the request from list...
   Lock ();
-  reEvaluate = DoDelRequest (&requestList, reqGid);
+  reEvaluate = DoDelRequest (&requestList, reqGid, t1);
   isRegistered = IsRegistered ();
   if (!isRegistered) {
     // Add a dummy request with an "invalid" value as a marker, so that later
@@ -1443,7 +1557,7 @@ void CResource::DelRequest (const char *reqGid) {
     if (!rcHost) {
       if (reEvaluate) EvaluateRequests ();
     }
-    else rcHost->RemoteDelRequest (this, reqGid);
+    else rcHost->RemoteDelRequest (this, reqGid, t1);
   }
 }
 
@@ -1452,28 +1566,25 @@ void CResource::DelRequest (const char *reqGid) {
 // **** For drivers *****
 
 
-bool CResource::NotifySubscribers (int evType) {
+void CResource::NotifySubscribers (int evType) {
   Lock ();
-  bool haveUnconnected = NotifySubscribersAL (evType);
+  NotifySubscribersAL (evType);
   Unlock ();
-  return haveUnconnected;
 }
 
 
-bool CResource::NotifySubscribersAL (int evType) {
+void CResource::NotifySubscribersAL (int evType) {
   CRcEvent ev;
   CRcSubscriberLink *sl;
   CRcSubscriber *subscr;
-  bool wasConnected, haveUnconnected;
+  bool wasConnected;
 
   //~ INFOF (("### NotifySubscribers: vs = '%s'", valueState.ToStr ()));
   ev.Set ((ERcEventType) evType, this, &valueState);
-  haveUnconnected = false;
   for (sl = subscrList; sl; sl = sl->next) {
 
     // Track "connected" status with the subscriber link...
     wasConnected = sl->isConnected;
-    haveUnconnected |= !wasConnected;
     if (evType == rceConnected) sl->isConnected = true;
     if (evType == rceDisconnected) sl->isConnected = false;
 
@@ -1485,17 +1596,16 @@ bool CResource::NotifySubscribersAL (int evType) {
       subscr->Unlock ();
     }
   }
-  return haveUnconnected;
 }
 
 
 void CResource::ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStamp) {
-  bool changed, mayHaveUnconnected;
+  bool changed;
 
   //~ CString s(valueState.ToStr ());
-  //~ if (rcHost) INFOF (("##### ReportValueStateAL (%s): vs = '%s' -> '%s'", Uri (), s.Get (), _valueState ? _valueState->ToStr () : "(NULL)"));
+  //~ INFOF (("##### ReportValueStateAL (%s): vs = '%s' -> '%s'", Uri (), s.Get (), _valueState ? _valueState->ToStr () : "(NULL)"));
 
-  // change value and state...
+  // Change value and state...
   if (valueState.Type () == rctTrigger) {
     // For triggers, '_valueState' is not used and can be NULL, which is interpreted as a valid value.
     changed = true;
@@ -1505,7 +1615,16 @@ void CResource::ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStam
       valueState.SetTrigger ();
     if (_valueState) valueState.SetState (_valueState->State ());
   }
+  else if (_valueState->Type () == rctNone) {
+    // Value/type was empty: Only report new state ...
+    if (valueState.state == _valueState->state || valueState.state == rcsUnknown) changed = false;    // a previously unknown state remains so
+    else {
+      valueState.state = _valueState->state;
+      changed = true;
+    }
+  }
   else {
+    // General case ...
     ASSERT (_valueState->Type () == Type ());
     changed = !valueState.Equals (_valueState);
     if (changed) valueState = *_valueState;   // Be careful to not overwrite the time stamp if there is no change!
@@ -1514,12 +1633,8 @@ void CResource::ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStam
   // If changed: Set time stamp and notify subscribers...
   if (changed) {
     valueState.SetTimeStamp (_timeStamp ? _timeStamp : TicksNow ());
-    mayHaveUnconnected = NotifySubscribersAL (rceValueStateChanged);
+    NotifySubscribersAL (rceValueStateChanged);
   }
-  else mayHaveUnconnected = true;
-
-  // At this point we know that we are connected and should report that...
-  if (mayHaveUnconnected) NotifySubscribersAL (rceConnected);
 }
 
 
@@ -1605,8 +1720,7 @@ void CResource::ReportNetLost () {
 
   Lock ();
   if (valueState.State () != rcsUnknown) {
-    vs.SetType (Type ());
-    vs.SetState (rcsUnknown);
+    vs.Clear (Type ());
     tLast = valueState.TimeStamp ();
     ASSERT (rcHost);
     tNew = rcHost->LastAlive ();      // last time the host is known to be alive
@@ -1618,10 +1732,9 @@ void CResource::ReportNetLost () {
 }
 
 
-void CResource::DriveValue (URcValue val) {
-  CRcValueState vs (Type (), val);
+void CResource::DriveValue (CRcValueState *vs) {
 
-  //~ INFOF (("### CResource::DriveValue ('%s', '%s')", Uri (), vs.ToStr ()));
+  //~ INFOF (("### CResource::DriveValue ('%s', '%s')", Uri (), vs->ToStr ()));
 
   // Sanity...
   ASSERT (rcDriver != NULL && Type () != rctNone);
@@ -1629,10 +1742,12 @@ void CResource::DriveValue (URcValue val) {
 
   // Drive via driver...
   Lock ();
-  if (!valueState.ValueEquals (val) || !valueState.IsValid ()) {
-    rcDriver->DriveValue (this, &vs);
+  if (!valueState.ValueEquals (vs) || !valueState.IsValid () || !vs->IsValid ()) {
+    //~ INFOF (("### CResource::DriveValue ('%s', '%s')", Uri (), vs->ToStr (true)));
+    rcDriver->DriveValue (this, vs);
     // Note: The driver may have changed 'vs' to report a busy state or changes due to hardware.
-    ReportValueStateAL (&vs);
+    if (!(vs->State () == rcsValid && vs->Type () == rctNone)) ReportValueStateAL (vs);
+      // Special case: rcsValid / rctNone indicates that nothing should be reported at all.
   }
   //~ else INFO ("###    ... skipping (not new)");
   Unlock ();
@@ -1643,7 +1758,7 @@ void CResource::DriveValue (URcValue val) {
 // ***** For directory services *****
 
 
-void CResource::GetInfo (CString *ret, int verbosity, bool allowNet) {
+const char *CResource::GetInfo (CString *ret, int verbosity, bool allowNet) {
   CRcSubscriberLink *sl;
   CRcRequest *req;
   CString s;
@@ -1676,6 +1791,7 @@ void CResource::GetInfo (CString *ret, int verbosity, bool allowNet) {
       Unlock ();
     }
   }
+  return ret->Get ();
 }
 
 
@@ -1748,7 +1864,7 @@ CRcRequest *CResource::GetWinningRequest (TTicks t) {
 
 void CResource::EvaluateRequests () {
   CRcRequest *req, *bestReq, *finalReq, **pReq, **pBestReq;
-  CRcValueState vs;
+  CRcValueState finalValueState;
   URcValue finalValue;
   TTicks curTime, nextTime, bestTime, finalTime;
   TTicksMonotonic curTicks, t;
@@ -1774,6 +1890,20 @@ void CResource::EvaluateRequests () {
   curTime = TicksNow ();              // Absolute time in milliseconds since epoch
   curTicks = TicksMonotonicNow ();    // Semi-absolute time in milliseconds
 
+  // Handle repetitions: Update 't0' / 't1' based on 'repeat' attributes ...
+  for (req = requestList; req; req = req->next)
+    if (req->repeat && req->t0) {
+      // Repeat back in time ...
+      while (req->t1 - req->repeat > curTime) req->t1 -= req->repeat;
+      while (req->t0 > req->t1) req->t0 -= req->repeat;
+      // Repeat forward in time ...
+      while (req->t1 <= curTime) {      // '<=' (and not '<') is important to not have it removed below!!
+        req->t0 += req->repeat;
+        req->t1 += req->repeat;
+      }
+    }
+
+  // Evaluate ...
   finalTime = 0;   //  > 0 indicates that 'finalValue' is valid and to be propagated to the driver
   if (Type () == rctTrigger) {
 
@@ -1798,7 +1928,7 @@ void CResource::EvaluateRequests () {
       delete req;
 
       // Let trigger happen...
-      finalValue.vInt = 0;  // drive a cleared value; In the 'Report...' methods, the value is ignored anyway.
+      finalValue.vInt = 0;  // drive a cleared value; In the 'Report...' methods, the value is ignored anyway. (TBD: Better drive the current value?)
       finalTime = curTime;
     }
   }
@@ -1877,7 +2007,10 @@ void CResource::EvaluateRequests () {
   Unlock ();
 
   // Apply new value (cannot be done when 'this' is locked) ...
-  if (finalTime > 0) DriveValue (finalValue);
+  if (finalTime > 0)  finalValueState.Set (Type (), finalValue, rcsValid);
+  else                finalValueState.Clear ();
+  //~ INFOF (("### CResource::EvaluateRequests (): Driving %s := %s", Gid (), finalValueState.ToStr (true)));
+  DriveValue (&finalValueState);
 }
 
 
@@ -2106,6 +2239,15 @@ void CRcEventProcessor::Interrupt () {
 }
 
 
+void CRcEventProcessor::FlushEvents () {
+  CRcEvent ev;
+
+  globMutex.Lock ();
+  while (DoPollEventAL (&ev)) {}
+  globMutex.Unlock ();
+}
+
+
 bool CRcEventProcessor::OnEvent (CRcEvent *ev) {
   if (cbEvent) return cbEvent (this, ev, cbEventData);
   else return false;
@@ -2160,7 +2302,7 @@ void CRcEventProcessor::SetInSelectSet (bool _inSelectSet) {
 }
 
 
-CRcEventProcessor *CRcEventProcessor::Select (int maxTime) {
+CRcEventProcessor *CRcEventProcessor::Select (TTicksMonotonic maxTime) {
   TTicksMonotonic timeLeft;
 
   timeLeft = maxTime;
@@ -2465,15 +2607,17 @@ void CRcRequest::Reset () {
   // Set default attributes...
   gid.SetC (EnvInstanceName ());
   priority = rcPrioNormal;
+  t0 = t1 = NEVER;
+  repeat = 0;
   hysteresis = 0;
-  t0 = t1 = 0;
+
 
   // Set origin stamp...
   SetOrigin ();
 }
 
 
-void CRcRequest::Set (CRcValueState *_value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _hysteresis) {
+void CRcRequest::Set (CRcValueState *_value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   TTicks now;
 
   if (_value) {
@@ -2481,7 +2625,7 @@ void CRcRequest::Set (CRcValueState *_value, const char *_gid, int _priority, TT
     isCompatible = false;
   }
   if (_gid) gid.Set (_gid);
-  if (priority != RCREQ_NONE) priority = _priority;
+  if (_priority != RCREQ_NONE) priority = _priority;
   if (_t0 < 0 || _t1 < 0) {
     now = TicksNow ();
     if (_t0 != RCREQ_NONE && _t0 < 0) _t0 = now - _t0;
@@ -2489,42 +2633,43 @@ void CRcRequest::Set (CRcValueState *_value, const char *_gid, int _priority, TT
   }
   if (_t0 != RCREQ_NONE) t0 = _t0;
   if (_t1 != RCREQ_NONE) t1 = _t1;
+  if (_repeat != RCREQ_NONE) repeat = _repeat;
   if (_hysteresis != RCREQ_NONE) hysteresis = _hysteresis;
 }
 
 
-void CRcRequest::Set (bool _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _hysteresis) {
+void CRcRequest::Set (bool _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetBool (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _hysteresis);
+  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
-void CRcRequest::Set (int _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _hysteresis) {
+void CRcRequest::Set (int _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetInt (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _hysteresis);
+  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
-void CRcRequest::Set (float _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _hysteresis) {
+void CRcRequest::Set (float _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetFloat (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _hysteresis);
+  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
-void CRcRequest::Set (const char *_value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _hysteresis) {
+void CRcRequest::Set (const char *_value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetString (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _hysteresis);
+  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
-void CRcRequest::Set (TTicks _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _hysteresis) {
+void CRcRequest::Set (TTicks _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetTime (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _hysteresis);
+  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
@@ -2568,6 +2713,45 @@ void CRcRequest::SetValue (TTicks _value) {
 // ***** Stringification *****
 
 
+bool CRcRequest::SetSingleAttrFromStr (const char *str) {
+  const char *p;
+  bool ok = true;
+
+  switch (str[0]) {
+    case '#':
+      gid.Set (str + 1);
+      break;
+    case '*':
+      priority = atoi (str + 1);
+      break;
+    case '+':     // t0 and (optionally) repeat ...
+      p = strchr (str + 1, '+');
+      if (!p) p = str + 1;      // no repeat value
+      else {
+        if (p == str + 1)
+          repeat = TICKS_FROM_SECONDS(TIME_OF (24,0,0));      // empty repeat expression -> 1 day
+        else
+          ok = TicksFromString (str + 1, &repeat, false);     // ticks value
+      }
+      if (ok) ok = TicksFromString (p, &t0, true);
+      break;
+    case '-':
+      ok = TicksFromString (str + 1, &t1, true);
+      break;
+    case '~':
+      hysteresis = atoi (str + 1);
+      break;
+    case '@':
+      origin.Set (str + 1);
+      //~ INFOF(("### CRcRequest::SetFromStr: Set origin = '%s'", origin.Get ()));
+      break;
+    default:
+      ok = false;
+  }
+  return ok;
+}
+
+
 bool CRcRequest::SetFromStr (const char *str) {
   char **argv;
   int n, argc;
@@ -2578,44 +2762,43 @@ bool CRcRequest::SetFromStr (const char *str) {
   StringSplit (str, &argc, &argv);
   ok = (argc >= 1);
 
-  // Value...
+  // Value ...
   if (ok) {
-    value.SetType (rctNone);
+    value.Clear (rctNone);
     //~ INFOF (("### CRcRequest::SetFromStr () -> value '%s'", argv[1]));
     ok = value.SetFromStr (argv[0]);
   }
 
-  // Optional parameters...
-  if (ok) {
-    for (n = 1; n < argc; n++) {
-      switch (argv[n][0]) {
-        case '#':
-          gid.Set (argv[n] + 1);
-          break;
-        case '*':
-          priority = atoi (argv[n] + 1);
-          break;
-        case '+':
-          ok = TicksFromString (argv[n] + 1, &t0);
-          break;
-        case '-':
-          ok = TicksFromString (argv[n] + 1, &t1);
-          break;
-        case '~':
-          hysteresis = atoi (argv[n] + 1);
-          break;
-        case '@':
-          origin.Set (argv[n] + 1);
-          //~ INFOF(("### CRcRequest::SetFromStr: Set origin = '%s'", origin.Get ()));
-          break;
-        default:
-          ok = false;
-      }
-    }
-  }
+  // Optional parameters ...
+  for (n = 1; n < argc && ok; n++)
+    ok = SetSingleAttrFromStr (argv[n]);
 
-  // Warn & finish
+  // Warn & finish ...
   if (!ok) WARNINGF(("Malformed request specification '%s'", str));
+  if (argv) {
+    free (argv[0]);
+    free (argv);
+  }
+  return ok;
+}
+
+
+bool CRcRequest::SetAttrsFromStr (const char *str) {
+  char **argv;
+  int n, argc;
+  bool ok;
+
+  //~ INFOF ( ("### CRcRequest::SetFromStr ('%s')", str));
+  if (!str) return false;
+  StringSplit (str, &argc, &argv);
+  ok = true;
+
+  // Optional parameters ...
+  for (n = 0; n < argc && ok; n++)
+    ok = SetSingleAttrFromStr (argv[n]);
+
+  // Warn & finish ...
+  if (!ok) WARNINGF(("Malformed attributes specification '%s'", str));
   if (argv) {
     free (argv[0]);
     free (argv);
@@ -2628,12 +2811,20 @@ const char *CRcRequest::ToStr (CString *ret, bool beautiful, TTicks relativeTime
   CString s;
   TTicks now = NEVER;
 
-  ret->SetF (beautiful ? "%-12s #%-12s *%i" : "%s #%s *%i",
+  ret->SetF (beautiful ? "%-16s #%-12s *%i" : "%s #%s *%i",
              value.ToStr (&s, beautiful, false, !beautiful, 16),
              gid.Get (), priority);
-  if (relativeTimeThreshold && (t0 || t1)) now = TicksNow ();
+  if (relativeTimeThreshold && (t0 != NEVER || t1 != NEVER)) now = TicksNow ();
   if (t0) {
     ret->Append (" +");
+    if (repeat) {
+      if (repeat == TICKS_FROM_SECONDS(TIME_OF(24,0,0)))
+        ret->Append ('+');
+      else if (repeat % TICKS_FROM_SECONDS(TIME_OF(24,0,0)) == 0)
+        ret->AppendF ("%id+", (int) (repeat / TICKS_FROM_SECONDS(TIME_OF(24,0,0))));
+      else
+        ret->AppendF ("t%lli+", (long long) repeat);
+    }
     if (relativeTimeThreshold && t0 > now && t0 - now <= relativeTimeThreshold)
       ret->AppendF ("%i", (int) (t0 - now));
     else
@@ -2799,20 +2990,27 @@ void RcUnlockSubscribers () {
 
 
 void CRcDriver::Register () {
-  if (!IsValidIdentifier (lid.Get (), false)) ERRORF(("CRcDriver::Register (): Invalid driver ID '%s'", lid.Get ()));
+  if (!IsValidIdentifier (lid.Get (), false))
+    ERRORF(("CRcDriver::Register (): Invalid driver ID '%s'", lid.Get ()));
   if (rcInitCompleted)
     ERRORF (("Registration attempt for driver '%s' after the initialization phase.", lid.Get ()));
+  if (driverMap.Get (lid.Get ()))
+    ERRORF (("Redefinition of driver '%s'.", lid.Get ()));
   driverMap.Set (lid.Get (), this);
 }
 
 
-CRcDriver *CRcDriver::RegisterAndInit (const char *_lid, FRcDriverFunc *_func) {
+void CRcDriver::RegisterAndInit (const char *_lid, FRcDriverFunc *_func) {
   CRcDriver *drv = new CRcDriver (_lid, _func);
   drv->Register ();
   if (drv->func) drv->func (rcdOpInit, drv, NULL, NULL);
-  return drv;
 }
 
+
+void CRcDriver::Unregister () {
+  ClearResources ();
+  driverMap.Del (lid.Get ());
+}
 
 
 void CRcDriver::ClearResources () {
@@ -2865,7 +3063,13 @@ void CRcEventDriver::DriveValue (CResource *rc, CRcValueState *vs) {
 
   //~ INFOF (("### CRcEventDriver::DriveValue ('%s', '%s') -> quick success = %i", rc->Uri (), vs->ToStr (), successState));
   PutEvent (&ev);
-  vs->SetState (successState);
+  switch (successState) {
+    case rcsValid:    break;   // no change; direct reporting
+    case rcsBusy:     vs->SetToReportBusyOldVal (); break;
+      // If the desired success state is 'rcsBusy', always report the old value with it
+      // (important for shades, for example).
+    case rcsUnknown:  vs->SetToReportNothing ();    break;
+  }
 }
 
 
@@ -2985,7 +3189,7 @@ void RcStop () {
 // ***** Subscriptions *****
 
 
-CRcSubscriber *RcSubscribe (const char *subscrLid) {
+CRcSubscriber *RcNewSubscriber (const char *subscrLid, CResource *rc) {
   CRcSubscriber *subscr;
 
   //~ INFOF (("### RcSubscribe ('%s')", subscrLid));
@@ -2999,19 +3203,14 @@ CRcSubscriber *RcSubscribe (const char *subscrLid) {
   subscr->Register (subscrLid);
   //~ INFOF (("###   -> '%s'/%08x", subscr->Lid (), subscr));
 
+  if (rc) subscr->AddResource (rc);
+
   return subscr;
 }
 
 
-CRcSubscriber *RcSubscribeToResource (const char *subscrLid, CResource *rc) {
-  CRcSubscriber *subscr = RcSubscribe (subscrLid);
-  subscr->AddResource (rc);
-  return subscr;
-}
-
-
-CRcSubscriber *RcSubscribeToResource (const char *subscrLid, const char *pattern) {
-  CRcSubscriber *subscr = RcSubscribe (subscrLid);
+CRcSubscriber *RcNewSubscriber (const char *subscrLid, const char *pattern) {
+  CRcSubscriber *subscr = RcNewSubscriber (subscrLid);
   subscr->AddResources (pattern);
   return subscr;
 }
@@ -3082,10 +3281,10 @@ void RcSetTriggerFromStr (const char *rcUri, const char *reqDef) {
 }
 
 
-void RcDelRequest (const char *rcUri, const char *reqGid) {
+void RcDelRequest (const char *rcUri, const char *reqGid, TTicks t1) {
   CResource *rc = RcGetResource (rcUri, false);
   ASSERT (rc != NULL);
-  rc->DelRequest (reqGid);
+  rc->DelRequest (reqGid, t1);
 }
 
 
@@ -3093,7 +3292,7 @@ void RcDelRequest (const char *rcUri, const char *reqGid) {
 // ***** Declaring drivers & their resources *****
 
 
-CRcEventProcessor *RcRegisterDriver (const char *drvLid, ERcState _successState) {
+CRcEventDriver *RcRegisterDriver (const char *drvLid, ERcState _successState) {
   CRcEventDriver *ret = new CRcEventDriver (drvLid, _successState);
   ret->Register ();
   return ret;

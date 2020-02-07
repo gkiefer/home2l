@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ readme: ../README.pdf
 # 1. The normal 'build-indep' target generates/updates:
 #      README.pdf
 #      home2l-figs/*
-#      home2l-showcase.tar.gz
+#      home2l-showcase-vbox.tar.gz
 #
 # 2. The following files/dirs consume much disk space and would be updated very frequently
 #    on small code changes. Hence, they are NOT updated with 'build*', but only explicitly
@@ -92,25 +92,22 @@ readme: ../README.pdf
 #      home2l-api_python/
 
 
-../README.md: ../home2l-figs/readme-title-web.png ../home2l-figs/home2l-components-web.png
-../README.pdf: ../README.md
-	cd ..; \
-	pandoc README.md -f markdown_github -V fontfamily=arev -V fontsize=12pt -V geometry:margin=2.5cm -V urlcolor=blue -o README.pdf
-
+../README.pdf: ../README.md ../home2l-figs/readme-title-web.png
+	@echo PANDOC $@
+	@cd .. && \
+	pandoc README.md -f gfm -V fontfamily=arev -V fontsize=12pt -V geometry:margin=2.5cm -V urlcolor=blue -o README.pdf \
+		# In Debian (Buster), '-V fontfamily=arev' requires the package 'texlive-fonts-extra' to be installed.
 
 ../home2l-figs/home2l-icon-web.png: figs/home2l-icon.svg
-	mkdir -p ../home2l-figs
-	inkscape -z -C $< -e $@ -b white -w 96 -h 96
+	@echo INKSCAPE $@
+	@mkdir -p ../home2l-figs && \
+	inkscape -z -C $< -e $@ -b white -w 96 -h 96 2>&1 >/dev/null && \
 	mogrify $@ -colors 256 # -quality 90
 
 ../home2l-figs/readme-title-web.png: figs/readme-title.svg
-	mkdir -p ../home2l-figs
-	inkscape -z -C $< -e $@ -b white -w 768
-	mogrify $@ -colors 256 # -quality 90
-
-../home2l-figs/home2l-components-web.png: figs/home2l-components.svg
-	mkdir -p ../home2l-figs
-	inkscape -z -C $< -e $@ -b white -w 768
+	@echo INKSCAPE $@
+	@mkdir -p ../home2l-figs && \
+	inkscape -z -C $< -e $@ -b white -w 1024 2>&1 >/dev/null && \
 	mogrify $@ -colors 256 # -quality 90
 
 
@@ -123,21 +120,21 @@ commit:  $(API_C) $(API_PYTHON) $(BOOK).pdf
 
 
 
-########## Tutorial: ShowCase VM ##########
+######################### Demo: VirtualBox VM ##################################
 
 
-.PHONY: tutorial
-tutorial: ../home2l-showcase.tar.gz
+.PHONY: showcase-vbox
+showcase-vbox: ../home2l-showcase-vbox.tar.gz
 
 
-../home2l-showcase.tar.gz:
+../home2l-showcase-vbox.tar.gz:
 	@echo CREATE $@
-	@mkdir -p $(HOME2L_BUILD)
-	@rm -fr $(HOME2L_BUILD)/home2l-showcase
-	@cp -a tutorial/home2l-showcase $(HOME2L_BUILD)
-	@gunzip $(HOME2L_BUILD)/home2l-showcase/system.vdi.gz
-	@tar czf $@ -C $(HOME2L_BUILD) home2l-showcase
-	@rm -fr $(HOME2L_BUILD)/home2l-showcase
+	@mkdir -p $(HOME2L_BUILD) && \
+	rm -fr $(HOME2L_BUILD)/home2l-showcase-vbox && \
+	cp -a showcase/vmachine $(HOME2L_BUILD)/home2l-showcase-vbox && \
+	gunzip $(HOME2L_BUILD)/home2l-showcase-vbox/system.vdi.gz && \
+	tar czf $@ -C $(HOME2L_BUILD) home2l-showcase-vbox && \
+	rm -fr $(HOME2L_BUILD)/home2l-showcase-vbox
 
 
 
@@ -152,7 +149,7 @@ tutorial: ../home2l-showcase.tar.gz
 # Module 'common'...
 ref_env_common.tex: ../common/base.C ../common/env.C ../common/phone.C
 	@echo EXCODE $@
-	@./excode.py e debug:home2l:sys:phone $^ > $@ || (rm $@; exit 7)
+	@./excode.py e debug:home2l:sys:net:phone $^ > $@ || (rm $@; exit 7)
 
 
 # Module 'resources'...
@@ -172,13 +169,26 @@ ref_env_daemon.tex: ../tools/home2l-daemon.C
 	@./excode.py e daemon $^ > $@ || (rm $@; exit 7)
 
 
+# Module 'brownies'...
+#   includes the resources of 'home2l-drv-brownies', which may be documented
+#   in the "Drivers" (not "Brownies") chapter.
+ref_env_brownies.tex: ../brownies/brownies.C ../brownies/home2l-brownie2l.C
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
+ref_rc_brownies.tex: ../brownies/brownies.C
+	@echo EXCODE $@
+	@./excode.py r : $^ > $@ || (rm $@; exit 7)
+
+
 # Module 'wallclock'...
 ref_env_wallclock.tex: ../wallclock/system.C \
 	       ../wallclock/ui_base.C ../wallclock/ui_widgets.C ../wallclock/ui_screen.C \
+	       ../wallclock/floorplan.C \
 	       ../wallclock/alarmclock.C ../wallclock/apps.C ../wallclock/alarmclock.C ../wallclock/app_home.C ../wallclock/home2l-wallclock.C \
 	       ../wallclock/app_phone.C ../wallclock/app_calendar.C ../wallclock/app_music.C
 	@echo EXCODE $@
-	@./excode.py e ui:alarm:var.alarm:phone:calendar:music:var.music $^ > $@ || (rm $@; exit 7)
+	@./excode.py e ui:floorplan:alarm:var.alarm:phone:calendar:music:var.music $^ > $@ || (rm $@; exit 7)
 
 ref_rc_wallclock.tex: ../wallclock/system.C
 	@echo EXCODE $@
@@ -214,42 +224,26 @@ ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 ######################### Home2L Book: Main document ###########################
 
 
-.PHONY: figs
-figs:
-	@grep '\includegraphics.*%%%' < $(BOOK).tex \
-	| sed 's#.*{\(.*\)}.*%%% \(.*\): *\(.*\)#\1 \2 \3#' \
-	| while read -r LINE; do \
-	    L=($$LINE); \
-	    BASE=$${L[0]};  unset L[0]; \
-	    EXT=$${L[1]};   unset L[1]; \
-	    CMD=$${L[@]//\$$BASE/$$BASE}; \
-	    # echo "### BASE=$$BASE EXT=$$EXT CMD=$$CMD"; \
-	    if [ "$$BASE.$$EXT" -ot "$$BASE.svg" ]; then \
-	       echo "Generating $$BASE.$$EXT ..."; \
-	       $$CMD 2>&1 | sed 's#^#  #'; \
-	    fi; \
-	  done
-
-
 REFS_ENV := ref_env_common.tex ref_env_resources.tex ref_env_daemon.tex \
+						ref_env_brownies.tex \
 	          ref_env_wallclock.tex ref_env_doorman.tex \
 	          ref_env_drv_gpio.tex ref_env_drv_weather.tex
 
 REFS_RC  := ref_rc_resources.tex  \
+						ref_rc_brownies.tex \
 	          ref_rc_wallclock.tex ref_rc_doorman.tex \
 	          ref_rc_drv_weather.tex
 
 
 $(BOOK).pdf: $(REFS_ENV) $(REFS_RC) $(BOOK).tex
-	$(MAKE) figs
 	@echo "PDFLaTeX: $(BOOK).pdf (1st run - draft)"
-	@pdflatex -draftmode --shell-escape -interaction=nonstopmode "\def\version{$(GIT_VERSION)} \input{$(BOOK).tex}" >/dev/null 2>&1
+	@set -o pipefail; pdflatex -draftmode -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" | (grep "\.tex:.*:" || true)
 	@echo "PDFLaTeX: $(BOOK).pdf (2nd run - draft)"
-	@pdflatex -draftmode --shell-escape -interaction=nonstopmode "\def\version{$(GIT_VERSION)} \input{$(BOOK).tex}" >/dev/null 2>&1
+	@set -o pipefail; pdflatex -draftmode -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" | (grep "\.tex:.*:" || true)
 	@echo "makeindex $(BOOK).idx"
 	@makeindex $(BOOK).idx >/dev/null 2>&1
 	@echo "PDFLaTeX: $(BOOK).pdf (3rd run - final)"
-	@pdflatex --shell-escape -interaction=nonstopmode "\def\version{$(GIT_VERSION)} \input{$(BOOK).tex}" >/dev/null 2>&1
+	@set -o pipefail; pdflatex -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" | (grep "\.tex:.*:" || true)
 
 
 .PHONY: draft
@@ -263,18 +257,24 @@ draft:
 #######################  Doxygen: C API, Python API ##########################
 
 
-# To improve layout:
+# How to improve layout:
 # - see https://stackoverflow.com/questions/19831837/documenting-with-doxygen-put-details-on-top
 # - generate layout file template: doxygen -l layoutFileName.xml
 
 
-API_C_SRC = $(wildcard api_c.H ../common/*.H ../resources/resources.H ../wallclock/*.H )
+API_C_SRC = $(wildcard api_c.H \
+							../common/*.H \
+							../resources/resources.H \
+							../brownies/brownies.H ../brownies/avr/interface.h  ../brownies/avr/config.h ../brownies/avr/base.h ../brownies/avr/core.h ../brownies/avr/twi.h \
+							../wallclock/*.H \
+						)
 
 $(API_C): api_c.doxygen ../home2l-figs/home2l-icon-web.png $(API_C_SRC)
 	@echo DOXY $@
 	@rm -fr $@
-	@( cat api_c.doxygen ; echo 'PROJECT_NUMBER="$(GIT_VERSION) ($(BUILD_DATE))"' ; echo 'INPUT=$(API_C_SRC)' ) | doxygen - >/dev/null
+	@( cat api_c.doxygen ; echo 'PROJECT_NUMBER="$(BUILD_VERSION) ($(BUILD_DATE))"' ; echo 'INPUT=$(API_C_SRC)' ) | doxygen - >/dev/null
 	@mv api_c/html $@
+	@rm -fr api_c
 
 
 
@@ -293,8 +293,31 @@ $(API_PYTHON): api_python.doxygen ../home2l-figs/home2l-icon-web.png api_python.
 	@echo DOXY $@
 	@rm -fr $@
 	@cp -a $(SWIG_PY) home2l.py
-	@( cat api_python.doxygen ; echo 'PROJECT_NUMBER="$(GIT_VERSION) ($(BUILD_DATE))"' ) | doxygen - >/dev/null
+	@( cat api_python.doxygen ; echo 'PROJECT_NUMBER="$(BUILD_VERSION) ($(BUILD_DATE))"' ) | doxygen - >/dev/null
 	@mv api_python/html $@
+	@rm -fr api_python home2l.py
+
+
+
+
+
+####################### Checking ###############################################
+
+# Check all documentation for broken links.
+# This target is meant to be called manually.
+
+
+.PHONY: check
+check: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+	@rm -f brownies && ln -s ../brownies .
+	@echo -e "\n#################### Checking C/C++ API ####################\n"
+	@linkchecker --check-extern home2l-api_c/index.html
+	@echo -e "\n#################### Checking Python API ####################\n"
+	@linkchecker --check-extern home2l-api_python/index.html
+	@rm brownies
+	@echo -e "\n#################### Checking PDFs ####################\n"
+	@./checkpdfs.py
+
 
 
 
@@ -309,7 +332,7 @@ $(API_PYTHON): api_python.doxygen ../home2l-figs/home2l-icon-web.png api_python.
 
 
 clean:
-	rm -fr api_c api_python figs/*.eps figs/*-eps-converted-to.pdf texput.log home2l.py
+	rm -fr api_c api_python svg-inkscape texput.log home2l.py
 	rm -fr $(BOOK).aux $(BOOK).idx $(BOOK).ilg $(BOOK).ind $(BOOK).log $(BOOK).out $(BOOK).toc $(BOOK).tex.bak
 	rm -fr _markdown_* $(BOOK).markdown.*
 	rm -fr $(BOOK).pdf $(API_C) $(API_C).pdf $(API_PYTHON) $(API_PYTHON).pdf
@@ -320,7 +343,7 @@ veryclean: clean
 	rm -fr ../README.pdf ../home2l-*
 
 
-build-indep: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf ../home2l-showcase.tar.gz
+build-indep: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf ../home2l-showcase-vbox.tar.gz
 
 
 install-indep:

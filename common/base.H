@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 
 
 /** @file
- * @defgroup base Base
- * Basic definitions and classes for all *Home2L* components.
+ * @defgroup common Common
+ * @brief Common definitions and classes for all *Home2L* components.
  *
  * @{
  */
@@ -51,8 +51,9 @@
 
 // ***************** Configuration *********************************************
 
+
 #ifdef __ANDROID__
-#define ANDROID 1   ///< 1, if compiling for Android (NDK), 0 otherwise
+#define ANDROID 1   ///< @brief 1, if compiling for Android (NDK), 0 otherwise
 #else
 #define ANDROID 0
 #endif
@@ -61,25 +62,27 @@
 
 
 
-// ***************** Basic definitions *****************************************
+// ***************** Basic definitions and functions ***************************
 
 
-/// @defgroup base_basics Basics
-/// Some very basic definitions
-/// @{
+/** @defgroup common_basics Basics
+ * @brief Some very basic definitions and functions
+ *
+ * @{
+ */
 
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))   ///< Typeless min-operator
 #define MAX(A, B) ((A) > (B) ? (A) : (B))   ///< Typeless max-operator
 
 #define STR(X) #X
-  ///< Stringify macro
+  ///< @brief Stringify macro
 
 #define OFFSETOF(type, field) ((unsigned) &(((type *) 0)->field))
-  ///< Byte offset of a field in struct or class
+  ///< @brief Byte offset of a field in struct or class
 
 #define CLEAR(X) bzero (&(X), sizeof (X))
-  ///< Set variable/object 'X' to all-zero
+  ///< @brief Set variable/object 'X' to all-zero
 
 
 /// @name Atomic read and write operations ...
@@ -91,14 +94,70 @@
 /// @}
 
 
+/// @name Enhanced file and directory operations ...
+/// @{
+size_t Write (int fd, const void *buf, size_t count);
+  ///< @brief Similar to POSIX write(), but returns all 'count' bytes whenever possible.
+  ///
+  /// This function repeatedly calls write(2) until 'count' bytes have been written.
+  /// On error, the actual number of bytes written is returned (which is less than
+  /// 'count'), and 'errno' is set accordingly.
+  /// @return the number of bytes written successfully.
+
+size_t Read (int fd, void *buf, size_t count);
+  ///< @brief Similar to POSIX read(), but reads all 'count' bytes whenever possible.
+  ///
+  /// This function repeatedly calls read(2) until 'count' bytes have been read.
+  /// On error or end-of-file, the actual number of bytes read is returned (which
+  /// is less than 'count'), and 'errno' is set accordingly. In the case of an
+  /// end-of-file condition, 'errno' is set to 0.
+  /// @return the number of bytes read successfully.
+
+bool MakeDir (const char *relOrAbsPath, bool setHome2lGroup);
+  ///< @brief Create a directory (and all its parents as necessary).
+  ///
+  /// If the argument is a symbolic links, the target directory (tree) is created
+  /// if it does not yet exist.
+  /// @param relOrAbsPath is either an absolute path or a path relative to
+  ///     HOME2L_ROOT and must identify a directory.
+  /// @param setHome2lGroup selects to set the directory group ownerships to HOME2L_USER, if possible.
+  /// @return success status (on error, a warning is logged).
+
+bool UnlinkTree (const char *relOrAbsPath, const char *skipPattern = NULL);
+  ///< @brief Unlink (remove) a directory with all its decendants.
+  ///
+  /// @param relOrAbsPath is either an absolute path or a path relative to
+  ///     HOME2L_ROOT and must identify a directory.
+  /// @param skipPattern identifies portions not to be unlinked. Presently, only
+  ///     a whitespace-separated list of items of the form "\<name\>" is supported,
+  ///     which means that, if `relOrAbsPath` is a directory, its top-level
+  ///     directory \<name\> is skipped.
+  ///     Further variants may be implemented in the future.
+  /// @return success status (on error, a warning is logged).
+
+bool ReadDir (const char *relOrAbsPath, class CKeySet *ret);
+  ///< @brief Read a directory into a @ref CKeySet object.
+  ///
+  /// @param relOrAbsPath is either an absolute path or a path relative to $PWD
+  /// @param ret points to the @ref CKeySet object to be filled
+  /// @return success status (on error, a warning is logged).
+  ///
+  /// In case of an error, the contents of 'ret' are unspecified.
+
+/// @}
+
+
 /// @}  // Basics
+
+
 
 
 
 // ***************** Logging and Debugging *************************************
 
-/** @defgroup base_logging Logging
- * Macros for logging.
+
+/** @defgroup common_logging Logging
+ * @brief Macros for logging.
  *
  * @{
  */
@@ -111,16 +170,30 @@ extern int envDebug;            ///< Debug level (read-only; may also be mapped 
 #endif
 
 
+typedef void FLogCbMessage (const char *title, const char *msg);
+  ///< @brief Callback to display a message box using OS mechanisms.
+  /// This is mainly used if the program is aborted using an ERROR... or ABORT... macro
+  /// and presently only supported on Android.
+typedef void FLogCbToast (const char *msg, bool showLonger);
+  ///< @brief Callback to display a short info popup using OS mechanisms.
+  /// This is used if for messages printed using an INFO... macro, where the message is
+  /// preceeded by "-t- " (short toast) or "-T- " (long toast).
+  /// Toasts are presently only supported on Android.
+
+
 #if !ANDROID
-void LogToSyslog ();      // Redirect logging to syslog from now (under non-Android)
+void LogToSyslog ();      ///< Redirect logging to syslog from now (under non-Android)
 void LogClose ();
 bool LoggingToSyslog ();
-void LogStack ();         // Log a stack trace (requires linker flag '-rdynamic' to print function names)
+void LogStack ();         ///< Log a stack trace (requires linker flag '-rdynamic' to print function names)
+static inline void LogSetCbMessage (FLogCbMessage *_cbMessage) {}
+static inline void LogSetCallbacks (FLogCbMessage *_cbMessage, FLogCbToast *_cbToast) {}
 #else
 static inline void LogToSyslog () {}
 static inline void LogClose () {}
 static inline bool LoggingToSyslog () { return true; }
 static inline void LogStack () {}
+void LogSetCallbacks (FLogCbMessage *_cbMessage, FLogCbToast *_cbToast);
 #endif
 
 void LogPara (const char *_logHead, const char* _logFile, int _logLine);    // Helper only; use the following macros instead
@@ -129,7 +202,7 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 
 #if WITH_DEBUG == 1
 #define DEBUG(LEVEL, MSG) do { if (envDebug >= LEVEL) { LogPara ("DEBUG", __FILE__, __LINE__); LogPrintf (MSG); } } while (0)
-  ///< Print a debug message.
+  ///< @brief Print a debug message.
   /// This is only effective if the tool was compiled with WITH_DEBUG == 1 and the
   /// configuration parameter 'debug' is set to a value > 0.
   ///
@@ -140,7 +213,7 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
   ///
   /// Messages of level 3 or more must have a topic-related prefix "[<topic>]" to allow later filtering,
 #define DEBUGF(LEVEL, FMT) do { if (envDebug >= LEVEL) { LogPara ("DEBUG", __FILE__, __LINE__); LogPrintf FMT; } } while (0)
-  ///< Print a formatted debug message.
+  ///< @brief Print a formatted debug message.
   /// The argument must contain a parantheses with arguments, which will then be
   /// passed to a printf() function variant. For example:
   /// `DEBUGF(("Current value is %i", my_value))`
@@ -150,41 +223,43 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 #endif
 
 #define INFO(MSG) do { LogPara ("INFO", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-  ///< Print a debug message to the console.
+  ///< @brief Print a debug message to the console.
 #define INFOF(FMT) do { LogPara ("INFO", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-  ///< Print a formatted info message.
+  ///< @brief Print a formatted info message.
 
 #define WARNING(MSG) do { LogPara ("WARNING", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-  ///< Print a warning message to the console.
+  ///< @brief Print a warning message to the console.
 #define WARNINGF(FMT) do { LogPara ("WARNING", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-  ///< Print a formatted warning message.
+  ///< @brief Print a formatted warning message.
 
 #define SECURITY(MSG) do { LogPara ("SECURITY", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-  ///< Print a security-related warning to the console.
+  ///< @brief Print a security-related warning to the console.
   /// These are warnings an adminstrator should regularly check out for, since
   /// they may be caused by an attack.
 #define SECURITYF(FMT) do { LogPara ("SECURITY", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-  ///< Print a formatted security-related warning.
+  ///< @brief Print a formatted security-related warning.
 
 #define ERROR(MSG) do { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf (MSG); _exit (3); } while (0)
-  ///< Print an error message to the console and quit the application.
+  ///< @brief Print an error message to the console and quit the application.
 #define ERRORF(FMT) do { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf FMT; _exit (3); } while (0)
-  ///< Print a formatted error message to the console and quit the application.
+  ///< @brief Print a formatted error message to the console and quit the application.
 
 #define ABORT(MSG) do { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf (MSG); abort (); } while (0)
-  ///< Print an error message to the console and abort the application.
+  ///< @brief Print an error message to the console and abort the application.
   /// Unlike `ERROR`, this uses the `abort()` system call, which may generate
   /// a core dump to be used for debugging.
 #define ABORTF(FMT) do { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf FMT; abort (); } while (0)
-  ///< Print a formatted error message to the console and abort the application.
+  ///< @brief Print a formatted error message to the console and abort the application.
 
 #define ASSERT(COND) do { if (!(COND)) { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf ("Assertion failed"); LogStack (); abort (); } } while (0)
-  ///< Check a condition and abort the application if not true.
+  ///< @brief Check a condition and abort the application if not true.
 #define ASSERTM(COND,MSG) do { if (!(COND)) { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf ("Assertion failed: %s", MSG); LogStack (); abort (); } } while (0)
-  ///< Check a condition and, if not true, abort the application with a message.
+  ///< @brief Check a condition and, if not true, abort the application with a message.
+#define ASSERTF(COND,FMT) do { if (!(COND)) { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf ("Assertion failed - explanation follows."); LogPrintf FMT; abort (); LogStack (); abort (); } } while (0)
+  ///< @brief Check a condition and, if not true, abort the application with a message.
 
 #define ASSERT_WARN(COND) do { if (!(COND)) WARNING("Weak assertion failed"); } while (0)
-  ///< Check a condition and emit a warning if not true.
+  ///< @brief Check a condition and emit a warning if not true.
 
 
 
@@ -192,11 +267,14 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 // ***** Compile-time assertion *****
 
 
-#define BUILD_ASSERT(NAME, COND) static inline void build_assert_##NAME() { (void) sizeof(char[(COND) - 1]); }
-  ///< Check a compile-time condition.
+#if __cplusplus >= 201103L
+#define STATIC_ASSERT(COND) static_assert (COND, "please check!")
+  ///< @brief Check a compile-time condition.
   /// This macro fails to compile with error "negative array size", if the asserted
-  /// condition is not true. `NAME` is an arbitrary identifier that must be unique
-  /// in the application.
+  /// condition is not true.
+#else
+#define STATIC_ASSERT(COND) static inline void build_assert_##__LINE__() { (void) sizeof(char[(COND) - 1]); }
+#endif
 
 
 /// @}  // Logging
@@ -208,8 +286,8 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 // *************************** Safe heap operations ****************************
 
 
-/** @defgroup base_heap Heap
- * Type-safe and null-pointer-aware heap operations.
+/** @defgroup common_heap Heap
+ * @brief Type-safe and null-pointer-aware heap operations.
  *
  * @{
  */
@@ -218,27 +296,27 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 /// @name C-style Allocation ...
 /// @{
 #define MALLOC(T, N) (T*) malloc (sizeof (T) * (N))
-  ///< Allocate an array of `N` objects of type `T` (type-safe)
+  ///< @brief Allocate an array of `N` objects of type `T` (type-safe)
 #define REALLOC(T, P, N) (T*) realloc (P, sizeof (T) * (N))
-  ///< Reallocate an array of `N` objects of type `T` (type-safe)
+  ///< @brief Reallocate an array of `N` objects of type `T` (type-safe)
 #define SETP(P, X) { if (P) free (P); P = (X); }
-  ///< Replace `P` with a new object/array, eventually free'ing the old one.
+  ///< @brief Replace `P` with a new object/array, eventually free'ing the old one.
 #define FREEP(P) SETP(P, NULL)
-  ///< Free object/array `P`, but only if `P != NULL`
+  ///< @brief Free object/array `P` and set `P = NULL`, but only if `P` was `!= NULL`.
 /// @}
 
 
 /// @name C++-style Allocation ...
 /// @{
 #define SETO(O, X) { if (O) delete O; O = (X); }
-  ///< Replace `O` with a new object, eventually deleting the old one.
+  ///< @brief Replace `O` with a new object, eventually deleting the old one.
 #define FREEO(O) SETO(O, NULL)
-  ///< Free object `O`, but only if `O != NULL`
+  ///< @brief Free object `O`, but only if `O != NULL`
 
 #define SETA(A, X) { if (A) delete [] A; A = (X); }
-  ///< Replace `A` with a new array, eventually deleting the old one.
+  ///< @brief Replace `A` with a new array, eventually deleting the old one.
 #define FREEA(A) SETA(A, NULL)
-  ///< Free array `A`, but only if `A != NULL`
+  ///< @brief Free array `A`, but only if `A != NULL`
 /// @}
 
 
@@ -246,10 +324,13 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 
 
 
+
+
 // ***************** Localization and language *********************************
 
-/** @defgroup base_language Language
- * Localization and translation
+
+/** @defgroup common_language Language
+ * @brief Localization and translation
  *
  * Localization and translation is typically supported in GUI programs
  * of the Home2L suite only. Command-line tools should always revert to the locale "C".
@@ -290,25 +371,27 @@ void LangDone ();
 
 
 // Marking macros...
-#define _(STR) gettext(STR)       ///< Use this GNU gettext-compliant macro for translated strings
+#define _(STR) gettext(STR)       ///< GNU gettext-compliant macro for translating strings
 #define gettext_noop(STR) STR
-#define N_(STR) gettext_noop(STR) ///< Use this GNU gettext-compliant macro for translated strings
+#define N_(STR) gettext_noop(STR) ///< GNU gettext-compliant macro for translating strings
 
 
 // More helpers...
 void LangTranslateNumber (char *str);
-  ///< Adapt numeric string by replacing all '.' by the locale's decimal point
+  ///< @brief Adapt numeric string by replacing all '.' by the locale's decimal point
 
 
 /// @}  // Language
 
 
 
+
+
 // *************************** Strings *****************************************
 
 
-/** @defgroup base_strings Strings
- * Helper functions and classes for string handling
+/** @defgroup common_strings Strings
+ * @brief Helper functions and classes for string handling
  *
  * A note on string encoding
  * -------------------------
@@ -361,34 +444,51 @@ void LangTranslateNumber (char *str);
 // ***** Misc. helpers *****
 
 
-class CString *GetThreadTempString ();    ///< Get the TTS of the calling thread
-static inline class CString *GetTTS () { return GetThreadTempString (); }   ///< Get the TTS
+class CString *GetThreadTempString ();
+  ///< @brief Get the thread-local temporary string (TTS) of the calling thread
+static inline class CString *GetTTS () { return GetThreadTempString (); }
+  ///< @brief Get the TTS (same as above, but shorter)
 
 const char *StringF (class CString *ret, const char *fmt, ...);
-  ///< Return 'ret->Get ()'
+  ///< @brief Return 'ret->Get ()'
 const char *StringF (const char *fmt, ...);
-  ///< (TTS) Create a formatted string (linke `sprinf()`, but with inlimited length).
+  ///< @brief (TTS) Create a formatted string (linke `sprinf()`, but with inlimited length).
   /// Returned pointer is valid until the next TTS usage.
 
-bool IntFromString (const char *str, int *ret);
-  ///< Convert a String to an integer using 'strtol'. On success, '*ret' is set accordingly and 'true' is returned.
+bool IntFromString (const char *str, int *ret, int radix = 0);
+  ///< @brief Convert a string to an integer using 'strtol'. On success, '*ret' is set accordingly and 'true' is returned.
   /// On failure, 'false' is returned and '*ret' remains unchanged.
+  /// If 'radix == 0', it is auto-detected from the string (16 with a preceeding "0x", 10 otherwise).
+int ValidIntFromString (const char *str, int defaultVal, int radix = 0);
+  ///< @brief Convert a string to an integer. On failure, 'defaultVal' is returned.
+bool FloatFromString (const char *str, float *ret);
+  ///< @brief Convert a string to a floating-point value using 'strtof'.
+  /// On success, '*ret' is set accordingly and 'true' is returned.
+  /// On failure, 'false' is returned and '*ret' remains unchanged.
+float ValidFloatFromString (const char *str, float defaultVal);
+  ///< @brief Convert a string to a float value. On failure, 'defaultVal' is returned.
 
 void StringStrip (char *str, const char *sepChars = WHITESPACE);
-  ///< Remove seperator (whitespace) characters at the beginning and end of the string
-void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE);
-  /**< Split a string into (whitespace-)separated arguments.
-   * The number of extracted words is written to `*retArgc`, an array of that size is
-   * returned via `***retArgv`.
-   * If `maxArgc-1` strings have been split, the complete remaining string is
-   * returned as argument #`(maxArgc-1)`.
-   *
-   * The resulting (sub-)strings will be placed into a single chunk of heap-allocated
-   * memory. The caller must later (only) free `**retArgv[0]` and `*retArgv`.
-   * `str` remains unchanged and owned by the caller.
-   * *To avoid confusion about memory handling, it is recommended to use the
-   * class `CSplitString` instead of this function.*
-   */
+  ///< @brief Remove seperator (whitespace) characters at the beginning and end of the string
+void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE, char **retRef = NULL);
+  ///< @brief Split a string into (whitespace-)separated arguments.
+  ///
+  /// The number of extracted words is written to `*retArgc`, an array of that size is
+  /// returned via `***retArgv`.
+  /// If `maxArgc-1` strings have been split, the complete remaining string is
+  /// returned as argument #`(maxArgc-1)`.
+  ///
+  /// The resulting (sub-)strings will be placed into a single chunk of heap-allocated
+  /// memory. The caller must later (only) free `**retArgv[0]` and `*retArgv`.
+  /// `str` remains unchanged and owned by the caller.
+  /// If 'retRef' is not NULL, a reference pointer is returned by which the caller
+  /// can determine the original location of some argument or character.
+  /// *To avoid confusion about memory handling, it is recommended to use the
+  /// class `CSplitString` instead of this function.*
+  ///
+
+bool CharIsWhiteSpace (char c);
+  ///< @brief Indicate whether the given character is white space (see WHITSPACE).
 
 
 /// @name Path handling ...
@@ -398,13 +498,14 @@ void PathRemoveTrailingSlashes (char *str); ///< Treat string as a (full) pathna
 const char *PathLeaf (const char *str);     ///< Get leaf component of a path
 
 const char *GetAbsPath (const char *relOrAbsPath, const char *defaultPath);
-  ///< (TTS) Get absolute path.
+  ///< @brief (TTS) Get absolute path.
 const char *GetAbsPath (class CString *ret, const char *relOrAbsPath, const char *defaultPath);
-  ///< Get absolute path.
+  ///< @brief Get absolute path.
   /// @param ret String to write the result to
   /// @param relOrAbsPath Input path
   /// @param defaultPath Default path
   /// @return Normalized absolute path
+  ///
   /// If the input path starts with '/', it is considered an absolute path and
   /// returned unchanged.Otherwise, `defaultPath` is prepended, and the normalized
   /// path is returned.
@@ -414,10 +515,10 @@ const char *GetAbsPath (class CString *ret, const char *relOrAbsPath, const char
 /// @name Transcoding ...
 /// @{
 const char *ToUtf8 (const char *iso8859str);
-  ///< (TTS) Transcode an ISO8859-coded string to UTF-8.
+  ///< @brief (TTS) Transcode an ISO8859-coded string to UTF-8.
   /// Result is valid until next call of this function.
 const char *ToIso8859 (const char *str);
-  ///< (TTS) Transcode an ISO8859-coded string to UTF-8.
+  ///< @brief (TTS) Transcode an ISO8859-coded string to UTF-8.
   /// Result is valid until next call of this function.
 /// @}
 
@@ -426,7 +527,7 @@ const char *ToIso8859 (const char *str);
 // ***** CString *****
 
 
-/** Dynamically allocated string.
+/** @brief Dynamically allocated string.
  *
  * This is the main class used in the *Home2L* project for strings of arbitrary
  * length. The strings storage (typically heap) may either be managed by this
@@ -437,7 +538,6 @@ class CString {
   public:
     CString () { size = 0; ptr = (char *) emptyStr; }
     CString (CString& str) { size = 0; Set (str.Get ()); }    ///< Copy constructor
-    //~ CString (CString& str, int n0 , int dn = INT_MAX) { size = 0; Set (str.Get () + n0, dn); }
     CString (const char *str, int maxLen = INT_MAX) { size = 0; Set (str, maxLen); }
     ~CString () { if (size) free (ptr); }
 
@@ -447,25 +547,28 @@ class CString {
     void Set (CString *str) { Set (str->Get ()); }
     void Set (CString *str, int n0, int dn = INT_MAX) { Set (str->Get () + n0, dn); }
     void Set (const char *str, int maxLen = INT_MAX);
-      ///< Set (substring) from 'str'.
+      ///< @brief Set (substring) from 'str'.
     void SetF (const char *fmt, ...);
-      ///< Set using printf() formatting.
+      ///< @brief Set using printf() formatting.
     void SetFV (const char *fmt, va_list ap);
-      ///< Set using vprintf() formatting.
+      ///< @brief Set using vprintf() formatting.
 
     void SetC (const char *_ptr);
-      ///< Set without copying or taking ownership of '_ptr' (but "copy-on-write" semantics): more efficient, but requires '_ptr' to remain valid afterwards
-      ///< '_ptr' must be a valid pointer (!= NULL).
+      ///< @brief Set without copying or taking ownership of '_ptr' (but "copy-on-write" semantics).
+      /// This is more efficient than Set(), but requires '_ptr' to remain valid afterwards.
+      /// '_ptr' must be a valid pointer (!= NULL).
     ///@}
 
     /// @name Ownership optimizations ...
     ///@{
     void SetO (const char *_ptr);
-      ///< Set content and takes ownership of '_ptr'.
-      ///< '_ptr' must have been dynamically allocated, since it will be free'd later using 'free ()'.
+      ///< @brief Set content and take ownership of '_ptr'.
+      /// '_ptr' must have been dynamically allocated, since it will be free'd later using 'free ()'.
     char *Disown ();
-      ///< Release ownership.
-      /// Caller is responsible for freeing the pointer later using free().
+      ///< @brief Release ownership.
+      ///
+      /// The caller is responsible for freeing the pointer later using free().
+      ///
       /// *Note:* If the memory of 'ptr' was previously not owned, a dynamic copy will be returned.
       ///       This guarantees, that 'free' can safely be called afterwards, but may be less efficient than
       ///       leaving the ownership with the string object.
@@ -485,7 +588,7 @@ class CString {
     /// @name Read access ...
     ///@{
     const char *Get () { return ptr; }    ///< Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer
-    int Len () { return strlen (ptr); }   ///< Get the lenght.
+    int Len () { return strlen (ptr); }   ///< Get the length.
     bool IsEmpty () { return ptr[0] == '\0'; }  ///< Check, if empty.
     ///@}
 
@@ -493,16 +596,16 @@ class CString {
     ///@{
     void Del (int n0, int dn = INT_MAX);
 
-    void Ins (int n0, int dn, int *retInsPos = NULL);
-    void Ins (int n0, char c);
-    void Ins (int n0, const char *str, int maxLen = INT_MAX);
-    void InsF (int n0, const char *fmt, ...);
-    void InsFV (int n0, const char *fmt, va_list ap);
+    void Insert (int n0, int dn, int *retInsPos = NULL);
+    void Insert (int n0, char c);
+    void Insert (int n0, const char *str, int maxLen = INT_MAX);
+    void InsertF (int n0, const char *fmt, ...);
+    void InsertFV (int n0, const char *fmt, va_list ap);
 
-    void Append (char c) { Ins (INT_MAX, c); }
-    void Append (const char *str, int maxLen = INT_MAX) { Ins (INT_MAX, str, maxLen); }
+    void Append (char c) { Insert (INT_MAX, c); }
+    void Append (const char *str, int maxLen = INT_MAX) { Insert (INT_MAX, str, maxLen); }
     void AppendF (const char *fmt, ...);
-    void AppendFV (const char *fmt, va_list ap) { InsFV (INT_MAX, fmt, ap); }
+    void AppendFV (const char *fmt, va_list ap) { InsertFV (INT_MAX, fmt, ap); }
     ///@}
 
     /// @name Extras ...
@@ -511,21 +614,22 @@ class CString {
     int RFind (char c);
     int Compare (const char *str2);
 
-    void Strip (const char *sepChars = WHITESPACE) { StringStrip (ptr, sepChars); }
+    void Strip (const char *sepChars = WHITESPACE);
 
     void Split (class CSplitString *args, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE);
     void Split (int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { StringSplit (ptr, retArgc, retArgv, maxArgc, sepChars); }
 
     void AppendFByLine (const char *fmt, const char *text);
-      ///< Same as 'Set...', but appending the result to the current srtring.
+      ///< @brief Same as SetFByLine(), but appending the result to the current srtring.
     void SetFByLine (const char *fmt, const char *text) { Clear (); AppendFByLine (fmt, text); }
-      ///< Split 'text' into lines and reassembles the text by processing each line through sprintf and 'fmt'.
+      ///< @brief Split 'text' into lines and reassembles the text by processing each line through sprintf and 'fmt'.
       /// 'fmt' must contain no more than "%s" (or similar) conversion modifier and should contain a trailing '\n'.
 
     void AppendEscaped (const char *s, int maxChars = INT_MAX);
-      ///< Same as 'Set...', but appending the result to the current srtring.
+      ///< @brief Same as 'Set...', but appending the result to the current srtring.
     void SetEscaped (const char *s, int maxChars = INT_MAX) { Clear (); AppendEscaped (s, maxChars); }
-      ///< Set and escape all non-alphanumerical characters by "\...".
+      ///< @brief Set and escape all non-alphanumerical characters by "\...".
+      ///
       /// If 's' is empty, "\0" is appended, so that the resulting string is never empty.
       /// Any escape sequence according to the C99 standard may be used.
       /// In addition to the C standard, the following sequences may occur here:
@@ -535,9 +639,9 @@ class CString {
       /// Even spaces are not contained.
 
     bool AppendUnescaped (const char *s);
-      ///< Same as 'Set...', but appending the result to the current srtring.
+      ///< @brief Same as 'Set...', but appending the result to the current srtring.
     bool SetUnescaped (const char *s) { Clear (); return AppendUnescaped (s); }
-      ///< Set and revers escapes. On error, 'false' is returned and the string remains unchanged.
+      ///< @brief Set and revers escapes. On error, 'false' is returned and the string remains unchanged.
       /// If the string has been generated by one of the '...Escaped' methods above, it is
       /// restored precisely. However, any character except '\' are tolerated in the input string
       /// and will be copied into the destination.
@@ -546,19 +650,23 @@ class CString {
     /// @name Path handling ...
     /// These methods do the same as the functions with the same name.
     /// @{
-    void PathNormalize () { ::PathNormalize (ptr); }
-    void PathRemoveTrailingSlashes () { ::PathRemoveTrailingSlashes (ptr); }
+    void PathNormalize ();
+    void PathRemoveTrailingSlashes ();
     const char *PathLeaf () { return ::PathLeaf (ptr); }
     void PathGo (const char *where);
     void PathGoUp ();
 
     /// @name Using CString as a file buffer ...
     /// @{
+    bool ReadFile (const char *relOrAbsPath);
+      ///< @brief Read a complete text file into a string.
+      /// The path may be absolute or relative to HOME2L_ROOT.
     bool AppendFromFile (int fd);
-      ///< Read as much as possible from 'fd' and append to buffer.
+      ///< @brief Read as much as possible from 'fd' and append to buffer.
       /// If an end-of-file is encountered, 'false' is returned. 'fd' is NOT closed automatically.
-    bool ReadLine (CString *retLine);
-      ///< Consume and optionally return the first line from 'this'.
+      /// This method can be used to read a file (or pipe or socket) asynchronously.
+    bool ReadLine (CString *ret);
+      ///< @brief Consume and optionally return the first line from 'this'.
       /// On success, 'true' is returned. If no complete line is available, 'false' is returned
       /// and 'this' is not changed.
       /// In 'this', each line ends with a '\n'. The output ('retLine') does not contain the '\n'.
@@ -588,11 +696,13 @@ class CString {
     const char *ToStr () { return Get (); }   // (internal, for 'CDict')
 
   protected:
+    void SetSize (int _size);
+    void MakeWriteable () { if (!size) SetSize (strlen (ptr) + 1); }    // '+1' is just for the case that string was empty
+
     char *ptr;
     int size;   // number of allocated bytes (including '\0`);
                 //'size' == 0: nothing allocated in heap ('ptr' may still point to some constant string
 
-    void SetSize (int _size);
 };
 
 
@@ -600,7 +710,7 @@ class CString {
 // ***** CSplitString *****
 
 
-/** Factory class to split a string into substrings
+/** @brief Factory class to split a string into substrings.
  *
  * Objects of this class are usually declared locally whereever
  * a string needs to be split into substrings, for example, as in
@@ -608,28 +718,38 @@ class CString {
  */
 class CSplitString {
   public:
-    CSplitString () { argc = 0; argv = NULL; }
-    CSplitString (const char *str, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { StringSplit (str, &argc, &argv, maxArgc, sepChars); }
-      ///< Initialize, set and split `str` (see `Set ()`).
+    CSplitString () { argc = 0; argv = NULL; ref = NULL; }
+    CSplitString (const char *str, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { StringSplit (str, &argc, &argv, maxArgc, sepChars, &ref); }
+      ///< @brief Initialize, set and split `str` (see `Set ()`).
     ~CSplitString () { Clear (); }
 
-    void Clear ();    ///< Clear the object (only necessary if another string is to be split)
+    void Clear ();
+      ///< @brief Clear the object (only necessary if another string is to be split)
 
-    void Set (const char *str, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { Clear (); StringSplit (str, &argc, &argv, maxArgc, sepChars); }
-      /**< Set and split a string.
-       * @param str The string to split
-       * @param maxArgc Maximum number of strings to return. If more substrings are
-       *      contained in the input the last ones are returned unsplit as a whole.
-       * @param sepChars Set of characters treated as separators
-       */
+    void Set (const char *str, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { Clear (); StringSplit (str, &argc, &argv, maxArgc, sepChars, &ref); }
+      ///< @brief Set and split a string.
+      /// @param str The string to split
+      /// @param maxArgc Maximum number of strings to return. If more substrings are
+      ///      contained in the input the last ones are returned unsplit as a whole.
+      /// @param sepChars Set of characters treated as separators
+      ///
 
-    int Entries () { return argc; }     ///< Get number of string after splitting
-    const char *Get (int idx) { return argv[idx]; }       ///< Get one string
-    const char *operator [] (int n) { return Get (n); }   ///< Get one string
+    int Entries () const { return argc; }     ///< Get number of string after splitting
+    const char *Get (int idx) const { return argv[idx]; }       ///< Get one string
+    const char *operator [] (int n) const { return Get (n); }   ///< Get one string
+
+    int GetOffset (int argNo) { return (argv && ref) ? argv[argNo] - ref : 0; }
+      ///< @brief Get offset of argument number `arg` in the original string.
+    int GetOffset (const char *p) { return ref ? (p - ref) : 0; }
+      ///< @brief Get offset of some character in some string in the original string.
+    int GetIdx (int pos);
+      ///< @brief Get the argument number of character number `pos` of the original string.
+      /// On error, -1 is returned, unless 'pos' points behind some existing
+      /// argument, in which this (or the last) argument is returned.
 
   protected:
     int argc;
-    char **argv;
+    char **argv, *ref;
 };
 
 
@@ -637,7 +757,7 @@ class CSplitString {
 // ***** Regexp *****
 
 
-/** Factory class for regular expression matching.
+/** @brief Factory class for regular expression matching.
  *
  * This is basically a wrapper for regexp(3).
  */
@@ -647,8 +767,8 @@ class CRegex {
     ~CRegex () { if (reValid) regfree (&re); }
 
     bool SetPattern (const char *pattern, int cflags = REG_EXTENDED);
-      ///< Set and compile a search pattern.
-      /// @param pattern The pattern
+      ///< @brief Set and compile a search pattern.
+      /// @param pattern The pattern (or NULL to not match anything)
       /// @param cflags Bit-wise OR of the following flags (see `regexp(3)`):
       ///   `REG_EXTENDED`:  Use POSIX Extended Regular Expression syntax
       ///   `REG_ICASE`:     Ignore case
@@ -656,7 +776,7 @@ class CRegex {
       ///   `REG_NEWLINE`:   Match-any-character operators don't match a newline
       /// @return 'true' on success, 'false' on failure
     bool Match (const char *s, int eflags = 0, size_t maxMatches = 0, regmatch_t *retMatchList = NULL);
-      ///< Perform a regular expression search.
+      ///< @brief Perform a regular expression search.
       /// @param s The string to be analysed
       /// @param eflags Bit-wise OR of the following flags (see `regexp(3)`):
       ///   `REG_NOTBOL`: The match-beginning-of-line operator always fails to match
@@ -685,8 +805,8 @@ class CRegex {
 // ***************** Dictionaries and key sets *********************************
 
 
-/** @defgroup base_containers Containers
- * Lightweight container classes for dictionaries and key sets.
+/** @defgroup common_containers Containers
+ * @brief Lightweight container classes for dictionaries and key sets.
  *
  * @{
  */
@@ -698,7 +818,7 @@ class CRegex {
 #define DICT_KEYSIZE DICT_ALIGN((int) sizeof (CString))
 
 
-/** Raw dictionary (base class for other dictionary variants)
+/** @brief Raw dictionary (base class for other dictionary variants).
  *
  * A dictionary stores arbitrary (key, value) pairs. The key is always of type
  * `CString` / `const char *`. Internally, the dictionary is stored as one
@@ -718,15 +838,15 @@ class CDictRaw {
     void Del (int idx);   ///< Delete entry; complexity is O(n).
     void Del (const char *key) { Del (Find (key)); }  ///< Delete entry; complexity is O(n).
 
-    int Entries () { return entries; }    ///< Get number of entries.
+    int Entries () const { return entries; }    ///< Get number of entries.
 
-    const char *GetKey (int idx) { return ((CString *) GetKeyAdr (idx))->Get (); }
+    const char *GetKey (int idx) const { return ((CString *) GetKeyAdr (idx))->Get (); }
 
     int Find (const char *key, int *retInsIdx = NULL);
-      ///< Make binary search and return index of entry found or -1 if the key does not exist.
+      ///< @brief Make binary search and return index of entry found or -1 if the key does not exist.
       /// If `retInsIdx != NULL`, the index to insert a new item is return in `*retInsIdx`.
     void PrefixSearch (const char *key, int *retIdx0, int *retIdx1);
-      ///< Determine all elements with keys starting with `key`.
+      ///< @brief Determine all elements with keys starting with `key`.
       /// @param key Key prefix
       /// @param retIdx0 Pointer to first return value, index of first matching entry.
       /// @param retIdx1 Pointer to second return value, index behind last matching entry.
@@ -747,12 +867,12 @@ class CDictRaw {
     virtual void ValueSet (void *p, void *orig) {}  // copy 'orig' to 'p' properly; both are initialized objects
     virtual const char *ValueToStr (void *p);       // (TTS) return readable string for the 'Dump' method
 
-    uint8_t *GetKeyAdr (int idx) { return idx < 0 ? NULL : data + recSize * idx; }
-    uint8_t *GetValueAdr (int idx) { return idx < 0 ? NULL : GetKeyAdr (idx) + DICT_KEYSIZE; }
-    void *GetValuePtr (int idx) { return idx < 0 ? NULL : * (void **) (GetKeyAdr (idx) + DICT_KEYSIZE); }
+    uint8_t *GetKeyAdr (int idx) const { return idx < 0 ? NULL : data + recSize * idx; }
+    uint8_t *GetValueAdr (int idx) const { return idx < 0 ? NULL : GetKeyAdr (idx) + DICT_KEYSIZE; }
+    void *GetValuePtr (int idx) const { return idx < 0 ? NULL : * (void **) (GetKeyAdr (idx) + DICT_KEYSIZE); }
 
     void SetRaw (int idx, void *value);            // entry must exist and 'idx' be valid
-    int SetRaw (const char *key, void *value);     // adds or replaces the keyed entry; returns new index
+    int SetRaw (const char *key, void *value);     // add or replace the keyed entry; returns new index
 
     void MergeRaw (CDictRaw *map2);                // merge 'map2' into this one
 
@@ -761,7 +881,7 @@ class CDictRaw {
 };
 
 
-/** Fast dictionary
+/** @brief Fast dictionary.
  *
  * This class stores the value object in the same array as the keys
  * and is therefore generally more efficient than the alternative class 'CDict'.
@@ -790,14 +910,15 @@ template <typename T> class CDictFast: public CDictRaw {
     /// @name Write access ...
     /// @{
     void Set (int idx, T *value) { SetRaw (idx, value); }
-      ///< Set (replace) a value.
+      ///< @brief Set (replace) a value.
       /// The entry must exist and 'idx' be valid. Complexity is O(1).
     int Set (const char *key, T *value) { return SetRaw (key, value); }
-      ///< Add or replace the keyed entry. Complexity is O(n).
+      ///< @brief Add or replace the keyed entry. Complexity is O(n).
       /// @return Index of new entry
     void Merge (CDictFast<T> *map2) { SetRaw (map2); }
-      ///< Merge another map into this one.
+      ///< @brief Merge another map into this one.
       /// Complexity is O(n_this + n_map2).
+      ///
       /// The recommended way to add a bunch of new keys to a map is to first add
       /// them to a new map and then use this method to merge them into 'this'
       /// using this method.
@@ -807,13 +928,13 @@ template <typename T> class CDictFast: public CDictRaw {
     virtual void ValueInit (void *p) { memcpy (p, &emptyObj, sizeof (emptyObj)); }
     virtual void ValueClear (void *p) { ValueSet (p, &emptyObj); }
     virtual void ValueSet (void *p, void *orig) { * (T *) p = * (T *) orig; }
-    virtual const char *ValueToStr (void *p) { return ((T *) p)->ToStr (); }
+    //~ virtual const char *ValueToStr (void *p) { return ((T *) p)->ToStr (); }
 
     T emptyObj;   // Template for an initialized object
 };
 
 
-/** Dictionary of references
+/** @brief Dictionary of references.
  *
  * This class stores references to the named object without taking over ownership.
  * Use the class 'CDict' instead, if a classical container for dynamically
@@ -840,15 +961,16 @@ template <typename T> class CDictRef: public CDictRaw {
     /// @name Write access ...
     /// @{
     void Set (int idx, T *value) { SetRaw (idx, &value); }
-      ///< Set (replace) a value.
+      ///< @brief Set (replace) a value.
       /// The entry must exist and 'idx' be valid. Complexity is O(1).
     int Set (const char *key, T *value) { return SetRaw (key, &value); }
-      ///< Add or replace the keyed entry. Complexity is O(n).
+      ///< @brief Add or replace the keyed entry. Complexity is O(n).
       /// @return Index of new entry
 
     void Merge (CDictRef<T> *map2) { SetRaw (map2); }
-      ///< Merge another map into this one.
+      ///< @brief Merge another map into this one.
       /// Complexity is O(n_this + n_map2).
+      ///
       /// The recommended way to add a bunch of new keys to a map is to first add
       /// them to a new map and then use this method to merge them into 'this'
       /// using this method.
@@ -862,7 +984,7 @@ template <typename T> class CDictRef: public CDictRaw {
 };
 
 
-/** Flexible dictionary
+/** @brief Flexible dictionary.
  *
  * The class is like 'CDictRef', except that it takes over ownership of
  * any object passed to the 'Set ()' calls.
@@ -883,7 +1005,7 @@ template <typename T> class CDict: public CDictRef<T> {
 };
 
 
-/** Set of strings (keys)
+/** @brief Set of strings (keys).
  */
 class CKeySet: public CDictRaw {
   public:
@@ -915,8 +1037,8 @@ class CKeySet: public CDictRaw {
 // ********************** Date & Time ******************************************
 
 
-/** @defgroup base_datetime Date and Time
- * Various defitions related to date and time handling.
+/** @defgroup common_datetime Date and Time
+ * @brief Various defitions related to date and time handling.
  *
  * The *Home2L* suite uses two different measures of time (clocks), as also supported
  * by the Linux kernel:
@@ -926,7 +1048,7 @@ class CKeySet: public CDictRaw {
  * 2. A monotonic time (`TTicksMonotonic`): This is some relative time which never
  *    makes quick changes in speed or even may move backwards (as is possible with
  *    `TTicks` after network synchronization). This clock is used wherever possible,
- *    particularly for @ref base_timers.
+ *    particularly for @ref common_timers.
  *
  * Besides the two basic types `TTicks` and `TTicksMonotonic`, this group contains
  * some helper types `TDate` and `TTime` for calendar time handling.
@@ -937,13 +1059,15 @@ class CKeySet: public CDictRaw {
 /// @name Ticks (real and monotonic) ...
 /// @{
 
-typedef int64_t TTicks;           ///< Real time; number of milliseconds since the Epoch (1970-01-01-000000 UTC)
-typedef int32_t TTicksMonotonic;  ///< Monotonic clock; number of milliseconds since the first invocation of GetTicksMonotonic(); TBD: test int64_t
+typedef int64_t TTicks;
+  ///< @brief Real time; number of milliseconds since the Epoch (1970-01-01-000000 UTC)
+typedef int32_t TTicksMonotonic;
+  ///< @brief Monotonic clock; number of milliseconds since the first invocation of GetTicksMonotonic()
 
-#define NEVER -1                  ///< Represents no time (for both types `TTicks` and `TTicksMonotonic`)
+#define NEVER 0                   ///< Represents no time (for both types `TTicks` and `TTicksMonotonic`)
 
-static inline bool TicksIsNever (TTicks t) { return t < 0; }
-static inline bool TicksMonotonicIsNever (TTicksMonotonic t) { return t < 0; }
+static inline bool TicksIsNever (TTicks t) { return t == 0; }
+static inline bool TicksMonotonicIsNever (TTicksMonotonic t) { return t == 0; }
 
 TTicks TicksNow ();                   ///< Get the current real time in milliseconds
 TTicksMonotonic TicksMonotonicNow (); ///< Get the current monotonic in milliseconds
@@ -952,22 +1076,27 @@ TTicks TicksFromMonotic (TTicksMonotonic tm); ///< Conversion function
 TTicksMonotonic TicksToMonotonic (TTicks t);  ///< Conversion function
 
 const char *TicksToString (TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
-  ///< (TTS) Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
+  ///< @brief (TTS) Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
 const char *TicksToString (CString *ret, TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
-  ///< Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
+  ///< @brief Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
   /// @param ret Return string
-  /// @param ticks Ticks to be converted
+  /// @param ticks Ticks to be converted, must be an absolute time
   /// @param fracDigits Number of fractional digits. If set to -1, the seconds are skipped, too.
   ///             If set to 'INT_MAX', the number of (fractional) seconds digits is determined
   ///             automatically (trailing 0s may be skipped).
   /// @param precise If 'true', a string of the form "`t<n>`" is returned, where
   ///             `<n>` is the decimal number milliseconds since the Epoch.
-bool TicksFromString (const char *str, TTicks *ret);
-  ///< Convert a string to an absolute ticks value. The following formats are accepted:
+bool TicksFromString (const char *str, TTicks *ret, bool absolute);
+  ///< @brief Convert a string to an (absolute) ticks value.
+  ///
+  /// The following formats are accepted:
   ///  - `YYYY-MM-DD[-hhmm[ss[.<millis>]]]` : readable time, interpreted as local time
   ///  - `t<unsigned integer>`              : absolute time in milliseconds since the Epoch
-  ///  - `<integer>`                        : relative time, milliseconds from now
-  ///  - `hh:mm[:ss[.<millis>]]`            : time relative to 0:00 today; `hh` may be > 23 to specify a time in the coming days (*Beware of potential race conditions when using this close to midnight!*)
+  ///  - `<integer>[<unit>]`                : relative time milliseconds (or some other unit with `<unit>`);
+  ///                                         Possible units are: seconds ('s'), minutes ('m'), hours ('h'), days ('d'), and weeks ('w').
+  ///  - `hh:mm[:ss[.<millis>]]`            : time relative to 0:00 today (if 'absolute == true'); `hh` may be > 23 to specify a time in the coming days (*Beware of potential race conditions when using this close to midnight!*)
+  /// If 'absolute' is set, an absolute time is returned in any case.
+  /// Otherwise, in the two latter formats, the relative number of ticks is returned.
 
 void TicksMonotonicToStructTimeval (TTicksMonotonic t, struct timeval *retTv);
 
@@ -1022,7 +1151,7 @@ void TicksToDateTimeUTC (TTicks t, TDate *retDate, TTime *retTime, struct tm *re
 /// @name Date/time: Current time...
 /// @{
 static inline void GetDateTimeNow (TDate *d, TTime *t) { TicksToDateTime (TicksNow (), d, t, NULL); }
-  ///< Retrieve current date and time (both pointers may be NULL)
+  ///< @brief Retrieve current date and time (both pointers may be NULL)
 TDate Today ();
 TTicks TicksToday ();
 /// @}
@@ -1061,8 +1190,8 @@ const char *DayNameShort (int wd);    ///< Get textual name. 0 = "Mon", ..., 6 =
 // *************************** Timer *******************************************
 
 
-/** @defgroup base_timers Timers
- * Scheduling timed and/or repeated operations.
+/** @defgroup common_timers Timers
+ * @brief Scheduling timed and/or repeated operations.
  *
  * A timer, represented by a @ref CTimer object, allows to execute some user-defined
  * function at a given time. The class can be used in one of two ways,
@@ -1094,26 +1223,26 @@ const char *DayNameShort (int wd);    ///< Get textual name. 0 = "Mon", ..., 6 =
 
 
 typedef void FTimerCallback (class CTimer *timer, void *data);
-  ///< Function type for timer callbacks
+  ///< @brief Function type for timer callbacks
   /// @param timer The calling timer.
   /// @param data User data as passed to the @ref CTimer object.
 
 
-/** Timer class
+/** @brief Timer class.
  */
 class CTimer {
   public:
     CTimer ();
     CTimer (FTimerCallback *_func, void *_data = NULL, void *_creator = NULL) { Set (_func, _data, _creator); }
-      ///< Construct with a callback function.
+      ///< @brief Construct with a callback function.
     CTimer (TTicksMonotonic _time, TTicksMonotonic _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL) { Set (_time, _interval, _func, _data, _creator); }
-      ///< Construct with a time/interval specification and eventually a callback function.
+      ///< @brief Construct with a time/interval specification and eventually a callback function.
     virtual ~CTimer () { Clear (); }
 
     void Set (FTimerCallback *_func, void *_data = NULL, void *_creator = NULL);
-      ///< Setup timer without (re-)scheduling it.
+      ///< @brief Setup timer without (re-)scheduling it.
     void Set (TTicksMonotonic _time, TTicksMonotonic _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL);
-      ///< Setup and (re-)schedule timer.
+      ///< @brief Setup and (re-)schedule timer.
       /// @param _func Callback function to be executed at the given times.
       /// @param _data Data to be passed as the `data` argument to the callback function.
       /// @param _creator A reference to the creator. If set (`!= NULL`), the class takes over the ownership.
@@ -1125,20 +1254,21 @@ class CTimer {
       ///             This number should be a power of 2 (see note above).
 
     void Reschedule (TTicksMonotonic _time, TTicksMonotonic _interval = 0);
-      ///< Change a timer (like 'Set'), but leave function and creator unchanged.
+      ///< @brief Change a timer (like 'Set'), but leave function and creator unchanged.
     void Clear ();                              ///< Remove timer from the event list.
     static void DelByCreator (void *_creator);  ///< Remove all timers created by `_creator` from the event list.
     void *GetCreator () { return creator; }
 
     bool Pending () { return isLinked; }
-      ///< Indicate whether the timer is pending and may be executed in the future.
+      ///< @brief Indicate whether the timer is pending and may be executed in the future.
+      ///
       /// **Note:** Be careful with potential race conditions. A value of 'false' can be safely be
       ///   used to draw conclusions, given that only the calling thread may call 'Set' & friends.
       ///   A value of 'true' may change to 'false' at any time.
 
     // Timer callback...
     virtual void OnTime () { if (func) func (this, data); }
-      ///< [T:timer] Virtual function called when the timer triggers.
+      ///< @brief [T:timer] Virtual function called when the timer triggers.
 
   protected:
     friend bool TimerIterate ();
@@ -1167,15 +1297,15 @@ class CTimer {
 /// @name Control functions (for the main program) ...
 /// @{
 bool TimerIterate ();
-  ///< Returns false if nothing was done.
+  ///< @brief Returns false if nothing was done.
 TTicksMonotonic TimerGetDelay ();
-  ///< Returns number of milliseconds until next call to `TimerIterate()` is necessary, or -1 if no timer is pending.
+  ///< @brief Returns number of milliseconds until next call to `TimerIterate()` is necessary, or -1 if no timer is pending.
 
-void TimerRun ();   ///< Perform an endless loop calling timers until `TimerStop()` is called.
-void TimerStart (); ///< Start `TimerRun()` in a background thread, which is to be stopped using `TimerStop()`.
-                    ///< All timer functions are then run from the same, namely this background thread.
-void TimerStop ();  ///< Request `TimerRun()` to return at next occasion (can be called from any thread).
-                    ///   If a dedicatd timer thread was started, this is joined, too.
+void TimerRun ();   ///< @brief Perform an endless loop calling timers until `TimerStop()` is called.
+void TimerStart (); ///< @brief Start `TimerRun()` in a background thread, which is to be stopped using `TimerStop()`.
+                    ///  All timer functions are then run from the same, namely this background thread.
+void TimerStop ();  ///< @brief Request `TimerRun()` to return at next occasion (can be called from any thread).
+                    ///  If a dedicatd timer thread was started, this is joined, too.
 /// @}
 
 
@@ -1188,19 +1318,19 @@ void TimerStop ();  ///< Request `TimerRun()` to return at next occasion (can be
 // ***************** Threading and Synchronization ****************************
 
 
-/** @defgroup base_threads Threads and Synchronization
- * Wrapping classes related to threads and synchronization.
+/** @defgroup common_threads Threads and Synchronization
+ * @brief Wrapping classes related to threads and synchronization.
  *
  * @{
  */
 
 
 typedef void *FThreadRoutine (void *data);
-  ///< Function type for thread routines
+  ///< @brief Function type for thread routines
   /// @param data User data as passed to the @ref CThread object.
 
 
-/** Class to wrap (POSIX) threads
+/** @brief Class to wrap (POSIX) threads.
  *
  * The thread routine can be supplied in the following ways:
  * 1. Instantiate the base class @ref CThread and specifiy a @ref FThreadRoutine function.
@@ -1216,23 +1346,23 @@ class CThread {
     virtual ~CThread () { if (running) Join (); }
 
     void Start (FThreadRoutine *_routine, void *_data = NULL);
-      ///< Run the supplied function `_routine` in the background passing `_data` as an argument.
-    void Start ();  ///< Run the virtual method Run() in the background.
-    void *Join ();  ///< Join with the background thread.
+      ///< @brief Run the supplied function `_routine` in the background passing `_data` as an argument.
+    void Start ();  ///< @brief Run the virtual method Run() in the background.
+    void *Join ();  ///< @brief Join with the background thread.
 
-    bool IsRunning () { return running;  } ///< (only for main thread)
+    bool IsRunning () { return running;  } ///< @brief (only for main thread)
 
   protected:
     friend void *CThreadRoutine (void *);
 
-    virtual void *Run () { return NULL; } ///< Main thread routine (to be overloaded)
+    virtual void *Run () { return NULL; } ///< @brief Main thread routine (to be overloaded)
 
     bool running;
     pthread_t thread;
 };
 
 
-/** Class to wrap (POSIX) mutex objects
+/** @brief Class to wrap (POSIX) mutex objects.
  */
 class CMutex {
   public:
@@ -1249,7 +1379,7 @@ class CMutex {
 };
 
 
-/** Class to wrap (POSIX) condition variables
+/** @brief Class to wrap (POSIX) condition variables.
  */
 class CCond {
   public:
@@ -1257,12 +1387,13 @@ class CCond {
     ~CCond ();
 
     void Wait (CMutex *mutex);
-      ///< Wait until woken up.
+      ///< @brief Wait until woken up.
       /// The supplied `mutex` must be locked and will be atomically unlocked while waiting.
     TTicksMonotonic Wait (CMutex *mutex, TTicksMonotonic maxTime);
-      ///< Wait until woken up or a time-out occured.
+      ///< @brief Wait until woken up or a time-out occured.
       /// @param mutex Mutex to unlock while waiting.
       /// @param maxTime Maximum wait time in milliseconds.
+      ///
       /// If woken up by signalling or by a spurious wakeup (see POSIX specification), the time left to wait is returned.
       /// If the maximum time has passed, -1 is returned.
       ///
@@ -1273,15 +1404,15 @@ class CCond {
       /// the remaining time for the repeateds invocation should *not* be taken from
       /// the return value, but recomputed according to the current time (to be
       /// determined by TicksNow().
-    void Signal ();           ///< Wakeup ONE waiting thread.
-    void Broadcast ();        ///< Wakeup ALL waiting threads.
+    void Signal ();           ///< @brief Wakeup ONE waiting thread.
+    void Broadcast ();        ///< @brief Wakeup ALL waiting threads.
 
   protected:
     pthread_cond_t cond;
 };
 
 
-/** Sleep until one out of several i/o operations becomes possible.
+/** @brief Class allowing to sleep until one out of multiple i/o operations becomes possible.
  *
  * This class serves as an interface to the 'select' system call.
  * Furthermore, it helps to implement worker threads that (may) monitor files
@@ -1296,36 +1427,40 @@ class CSleeper {
     /// @name Enable the command mechanism ...
     /// @{
     void EnableCmds (int _cmdRecSize);
-      ///< Enable sending commands by PutCmd().
+      ///< @brief Enable sending commands by PutCmd().
       /// To be called immediately after initialization and only if the command feature is used.
     /// @}
 
     /// @name For the sleeping thread: Preparation...
     /// @{
     void Clear ();
-    void AddReadable (int fd);  ///< add file descriptor `fd` to monitor for readability, descriptors < 0 are silently ignored.
-    void AddWritable (int fd);  ///< add file descriptor `fd` to monitor for writability, descriptors < 0 are silently ignored.
+    void AddReadable (int fd);  ///< @brief Add file descriptor `fd` to monitor for readability, descriptors < 0 are silently ignored.
+    void AddWritable (int fd);  ///< @brief Add file descriptor `fd` to monitor for writability, descriptors < 0 are silently ignored.
     /// @}
 
     /// @name For the sleeping thread: Sleep...
     /// @{
     void Sleep (TTicksMonotonic maxTime = -1);
-      ///< Sleep until one file descriptor is readable/writable or a new command was received.
+      ///< @brief Sleep until one file descriptor is readable/writable or a new command was received.
       /// @param maxTime Maximum waiting time; -1: wait forever, 0 => do not wait
+      ///
       /// A non-blocking Sleep() (`maxTime` == 0) updates the internal readability/writability flags.
     /// @}
 
     /// @name For the sleeping thread: Afterwards...
     /// @{
-    bool GetCmd (void *retCmdRec);  ///< Get and consume next command (non-blocking). @returns 'true' if none is available
-    bool IsReadable (int fd);   ///< Check if file descriptor is readable (flags are only updated in Sleep() ).
-    bool IsWritable (int fd);   ///< Check if file descriptor is writable (flags are only updated in Sleep() ).
+    bool IsReadable (int fd);   ///< @brief Check if file descriptor is readable (flags are only updated in Sleep() ).
+    bool IsWritable (int fd);   ///< @brief Check if file descriptor is writable (flags are only updated in Sleep() ).
+    bool GetCmd (void *retCmdRec);
+      ///< @brief Get and consume next command (non-blocking).
+      /// @return 'true' if none is available
     /// @}
 
     /// @name For other threads...
     /// @{
     void PutCmd (const void *cmdRec, TTicksMonotonic t = 0, TTicksMonotonic _interval = 0);
-      ///< Send message to sleeper.
+      ///< @brief Send message to sleeper.
+      ///
       /// `cmd == NULL` represents "no command" and will be ignored by receiver.
       /// The command can optionally be scheduled for a certain time or even be repeated.
       /// `t` is an absolute time, `t == 0` represents "now".
@@ -1340,7 +1475,7 @@ class CSleeper {
 
 
 void Sleep (TTicksMonotonic mSecs);
-  ///< Suspend for `mSecs` milliseconds using `nanosleep()`.
+  ///< @brief Suspend for `mSecs` milliseconds using `nanosleep()`.
 
 
 
@@ -1355,8 +1490,8 @@ void Sleep (TTicksMonotonic mSecs);
 // ********************** CShell and variants **********************************
 
 
-/** @defgroup base_shells Shells
- * Shell classes to run and iteract with external processes.
+/** @defgroup common_shells Shells
+ * @brief Shell classes to run and iteract with external processes.
  *
  * @{
  */
@@ -1366,7 +1501,8 @@ void Sleep (TTicksMonotonic mSecs);
 // ***** Abstract base class and functions *****
 
 
-/** Abstract base class for shells that can execute system commands.
+/** @brief Abstract base class for shells that can execute system commands.
+ *
  * **Note:** All methods (for one object) must be called from the same thread.
  */
 class CShell {
@@ -1376,39 +1512,45 @@ class CShell {
 
     /// @name Execution control...
     /// @{
-    virtual bool Start (const char *cmd) = 0;
-      /**< Start command.
-       * @param cmd The exact (and arbitrary) shell command.
-       * If a previous command is still running, Wait() is executed before.
-       * On error, a warning is printed and 'false' is returned.
-       * Only one command can be executed at a time. It can be understood that the Start() method includes
-       * an implicit Mutex-Lock operation, and the lock has been obtained (only) if 'true' is returned.
-       * The corresponding Mutex-Unlock operation is implied by calling Wait().
-       */
+    virtual bool Start (const char *cmd, bool readStdErr = false) = 0;
+      ///< @brief Start command.
+      /// @param cmd The exact (and arbitrary) shell command. On Android, relative
+      ///    paths are prepended with HOME2L\_ROOT.
+      /// @param readStdErr decides whether STDERR is redirected to STDIN and
+      ///    also returned via ReadLine() and friends. By default, it is left undirected.
+      ///
+      /// If a previous command is still running, Wait() is executed before.
+      /// On error, a warning is printed and 'false' is returned.
+      /// Only one command can be executed at a time. It can be understood that the Start() method includes
+      /// an implicit Mutex-Lock operation, and the lock has been obtained (only) if 'true' is returned.
+      /// The corresponding Mutex-Unlock operation is implied by calling Wait().
+      ///
     virtual bool StartRestricted (const char *name, const char *args = NULL);
-      /**< Same as 'Start', but fetch the command from the environment.
-       * This way, only commands explicitly defined in the environment settings are allowed, which
-       * is a security improvment.
-       * The actual command is taken from the environment variable `rc.cmd.<name>`.
-       * The command name may contain the placeholder "%s", which is replaced by `args`.
-       * This mode of command definition is meant for remote network execution to avoid security holes.
-       */
+      ///< @brief Same as 'Start', but fetch the command from the environment.
+      ///
+      /// This way, only commands explicitly defined in the environment settings are allowed, which
+      /// is a security improvment.
+      /// The actual command is taken from the environment variable `rc.cmd.<name>`.
+      /// The command name may contain the placeholder "%s", which is replaced by `args`.
+      /// This mode of command definition is meant for remote network execution to avoid security holes.
+      ///
     virtual bool IsRunning () { return !ReadClosed (); }
-      ///< Still running?
+      ///< @brief Still running?
     virtual void Wait () = 0;
-      ///< Wait until current command completes.
+      ///< @brief Wait until current command completes.
     virtual void Kill (int sig = SIGTERM) { WriteClose (); }
-      ///< Kill the current command nicely.
+      ///< @brief Kill the current command nicely.
       /// This may not work for all types of shells.
       /// A Wait() invocation is required anyway afterwards.
     int ExitCode () { return exitCode; }
-      ///< Get the exit code of last command.
+      ///< @brief Get the exit code of last command.
     /// @}
 
     /// @name Simple running...
     /// @{
     int Run (const char *cmd, const char *input = NULL, CString *output = NULL);
-      ///< Run command 'cmd' synchronously and return its exit code.
+      ///< @brief Run command 'cmd' synchronously and return its exit code.
+      ///
       /// The standard input is taken from 'input' and the output is writen to the string referred to
       /// by 'output'.
       /// This function is only appropriate for short running
@@ -1418,45 +1560,52 @@ class CShell {
     /// @name Accessing stdin & stdout...
     /// @{
     virtual void CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime = -1) = 0;
-      /**< Check whether the i/o channels can take/deliver data.
-       * @param canWrite may point to a variable that will be set, depending on whether at least one
-       *    byte can be written to the external command.
-       * @param canRead may point to a variable that will be set, depending on whether at least one
-       *    byte can be read from the external command.
-       * If any of the two pointers is 'NULL', the caller indicates that he is not interested in the
-       * respective result. Hence, the method waits until the respective other channel is ready.
-       * @param maxTime is the maximum waiting time in milliseconds. A value <0 lets it wait forever,
-       *    a value 0 does not cause any waiting at all.
-       * In situations, where CheckIO() would wait forever, it returns immediately with both flags
-       * set to 'false' (for example: read channel already closed, and `canWrite == NULL`).
-       * **Note:** As long as both the read and the write channel are open, the caller (usually) must
-       * always write *and* read as much as possible. Otherwise, a deadlock may occur.
-       */
+      ///< @brief Check whether the i/o channels can take/deliver data.
+      /// @param canWrite may point to a variable that will be set, depending on whether at least one
+      ///    byte can be written to the external command.
+      /// @param canRead may point to a variable that will be set, depending on whether at least one
+      ///    byte can be read from the external command.
+      /// @param maxTime is the maximum waiting time in milliseconds. A value <0 lets it wait forever,
+      ///    a value 0 does not cause any waiting at all.
+      ///
+      /// If any of the two pointers 'canWrite' and 'canRead' is 'NULL', the caller indicates that he is not interested in the
+      /// respective result. Hence, the method waits until the respective other channel is ready.
+      ///
+      /// In situations, where CheckIO() would wait forever, it returns immediately with both flags
+      /// set to 'false' (for example: read channel already closed, and `canWrite == NULL`).
+      /// **Note:** As long as both the read and the write channel are open, the caller (usually) must
+      /// always write *and* read as much as possible. Otherwise, a deadlock may occur.
+      ///
     bool WaitUntilReadable (TTicksMonotonic timeOut = -1) { bool canRead; CheckIO (NULL, &canRead, timeOut); return canRead; }
-      /**< Wait until output of the external command is readable.
-       * Be aware of potential deadlocks. This command can only be safely used if the external
-       * command does not wait for input.
-       * @return 'true', if the output is readable.
-       */
+      ///< @brief Wait until output of the external command is readable.
+      /// Be aware of potential deadlocks. This command can only be safely used if the external
+      /// command does not wait for input.
+      /// @return 'true', if the output is readable.
+      ///
     bool WaitUntilWritable (TTicksMonotonic timeOut = -1) { bool canWrite; CheckIO (&canWrite, NULL, timeOut); return canWrite; }
-      /**< Wait until the external command can accept written input.
-       * Be aware of potential deadlocks. This command can only be safely used if the external
-       * command does not produce any output.
-       * @return 'true', if the output is writeable.
-       */
+      ///< @brief Wait until the external command can accept written input.
+      /// Be aware of potential deadlocks. This command can only be safely used if the external
+      /// command does not produce any output.
+      /// @return 'true', if the output is writeable.
+      ///
 
-    bool Writable () { return WaitUntilWritable (0); }  ///< Poll for writability (non-blocking).
+    bool Writable () { return WaitUntilWritable (0); }
+      ///< @brief Poll for writability (non-blocking).
     virtual void WriteLine (const char *line) = 0;
-      ///< Blocking write, execution is guaranteed.
+      ///< @brief Blocking write, execution is guaranteed.
       /// To avoid blocking, run Writable() or CheckI() first.
     void WriteLine (CString *str) { WriteLine (str->Get ()); }
-    virtual void WriteClose () = 0;                     ///< Close the write channel.
+      ///< @brief Write a line.
+    virtual void WriteClose () = 0;
+      ///< @brief Close the write channel.
 
-    bool Readable () { return WaitUntilReadable (0); }  ///< Poll for readability.
+    bool Readable () { return WaitUntilReadable (0); }
+      ///< @brief Poll for readability.
     virtual bool ReadLine (CString *str) = 0;
-      ///< Non-Blocking read, returns 'true' on success.
+      ///< @brief Non-Blocking read, returns 'true' on success.
       /// `str` can be NULL, in which case the line is ignored, given the reading was successul.
-    virtual bool ReadClosed () = 0;                     ///< Close the read channel.
+    virtual bool ReadClosed () = 0;
+      ///< @brief Close the read channel.
     /// @}
 
   protected:
@@ -1469,7 +1618,7 @@ class CShell {
 // ***** CShellBare *****
 
 
-/** Normal shell: Execute commands individually
+/** @brief Normal shell: Commands are executed individually.
  *
  * Each command is executed separately using 'fork'/'exec'.
  */
@@ -1481,7 +1630,8 @@ class CShellBare: public CShell {
 
     /// @name Execution control...
     /// @{
-    virtual bool Start (const char *cmd);  ///< Start new command, optionally on a remote host (see below).
+    virtual bool Start (const char *cmd, bool readStdErr = false);
+      ///< @brief Start new command, optionally on a remote host (see below).
     virtual bool IsRunning ();
     virtual void Wait ();
     virtual void Kill (int sig = SIGTERM); ///< (not tested in shell mode!)
@@ -1490,7 +1640,7 @@ class CShellBare: public CShell {
     /// @name Accessing stdin & stdout...
     /// @{
     virtual void CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime = 0);
-      ///< Use select() to check whether the i/o channels can take/deliver data.
+      ///< @brief Use select() to check whether the i/o channels can take/deliver data.
 
     virtual void WriteLine (const char *line);
     virtual void WriteClose ();
@@ -1506,16 +1656,19 @@ class CShellBare: public CShell {
     ///   (or their CheckIO() equivalents) returned 'false' before.
 
     /// @{
-    int ReadFd () { return fdFromScript; }   ///< Get FD to allow select() by owner with multiple scripts.
-    int WriteFd () { return fdToScript; }    ///< Get FD to allow select() by owner with multiple scripts.
+    int ReadFd () { return fdFromScript; }   ///< @brief Get FD to allow select() by owner with multiple scripts.
+    int WriteFd () { return fdToScript; }    ///< @brief Get FD to allow select() by owner with multiple scripts.
     /// @}
 
     /// @name Extra features...
     /// @{
-    void SetHost (const char *_host) { host = _host; }  ///< Set host to run subsequent commands on; 'NULL' represents the local host.
+    void SetHost (const char *_host) { host = _host; }
+      ///< @brief Set host to run subsequent commands on; 'NULL' represents the local host.
+    const char *Host () { return host; }
     void SetNewProcessGroup (bool on = true) { newProcessGroup = on; }
-      ///< Create a new process group and let this process become the leader (for daemon to support job control).
-    bool StartSession () { return Start (NULL); }       ///< Start a commmand shell session.
+      ///< @brief Create a new process group and let this process become the leader (for daemon to support job control).
+    bool StartSession (bool readStdErr = false) { return Start (NULL, readStdErr); }
+      ///< @brief Start a commmand shell session.
     /// @}
 
   protected:
@@ -1534,7 +1687,7 @@ class CShellBare: public CShell {
 // ***** CShellSession *****
 
 
-/** Session shell: Execute multiple commands through one shell
+/** @brief Session shell: Multiple commands are executed through one shell.
  *
  * All commands are executed through a common command shell, which is (re-)opened by the 'Start' method
  * and left open until 'Done' is called. Compared to a bare shell, this greatly improves efficiency
@@ -1549,12 +1702,13 @@ class CShellSession: public CShell {
     /// @name Extra features ...
     /// @{
     void SetHost (const char *_host) { session.SetHost (_host); }
-      ///< Define a remote host; must be called before first Start() call.
+      ///< @brief Define a remote host; must be called before first Start() call.
+    const char *Host () { return session.Host (); }
     /// @}
 
     /// @name Execution control...
     /// @{
-    virtual bool Start (const char *cmd);
+    virtual bool Start (const char *cmd, bool readStdErr = false);
     virtual void Wait ();
     /// @}
 
@@ -1568,8 +1722,8 @@ class CShellSession: public CShell {
     virtual bool ReadLine (CString *str);
     virtual bool ReadClosed () { return !readOpen; }
 
-    int ReadFd () { return session.ReadFd (); }      ///< Get FD to allow select() by owner with multiple scripts.
-    int WriteFd () { return session.WriteFd (); }    ///< Get FD to allow select() by owner with multiple scripts.
+    int ReadFd () { return session.ReadFd (); }      ///< @brief Get FD to allow select() by owner with multiple scripts.
+    int WriteFd () { return session.WriteFd (); }    ///< @brief Get FD to allow select() by owner with multiple scripts.
     /// @}
 
   protected:
@@ -1580,6 +1734,19 @@ class CShellSession: public CShell {
 
 /// @}  // Shells
 
+
+
+
+
+// ********************** Doxygen Hooks  ***************************************
+//
+// Declare groups for the other modules in "common".
+
+/// @defgroup common_phone Phone
+/// @brief Wrapper for IP phone functionality.
+
+/// @defgroup common_streamer Streamer
+/// @brief Wrapper for media streaming functionality (audio via *GStreamer*).
 
 
 

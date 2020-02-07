@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 
 
 /** @file
- * @defgroup phone Phone
- * Wrapper for IP phone functionality.
+ *
+ * @addtogroup common_phone
  *
  * This module provides a wrapper for IP phone functionality, which is presently
  * required by the *Home2L* applications *WallClock* and *DoorMan*.
@@ -124,9 +124,9 @@ struct TPhoneVideoFrame {
 //     not use any device at all.
 
 
-/// Current phone state
+/// @brief Current phone state.
 enum EPhoneState {
-  psNone = 0,             ///< No state (e.g. phone not initialized)
+  psNone = 0,             ///< No state (e.g. phone not initialized).
   psIdle,                 ///< Phone is idle.
   psDialing,              ///< Phone is dialing, remote end may be ringing.
   psRinging,              ///< This phone is ringing.
@@ -139,11 +139,11 @@ enum EPhoneState {
 
 
 static inline bool PhoneStateIsDevicePermitting (EPhoneState s) { return s == psIdle || s == psRinging; }
-  ///< Return whether the caller is allowed to use the media (audio/video) devices that may be
+  ///< @brief Return whether the caller is allowed to use the media (audio/video) devices that may be
   /// occupied by the respective phone.
 
 
-/// Media mask
+/// @brief Media mask.
 enum EPhoneMedia {
   pmNone = 0,         ///< Nothing
   pmAudioIn = 1,      ///< Microphone
@@ -158,7 +158,7 @@ enum EPhoneMedia {
 #define pmOn pmAll
 
 
-/// Represent an IP Telephone.
+/// @brief IP Telephone.
 class CPhone {
   public:
     CPhone () { Init (); }
@@ -169,7 +169,7 @@ class CPhone {
     /// @name General ...
     /// @{
 
-    void Iterate ();    ///< Iterate the backend and update the phone state; must be called regularly.
+    void Iterate ();    ///< @brief Iterate the backend and update the phone state; must be called regularly.
 
     /// @}
 
@@ -180,31 +180,31 @@ class CPhone {
     void Setup (const char *agentName, int _mediaSelected, int withLogging,
                 const char *tmpDir,
                 const char *lpLinphoneRcFile);
-      /**< Setup phone object.
-       *
-       * @param agentName is the name of the phone agent.
-       * @param _mediaSelected is set of initially enabled media.
-       * @param withLogging enables logging, and should be set to the 'envDebug' setting.
-       * @param tmpDir is the root temporary directory. It should be set to some path below EnvHome2lTmp().
-       *        To disallow the generation of temporary files (e.g. database for noise cancellation), NULL
-       *        may be passed here.
-       * @param lpLinphoneRcFile (*Linphone* only) The (read-only) linphone config file.
-       *
-       * A call to this function finally causes a "state changed" event from 'psNone' to 'psIdle'.
-       * If the callback handlers are set before, this can be caught for initialization purposes.
-       *
-       * **Note:** (2017-01-15) Persistent echo cancellation with *Linphone* requires a patched version
-       *        of *Linphone* (see `external/linphone`).
-       */
+      ///< @brief Setup phone object.
+      ///
+      /// @param agentName is the name of the phone agent.
+      /// @param _mediaSelected is set of initially enabled media.
+      /// @param withLogging enables logging, and should be set to the 'envDebug' setting.
+      /// @param tmpDir is the root temporary directory. It should be set to some path below EnvHome2lTmp().
+      ///        To disallow the generation of temporary files (e.g. database for noise cancellation), NULL
+      ///        may be passed here.
+      /// @param lpLinphoneRcFile (*Linphone* only) The (read-only) linphone config file.
+      ///
+      /// A call to this function finally causes a "state changed" event from 'psNone' to 'psIdle'.
+      /// If the callback handlers are set before, this can be caught for initialization purposes.
+      ///
+      /// **Note:** (2017-01-15) Persistent echo cancellation with *Linphone* requires a patched version
+      ///        of *Linphone* (see `external/linphone`).
+      ///
 
     bool Register (const char *identity, const char *secret);
-      ///< Register phone with a registrar.
+      ///< @brief Register phone with a registrar.
 
     void SetCamRotation (int rot);
-      ///< Set rotation of video (in degree); relevant for the format of a built-in camera.
+      ///< @brief Set rotation of video (in degree); relevant for the format of a built-in camera.
 
     void DumpSettings ();
-      ///< (For debugging) Dump the phone settings as INFO log messages.
+      ///< @brief (For debugging) Dump the phone settings as INFO log messages.
 
     /// @}
 
@@ -220,41 +220,47 @@ class CPhone {
     /// @{
 
     bool Dial (const char *url);
-      ///< Dial the number or URL. If PrepareTransfer() was called previously,
+      ///< @brief Dial the number or URL.
+      ///
+      /// If PrepareTransfer() was called previously,
       /// an eventually existing call will be paused automatically and
       /// the new peer is called as a future destination.
       ///
       /// **Note:** The caller must make sure that the audio/video devices is
       ///       not opened  before calling this method, since the phone
       ///       library may use it from now.
+      ///
     bool AcceptCall ();
-      ///< Green button on the phone: Accept an incoming call.
+      ///< @brief Green button on the phone: Accept an incoming call.
+      ///
       /// **Note:** The caller must make sure that the audio/video devices is
       ///       not opened  before calling this method, since the phone
       ///       library may use it from now.
+      ///
     bool Hangup ();
-      ///< Red button on the phone: Cancel a call or a dialing process.
+      ///< @brief Red button on the phone: Cancel a call or a dialing process.
       /// If there is a paused call, it will be resumed and become the active call again.
       ///
       /// **Note:** The caller must not open the audio/video devices before a
       ///       "device-permitting" state (e.g. 'psIdle') is reported again.
+      ///
     bool CancelAllCalls ();
-      ///< Cancel all active calls, try to reach the idle state as soon as
-      /// possible.
+      ///< @brief Cancel all active calls, try to reach the idle state as soon as possible.
       ///
       /// **Note:** The caller must not open the audio/video devices before a
       ///       "device-permitting" state (e.g. 'psIdle') is reported again.
+      ///
 
     bool PrepareTransfer ();
-      ///< Pause (hold) the current call and set phone into the state 'psTransferIdle'
+      ///< @brief Pause (hold) the current call and set phone into the state 'psTransferIdle'
       /// to initiate an attended transfer. For an unattended transfer, call
       /// CompleteTransfer() immediately after dialing (Dial()).
     bool CompleteTransfer ();
-      ///< Transfer the paused call to the active one (complete the transfer).
+      ///< @brief Transfer the paused call to the active one (complete the transfer).
       /// If called when still dialing, the auto-pickup state is entered automatically.
 
     bool SendDtmf (const char *dtmfSequence);
-      ///< Send a sequence of DTMF characters.
+      ///< @brief Send a sequence of DTMF characters.
 
     /// @}
 
@@ -263,7 +269,7 @@ class CPhone {
     /// @{
 
     void SetIncomingCallAction (EPhoneState _incomingAction) { incomingAction = _incomingAction; }
-      ///< Set decision on what to do with an incoming call in form of a desired next state:
+      ///< @brief Set decision on what to do with an incoming call in form of a desired next state:
       /// - 'psRinging': let it ring (default mode)
       /// - 'psInCall': automatically accept (e.g. for baby phone mode or for a door phone)
       /// - others: reject call
@@ -302,27 +308,27 @@ class CPhone {
     /// @{
 
     // Phone state...
-    EPhoneState GetState () { return state; }   ///< Get current phone state.
+    EPhoneState GetState () { return state; }   ///< @brief Get current phone state.
 
     // Callbacks...
     virtual void OnPhoneStateChanged (EPhoneState oldState);
     void SetCbPhoneStateChanged (void (*_cbPhoneStateChanged) (void *, EPhoneState), void *data = NULL) { cbPhoneStateChanged = _cbPhoneStateChanged; cbPhoneStateChangedData = data; }
-      ///< Callback on a phone state change; the second parameter is the previous state.
+      ///< @brief Callback on a phone state change; the second parameter is the previous state.
 
     virtual void OnInfo (const char *msg);
     void SetCbInfo (void (*_cbInfo) (void *, const char *), void *data = NULL) { cbInfo = _cbInfo; cbInfoData = data; }
-      ///< Callback on the receipt of a new info message (should be displayed on the UI).
+      ///< @brief Callback on the receipt of a new info message (should be displayed on the UI).
 
     virtual void OnDtmfReceived (char dtmf);
     void SetCbDtmfReceived (void (*_cbDtmfReceived) (void *, char), void *data = NULL) { cbDtmfReceived = _cbDtmfReceived; cbDtmfReceivedData = data; }
-      ///< Callback on the receipt of a DTMF character.
+      ///< @brief Callback on the receipt of a DTMF character.
 
     // Information...
     int GetCallDuration (int callId = 0);
-      ///< Get call duration in seconds.
+      ///< @brief Get call duration in seconds.
       /// @param callId is 0 for the (last) active call, or 1 for the currently paused one.
     const char *GetPeerUrl (int callId = 0);
-      ///< Get the URL of the peer.
+      ///< @brief Get the URL of the peer.
       /// @param callId is 0 for the (last) active call, or 1 for the currently paused one.
       ///
       /// **Note:**
@@ -338,12 +344,13 @@ class CPhone {
     ///   - 1: Small video (to be displayed in a small frame, e.g. a self-view)
     /// @{
     TPhoneVideoFrame *VideoLockFrame (int streamId);
-      ///< Lock the video stream and return info about the current picture.
+      ///< @brief Lock the video stream and return info about the current picture.
+      ///
       /// The lock must be held as long as the return value is used and must
       /// be unlocked even if 'NULL' is returned.
       /// Also resets the internal "changed" flag automatically.
     void VideoUnlock ();
-      ///< Unlock the video stream.
+      ///< @brief Unlock the video stream.
     /// @}
 
 

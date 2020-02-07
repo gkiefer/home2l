@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@
 /** @file
  *
  * @defgroup resources Resources
- * The *Home2L Resources* library.
+ * @brief The *Home2L Resources* library.
  *
  * This module contains the shared interface for the *Home2L Resources* library.
  *
@@ -55,67 +55,62 @@
  *
  * ### Terminology
  *
- * **URI (Uniform Resource Identifier):**
+ * * **URI (Uniform Resource Identifier):**
  *   Full path name for some object, including aliases and env settings.
  *
- * **LID (Local ID):**
+ * * **LID (Local ID):**
  *   String to identify an object locally inside the process.
  *
- * **GID, ID (Global ID):**
+ * * **GID, ID (Global ID):**
  *   String to identify an object globally inside the Home2L net.
  *   If a class has no distinction between local and global IDs, the "G"
  *   may be skipped. Anyway, the ID is still globally unique.
  *
- * **Origin:**
+ * * **Origin:**
  *   String with human-readable information on where an object comes from.
  *
- * **HID (host ID):**
+ * * **HID (host ID):**
  *   ID by which a host can be identified by the local instance for a re-connect.
  *
- * The exact syntaxes of LIDs and GIDs can be found in comments to the
+ * The exact syntax of LIDs and GIDs can be found in comments to the
  * respective '[Get]?id' and 'Set*id' methods of the various classes.
- *
- *
- * ### Resource URI (uniform resource identifier)
- *
- * General:  `/[<host>]/<driver>/<localPath>`
  *
  *
  *
  * @{
  *
  * @defgroup resources_general Main API
- * Top-level functionality of this library - most commonly used functions can be found here
+ * @brief Top-level functionality of this library - most commonly used functions can be found here
  *
  * @defgroup resources_values Values, Types and States
- * Basic definitions for values and their types and state
+ * @brief Basic definitions for values and their types and state
  *
  * @defgroup resources_rc *Resource* Objects
- * Accessing resource objects
+ * @brief Accessing resource objects
  *
  * @defgroup resources_subscribe Subscriptions
- * Subscribing to resources to read their values
+ * @brief Subscribing to resources to read their values
  *
  * @defgroup resources_requests Requests
- * Placing requests to change resource values
+ * @brief Placing requests to change resource values
  *
  * @defgroup resources_drivers Drivers
- * Defining custom drivers
+ * @brief Defining custom drivers
  *
  * @defgroup resources_directory Directory Services
- * Querying local metadata directories (for shells or service tools)
+ * @brief Querying local metadata directories (for shells or service tools)
  */
 
 #ifdef SWIG
 %pythoncode %{
 ## @defgroup resources Resources
-## The *Home2L Resources* library.
+## @brief The *Home2L Resources* library.
 ##
 ## The API exports a large number of low-level C/C++ functions and classes, which in many cases
 ## are not relevant for rules scripts or Python-based drivers and are not documented in detail here.
 ## As a rule of thumb, the level of documentation reflects the relevance of some function.
 ##
-## The most common function can be found in section @ref resources_general.
+## The most common functions can be found in section @ref resources_general.
 ## Besides this, the classes CResource (@ref resources_rc) and CRcValueState (@ref resources_values)
 ## are important for accessing the data transported via resource objects.
 ##
@@ -127,25 +122,28 @@
 ## @{
 ##
 ## @defgroup resources_general Main API
-## Top-level functionality of the *Resources* library - most commonly used functions can be found here.
+## @brief Top-level functionality of the *Resources* library - most commonly used functions can be found here.
 ##
 ## @defgroup resources_values Values, Types and States
-## Basic definitions for values and their types and state.
+## @brief Basic definitions for values and their types and state.
 ## Most relevant is the CRcValueState class to access the present value and state of a resource.
 ## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__values.html).
 ##
 ## @defgroup resources_rc *Resource* Objects
-## Accessing resource objects.
+## @brief Accessing resource objects.
 ## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__rc.html).
 ##
 ## @defgroup resources_directory Directory Services
-## Querying local metadata (for interactive debugging).
+## @brief Querying local metadata (for interactive debugging).
+## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__directory.html).
 ##
 ## @defgroup resources_subscribe Subscriptions
-## Low-level access to the C/C++ subscriber classes.
+## @brief Low-level access to the C/C++ subscriber classes.
+## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__subscribe.html).
 ##
 ## @defgroup resources_requests Requests
-## Low-level access to the C/C++ request class.
+## @brief Low-level access to the C/C++ request class.
+## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__requests.html).
 %}
 #endif // SWIG
 
@@ -199,14 +197,15 @@ class CResourceLink;
  * @{
  */
 
-#define rcPrioMin     0             ///< Minimum (lowest) priority
-#define rcPrioMax     9             ///< Maximum (highest) priority
+#define rcPrioMin     0           ///< Minimum (lowest) priority
+#define rcPrioNormal  3           ///< Default value (automation rules level)
+#define rcPrioMax     9           ///< Maximum (highest) priority
 
-#define rcPrioDefault rcPrioMin     ///< Typical use: Preset defaults (typically by the driver)
-#define rcPrioWeak    2             ///< Typical use: Automated rules (e.g. close window shades at certain times)
-#define rcPrioNormal  5             ///< (Default value) Typical use: Direct user interaction (e.g. user pushes button to open window shades)
-#define rcPrioStrong  8             ///< Typical use: Administrative interaction (default priority in the Home2l shell)
-#define rcPrioSafety  rcPrioMax     ///< Typical use: Necessary actions to avoid damage (e.g. close roof window on bad weather)
+#define rcPrioDefault rcPrioMin   ///< Typical use: Preset defaults (typically by the driver)
+#define rcPrioRule    3           ///< Typical use: Automation rules (e.g. close window shades at certain times)
+#define rcPrioUser    7           ///< Typical use: Direct user interaction (e.g. user pushes button to open window shades)
+#define rcPrioAdmin   8           ///< Typical use: Administrative interaction (default priority in the Home2l shell)
+#define rcPrioSafety  rcPrioMax   ///< Typical use: Necessary actions to avoid damage (e.g. close roof window on bad weather)
 
 /// @}  // @name
 
@@ -270,7 +269,7 @@ enum ERcType {
   /// @name Special resource types...
   /// @{
   rctTrigger,   ///< [rctInt] Resource does not carry a value, but can transport events ("triggers"); 'vTriggerCount' counts the number of trigger events.
-  rctMutex,     ///< [rctString] resource represents a mutex (not implemented yet)
+  rctMutex,     ///< @brief [rctString] resource represents a mutex (not implemented yet)
                 ///
                 ///   **Note:** Mutex operations are not implemented yet. Once implemented, they will work as follows.
                 ///
@@ -312,8 +311,12 @@ enum ERcType {
   ///
   /// Enumeration types are based on 'rctInt'.
   /// @{
-  rctWindow = rctEnumTypesBase,
-                ///< Window opening state ("closed", "tilted", "open", "openOrTilted")
+  rctUseState = rctEnumTypesBase,
+    ///< Use/presence state ("day", "night", "away", "vacation")
+  rctWindowState,
+    ///< Window opening state ("closed", "tilted", "open", "openOrTilted")
+  rctPhoneState,
+    ///< Phone state ("idle", "ringing", "inCall")
   rctEnumTypesEND
   /// @}
 };
@@ -325,27 +328,27 @@ ERcType RcTypeGetFromName (const char *name);
 
 // Get base type ...
 ERcType RcTypeGetBaseType (ERcType t);
-  ///< Return the underlying base type as a unique representative for compatible classes (e.g. rctFloat/rctTemp -> rctFloat)
+  ///< @brief Return the underlying base type as a unique representative for compatible classes (e.g. rctFloat/rctTemp -> rctFloat)
 bool RcTypeIsStringBased (ERcType t);
-  ///< Return if the base type is 'rctString'; This is the set of types that have dynamic data.
+  ///< @brief Return if the base type is 'rctString'; This is the set of types that have dynamic data.
 
 // Unit types ...
 static inline bool RcTypeIsUnitType (ERcType t) { return t >= rctUnitTypesBase && t <= rctEnumTypesBase; }
-  ///< Return whether the type is a unit type.
+  ///< @brief Return whether the type is a unit type.
 const char *RcTypeGetUnit (ERcType t);
-  ///< Return the unit string; For non-unit types, an empty string is returned.
+  ///< @brief Return the unit string; For non-unit types, an empty string is returned.
 
 // Enumeration types ...
 static inline bool RcTypeIsEnumType (ERcType t) { return t >= rctEnumTypesBase; }
-  ///< Return whether the type is a enumeration type.
+  ///< @brief Return whether the type is a enumeration type.
 int RcTypeGetEnumValues (ERcType t);
-  ///< Return the number of possible values for an enumeration type.
+  ///< @brief Return the number of possible values for an enumeration type.
 const char *RcTypeGetEnumValue (ERcType t, int idx, bool warn = true);
-  ///< Return the value for 'idx' for an enumeration type.
+  ///< @brief Return the value for 'idx' for an enumeration type.
   /// Allowed index vaules range from 0 to N-1, where N is the number of possible values.
   /// If the index is invalid, "?" is returned and, if 'warn == true', a warning is logged.
 int RcTypeGetEnumIdx (ERcType t, const char *value, bool warn = true);
-  ///< Return the index of some value for an enumeration type.
+  ///< @brief Return the index of some value for an enumeration type.
   /// If the 'value' is out of range, -1 is returned and, if 'warn == true', a warning is logged.
 
 
@@ -355,11 +358,29 @@ int RcTypeGetEnumIdx (ERcType t, const char *value, bool warn = true);
 // ***** Enum declarations for enumeration types *****
 
 
-enum ERctWindow {   // for 'rctWindow'
-  rctWindowClosed = 0,
-  rctWindowTilted,
-  rctWindowOpen,
-  rctWindowOpenOrTilted    // Type of opening is not known
+/// Use/presence state of the home (for 'rctUseState')
+enum ERctUseState {
+  rcvUseDay = 0,  /// User is at home and present at day time
+  rcvUseNight,    /// User is at home, but sleeping (e.g. doors should be locked)
+  rcvUseAway,     /// User is away temporarily (e.g. for work)
+  rcvUseVacation  /// User is away for longer (e.g. on vacation)
+};
+
+
+/// Window state (for 'rctWindowState')
+enum ERctWindowState {
+  rcvWindowClosed = 0,    /// closed
+  rcvWindowTilted,        /// tilted
+  rcvWindowOpen,          /// (wide) open
+  rcvWindowOpenOrTilted   /// type of opening is not known
+};
+
+
+/// Phone state (for 'rctPhoneState')
+enum ERctPhoneState {
+  rcvPhoneIdle = 0,   /// idle
+  rcvPhoneRinging,    /// ringing
+  rcvPhoneInCall      /// includes 'psDialing' and all 'psTransfer...' states (anything where a user is actively using the phone)
 };
 
 
@@ -385,13 +406,14 @@ union URcValue {
 
 
 #ifndef SWIG
-BUILD_ASSERT(URcValue, sizeof (URcValue) == sizeof (URcValue::vAny));
+STATIC_ASSERT(sizeof (URcValue) == sizeof (URcValue::vAny));
 #endif
 
 
 /// @name Value ('URcValue') construction and evaluation ...
 /// @{
 static inline URcValue URcValueCleared () { URcValue ret; ret.vAny = 0; return ret; }   ///< Get cleared value (0 / 0.0 / false)
+static inline void URcValueClear (URcValue *val) { val->vAny = 0; }                     ///< Clear value (0 / 0.0 / false)
 
 static inline URcValue URcValueOf (bool v) { URcValue ret; ret.vAny = 0; ret.vBool = v; return ret; }
 static inline URcValue URcValueOf (int v) { URcValue ret; ret.vAny = 0; ret.vInt = v; return ret; }
@@ -412,6 +434,10 @@ enum ERcState {
   rcsUnknown = 0,   ///< Value is presently unknown (e.g. outdated).
   rcsBusy,          ///< Devices is busy and/or switching to the value indicated by the associate value.
   rcsValid,         ///< Value is valid.
+
+  // Aliases ...
+  rcsNoReport = rcsUnknown
+                    ///< Alias to make the 'successState' attribute in @ref CRcEventDriver more intuitive.
 };
 
 
@@ -439,7 +465,7 @@ class CRcValueState {
   public:
     CRcValueState () { type = rctNone; Clear (); }
     CRcValueState (const CRcValueState &vs) { type = rctNone; Set (vs.type, vs.val, vs.state); timeStamp = vs.timeStamp; }
-    CRcValueState (ERcType _type) { type = rctNone; Clear (_type); }   // for initializing type, but no value & state
+    CRcValueState (ERcType _type) { type = rctNone; Clear (_type); }   ///< for initializing type, but no value & state
     CRcValueState (ERcType _type, URcValue _val, ERcState _state = rcsValid) { type = rctNone; Set (_type, _val, _state); }
 
     CRcValueState (ERcType _type, bool _val, ERcState _state = rcsValid) { type = rctNone; SetBool (_val, _state); }
@@ -459,15 +485,34 @@ class CRcValueState {
     /// Unless specified otherwise, all 'Set...' methods clear or set all attributes
     /// (i.e. the state and the time stamp). The time stamp is always cleared.
     /// @{
-    void Clear () { Clear (type); }     ///< Clear value, leave type unchanged
+    void Clear () { Clear (type); }
+      ///< @brief Clear value, set state to 'rcsUnknown', and leave type unchanged
     void Clear (ERcType _type, ERcState _state = rcsUnknown);
-      ///< Clear to default value:
+      ///< @brief Clear to default value:
       ///   - rctBool: false
       ///   - rctInt / rctTrigger: 0
       ///   - rctFloat: 0.0
       ///   - rctString / rctMutex: "" (NULL)
     void Set (ERcType _type, URcValue _val, ERcState _state = rcsValid);
     void Set (URcValue _val, ERcState _state = rcsValid) { Set (type, _val, _state); }
+    /// @}
+
+    /// @name Setting special values for @ref CRcDriver::DriveValue() methods ...
+    /// These methods may be used by drivers to steer the implicit reporting
+    /// done after a driver's DriveValue() method has been called.
+    /// **Note:** Some of these values (particularly the combination of no type
+    /// and a state != rcsUnknown) are only allowed in this context and usually
+    /// forbidden.
+    void SetToReportBusyOldVal () { Clear (rctNone, rcsBusy); }
+      ///< @brief Modify object to auto-report a busy state with no value change.
+      /// **Note:** Only for use in @ref CRcDriver::DriveValue()! Normally,
+      /// the combination of no type and a state != rcsUnknown are forbidden.
+    void SetToReportBusyNewVal () { state = rcsBusy; }
+      ///< @brief Modify object to auto-report a busy state with the new (prospective) value.
+    void SetToReportNothing () { Clear (rctNone, rcsValid); }
+      ///< @brief Modify object to not auto-report anything.
+      /// **Note:** Only for use in @ref CRcDriver::DriveValue()! Normally,
+      /// the combination of no type and a state != rcsUnknown are forbidden.
     /// @}
 
     /// @name Set value and state (multi-type capable setters) ...
@@ -478,11 +523,11 @@ class CRcValueState {
     /// 'true' if and only if they are != 0. With the exception of SetGenericString(), this never fails.
     /// @{
     void SetGenericInt (int _val, ERcType _type, ERcState _state = rcsValid);
-      ///< Set from integer or boolean.
+      ///< @brief Set from integer or boolean.
     void SetGenericFloat (float _val, ERcType _type, ERcState _state = rcsValid);
-      ///< Set from float.
+      ///< @brief Set from float.
     bool SetGenericString (const char *_val, ERcType _type, ERcState _state = rcsValid);
-      ///< Set from string. On syntax error, a warning is emitted, the default value (see 'Clear') is set,
+      ///< @brief Set from string. On syntax error, a warning is emitted, the default value (see 'Clear') is set,
       /// and 'false' is returned.
     /// @}
 
@@ -539,7 +584,7 @@ class CRcValueState {
     /// and 'rcsUnknown' is returned if either the state is 'rcsUnknown', the type does not match
     /// or 'this == NULL'. No runtime errors will be thrown.
     ///
-    /// Use these methods for remote resources. The relaced typing will help to avoid run-time errors.
+    /// Use these methods for remote resources. The relaxed typing will help to avoid run-time errors.
     ///
     /// @{
     ERcState GetValue (bool *retBool);
@@ -565,14 +610,15 @@ class CRcValueState {
     int           ValidTrigger (int defaultVal = 0) const                       { return ValidInt (defaultVal); }
     const char *  ValidMutex (const char *defaultVal = CString::emptyStr) const { return ValidString (defaultVal); }
 
-    int           ValidUnitInt (int defaultVal = 0) const         { return ValidInt (defaultVal); }
-    float         ValidUnitFloat (float defaultVal = 0.0) const   { return ValidFloat (defaultVal); }
-    int           ValidEnumIdx (int defaultVal = 0) const         { return ValidInt (defaultVal); }
+    int           ValidUnitInt (ERcType _type, int defaultVal = 0) const;
+    float         ValidUnitFloat (ERcType _type, float defaultVal = 0.0) const;
+    int           ValidEnumIdx (ERcType _type, int defaultVal = 0) const;
     /// @}
 
     /// @name Attributes ...
     /// @{
     void SetType (ERcType _type) { Clear (_type); }
+      ///< @brief Change type in a hard way; implies resetting the state to 'rcsUnkown'
     void SetState (ERcState _state) { state = _state; }
     void SetTimeStamp (TTicks _timeStamp) { timeStamp = _timeStamp; }
 
@@ -581,30 +627,32 @@ class CRcValueState {
     TTicks TimeStamp () const { return timeStamp; }
 
     bool IsValid () const { return state == rcsValid; }
-      ///< State is `rcsValid`, neither `rcsBusy` nor `rcsUnknown`.
+      ///< @brief State is `rcsValid`, neither `rcsBusy` nor `rcsUnknown`.
+    bool IsBusy () const { return state == rcsBusy; }
+      ///< @brief State is `rcsBusy`, neither `rcsValid` nor `rcsUnknown`.
     bool IsKnown () const { return state != rcsUnknown; }
-      ///< State is either `rcsValid` or `rcsBusy`; In other words: the value can be retrieved.
+      ///< @brief State is either `rcsValid` or `rcsBusy`; In other words: the value can be retrieved.
 
     bool Equals (CRcValueState *val2) const;
-      ///< Strict comparison: state, type and value must match exactly; time stamps are not compared.
+      ///< @brief Strict comparison: state, type and value must match exactly; time stamps are not compared.
     bool ValueEquals (URcValue val2) const;
     bool ValueEquals (CRcValueState *val2) const;
-      ///< Relaxed comparison: type and value must match exactly; state and time stamps are not compared.
+      ///< @brief Relaxed comparison: type and value must match exactly; state and time stamps are not compared.
     /// @}
 
     /// @name Type conversion ...
     /// @{
     bool Convert (ERcType _type);
-      ///< Try to convert the current value to a new type.
+      ///< @brief Try to convert the current value to a new type.
       /// If a conversion is not possible, 'false' is returned and the object remains unchanged.
     /// @}
 
     /// @name Stringification ...
     /// @{
     const char *ToStr (bool withType = false, bool withTimeStamp = false, bool precise = false, int stringChars = 20) const;
-      ///< (TTS) Output the object contents as a string.
+      ///< @brief (TTS) Output the object contents as a string.
     const char *ToStr (CString *ret, bool withType = false, bool withTimeStamp = false, bool precise = false, int stringChars = 20) const;
-      ///< Output the object contents as a string according to the synax described for 'SetFromStr'.
+      ///< @brief Output the object contents as a string according to the synax described for 'SetFromStr'.
       ///
       /// If 'withType' is set, the type information is prepended.
       /// If 'precise' is set, the output is in a format that allows a transportation without information loss,
@@ -614,18 +662,15 @@ class CRcValueState {
       /// If 'withTimeStamp' is set AND the time stamp is > 0, the time stamp is appended to the output.
 
     bool SetFromStr (const char *str);
-      ///< Set the object based on textual information.
+      ///< @brief Set the value and state based on textual information.
       ///
-      /// Syntax: `["("<type>")"] [!]<value>|? [@<timeStamp>]`
-      ///
-      /// On error, a warning is emitted, the default value at a state of 'rcsUnknown'
-      /// is set (see 'Clear'), and 'false' is returned.
-      /// If 'str' contains type information, the 'type' field is set accordingly.
-      /// If not, and the current type is 'rctNone', the type is auto-detected.
-      /// In all other cases, 'type' is not changed and must match the given `<value>`.
+      /// Syntax:
+      /// @code
+      ///     ["("<type>")"] [!]<value>|? [@<timestamp>]
+      /// @endcode
       ///
       /// Syntax of `<value>`:
-      ///
+      /// @code
       ///     <bool>    ::= [0fF] | [1tT+]                  : boolean value
       ///     <int>     ::= [-][0-9]+                       : integer value
       ///     <float>   ::= [-][0-9]*[.[0-9]+][E[+/-][0-9]+]: floating-point value
@@ -634,16 +679,26 @@ class CRcValueState {
       ///     <time>    ::= <time>                          : time value; see TicksFromString() for syntax
       ///     <unit>    ::= [<float>|<int>]<unit>           : unit value (<unit> is the unit string)
       ///     <enum>    ::= [_a-zA-Z][_a-zA-Z0-9]+          : enumeration value
+      /// @endcode
       ///
-      /// A '!' indicates the state 'rcsBusy', a value of '?' the state 'rcsUnknown'.
+      /// A value starting with '!' indicates the state 'rcsBusy', a value of '?' the state 'rcsUnknown'.
       /// In all other cases, the state is 'rcsValid'.
       ///
+      /// On error, a warning is emitted, the default value at a state of 'rcsUnknown'
+      /// is set (see 'Clear'), and 'false' is returned.
+      /// If 'str' contains type information, the 'type' field is set accordingly.
+      /// If not, and the current type is 'rctNone', the type is auto-detected.
+      /// In all other cases, 'type' is not changed and must match the given `<value>`.
+      ///
       /// Whitespaces are tolerated and stripped away internally.
+      ///
     bool SetFromStrFast (const char *str, bool warn = true);
-      ///< Set the object based on textual information (fast version).
+      ///< @brief Set the object based on textual information (fast version).
+      ///
       /// This is a variant of SetFromStr() which does not copy 'str' internally and may be faster,
       /// especially for long strings. This method cannot not interpret type and timestamp information.
       /// Also, leading/trailing whitespaces are not tolerated.
+      ///
     /// @}
 
   protected:
@@ -672,7 +727,8 @@ class CRcValueState {
     ## Return the value as a Python object.
     def Value(self):
       """Return the value as a Python object. In case of a state of 'rcsUnknown' or\n\
-      if 'self' is not defined, 'None' is returned. 'self == None' is allowed."""
+      if 'self' is not defined, 'None' is returned. 'self == None' is allowed.\n\
+      """
       if not self: return None
       if self.State () == rcsUnknown: return None
       t = RcTypeGetBaseType (self.Type ())
@@ -680,6 +736,7 @@ class CRcValueState {
       elif t == rctInt:    return self.UValue().vInt
       elif t == rctFloat:  return self.UValue().vFloat
       elif t == rctString: return self.UValue().vString
+      elif t == rctTime:   return self.UValue().vTime
       else: return None
 
     ## Return the most appropriate valid value as a Python object.
@@ -689,7 +746,7 @@ class CRcValueState {
       transort a valid value. 'self == None' is tolerated\n\
       """
       ret = self.Value ()
-      if not ret: ret = defaultVal
+      if ret == None: ret = defaultVal
       return ret
   %} // %pythoncode
 }; // %extend CRcValueState
@@ -785,7 +842,7 @@ class CRcValueState {
 #endif // SWIG
 
 
-/** Home2L Resource
+/** @brief Home2L Resource
  *
  * This is the central class of the library. A 'Resource' may represent
  * a sensor, an actor, a stored value, a virtual device, a mutex, an event
@@ -816,7 +873,7 @@ class CResource /* final */ {
     /// @name (App) Obtaining and managing resources ...
     /// @{
     static CResource *Get (const char *uri, bool allowWait = false);
-      ///< Look up a resource by its URI and return a reference to it.
+      ///< @brief Look up a resource by its URI and return a reference to it.
       ///
       /// The returned pointer is always valid (!= NULL) unless the URI is syntactically incorrect and will neither now
       /// nor in the future refer to a valid resource. Hence, the pointer can be used for identity comparisons.
@@ -825,10 +882,13 @@ class CResource /* final */ {
       /// If 'allowWait' is 'true', the function may wait/block for some time, increasing the chance that the resource
       /// is known afterwards.
       ///
+      /// If the URI is not absolute, it is relative to "/alias".
+      ///
       /// If the URI is syntactically incorrect, a warning is emitted and 'NULL' is returned.
+      /// It is allowed to pass 'uri == NULL', in which case NULL will be returned without any warning.
       ///
     static void GarbageCollection ();
-      ///< Remove all unregistered resources.
+      ///< @brief Remove all unregistered resources.
       ///
       /// The calling process must not hold (and later use) any references to 'CResource' objects if this function is
       /// used.
@@ -843,11 +903,14 @@ class CResource /* final */ {
 
     /// @name (App) Identification (static) ...
     /// @{
-    const char *Uri () { return gid.Get (); } ///< Get the URI.
+    const char *Uri () { return gid.Get (); }         ///< @brief Get the URI (aka global ID / GID).
+    const char *Gid () { return gid.Get (); }         ///< @brief Get the global ID.
+    const char *Lid () { return ATOMIC_READ (lid); }
+      ///< @brief Get the local ID (LID). This is the path relative to a) 'this's host (remote resource) or b) driver (local resource).
 
-    bool Is (const char *uri);                        ///< Check identity by exact match.
-    bool Is (CResource *rc) { return this == rc; }    ///< Check identity (for Python & eventual wrapper classes).
-    bool IsLike (const char *pattern);                ///< Check identity by pattern.
+    bool Is (const char *uri);                        ///< @brief Check identity by exact match.
+    bool Is (CResource *rc) { return this == rc; }    ///< @brief Check identity (for Python & eventual wrapper classes).
+    bool IsLike (const char *pattern);                ///< @brief Check identity by pattern.
 
     ERcType Type () { return valueState.type; }
     bool IsWritable () { return writable; }
@@ -873,53 +936,57 @@ class CResource /* final */ {
     ///
     /// @{
     void GetValueState (CRcValueState *retValueState);
-      ///< Get the value and state.
+      ///< @brief Get the value and state.
 
     // Get value (relaxed typing) ...
     ERcState GetValue (bool *retBool, TTicks *retTimeStamp = NULL);
-      ///< Get a value of type "Bool" or a type based on it.
+      ///< @brief Get a value of type "Bool" or a type based on it.
+      ///
       /// Type mismatches inside a type class are silently tolerated.
       /// The returned state must be checked. If the state is 'rcsUnknown', the type does not match
       /// or if 'this == NULL', a value of 'rcsUnknown' is returned and '*ret...'
       /// is left unchanged. No runtime errors will be thrown.
+      ///
     ERcState GetValue (int *retInt, TTicks *retTimeStamp = NULL);
-      ///< Get a value of type "int" or a type based on it.
+      ///< @brief Get a value of type "int" or a type based on it.
     ERcState GetValue (float *retFloat, TTicks *retTimeStamp = NULL);
-      ///< Get a value of type "float" or a type based on it.
+      ///< @brief Get a value of type "float" or a type based on it.
     ERcState GetValue (CString *retString, TTicks *retTimeStamp = NULL);
-      ///< Get a value of type "string" or a type based on it.
+      ///< @brief Get a value of type "string" or a type based on it.
     ERcState GetValue (TTicks *retTime);
-      ///< Get a value of type "time".
+      ///< @brief Get a value of type "time".
 
     // Get value (relaxed typing with auto-correction) ...
     bool          ValidBool (bool defaultVal = false, TTicks *retTimeStamp = NULL);
-      ///< Get a valid Boolean value.
+      ///< @brief Get a valid Boolean value.
       /// This and the following methods are shortcuts for first obtaining the 'ValueState' and then use the same methods
       /// of @ref CRcValueState on that object.
     int           ValidInt (int defaultVal = 0, TTicks *retTimeStamp = NULL);
-      ///< Get a valid integer value.
+      ///< @brief Get a valid integer value.
     float         ValidFloat (float defaultVal = 0.0, TTicks *retTimeStamp = NULL);
-      ///< Get a valid float value.
+      ///< @brief Get a valid float value.
     const char *  ValidString (CString *ret, const char *defaultVal = CString::emptyStr, TTicks *retTimeStamp = NULL);
-      ///< Get a valid string value.
+      ///< @brief Get a valid string value.
     const char *  ValidString (const char *defaultVal = CString::emptyStr, TTicks *retTimeStamp = NULL);
-      ///< Get a valid string value (TTS variant).
+      ///< @brief Get a valid string value (TTS variant).
     TTicks        ValidTime (TTicks defaultVal = 0, TTicks *retTimeStamp = NULL);
-      ///< Get a valid time value.
+      ///< @brief Get a valid time value.
 
     int           ValidTrigger (int defaultVal = 0, TTicks *retTimeStamp = NULL)  { return ValidInt (defaultVal, retTimeStamp); }
-      ///< Get a valid trigger value.
+      ///< @brief Get a valid trigger value.
     const char *  ValidMutex (CString *ret, const char *defaultVal = CString::emptyStr, TTicks *retTimeStamp = NULL)  { return ValidString (ret, defaultVal, retTimeStamp); }
-      ///< Get a valid mutex value.
+      ///< @brief Get a valid mutex value.
     const char *  ValidMutex (const char *defaultVal = CString::emptyStr, TTicks *retTimeStamp = NULL)                { return ValidString (defaultVal, retTimeStamp); }
-      ///< Get a valid mutex value (TTS variant).
+      ///< @brief Get a valid mutex value (TTS variant).
 
-    int           ValidUnitInt (int defaultVal = 0, TTicks *retTimeStamp = NULL)        { return ValidInt (defaultVal, retTimeStamp); }
-      ///< Get a valid unit-type integer value.
-    float         ValidUnitFloat (float defaultVal = 0.0, TTicks *retTimeStamp = NULL)  { return ValidFloat (defaultVal, retTimeStamp); }
-      ///< Get a valid unit-type float value.
-    int           ValidEnumIdx (int defaultVal = 0, TTicks *retTimeStamp = NULL)        { return ValidInt (defaultVal, retTimeStamp); }
-      ///< Get a valid enumeration value index.
+    int           ValidUnitInt (ERcType _type, int defaultVal = 0, TTicks *retTimeStamp = NULL);
+      ///< @brief Get a valid unit-type integer value.
+    float         ValidUnitFloat (ERcType _type, float defaultVal = 0.0, TTicks *retTimeStamp = NULL);
+      ///< @brief Get a valid unit-type float value.
+    int           ValidEnumIdx (ERcType _type, int defaultVal = 0, TTicks *retTimeStamp = NULL);
+      ///< @brief Get a valid enumeration value index.
+
+    /// @}
 
 #endif
 
@@ -937,12 +1004,13 @@ class CResource /* final */ {
     ///
     /// @{
     CResource *Subscribe (CRcSubscriber *subscr) { SubscribePAL (subscr); return this; }
-      ///< Subscribe to this resource. The caller remains owner of 'subscr'.
+      ///< @brief Subscribe to this resource. The caller remains owner of 'subscr'.
+      ///
       /// If the present value of 'this' is known, an initial notification with the current value
       /// is sent to the subscriber.
       /// 'this' is returned to allow short constructs like "rc = RcGetResource (...)->Subscribe (subscr)".
     void Unsubscribe (CRcSubscriber *subscr) { UnsubscribePAL (subscr); }
-      ///< Unsubscribe this resource.
+      ///< @brief Unsubscribe to this resource.
     /// @}
 
     /// @name (App) Placing requests ...
@@ -958,43 +1026,47 @@ class CResource /* final */ {
     void SetRequestFromObj (CRcRequest *_request);
 #ifndef SWIG
     void SetRequest (CRcRequest *_request) { SetRequestFromObj (_request); }
-      ///< Add or replace a request (generic version).
+      ///< @brief Add or replace a request (generic version).
       /// @param _request must by a dynamically allocated object, which is handed over and must no longer be used by the caller afterwards.
-    void SetRequest (CRcValueState *value, const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-      ///< Add or replace a request (generic value, direct parameters).
+    void SetRequest (CRcValueState *value, const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      ///< @brief Add or replace a request (generic value, direct parameters).
+      /// The request attributes are explaind in the [*Home2L Book*](../home2l-book.pdf).
+      ///
       /// @param reqGid identifies the request; it is legal to pass NULL, in which case the instance name is used.
       /// @param value specifies the requested value (only type and value are used; the state is ignored).
       /// @param priority is the request priority attribute.
       /// @param t0 is the activation (start) time attribute (optional).
       /// @param t1 is the expiration (stop) time attribute (optional).
+      /// @param repeat is the repeatition interval attribute (optional).
       /// @param hysteresis is the hysteresis attribute (optional).
       ///
-      /// The request attributes are explaind in the [*Home2L Book*](../home2l-book.pdf).
-    void SetRequest (bool valBool,          const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-      ///< Add or replace a request (direct value and parameters).
-    void SetRequest (int valInt,            const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-      ///< Add or replace a request (direct value and parameters).
-    void SetRequest (float valFloat,        const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-      ///< Add or replace a request (direct value and parameters).
-    void SetRequest (const char *valString, const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-      ///< Add or replace a request (direct value and parameters).
-    void SetRequest (TTicks valTime,        const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-      ///< Add or replace a request (direct value and parameters).
-#endif // SWIG
+    void SetRequest (bool valBool,          const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      ///< @brief Add or replace a request (direct value and parameters).
+    void SetRequest (int valInt,            const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      ///< @brief Add or replace a request (direct value and parameters).
+    void SetRequest (float valFloat,        const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      ///< @brief Add or replace a request (direct value and parameters).
+    void SetRequest (const char *valString, const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      ///< @brief Add or replace a request (direct value and parameters).
+    void SetRequest (TTicks valTime,        const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      ///< @brief Add or replace a request (direct value and parameters).
     void SetRequestFromStr (const char *reqDef);
-      ///< Set request by textual definition - see CRcRequest::SetFromStr() and the
+      ///< @brief Set request by textual definition. See CRcRequest::SetFromStr() and the
       /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
+#endif // SWIG
 
 #ifndef SWIG
-    void SetTrigger (const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { SetRequest (1, reqGid, priority, t0, t1, hysteresis); }
-      ///< Set a trigger request (no value needs to be given).
-#endif // SWIG
+    void SetTrigger (const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0) { SetRequest (1, reqGid, priority, t0, t1, repeat, hysteresis); }
+      ///< @brief Set a trigger request (no value needs to be given).
     void SetTriggerFromStr (const char *reqDef);
-      ///< Set trigger request by textual definition.
+      ///< @brief Set trigger request by textual definition.
+#endif // SWIG
 
-    void DelRequest (const char *reqGid = NULL);
-      ///< Delete a request.
+    void DelRequest (const char *reqGid = NULL, TTicks t1 = 0);
+      ///< @brief Delete a request.
       /// @param reqGid is the global request identifierr (GID) and identifies the request.
+      ///    If set to 'NULL', the instance name is used.
+      /// @param t1 is the time at which the request is to be deleted (optional).
     /// @}
 
     /// @name (App) Emulate classical "read" and "write" operations ...
@@ -1003,12 +1075,12 @@ class CResource /* final */ {
     /// @{
 #ifndef SWIG
     void ReadValueState (CRcValueState *retValueState, int maxTime = -1);
-      ///< Perform a blocking read to obtain an up-to-date value from the driver.
-      /// Internally, a temporary subscription is generated and the 'CRcSubscriber' methods are used
+      ///< @brief Perform a blocking read to obtain an up-to-date value from the driver.
+      /// Internally, a temporary subscription is generated and the @ref CRcSubscriber methods are used
       /// to implement this reading.
 #endif
     void WriteValue (CRcValueState value, int priority = rcPrioNormal, const char *reqGid = "rclib") { SetRequest (&value, reqGid, priority); }
-      ///< Write a value by issueing or updating a request with the given global id.
+      ///< @brief Write a value by issueing or updating a request with the given global id.
       /// The implementation of this method can be used as a tutorial on working with requests.
     void UnWrite (const char *reqGid = "rclib") { DelRequest (reqGid); }
     /// @}
@@ -1022,22 +1094,24 @@ class CResource /* final */ {
 #ifndef SWIG
     static CResource *Register (CRcDriver *_rcDriver, const char *_lid, ERcType _type, bool _writable) { return Register (NULL, _rcDriver, _lid, _type, _writable); }
     static CResource *Register (CRcDriver *_rcDriver, const char *_lid, const char *rcTypeDef) { return Register (NULL, _rcDriver, _lid, rcTypeDef); }
-      ///< Register a new local resource for a driver.
+      ///< @brief Register a new local resource for a driver.
       /// Returns 'NULL' on error and prints a warning.
-      /// 'rcTypeDef' is a textual type definition, syntax: `<type> (ro|wr)`
+      /// 'rcTypeDef' is a textual type definition, syntax: `<type> (ro|wr)`.
       ///
-      /// **Note:** For the automatic documentation system, invocations of this method must be documented as follows:
+      /// **Note:** For the automatic documentation system, invocations of these methods may be documented as follows:
       /// - If a default value is to be set, the SetDefault() call must follow in the next line.
       /// - The next line must be a comment of the form: `/ * [RC:<driver>] <brief description>`
       /// - If a long description is supplied, the next line must be: " *"
       ///   ... then the description follows in lines starting with "*".
       /// - The comment block must end with a line starting with "* /" (end of comment - ignore the space here).
       /// - To explicitly exclude the resource from documentation, place a line
-      ///   with "/ * [RC:-] * /"  (end/start of comment - ignore the spaces here) below call.
+      ///   with "/ * [RC:-] * /"  (end/start of comment - ignore the spaces here) below or behind the call.
+      ///
+      /// Details on the documentation system can be found in the Home2L Book.
 #endif
 
-    void SetDefault (CRcValueState *vs)     { SetRequest (vs, "_default", rcPrioDefault); }
-      ///< Set a default value.
+    void SetDefault (CRcValueState *vs)     { SetRequest (vs,         "_default", rcPrioDefault); }
+      ///< @brief Set a default value.
     void SetDefault (bool valBool)          { SetRequest (valBool,    "_default", rcPrioDefault); }
     void SetDefault (int valInt)            { SetRequest (valInt,     "_default", rcPrioDefault); }
     void SetDefault (float valFloat)        { SetRequest (valFloat,   "_default", rcPrioDefault); }
@@ -1046,7 +1120,8 @@ class CResource /* final */ {
     void SetDefault (TTicks valTime)        { SetRequest (valTime,    "_default", rcPrioDefault); }
 
     void Unregister ();
-      ///< Unregister a resource.
+      ///< @brief Unregister a resource.
+      ///
       /// Unused 'CResource' objects are never deleted from heap, but only marked as unregistered
       /// and its state set to 'rcsUnknown', if they are no longer used.
 
@@ -1068,9 +1143,10 @@ class CResource /* final */ {
     /// @{
 
     void ReportValueState (CRcValueState *_valueState);
-      ///< Report value and state; if different from previous value/state, notify all subscribers.
+      ///< @brief Report value and state; if different from previous value/state, notify all subscribers.
+      /// If '_valueState->Type () == rctNone', the new state is reported with the old value.
     void ReportValue (URcValue _value, ERcState _state = rcsValid);
-      ///< Report value and optionaly state (see 'ReportValueState')
+      ///< @brief Report value and optionaly state (see 'ReportValueState')
     void ReportValue (bool _value, ERcState _state = rcsValid);
     void ReportValue (int _value, ERcState _state = rcsValid);
     void ReportValue (float _value, ERcState _state = rcsValid);
@@ -1078,8 +1154,12 @@ class CResource /* final */ {
     void ReportValue (TTicks _value, ERcState _state = rcsValid);
     void ReportUnknown () { CRcValueState vs (Type ()); ReportValueState (&vs); }
     void ReportTrigger () { ReportValueState (NULL); }
-      ///< For triggers, this method must be called.
-
+      ///< @brief For triggers, this method must be called.
+    void ReportState (ERcState _state) { CRcValueState vs; vs.SetState (_state); ReportValueState (&vs); }
+      ///< @brief Report state change only, value remains unmodified
+    void ReportValue (CRcValueState *vs, ERcState _state = rcsValid) { ReportValue (vs->UValue (), _state); }
+      ///< @brief Report value of the 'vs' object, but with the state given here.
+      /// **Note:** Do not confuse with ReportValueState()!
     /// @}
 
 
@@ -1088,15 +1168,21 @@ class CResource /* final */ {
     /// @name (Meta) For info & directory services ...
     /// @{
 
-    void GetInfo (CString *ret, int verbosity = 1, bool allowNet = true);
-      ///< Get textual information on this resource.
-      /// 'verbosity == 0': single line, 1: list pending requests and subscriptions
-      /// By default ('allowNet = true'), the method is network transparent, and for remote resources, its host is contacted.
-      /// With 'allowNet = false', not network operation is performed and the locally available information is shown (for diagnostic purposes).
+#ifndef SWIG
+    const char *GetInfo (CString *ret, int verbosity = 1, bool allowNet = true);
+      ///< @brief Get textual information on this resource.
+      /// @param ret points to a string object filled with the textual information.
+      /// @param verbosity is the verbosity level: 0 = single line, 1 = list pending requests and subscriptions.
+      /// @param allowNet defines whether network access is allowed.
+      ///     By default ('true'), the method is network transparent, and for remote resources, its host is contacted.
+      ///     If set to 'false', no network operation is performed and the locally available information is shown
+      ///     (may also be used for for diagnostic purposes).
+      /// @return pointer to the returned string.
+#endif
     void PrintInfo (FILE *f = stdout, int verbosity = 1, bool allowNet = true);
 
     int LockSubscribers ();
-      ///< Return number of all active subscribers for a resource and locks this object.
+      ///< @brief Return number of all active subscribers for a resource and locks this object.
       /// During the locked state, other operations are also locked out, so the caller should
       /// use this carefully and unlock as soon as possible.
       /// On error, a warning is emitted, but all successfully read subscribers are returned.
@@ -1104,7 +1190,7 @@ class CResource /* final */ {
     void UnlockSubscribers () { Unlock (); }
 
     int LockRequests ();
-      ///< Return number of active requests for a resource and locks this object.
+      ///< @brief Return number of active requests for a resource and locks this object.
       /// During the locked state, other operations are also locked out, so the caller should
       /// use this carefully and unlock as soon as possible.
       /// On error, a warning is emitted, but all successfully read requests are returned.
@@ -1120,23 +1206,21 @@ class CResource /* final */ {
     /// that it may change if and only if the object is (re-)registered or unregistered.
     /// @{
 
-    const char *Gid () { return gid.Get (); }         ///< Global ID (presently equivalent to the URI) of the resource.
-    const char *Lid () { return ATOMIC_READ (lid); }
-      ///< Path relative to a) 'this's host (remote resource) or b) driver (local resource).
     class CRcHost *Host () { return ATOMIC_READ (rcHost); }
     class CRcDriver *Driver () { return ATOMIC_READ (rcDriver); }
 
     unsigned RegSeq () { return ATOMIC_READ (regSeq); }
-      ///< The 'regSeq' number is incremented each time the resource is registered or unregistered.
+      ///< @brief The 'regSeq' number is incremented each time the resource is registered or unregistered.
       /// Reading it before and after a critical section allows a caller to check whether semi-static
       /// data may have changed during the critical section and eventually withdraw and repeat the action.
 
     bool IsRegistered () { return (ATOMIC_READ (regSeq) & 1) == 1; }
-    void WaitForRegistration ();    ///< Wait until registered or a network timeout occured.
+    void WaitForRegistration ();
+      ///< @brief Wait until registered or a network timeout occured.
     bool HasSubscribers () { return ATOMIC_READ (subscrList) != NULL; }
-      ///< Return 'true' iff this resource is subscribed (dynamic, *not* semi-static).
+      ///< @brief Return whether this resource is currently subscribed (dynamic, *not* semi-static).
     bool HasRequests () { return ATOMIC_READ (requestList) != NULL; }
-      ///< Return 'true' iff this has requests (dynamic, *not* semi-static).
+      ///< @brief Return whether this resource has requests (dynamic, *not* semi-static).
 
     /// @}
 
@@ -1190,16 +1274,18 @@ class CResource /* final */ {
 
     // Requests...
     void ClearRequestsAL ();
-    static bool DoDelRequest (CRcRequest **pList, const char *reqGid);
+    static bool DoDelRequest (CRcRequest **pList, const char *reqGid, TTicks t1);
 
     CRcRequest *GetWinningRequest (TTicks t);
     void EvaluateRequests ();     // checks and processes all pending requests
 
     // Drivers ...
-    bool NotifySubscribers (int evType);
-    bool NotifySubscribersAL (int evType);    // 'evType' is effectively of type 'ERcEventType'
-    void ReportNetLost ();  // Report that the network connection to the server was lost (like 'ReportUnknown' but with different time stamp behaviour; see above).
-    // ... The '...AL' variants assume that the resource has already been locked by the caller.
+    //   The '...AL' method variants assume that the resource has already been locked by the caller.
+    void NotifySubscribers (int evType);
+    void NotifySubscribersAL (int evType);    // 'evType' is effectively of type 'ERcEventType'
+    void ReportNetLost ();
+      // Report that the network connection to the server was lost (like 'ReportUnknown' but
+      // with different time stamp behaviour; see above).
 
     void ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStamp = 0);
     void ReportValueAL (URcValue _value, ERcState _state = rcsValid);
@@ -1207,7 +1293,7 @@ class CResource /* final */ {
     void ReportTriggerAL () { ReportValueStateAL (NULL); }
 
     // Driving values to the real device...
-    void DriveValue (URcValue val);
+    void DriveValue (CRcValueState *vs);
       // Propagate a new requested value to the driver (to make that happen in the real device).
 
     // Helpers...
@@ -1275,18 +1361,27 @@ class CResource /* final */ {
       """Get a valid value of this resource (use ValueState() to get the complete value and state)."""
       return self.ValueState ().ValidValue (defaultVal)
 
-    def SetRequest (self, value, id = None, priority = None, t0 = None, t1 = None, hysteresis = None):
-      """Set a request with selected attributes."""
+    def Type (self):
+      """Get the type of this resource."""
+      return self.ValueState ().Type ()
+
+    def SetRequest (self, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
+      """Set a request with selected attributes.\n\
+      \n\
+      See CRcRequest::Set() for a detailed explanation of the arguments.\n\
+      """
+      if RcTypeIsStringBased (self.Type ()) and reqDef != None:
+        print ("WARNING: Setting a request to the string-type resource '" + str(self) + "' using the 'reqDef' argument is ambiguous!")
       req = CRcRequest ()
-      req.Set (value, id, priority, t0, t1, hysteresis)
+      req.Set (reqDef = reqDef, attrs = attrs, value = value, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
       req.thisown = 0   # tell swig to disown the object
       self.SetRequestFromObj (req)
 
-    def SetTrigger (self, id = None, priority = None, t0 = None, t1 = None, hysteresis = None):
+    def SetTrigger (self, attrs = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
       """Set a request for a trigger resource with selected attributes."""
       req = CRcRequest ()
-      req.Set (1, id, priority, t0, t1, hysteresis)
-      req.thisown = 0   # tell swig zo disown the object
+      req.Set (value = 1, attrs = attrs, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
+      req.thisown = 0   # tell swig to disown the object
       self.SetRequestFromObj (req)
   %}
 };  // %extend CResource
@@ -1329,7 +1424,7 @@ class CResource /* final */ {
 #endif // SWIG
 
 
-/// Event type
+/// @brief Event type
 enum ERcEventType {
   rceNone = 0,                ///< None (for dummy events)
 
@@ -1347,7 +1442,7 @@ enum ERcEventType {
 // ***** CRcEvent *****
 
 
-/** Events delivered by a subscriber or to a driver.
+/** @brief Events delivered by a subscriber or to a driver.
  *
  * @nosubgrouping
  */
@@ -1427,10 +1522,10 @@ class CRcEvent {
 
 
 typedef bool FRcEventFunc (class CRcEventProcessor *, CRcEvent *, void *);
-  ///< Event processor callback function.
+  ///< @brief Event processor callback function.
   /// Example: `bool OnEventFunc (CRcEventProcessor *ep, CRcEvent *ev, void *data);`
 
-/** Event processor
+/** @brief Event processor
  *
  * This class allows to queue and process events in three different ways:
  *
@@ -1447,7 +1542,7 @@ class CRcEventProcessor {
 
     /// @name Putting events ...
     /// @{
-    void PutEvent (CRcEvent *ev);     ///< Enqueue/process an event; caller remains owner of 'ev'.
+    void PutEvent (CRcEvent *ev);     ///< @brief Enqueue/process an event; caller remains owner of 'ev'.
     /// @}
 
 #ifndef SWIG
@@ -1455,7 +1550,7 @@ class CRcEventProcessor {
     /// @name Fetching events synchronously...
     /// @{
     bool PollEvent (CRcEvent *ev);
-      ///< Check for an event (non-blocking) and return it at '*ev'.
+      ///< @brief Check for an event (non-blocking) and return it at '*ev'.
       ///
       /// A return value of 'true' indicates that an event was waiting and (if 'ev != NULL') is now removed from the internal queue.
       /// If 'ev != NULL', this event is returned. Otherwise, the queue is left unchanged.
@@ -1464,7 +1559,7 @@ class CRcEventProcessor {
       /// synchronisation measures by calling these from his main thread.
       ///
     bool WaitEvent (CRcEvent *ev, int *maxTime = NULL);
-      ///< Wait for an event and return it at '*ev'.
+      ///< @brief Wait for an event and return it at '*ev'.
       ///
       /// A return value of 'true' indicates that an event was waiting and (if 'ev != NULL') is now removed from the internal queue.
       /// If 'ev != NULL', this event is returned. Otherwise, the queue is left unchanged.
@@ -1476,7 +1571,8 @@ class CRcEventProcessor {
       /// Can be called from any thread: the user does not need to take
       /// synchronisation measures by calling these from his main thread.
       ///
-    void Interrupt ();     ///< Request a running WaitEvent() to stop now.
+    void Interrupt ();    ///< @brief Request a running WaitEvent() to stop now.
+    void FlushEvents ();  ///< @brief Remove all presently queued events.
     /// @}
 
     /// @name Event callbacks (asynchronous) ...
@@ -1501,12 +1597,15 @@ class CRcEventProcessor {
     /// @name Support for global event loops ...
     /// @{
     void SetInSelectSet (bool _inSelectSet);
-      ///< Set whether or not the event processor is contained in the set of upcoming Select() operations.
+      ///< @brief Set whether or not the event processor is contained in the set of upcoming Select() operations.
     bool InSelectSet () { return inSelectSet; }
 
-    static CRcEventProcessor *Select (int maxTime = -1);
-      ///< Wait until *any* of the existing 'CRcEventProcessor' object has an event available.
-      /// Returns an event processor with waiting events, or 'NULL' if 'maxTime' was exceeded when waiting.
+    static CRcEventProcessor *Select (TTicksMonotonic maxTime = -1);
+      ///< @brief Wait until *any* of the existing 'CRcEventProcessor' object has an event available.
+      /// @param maxTime is the maximum time to wait. If set <0, the method waits forever.
+      ///     If set to 0, no waiting happens, this can be used for non-blocking polling.
+      /// @return an event processor with waiting events, or 'NULL' if 'maxTime' was exceeded while waiting.
+      ///
       /// **Note:** It is mandatory that at least one (better: all) event is actually consumed afterwards,
       ///     which implies that the caller is able to process/delegate events for all of the existing
       ///     event processors. If no event is consumed, a busy waiting loop can result.
@@ -1595,12 +1694,12 @@ class CRcEventTimer: public CTimer, public CRcEventProcessor {
     CRcEventTimer (TTicks _time, TTicks _interval = 0, void *_data = NULL) { Set (_time, _interval, _data); }
 
     void Set (void *_data) { CTimer::Set (NULL, _data, NULL); }
-      ///< Setup timer without (re-)scheduling it.
+      ///< @brief Setup timer without (re-)scheduling it.
 #ifndef SWIG
     void Set (TTicksMonotonic _time, TTicksMonotonic _interval = 0, void *_data = NULL) { CTimer::Set (_time, _interval, NULL, _data, NULL); }
 #endif
     void Set (TTicks _time, TTicks _interval = 0, void *_data = NULL) { CTimer::Set (TicksToMonotonic (_time), (TTicksMonotonic) _interval, NULL, _data, NULL); }
-      ///< Setup and (re-)schedule timer.
+      ///< @brief Setup and (re-)schedule timer.
 
     virtual void OnTime () { CRcEvent ev (rceTimer, NULL, NULL, data); PutEvent (&ev); }
 
@@ -1639,7 +1738,7 @@ class CRcEventTimer: public CTimer, public CRcEventProcessor {
 
 
 
-/** Subscriber to follow an arbitrary set of resources.
+/** @brief Subscriber to follow an arbitrary set of resources.
  *
  * A subscriber monitors any number of resources. The resources can be
  * specified by their real URIs or alias names. Wildcards as well as
@@ -1659,18 +1758,18 @@ class CRcEventTimer: public CTimer, public CRcEventProcessor {
   "presently unkown resources are allowed. Events can be fetched using\n"
   "'Select ()' and 'PollEvent'.\n"
 #endif
-class CRcSubscriber: public CRcEventProcessor {    // subscription to any number of resources
+class CRcSubscriber: public CRcEventProcessor {
   public:
-    CRcSubscriber () { resourceList = NULL; }     ///<
+    CRcSubscriber () { resourceList = NULL; }
     CRcSubscriber (const char *_lid) { resourceList = NULL; Register (_lid); }
     virtual ~CRcSubscriber () { Unregister (); }
 
     /// @name Registration ...
     /// @{
     void Register (const char *_lid);
-      ///< Enable the subscriber, set its LID and GID. Caller remains owner of object.
+      ///< @brief Enable the subscriber, set its LID and GID. Caller remains owner of object.
     void Unregister ();
-      ///< Clear and unregister the subscriber.
+      ///< @brief Clear and unregister the subscriber.
     /// @}
 
     /// @name Properties and stringification ...
@@ -1691,17 +1790,19 @@ class CRcSubscriber: public CRcEventProcessor {    // subscription to any number
     /// @{
     CResource *AddResource (CResource *rc);
     CResource *AddResources (const char *pattern);
-      ///< Add new resources by pattern. The pattern is also stored internally to catch possible resources added in the future.
+      ///< @brief Add new resources by pattern. The pattern is also stored internally to catch possible resources added in the future.
+      ///
       /// Returns the resource, if 'pattern' does not contain wildcards and refers to a single valid URI, or 'NULL' otherwise.
       /// It is allowed to pass multiple, comma-separated URIs or patterns here.
     void DelResource (CResource *rc);
     void DelResources (const char *pattern);
-      ///< Remove resources by pattern.
+      ///< @brief Remove resources by pattern.
+      ///
       /// **Note:** When using wildcards, all patterns previously passed to AddResources() must either be covered
       ///   completely (or be identical), or must not have any common matching name with 'pattern'. For example,
       ///   it is NOT allowed to first add the pattern "a*" and later delete "*b".
     void Clear ();
-      ///< Remove all resources.
+      ///< @brief Remove all resources.
     /// @}
 
     /// @name Synonyms for adding/removing resources (mainly for the Python wrappers) ...
@@ -1717,12 +1818,13 @@ class CRcSubscriber: public CRcEventProcessor {    // subscription to any number
     /// @name For directory services ...
     /// @{
     void GetInfo (CString *ret, int verbosity = 1);
-      ///< Get Info. 'verbosity == 0': single line, 1: list entries / resources.
+      ///< @brief Get Info. 'verbosity == 0': single line, 1: list entries / resources.
     static void GetInfoAll (CString *ret, int verbosity = 1);
-      ///< Get info for all subscribers of this instance (see GetInfo() for info on 'verbosity').
+      ///< @brief Get info for all subscribers of this instance (see GetInfo() for info on 'verbosity').
     void PrintInfo (FILE *f = stdout, int verbosity = 1);
 
-    void GetPatternSet (CKeySet *retPatternSet);    ///< Patterns from the watch set are followed by a "?"
+    void GetPatternSet (CKeySet *retPatternSet);
+      ///< @brief Get current pattern set. Patterns from the watch set are followed by a "?"
     /// @}
 
   protected:
@@ -1756,6 +1858,17 @@ class CRcSubscriber: public CRcEventProcessor {    // subscription to any number
 };
 
 
+// Python extension...
+#ifdef SWIG
+%extend CRcSubscriber {
+  %newobject __str__ ();
+  const char *__str__ () { CString s; $self->ToStr (&s); return s.Disown (); }
+  %newobject __repr__ ();
+  const char *__repr__ () { CString s; s.SetF ("(CRcSubscriber) %s", $self->ToStr ()); return s.Disown (); }
+};  // %extend CRcSubscriber
+#endif
+
+
 /// @}  // resources_subscribe
 #ifdef SWIG
 %pythoncode %{
@@ -1782,7 +1895,8 @@ class CRcSubscriber: public CRcEventProcessor {    // subscription to any number
 
 #define RCREQ_NONE INT_MAX     ///< Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis
 
-/** Request description object
+
+/** @brief Request description object
  *
  * Request objects define the request for a certain value together with some
  * additional attributes. The concept of requests is introduced to deal with
@@ -1800,26 +1914,26 @@ class CRcSubscriber: public CRcEventProcessor {    // subscription to any number
   "value, a request has the following attributes:\n"
   "  - a unique GID by which it can be later be changed or deleted.\n"
   "  - a priority (see also: comments on the 'prio*' constants)\n"
-  "  - a starting time (optional)\n"
-  "  - an expiration time (optional)\n"
+  "  - a start (on) time (optional)\n"
+  "  - an expiration (off) time (optional)\n"
   "  - a hysteresis to avoid too frequent value changes (optional)"
 #endif
 class CRcRequest {
   public:
-    CRcRequest () { Reset (); }   ///< Default constructor
+    CRcRequest () { Reset (); }   ///< @brief Default constructor
 #ifndef SWIG
-    CRcRequest (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
-      ///< Construct with value and optional attributes.
-    CRcRequest (bool        _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
-      ///< Construct with value and optional attributes.
-    CRcRequest (int         _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
-      ///< Construct with value and optional attributes.
-    CRcRequest (float       _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
-      ///< Construct with value and optional attributes.
-    CRcRequest (const char *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
-      ///< Construct with value and optional attributes.
-    CRcRequest (TTicks      _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
-      ///< Construct with value and optional attributes.
+    CRcRequest (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
+      ///< @brief Construct with value and optional attributes.
+    CRcRequest (bool        _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
+      ///< @brief Construct with value and optional attributes.
+    CRcRequest (int         _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
+      ///< @brief Construct with value and optional attributes.
+    CRcRequest (float       _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
+      ///< @brief Construct with value and optional attributes.
+    CRcRequest (const char *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
+      ///< @brief Construct with value and optional attributes.
+    CRcRequest (TTicks      _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
+      ///< @brief Construct with value and optional attributes.
 #endif // SWIG
 
     ~CRcRequest () {}
@@ -1828,29 +1942,31 @@ class CRcRequest {
     /// @{
 
     void Reset ();
-      ///< Clear the value and set default attributes.
+      ///< @brief Clear the value and set default attributes.
 
-    void Set (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
-      ///< Define a request with all parameters and attributes.
+    void Set (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+      ///< @brief Define a request with all parameters and attributes.
       /// @param _value is the requested value; Only the type and value are used, the state does not have any effect.
       /// @param _gid is the user-defined global ID (GID);  If 'NULL', the instance name is used as the GID.
       /// @param _priority is the request priority attribute.
-      /// @param _t0 is the activation (on/start) time attribute (optional).
-      /// @param _t1 is the expiration (off/stop) time attribute (optional).
+      /// @param _t0 is the activation (on/start) time attribute (optional; 0 = since ever).
+      /// @param _t1 is the expiration (off/stop) time attribute (optional; 0 = forever).
+      /// @param _repeat is the repetition interval (optional; 0 = no repetition);
+      ///        If set, both t0 and t1 are incremented by this after time t1 instead of removing the request.
       /// @param _hysteresis is the hysteresis attribute (optional).
       ///
       /// The request attributes are explaind in the [*Home2L Book*](../home2l-book.pdf).
       /// Attributes left with the defaults of 'RCREQ_NONE' or 'NULL' are not changed.
       /// Negative values t are interpreted as a time relative from now in the future (= t_now - t).
 #ifndef SWIG
-    void Set (bool        _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
-    void Set (int         _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
-    void Set (float       _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
-    void Set (const char *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
-    void Set (TTicks      _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+    void Set (bool        _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+    void Set (int         _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+    void Set (float       _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+    void Set (const char *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+    void Set (TTicks      _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
 #endif // SWIG
 
-    void SetValue (CRcValueState *_value);                                ///< Set value (argument must be != NULL).
+    void SetValue (CRcValueState *_value);                                ///< Set value (no state!) (argument must be != NULL).
     void SetValue (bool _value);
     void SetValue (int _value);
     void SetValue (float _value);
@@ -1860,8 +1976,9 @@ class CRcRequest {
     void SetGid (const char *_gid) { gid.Set (_gid); }                    ///< Set GID (argument must be != NULL).
 
     void SetPriority (int _priority) { priority = _priority; }            ///< Set GID (argument must be != RCREQ_NONE).
-    void SetTimeOn (TTicks _t0) { t0 = _t0; }                                ///< Set on time (argument must be != RCREQ_NONE).
-    void SetTimeOff (TTicks _t1) { t1 = _t1; }                               ///< Set off time (argument must be != RCREQ_NONE).
+    void SetTimeOn (TTicks _t0) { t0 = _t0; }                             ///< Set on time (argument must be != RCREQ_NONE).
+    void SetTimeOff (TTicks _t1) { t1 = _t1; }                            ///< Set off time (argument must be != RCREQ_NONE).
+    void SetRepeat (TTicks _repeat) { repeat = _repeat; }                 ///< Set repetition interval (argument must be != RCREQ_NONE).
     void SetHysteresis (TTicks _hysteresis) { hysteresis = _hysteresis; } ///< Set hysteresis (argument must be != RCREQ_NONE).
 
     /// @}
@@ -1869,7 +1986,7 @@ class CRcRequest {
     /// @name Type conversion/setting ...
     /// @{
     void Convert (CResource *rc);
-      ///< Try to convert type to match the given resource and set 'isCompatible' according to the success.
+      ///< @brief Try to convert type to match the given resource and set 'isCompatible' according to the success.
       /// On failure (incompatible types), a warning is emitted.
     /// @}
 
@@ -1878,10 +1995,10 @@ class CRcRequest {
 
     bool IsCompatible () { return isCompatible; }
     const char *Gid () { return gid.Get (); }
-      ///< Requests only have a global ID, no local ID, since they do not "belong" to the initiating host or process.
+      ///< @brief Requests only have a global ID, no local ID, since they do not "belong" to the initiating host or process.
       /// Based on the GID, the request can be set, changed or removed freely from any host or process in the *Home2L* cluster.
     const char *Origin () { return origin.Get (); }
-      ///< Origin of the request.
+      ///< @brief Origin of the request.
       /// It is automatically set by Reset() to the request creation information
       /// in the form "<hostname>:<process name>[<pid>] <yyyy-mm-dd-hhmmss>".
       ///
@@ -1891,6 +2008,7 @@ class CRcRequest {
     int Priority () { return priority; }
     TTicks TimeOn () { return t0; }
     TTicks TimeOff () { return t1; }
+    TTicks Repeat () { return repeat; }
     TTicks Hysteresis () { return hysteresis; }
 
     /// @}
@@ -1899,37 +2017,63 @@ class CRcRequest {
     /// @{
 
     bool SetFromStr (const char *str);
-      /**< Set the request based on a textual definition.
-       *
-       * Syntax: `<value without type> [<attributes>]`
-       *
-       * The request options `<attributes>` may be a combination of the following:
-       * - `#<id>  ` : Request ID [default: instance name]
-       * - `*<prio>` : Priority (0..9) [default: 5]
-       * - `+<time>` : Start time
-       * - `-<time>` : End time
-       *              `<time>` may be an absolute date/time in the format `YYYY-MM-DD-HHMM[SS[.frac]]`
-       *                      or a relative time `<n>`, where `<n>` is the number of milliseconds in the future.
-       *              See TicksFromString() for details and further options.
-       * - `~<hyst>` : Hysteresis in milliseconds
-       * - `@<origin>` : Origin in the form `<host>/<issue time>`; Should not be set manually.
-       *
-       * If some parameter is specified multiple times, the last occurence will overwrite the others.
-       * Unspecified attributes are left unchanged.
-       *
-       * On success, 'true' is returned. On error, a warning is emmited.
-       * The type is auto-detected.
-       */
+      ///< @brief Set the request based on a textual definition.
+      ///
+      /// Syntax: `<value without type> [<attributes>]`
+      ///
+      /// The optional request attributes are described with CRcRequest::SetAttrsFromStr().
+      /// Unspecified attributes are left unchanged.
+      ///
+      /// On success, 'true' is returned. On error, a warning is emmited.
+      /// The type is auto-detected.
+
+    bool SetAttrsFromStr (const char *str);
+      ///< @brief Set request attributes (no value) base on a textual definition.
+      ///
+      /// The string must contain a one or multiple whitespace-separated options with the following syntax:
+      /// @code
+      ///
+      ///   #<id>           : Request ID [default: instance name]
+      ///
+      ///   *<prio>         : Priority (0..9) [default: 3]
+      ///
+      ///   [+<rep>]+<time> : Start time and optionally repeat interval.
+      ///                     <rep> may be empty (= repeat daily), or a ticks value as
+      ///                     described in TicksFromString(). e.g. "2d" for 2 days. The most
+      ///                     common case is to have a daily repetition, in which case just
+      ///                     an additional '+' needs to be added to the start time. For
+      ///                     example, to turn on some resource daily from 5 to 7 p.m.,
+      ///                     enter "++17:00 -19:00"
+      ///
+      ///   -<time>         : End time.
+      ///                     <time> may be an absolute date/time in the format
+      ///                     'YYYY-MM-DD-HHMM[SS[.frac]]' or a relative time `<n>`, where
+      ///                     <n> is the number of milliseconds in the future.
+      ///                     See TicksFromString() for details and further options.
+      ///
+      ///   ~<hyst>         : Hysteresis in milliseconds
+      ///
+      ///   @<origin>       : Origin in the form `<host>/<issue time>`;
+      ///                     should never be set manually.
+      ///
+      /// @endcode
+      ///
+      /// If some parameter is specified multiple times, the last occurence will overwrite the others.
+      /// Unspecified attributes are left unchanged.
+      ///
+      /// On success, 'true' is returned. On error, a warning is emmited.
+
     const char *ToStr (CString *ret, bool beautiful = false, TTicks relativeTimeThreshold = 0);
-      ///< Return a string in the format accepted by SetFromStr().
+      ///< @brief Return a string in the format accepted by SetFromStr().
       ///
       /// If 't0' or 't1' are defined, in the future, and in less then 'relativeTimeThreshold' milliseconds
       /// from now, the time settings are output relative to the current time. This is useful if the
       /// request string is to be transmitted to another computer with a slightly different local time.
       /// (Example: A door opener request is timed for 1 second. If the server's local clock deviates from
       /// the local one by more than one second, this request may be completely ignored.)
+      ///
     const char *ToStr (bool beautiful = false, TTicks relativeTimeThreshold = 0);
-      ///< (TTS) Return a string in the format accepted by SetFromStr().
+      ///< @brief (TTS) Return a string in the format accepted by SetFromStr().
 
     /// @}
 
@@ -1937,14 +2081,16 @@ class CRcRequest {
     friend class CResource;
 
     void SetOrigin ();
+    bool SetSingleAttrFromStr (const char *str);
 
     // Fields...
     bool isCompatible;
     CString gid, origin;
     CRcValueState value;
     int priority;
-    TTicks t0, t1;                // start and end time (0 = not set); t0 == t1 => value is set once (and may then stay)
-    TTicks hysteresis;            // hysteresis in milliseconds
+    TTicks t0, t1;            // start and end time (0 = not set); t0 == t1 => value is set once (and may then stay)
+    TTicks repeat;            // repeat interval (ignored, if t0 == 0)
+    TTicks hysteresis;        // hysteresis in milliseconds
 
     // Internal fields...
     //   Requests are managed as a linked list associated with a 'CResource' object.
@@ -1965,8 +2111,20 @@ class CRcRequest {
     pass    # (Workaround to keep SWIG from scrambling the indentation of the following code.)
 
     ## Versatile setter.
-    def Set (self, value = None, id = None, priority = None, t0 = None, t1 = None, hysteresis = None):
-      """Set selected request attributes."""
+    def Set (self, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
+      """Set value and/or selected request attributes.\n\
+      \n\
+      This method allows to set any subset of attributes in a flexible way, either by (named) function arguments\n\
+      or by a textual description as accepted by the Home2L Shell or CRequest::SetFromStr().\n\
+      \n\
+      See RcSetRequest() for a detailed explanation of the arguments.\n\
+      """
+      if reqDef != None:
+        if isinstance (reqDef, str):
+          self.SetFromStr (reqDef)
+        else:
+          if value == None: value = reqDef
+      if attrs != None: self.SetAttrsFromStr (attrs)
       if value != None: self.SetValue (value)
       if id: self.SetGid (id)
       if priority: self.SetPriority (priority)
@@ -1978,11 +2136,21 @@ class CRcRequest {
         ticks = TicksAbsOf (t1)
         if ticks: self.SetTimeOff (ticks)
         else: print ("WARNING: Invalid time specification '" + str(t1) + "' - ignoring!")
+      if repeat:
+        ticks = TicksAbsOf (repeat)
+        if ticks: self.SetRepeat (ticks)
+        else: print ("WARNING: Invalid time specification '" + str(repeat) + "' - ignoring!")
       if hysteresis: self.SetHysteresis (hysteresis)
 
   %} // %pythoncode
 };  // %extend CRcRequest
 #endif
+
+
+const char *RcGetUserRequestId ();
+  ///< @brief Get the configured request ID for user interactions.
+const char *RcGetUserRequestAttrs ();
+  ///< @brief Get the configured request attributes for user interactions.
 
 
 /// @}  // resources_requests
@@ -2001,15 +2169,21 @@ class CRcRequest {
 
 /** @addtogroup resources_drivers
  *
- * Defining an own driver can be done in three ways:
+ * Defining an own driver can be done in two ways:
  *
- * 1. Deriving an own class from @ref CRcDriver and override the interface methods (see "protected:" section).
+ * 1. Deriving an own class from @ref CRcDriver and overriding the interface methods (see "protected:" section).
  * 2. Instantiating an @ref CRcDriver object and passing a driver function to CRcDriver::Register() (function-based driver).
- * 3. Instantiating an event-based driver (see @ref CRcEventDriver; only recommended for high-level language bindings).
+ * 3. Instantiating an event-based driver (see @ref CRcEventDriver).
  *
- * There is a clear distinction between an initialization phase and an active phase.
- * All resources must be registered in the initialization phase (Operation 'rcdOpInit').
- * 'rcdOpDriveValue' operations can only occur in the active phase.
+ * The advantage of an event-based driver is that all driver functionality can be implemented in a single thread
+ * (the driver thread), so that the necessity of synchronization inside the driver can be avoided.
+ *
+ * Loadable drivers must always provide a driver function and are thus by default function-based drivers.
+ * See @ref HOME2L_DRIVER on how loadable drivers can use their own @ref CRcDriver class or @ref CRcEventDriver .
+ *
+ * There is a clear distinction between an initialization (or elaboration) phase and the active phase.
+ * All resources must be registered in the initialization phase (Operation @ref rcdOpInit).
+ * @ref rcdOpDriveValue operations can only occur in the active phase.
  *
  * @{
  */
@@ -2022,52 +2196,76 @@ class CRcRequest {
 enum ERcDriverOperation {
 
   // For linking in C drivers...
-  rcdOpInit = 0,      ///< Initialize driver object(s) of a linked-in driver.
-    /// Parameter: (CRcDriver *drv)
+  rcdOpInit = 0,
+    ///< @brief Initialize driver object(s) of a linked-in driver.
+    /// **Parameter:** CRcDriver *drv
     ///
     /// 'drv' is a 'CRcDriver' (base class) object pre-initialized and registered with a LID and 'FRcDriverFunc'
-    /// according to the driver declaration table. For function-based driver which implements
+    /// according to the driver declaration table. For a function-based driver which implements
     /// 'rcdStop' and 'rcdOpDriveValue' accordingly, everything is fine now.
-    /// If the driver wants to use its own objects with classes derived from 'CRcDriver', it must delete 'drv' and
+    /// If the driver wants to use its own objects with classes derived from 'CRcDriver', it must unregister 'drv' and
     /// may then create and register own driver(s).
 
   // Using a base-class 'CRcDriver' object to drive something...
-  rcdOpStop,          ///< Stop the driver; refers to CRcDriver::Stop()
-    /// Parameters: (CRcDriver *drv)
-  rcdOpDriveValue     ///< Drive a value; refers to CRcDriver::DriveValue()
-    /// Parameters: (CRcDriver *driver, CResource *rc, CRcValueState *vs)
+  rcdOpStop,
+    ///< @brief Stop the driver; refers to CRcDriver::Stop().
+    /// **Parameter:** CRcDriver *drv
+  rcdOpDriveValue
+    ///< @brief Drive a value; refers to CRcDriver::DriveValue().
+    /// **Parameters:** CRcDriver *driver, CResource *rc, CRcValueState *vs
 };
 
 
 typedef void FRcDriverFunc (ERcDriverOperation, CRcDriver *, CResource *, CRcValueState *);
-  ///<  Resources driver function.
+  ///< @brief Resources driver function.
   ///
-  /// Example: void DriverFunc_sample (int appOp, CRcDriver *driver, CResource *rc, CRcValueState *vs);
+  /// Example:
+  /// @code
+  ///   void DriverFunc_sample (int appOp, CRcDriver *driver, CResource *rc, CRcValueState *vs);
+  /// @endcode
 
 
-/// Define the entry point of a binary driver.
-/// Example:
-/// @code
-///   HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcValueState *vs) {
-///     switch (op) {
-///       case rcdOpInit:
-///         ...
-///         break;
-///       case rcdOpStop:
-///         ...
-///         break;
-///       case rcdOpDriveValue:
-///         ...
-///         break;
-///     }
-///   }
-/// @endcode
 #define HOME2L_DRIVER(NAME) \
   extern "C" { void Home2lRcDriverFunc_##NAME (ERcDriverOperation, CRcDriver *, CResource *, CRcValueState *); } \
   void Home2lRcDriverFunc_##NAME
+  ///< @brief Define the entry point of a binary driver.
+  ///
+  ///  **Example 1:** Function-Based Driver
+  ///  @code
+  ///    HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcValueState *vs) {
+  ///      switch (op) {
+  ///        case rcdOpInit:
+  ///          ...
+  ///          break;
+  ///        case rcdOpStop:
+  ///          ...
+  ///          break;
+  ///        case rcdOpDriveValue:
+  ///          ...
+  ///          break;
+  ///      }
+  ///    }
+  ///  @endcode
+  ///
+  ///  **Example 2:** Class-Based Driver
+  ///
+  ///  This pattern allows loadable drives to use a different @ref CRcDriver class than the base class,
+  ///  for example, @ref CRcEventDriver or an own derived class.
+  ///  @code
+  ///    HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *, CRcValueState *) {
+  ///      ASSERT(op == rcdOpInit);            // just in case you do not trust the Home2Ls ...
+  ///      drv->Unregister ();                 // ... this function will never be called again after this.
+  ///      drv = new CRcMyOwnDriver ("foo");   // Create a new driver object (must pass the driver ID "foo" to ...
+  ///                                          // ... the constructor of @ref CRcDriver).
+  ///      drv->Register ();                   // Register the driver.
+  ///
+  ///      ...                                 // Register all resources, then we are done.
+  ///
+  ///    }
+  ///  @endcode
 
 
-/** Driver for local resources.
+/** @brief Driver for local resources.
  *
  * All 'CRcDriver' objects must be allocated dynamically and registered before the Resources library is started (see RcStart() ).
  * On registration, the library becomes owner of the object.
@@ -2079,16 +2277,20 @@ typedef void FRcDriverFunc (ERcDriverOperation, CRcDriver *, CResource *, CRcVal
 class CRcDriver {
   public:
     CRcDriver (const char *_lid, FRcDriverFunc *_func = NULL) { lid.Set (_lid); func = _func; }
-    virtual ~CRcDriver () { ClearResources (); }
+    virtual ~CRcDriver () {}
 
     /// @name Life cycle ...
     /// @{
     void Register ();
-      ///< Register and enable the driver. This must be done between the calls to RcInit() and RcStart(), i.e. the
+      ///< @brief Register and enable the driver. This must be done between the calls to RcInit() and RcStart(), i.e. the
       /// initialization phase. The class takes over the ownership of 'this', which must be a dynamically allocated
       /// object, which is deleted during RcDone().
-    static CRcDriver *RegisterAndInit (const char *_lid, FRcDriverFunc *_func);
-      ///< Create, register and initialize a function-based driver; Returns a reference to the @ref CRcDriver object.
+    static void RegisterAndInit (const char *_lid, FRcDriverFunc *_func);
+      ///< @brief Create, register and initialize a function-based driver.
+    void Unregister ();
+      ///< @brief Unregister the driver. This is only allowed in the elaboration phase or on shutdown.
+      /// Calling this method will delete 'this' soon, so that no further accesses are allowed
+      /// after this.
     /// @}
 
     /// @name Properties ...
@@ -2101,7 +2303,7 @@ class CRcDriver {
     /// @{
     CResource *RegisterResource (const char *rcLid, ERcType _type, bool _writable = true) { return CResource::Register (this, rcLid, _type, _writable); }
     CResource *RegisterResource (const char *rcLid, const char *rcTypeDef) { return CResource::Register (this, rcLid, rcTypeDef); }
-      ///< see also: CResource::Register()
+      ///< @brief see also: CResource::Register()
     /// @}
 
     /// @name For directory services ...
@@ -2122,21 +2324,31 @@ class CRcDriver {
     /// @name Interface methods ...
     /// @{
     virtual void Stop ();
-      ///< Stop all (own) threads and close all I/Os properly; Will be called from RcDone().
+      ///< @brief Stop all (own) threads and close all I/Os properly; Will be called from RcDone().
       /// Resources are still registered and will be unregistered afterwards.
     virtual void DriveValue (CResource *rc, CRcValueState *vs);
-      ///< Drive a new value; Will be called from CResource::DriveValue().
+      ///< @brief Drive a new value; Will be called from CResource::DriveValue().
       ///
       /// Propagate a new requested value to the device (e.g. to an actor). Afterwards, the new value and state pointed at
       /// by 'vs' will be reported automatically by the caller.
       ///
-      /// It is legal to modify '*vs' to reflect a new state or even a value different from the driven one.
-      /// The state of '*vs' is preset with 'rcsValid'. As required, the method shall change it to an appropriate
-      /// state ('rcsUnknown' or 'rcsBusy'). If the new value is not known yet, 'rcsBusy' should be set now and
-      /// a 'CRcResource::Report...()' method be called later with a valid value. If for some reason, nothing
-      /// should be reported now at all, 'val->type' can be set to 'rctNone' by calling 'rc->Clear()'.
+      /// If there are no pending requests at all, this method is called with 'vs->State() == rcsUnkown'.
+      /// Most drivers will do nothing then (e.g. the "signal" driver does so) and keep the previous value active.
+      /// Some drivers (e.g. brownies/shades) may switch off their actors now.
       ///
-      /// It is not allowed to call any method of the 'rc' object (e.g. 'Report' methods) from here, since the
+      /// In all other cases, state of '*vs' is preset with 'rcsValid'.
+      ///
+      /// It is legal to modify '*vs' to reflect a new state or even a value different from the driven one.
+      /// The method shall change it to an appropriate state ('rcsUnknown' or 'rcsBusy') as adequate.
+      /// If the new value is not known yet, the state should be set to 'rcsBusy'
+      /// now and a 'CRcResource::Report...()' method called later with a valid value.
+      ///
+      /// If the state is set to 'rcsBusy', the busy state will be reported with the new value by default (as stored in '*vs').
+      /// To report 'rcsBusy' with the old value instead, call @ref CRcValueState::SetToReportBusyOldVal() on '*vs'.
+      ///
+      /// To report report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs'.
+      ///
+      /// It is not allowed to call any method of the '*rc' object (e.g. 'Report' methods) from here, since the
       /// resource may be locked.
       ///
       /// In most cases, just writing to the device is sufficient.
@@ -2147,7 +2359,7 @@ class CRcDriver {
     void Lock () { mutex.Lock (); }
     void Unlock () { mutex.Unlock (); }
 
-    void ClearResources ();     ///< Unregister all resources.
+    void ClearResources ();     ///< @brief Unregister all resources.
     /// @}
 
     // Static data...
@@ -2160,30 +2372,41 @@ class CRcDriver {
 };
 
 
-/** Local driver using the event processor mechanism for the 'DriveValue()' functionality.
- * The class is intended mainly for the Python API to allow writing simple applications (e.g. 'rules' scripts)
+#endif // #ifndef SWIG
+
+
+#ifdef SWIG
+%warnfilter(401) CRcEventDriver;     // class 'CRcDriver' is not known to SWIG
+#endif
+
+
+/** @brief Local driver using the event processor mechanism for the 'DriveValue()' functionality.
+ *
+ * The class is useful for the Python API to allow writing simple applications (e.g. 'rules' scripts)
  * without parallel threads and an event loop design.
  */
 class CRcEventDriver: public CRcDriver, public CRcEventProcessor {
   public:
-    CRcEventDriver (const char *_lid, ERcState _successState = rcsValid): CRcDriver (_lid) { successState = _successState; }
-      ///< Initialize the driver (does not register).
-      /// '_successState' is the value returned by 'DriveValue'; Typical values are:
-      /// - 'rcsValid': everything ok (no further action by the driver necessary)
-      /// - 'rcsBusy': potentially not ok; Driver must report a valid value later.
+    CRcEventDriver (const char *_lid, ERcState _successState = rcsBusy): CRcDriver (_lid) { successState = _successState; }
+      ///< @brief Initialize the driver (does not register).
+      /// @param _lid is the local ID.
+      /// @param _successState' controls the value returned by 'DriveValue'.
+      ///    **Note:** These do a bit more than just setting the type of 'vs' in @ref CRcDriver::DriveValue():
+      ///    - 'rcsBusy':    (default) 'rcsBusy' with the *old* value is reported now; the application must report a valid and new value later.
+      ///    - 'rcsValid':   the driven value is reported back; no further action by the driver necessary, but no errors are allowed to happen.
+      ///    - 'rcsUnknown' or 'rcsNoReport': nothing is reported back now; the application should report something soon and must report a valid and new value later.
 
+#ifndef SWIG
     virtual const char *TypeId () { return "D"; }     // hint for Python/SWIG API
     virtual const char *InstId () { return Lid (); }  // hint for Python/SWIG API
 
   protected:
-    virtual void Stop () {}   ///< The caller/owner must do this before 'RcDone()'. (The event processor may not work anymore by the time this method is called.)
+    virtual void Stop () {}   ///< @brief The caller/owner must do this before 'RcDone()'. (The event processor may not work anymore by the time this method is called.)
     virtual void DriveValue (CResource *rc, CRcValueState *vs);
 
     ERcState successState;
+#endif
 };
-
-
-#endif // #ifndef SWIG
 
 
 /// @}  // resources_drivers
@@ -2221,17 +2444,17 @@ class CRcEventDriver: public CRcDriver, public CRcEventProcessor {
 /// @name Hosts ...
 /// @{
 
-int RcGetHosts ();            ///< Get number of known hosts.
-CRcHost *RcGetHost (int n);   ///< Get reference to host *n*, *0 <= n < number of hosts*.
+int RcGetHosts ();            ///< @brief Get number of known hosts.
+CRcHost *RcGetHost (int n);   ///< @brief Get reference to host *n*, *0 <= n < number of hosts*.
 
-CRcHost *RcGetHost (const char *id);      ///< Lookup host by its ID.
-const char *RcGetHostId (CRcHost *host);  ///< Get textual ID of 'host'.
+CRcHost *RcGetHost (const char *id);      ///< @brief Lookup host by its ID.
+const char *RcGetHostId (CRcHost *host);  ///< @brief Get textual ID of 'host'.
 
 
 #ifndef SWIG
-extern CString localHostId;
+extern CString localHostId;   ///< @private
 #endif
-static inline const char *GetLocalHostId () { return localHostId.Get (); }  ///< Get the ID of the local instance.
+static inline const char *RcLocalHostId () { return localHostId.Get (); }  ///< @brief Get the ID of the local instance.
 #ifdef SWIG
 %pythoncode %{
   pass
@@ -2240,7 +2463,7 @@ static inline const char *GetLocalHostId () { return localHostId.Get (); }  ///<
   def RcHosts ():
     """Return a list of all known hosts (including our own one as #0)."""
     num = RcGetHosts ()
-    ret = [ GetLocalHostId () ]
+    ret = [ RcLocalHostId () ]
     for i in range (num):
       ret += [ RcGetHostId (RcGetHost (i)) ]
     return ret
@@ -2289,7 +2512,8 @@ const char *RcGetDriverId (CRcDriver *cur);
 /// @{
 
 int RcLockHostResources (CRcHost *host);
-  ///< Query number of resources for a *remote* host.
+  ///< @brief Query number of resources for a *remote* host.
+  ///
   /// The set is locked internally, meaning that no registration of new resources is possible
   /// until 'RcUnlockHostResources' is called!
   /// Only presently known resources are returned, no network queries are performed.
@@ -2297,7 +2521,8 @@ CResource *RcGetHostResource (CRcHost *host, int n);
 void RcUnlockHostResources (CRcHost *host);
 
 int RcLockDriverResources (CRcDriver *driver);
-  ///< Query the number of resources for a *local* driver.
+  ///< @brief Query the number of resources for a *local* driver.
+  ///
   /// The set is locked internally, meaning that no registration of new resources is possible
   /// until 'RcUnlockDriverResources' is called!
 CResource *RcGetDriverResource (CRcDriver *driver, int n);
@@ -2309,13 +2534,17 @@ void RcUnlockDriverResources (CRcDriver *driver);
 
   ## Return all known resources of a remote host.
   def RcHostResources (hostName):
-    """Return all known resources of a remote host."""
-    h = RcGetHost (hostName)
-    num = RcLockHostResources (h)
+    """Return all known resources of a host. '/local' is an alias for the local host ID."""
     ret = []
-    for i in range (num):
-      ret += [ RcGetHostResource (h, i).Uri () ]
-    RcUnlockHostResources (h)
+    if hostName == RcLocalHostId () or hostName == "/local":
+      for d in RcDrivers ():
+        ret += RcDriverResources (d)
+    else:
+      h = RcGetHost (hostName)
+      num = RcLockHostResources (h)
+      for i in range (num):
+        ret += [ RcGetHostResource (h, i).Uri () ]
+      RcUnlockHostResources (h)
     return ret
 
   ## Return all local resources managed by a driver.
@@ -2354,7 +2583,8 @@ void RcUnlockDriverResources (CRcDriver *driver);
 
 #ifndef SWIG
 int RcLockSubscribers ();
-  ///< Return the number of existing subscribers and locks the subscriber database.
+  ///< @brief Query the number of existing subscribers and lock the subscriber database.
+  ///
   /// During the locked state, other operations are also locked out, so the caller should
   /// use this carefully and unlock as soon as possible.
 CRcSubscriber *RcGetSubscriber (int n);
@@ -2401,7 +2631,7 @@ void RcUnlockSubscribers ();
 /// @name Init/Done ...
 /// @{
 void RcInit (bool enableServer = false, bool inBackground = false);
-  ///< Initialize the Resources library (elaboration phase).
+  ///< @brief Initialize the Resources library (and start the elaboration phase).
   /// This may be followed by driver declarations, and after that RcStart() must be called.
   /// @param enableServer enables the server mode:
   ///   - false => server is off, independent on the configuration environment.
@@ -2410,22 +2640,22 @@ void RcInit (bool enableServer = false, bool inBackground = false);
   ///    responsible for iterating the timer. This can be the case if the caller itself has a an own background timer
   ///    thread (e.g. 'home2l-wallclock') or if RcRun() / RcStop() is to be used for the main program.
 void RcStart ();
-  ///< Complete the elaboration phase and start active operation.
+  ///< @brief Complete the elaboration phase and start active operation.
   /// No more drivers and resources may be declared after this.
 void RcDone ();
-  ///< Shutdown the Resources library
+  ///< @brief Shutdown the Resources library
 /// @}
 
 
 /// @name Running the library tasks in foreground ...
 /// Functions to run the background work of the Resources library in a user-supplied thread.
 /// The following functions are only necessary and allowed if 'inBackground = false' was passed to RcInit() and the
-/// main program does not maintain the timers otherwise (see section @ref base_timers in file @ref common/base.H).
+/// main program does not maintain the timers otherwise (see section @ref common_timers in file @ref common/base.H).
 /// In other words: These functions may be used if there is no main event loop yet.
 /// @{
-void RcIterate ();  ///< Perform pending actions and return.
-void RcRun ();      ///< Run 'RcStart', then RcIterate() in a main event loop until RcStop() is called.
-void RcStop ();     ///< Stop a loop started by RcRun().
+void RcIterate ();  ///< @brief Perform pending actions, call TimerIterate() and return.
+void RcRun ();      ///< @brief Run 'RcStart', then RcIterate() in a main event loop until RcStop() is called.
+void RcStop ();     ///< @brief Stop a loop started by RcRun().
 /// @}
 
 
@@ -2453,21 +2683,27 @@ void RcStop ();     ///< Stop a loop started by RcRun().
 
 static inline CResource *RcGetResource (const char *uri, bool allowWait = false) { return CResource::Get (uri, allowWait); }
 static inline CResource *RcGet (const char *uri, bool allowWait = false) { return CResource::Get (uri, allowWait); }
-  ///< Lookup a resource by its URI and return a reference to it.
+  ///< @brief Lookup a resource by its URI and return a reference to it.
   /// @param uri is the full URI of the resource.
   /// @param allowWait allows to wait for network operations if the resource is not yet known.
-  /// This is useful for the *Home2L Shell* to display the properties (type, state, value) right
-  /// afterwards. In most other applications, the default value of 'false' is more appropriate.
+  ///   This is useful for the *Home2L Shell* to display the properties (type, state, value) right
+  ///   afterwards. In most other applications, the default value of 'false' is more appropriate.
+  ///
+  /// If the URI is not absolute, it is relative to "/alias".
   ///
   /// The returned pointer is always valid (!= NULL) unless the URI is syntactically incorrect and will neither now
   /// nor in the future refer to a valid resource. Hence, the pointer can be used for identity comparisons.
   /// It will be uniquely associated with the URI until the program terminates or RcGarbageCollection() is called.
+  /// It is allowed to pass 'uri == NULL', in which case NULL will be returned without any warning.
 
 
 static inline void RcGarbageCollection () { CResource::GarbageCollection (); }
-  ///< (For experts only) Remove all presently unregistered resources from memory.
+  ///< @brief (For experts only) Remove all presently unregistered resources from memory.
+  ///
   /// This may free some memory, but at the same time invalidates any existing reference to @ref CResource objects.
   /// May only be called if no 'CResource *' reference is presently used!
+
+
 
 
 /// @}
@@ -2497,38 +2733,34 @@ static inline void RcGarbageCollection () { CResource::GarbageCollection (); }
 
 
 #ifdef SWIG
-%feature("docstring") RcSubscribe "Create and register a new subscriber object."
-%feature("docstring") RcSubscribeToResource "Subscribe to a resource. Either create a new subscriber object or add it to an existing one."
+%feature("docstring") RcNewSubscriber "Create and register a new subscriber object, optionally subscribe to resources."
 %feature("docstring") RcUnsubscribeFromAll "Unsubscribe to all resources managed by the subscriber."
-%newobject RcSubscribe (const char *);
-%newobject RcSubscribeToResource (const char *, CResource *);
-%newobject RcSubscribeToResource (const char *, const char *);
+%newobject RcNewSubscriber (const char *, CResource *);
+%newobject RcNewSubscriber (const char *, const char *);
 #endif
 
-CRcSubscriber *RcSubscribe (const char *subscrLid);
-  ///< Create and register a new subscriber object.
+CRcSubscriber *RcNewSubscriber (const char *subscrLid, CResource *rc = NULL);
+  ///< @brief Create and register a new subscriber object and optionally subscribe to the given resource.
   /// @param subscrLid is the local ID of the subscriber.
-  /// The object is owned by the caller and must be deleted later.
-CRcSubscriber *RcSubscribeToResource (const char *subscrLid, CResource *rc);
-  ///< Create and register a new subscriber object and subscribe to the given resource.
-  /// @param subscrLid is the local ID of the subscriber.
-  /// @param rc is a reference to the resource to subscribe to.
-CRcSubscriber *RcSubscribeToResource (const char *subscrLid, const char *pattern);
-  ///< Create and register a new subscriber and subscribe to a set of resources.
+  /// @param rc is a reference to the resource to subscribe to (or NULL if no resource should be added now).
+  /// @return new subscriber object.
+CRcSubscriber *RcNewSubscriber (const char *subscrLid, const char *pattern);
+  ///< @brief Create and register a new subscriber and subscribe to a set of resources.
   /// @param subscrLid is the local ID of the subscriber.
   /// @param pattern may be the URI of a resource, a pattern with allowed wildcards, or a comma-separated list of URIs/patterns.
+  /// @return new subscriber object.
 
-static inline CRcSubscriber *RcSubscribeToResource (CRcSubscriber *subscr, CResource *rc) { subscr->AddResource (rc); return subscr; }
-  ///< Subscribe to an additional resource(s).
-static inline CRcSubscriber *RcSubscribeToResource (CRcSubscriber *subscr, const char *pattern) { subscr->AddResources (pattern); return subscr; }
-  ///< Subscribe to an additional set of resources.
+static inline CRcSubscriber *RcSubscribe (CRcSubscriber *subscr, CResource *rc) { subscr->AddResource (rc); return subscr; }
+  ///< @brief Subscribe to an additional resource.
+static inline CRcSubscriber *RcSubscribe (CRcSubscriber *subscr, const char *pattern) { subscr->AddResources (pattern); return subscr; }
+  ///< @brief Subscribe to an additional set of resources.
 
 static inline void RcUnsubscribeFromAll (CRcSubscriber *subscr) { subscr->Clear (); }
-  ///< Unsubscribe to all resources presently subscribed by 'subscr'.
+  ///< @brief Unsubscribe from all resources presently subscribed by 'subscr'.
   /// The caller remains owner of 'subscr', which does not need to reside in the heap.
 #ifndef SWIG
 static inline void RcUnsubscribeFromAll (CRcSubscriber **pSubscr) { if (*pSubscr) { delete *pSubscr; *pSubscr = NULL; } }
-  ///< Unsubscribe to all resources defined by 'subscr' and remove the subscriber object from heap.
+  ///< @brief Unsubscribe from all resources defined by 'subscr' and remove the subscriber object from heap.
 #endif
 
 
@@ -2568,12 +2800,12 @@ static inline void RcUnsubscribeFromAll (CRcSubscriber **pSubscr) { if (*pSubscr
 #ifndef SWIG
 static inline void RcSetRequest (CResource *rc, CRcRequest *req) { rc->SetRequest (req); }
 void RcSetRequest (const char *rcUri, CRcRequest *req);
-  ///< Add or replace a request (generic version).
+  ///< @brief Add or replace a request (generic version).
   /// @param rcUri identifies the resource.
   /// @param req must by a dynamically allocated object, which is handed over and must no longer be used by the caller afterwards.
 static inline void RcSetRequest (CResource *rc, CRcValueState *value, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (value, reqGid, priority, t0, t1, hysteresis); }
 void RcSetRequest (const char *rcUri, CRcValueState *value, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-  ///< Add or replace a request (generic value, direct parameters).
+  ///< @brief Add or replace a request (generic value, direct parameters).
   /// @param reqGid identifies the request.
   /// @param rcUri identifies the resource.
   /// @param value specifies the requested value (only type and value are used; the state is ignored).
@@ -2583,56 +2815,109 @@ void RcSetRequest (const char *rcUri, CRcValueState *value, const char *reqGid, 
   /// @param hysteresis is the hysteresis attribute (optional).
   ///
   /// The request attributes are explaind in the [*Home2L Book*](../home2l-book.pdf).
+  ///
 static inline void RcSetRequest (CResource *rc, bool valBool, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valBool, reqGid, priority, t0, t1, hysteresis); }
 void RcSetRequest (const char *rcUri, bool valBool, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-  ///< Add or replace a request (direct value and parameters).
+  ///< @brief Add or replace a request (direct value and parameters).
 static inline void RcSetRequest (CResource *rc, int valInt, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valInt, reqGid, priority, t0, t1, hysteresis); }
 void RcSetRequest (const char *rcUri, int valInt, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-  ///< Add or replace a request (direct value and parameters).
+  ///< @brief Add or replace a request (direct value and parameters).
 static inline void RcSetRequest (CResource *rc, float valFloat, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valFloat, reqGid, priority, t0, t1, hysteresis); }
 void RcSetRequest (const char *rcUri, float valFloat, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-  ///< Add or replace a request (direct value and parameters).
+  ///< @brief Add or replace a request (direct value and parameters).
 static inline void RcSetRequest (CResource *rc, const char *valString, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valString, reqGid, priority, t0, t1, hysteresis); }
 void RcSetRequest (const char *rcUri, const char *valString, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-  ///< Add or replace a request (direct value and parameters).
+  ///< @brief Add or replace a request (direct value and parameters).
+static inline void RcSetRequestFromStr (CResource *rc, const char *reqDef) { rc->SetRequestFromStr (reqDef); }
+void RcSetRequestFromStr (const char *rcUri, const char *reqDef);
+  ///< @brief Set request by textual definition - see CRcRequest::SetFromStr() and the
+  /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
 #else
 %pythoncode %{
-  def RcSetRequest (rc, value, id = None, priority = None, t0 = None, t1 = None, hysteresis = None):
-    """Set a request to a resource with selected attributes."""
+  def RcSetRequest (rc, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
+    """Set a request to a resource with selected attributes.\n\
+    \n\
+    The attributes can be set in a flexible way, either by (named) function arguments\n\
+    or by a textual description as accepted by the Home2L Shell or CRequest::SetFromStr().\n\
+    \n\
+    The parameters have the following meanings:\n\
+    \n\
+    - reqDef = full definition as a single string ("<val> [<attrs>]");\n\
+               Note: Values of type string should never be passed by this, but\n\
+                     by the 'val' and 'attrs' arguments.\n\
+               If 'reqDef' is not a string instance, it is used as a value ('val').\n\
+    - attrs  = attribute string (similar to 'reqDef', but without the first field interpreted as value)\n\
+    - value      = value (any type or string)\n\
+    - id         = request ID (default = instance name)\n\
+    - priority   = request priority (0..9; default = do not set)\n\
+    - t0         = on time\n\
+    - t1         = off time\n\
+    - repeat     = repetition interval\n\
+    - hysteresis = hysteresis time\n\
+    \n\
+    Information on the syntax of textual request definition can be found in the Home2L Book and\n\
+    in the C/C++ API documentation for CRcRequest::SetFromStr().\n\
+    \n\
+    Examples:\n\
+    \n\
+    - Request integer value 7 with default attributes:\n\
+        RcSetRequest (rc, 7);\n\
+        RcSetRequest (rc, "7");\n\
+        RcSetRequest (rc, value = "7");\n\
+        RcSetRequest (rc, reqDef = "7");\n\
+    \n\
+    - Request integer value 7 with priority 3:\n\
+        RcSetRequest (rc, 7, priority = 3);\n\
+        RcSetRequest (rc, 7, "*3");\n\
+        RcSetRequest (rc, "7 *3");\n\
+    \n\
+    - Request string value "Hello *3" with priority 5 and an off time at 6pm today:\n\
+        RcSetRequest (rc, value = "Hello *3", attrs = "*5 -18:00");\n\
+        RcSetRequest (rc, value = "Hello *3", prio = 5, t1 = "-18:00");\n\
+    \n\
+    - Set request with user-supplied attributes, some of which must not be changed by user\n\
+        RcSetRequest (rc, 7, userAttrs, t1 = "-23:00")    # t1 overrides an eventual off time in userAttrs\n\
+    \n\
+    - Set request with user-supplied attributes and defaults\n\
+        req = CRcRequest (val = 7, t1 = "-23:00")       # Set value and default attributes\n\
+        req->Set (attrs = userAttrs)     # userAttrs may override t1\n\
+    \n\
+    """
     if isinstance (rc, str): rc = RcGetResource (rc)
-    rc.SetRequest (value, id, priority, t0, t1, hysteresis)
+    rc.SetRequest (reqDef = reqDef, attrs = attrs, value = value, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
 %} // %pythoncode
 #endif // SWIG
-void RcSetRequestFromStr (const char *rcUri, const char *reqDef);
-  ///< Set request by textual definition - see CRcRequest::SetFromStr() and the
-  /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
-static inline void RcSetRequestFromStr (CResource *rc, const char *reqDef) { rc->SetRequestFromStr (reqDef); }
 
 
 // Triggers...
 #ifndef SWIG
 static inline void RcSetTrigger (CResource *rc, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetTrigger (reqGid, priority, t0, t1, hysteresis); }
 void RcSetTrigger (const char *rcUri, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
-  ///< Set a trigger request (no value needs to be given).
-#else
-%pythoncode %{
-  def RcSetTrigger (rc, id = None, priority = None, t0 = None, t1 = None, hysteresis = None):
-    """Set a request to a trigger resource with selected attributes."""
-    if isinstance (rc, str): rc = RcGetResource (rc)
-    rc.SetRequest (1, id, priority, t0, t1, hysteresis)
-%} // %pythoncode
-#endif // SWIG
+  ///< @brief Set a trigger request (no value needs to be given).
 static inline void RcSetTriggerFromStr (CResource *rc, const char *reqDef) { rc->SetTriggerFromStr (reqDef); }
 void RcSetTriggerFromStr (const char *rcUri, const char *reqDef);
-  ///< Set trigger request by textual definition.
+  ///< @brief Set trigger request by textual definition.
+#else
+%pythoncode %{
+  def RcSetTrigger (rc, attrs = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
+    """Set a request to a trigger resource with selected attributes."""
+    if isinstance (rc, str): rc = RcGetResource (rc)
+    rc.SetRequest (attrs = attrs, value = 1, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
+%} // %pythoncode
+#endif // SWIG
 
 
 // Delete requests ...
 static inline void RcDelRequest (CResource *rc, const char *reqGid = NULL) { rc->DelRequest (reqGid); }
-void RcDelRequest (const char *rcUri, const char *reqGid = NULL);
-  ///< Delete a request.
+void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = 0);
+  ///< @brief Delete a request.
   /// @param rcUri identifies the resource.
-  /// @param reqGid is the global request identifierr (GID) and identifies the request.
+  /// @param reqGid is the global request identifier (GID) and identifies the request.
+  ///    If set to 'NULL', the instance name is used.
+  /// @param t1 is the time at which the deletion takes effect.
+  ///
+  /// If `t1` is non-zero and a request with the given `reqId` exists, its off-time
+  /// is replaced by `t1`.
 
 // Mutex operations (TBD) ...
 //~ static inline CRcSubscriber *RcMutexRequestLock (const char *rcUri, const char *regGid, CRcSubscriber *subscr == NULL) { RcSetRequest (rcUri, reqGid, reqGid); return subscr; }
@@ -2680,20 +2965,23 @@ void RcDelRequest (const char *rcUri, const char *reqGid = NULL);
 /// @{
 #ifndef SWIG
 static inline void RcRegisterDriver (CRcDriver *drv) { drv->Register (); }
-  ///< Register a pre-initialized driver object (typically an object of a derived class with overloaded methods).
+  ///< @brief Register a pre-initialized driver object (typically an object of a derived class with overloaded methods).
 static inline void RcRegisterDriver (const char *drvLid, FRcDriverFunc *func) { CRcDriver::RegisterAndInit (drvLid, func); }
-  ///< Register and initialize a driver by its function.
+  ///< @brief Register and initialize a driver by its function.
   /// The driver object is created internally, and 'func' is called with the 'rcdOpInit' operation.
 #endif
-CRcEventProcessor *RcRegisterDriver (const char *drvLid, ERcState _successState = rcsValid);
-  ///< Register an event-based driver and return a reference to the event processor.
+CRcEventDriver *RcRegisterDriver (const char *drvLid, ERcState _successState = rcsBusy);
+  ///< @brief Register an event-based driver and return a reference to the event processor.
+  ///
   /// Driven values are collected by the returned event processor, and the caller must process the events accordingly.
   /// Reporting of values can be done via the 'Report...()' methods of the respective resources.
   /// The @ref CRcEventProcessor object remains owned by the library.
   /// @param drvLid is the ID of the new driver.
-  /// @param _successState' is the value returned by DriveValue(); senseful values are:
-  ///   - 'rcsValid': everything ok (no further action by the driver necessary)
-  ///   - 'rcsBusy': potentially not ok; Driver must report a valid value later.
+  /// @param _successState' is the value returned by DriveValue(); possible values are:
+  ///
+  ///    - 'rcsBusy':    (default) 'rcsBusy' with the *old* value is reported now; the application must report a valid and new value later.
+  ///    - 'rcsValid':   the driven value is reported back; no further action by the driver necessary, but no errors are allowed to happen.
+  ///    - 'rcsUnknown' or 'rcsNoReport': nothing is reported back now; the application should report something soon and must report a valid and new value later.
 /// @}
 
 /// @name Drivers: Registering a new resource to a driver ...
@@ -2707,9 +2995,9 @@ CResource *RcRegisterResource (const char *drvLid, const char *rcLid, ERcType _t
 CResource *RcRegisterResource (const char *drvLid, const char *rcLid, const char *rcTypeDef);
 
 CResource *RcRegisterSignal (const char *name, ERcType type);
-  ///< Register a new resource for the built-in 'signal' driver.
+  ///< @brief Register a new resource for the built-in 'signal' driver.
 CResource *RcRegisterSignal (const char *name, CRcValueState *vs);
-  ///< Register a new resource for the built-in 'signal' driver and optionally set a default request.
+  ///< @brief Register a new resource for the built-in 'signal' driver and optionally set a default request.
   ///  The type is taken from 'vs', and if 'vs' is valid, a default request is set.
 /// @}
 

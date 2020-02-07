@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ for fileName in fileList:
           if "Register" in line:    # quick pre-check
             if "CResource::Register" in line or "RcRegisterResource" in line: haveRegister, skipArgs = True, 1
             elif "->RegisterResource" in line: haveRegister, skipArgs = True, 0
-            if "UNDOCUMENTED" in line: haveRegister = False
+            if "[RC:-]" in line: haveRegister = False
           if haveRegister:
 
             # Get the 'Register' command arguments ...
@@ -135,11 +135,13 @@ for fileName in fileList:
             line = lineList[lineNo + 1]
             if not "/* [RC:" in line:
               raise ValueError ("Brief description not detected (undocumented resource?)")
-            else:
-              lineNo += 1
-              driver, briefOut = line.partition("[RC:")[2].split ("] ", 1)
-              briefOut = briefOut.strip () + "."
+            lineNo += 1
+            args, briefOut = line.partition("[RC:")[2].split ("] ", 1)
+            driver, keyDef, defaultDef = (args.split (':') + [ "", "" ]) [:3]
+            briefOut = briefOut.strip () + "."
             if driver != "-":   # skip explicitly undocumented resource
+              if keyDef: keyOut = keyDef
+              if defaultDef: defaultOut = defaultDef
               keyOut = driver + "/" + keyOut
 
               # Read full description ...
@@ -159,7 +161,7 @@ for fileName in fileList:
         # End of file reading loop...
         lineNo += 1
     except ValueError as e:
-      print ("ERROR parsing " + fileName + ":" + str(lineNo+1) + ": " + str(e.args), file=sys.stderr, flush=True)
+      print (fileName + ":" + str(lineNo+1) + ": error: " + str(e.args), file=sys.stderr, flush=True)
       raise
 
 
@@ -192,7 +194,7 @@ for prefix in prefixList + [ None ]:
         else: defaultStr = ""
 
         print ("\n\n\n\\subsubsection*{\\texttt{" + item["key"] + "} (" + item["type"] + ") \\textnormal{" + defaultStr + " \\hfill {\\scriptsize \\texttt{" + item["src"] + "}}}}")
-        print ("\\envlabel{" + item["key"] + "}")
+        print ("\\labelenv{" + item["key"] + "}")
 
         print ("\\begin{addmargin}[0.8cm]{0cm}")
         print (item["brief"])
@@ -205,7 +207,7 @@ for prefix in prefixList + [ None ]:
         driver = item["key"].partition("/") [0]
 
         print ("\n\n\n\\subsubsection*{\\texttt{" + item["key"] + "} (" + item["type"] + "," + item["mode"] + ") \\textnormal{" + defaultStr + " \\hfill {\\scriptsize \\texttt{" + item["src"] + "}}}}")
-        print ("\\rclabel{" + driver + "}{" + item["key"] + "}")
+        print ("\\labelrc{" + driver + "}{" + item["key"] + "}")
 
         print ("\\begin{addmargin}[0.8cm]{0cm}")
         print (item["brief"])

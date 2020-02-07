@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -118,6 +118,15 @@ ENV_PARA_INT ("music.recoveryMaxTime", envRecoveryMaxTime, 10000);
   /* Maximum time to retry if something (presently local streaming) fails.
    */
 
+ENV_PARA_BOOL ("music.autoUnmute", envAutoUnmute, false);
+  /* Automatically continue playing if the reason for muting is gone.
+   *
+   * If 'true', the music player resumes playing if the 'mute' resource
+   * changes from 1 to 0. If 'false', the player stays paused. The latter may be
+   * useful if there are multiple phones in the room, and the user answers with
+   * a phone other than that controlling the player.
+   */
+
 ENV_PARA_NOVAR ("var.music.server", const char *, envMpdServer, NULL);
   /* MPD server to connect to first
    */
@@ -129,9 +138,9 @@ static const char *MakeEnvKeyPath (const char *base, const char *serverKey, cons
   const char *para = base + 6;    // skip "music."
 
   ret.SetF ("music.%s", para);
-  if (serverKey) ret.InsF (0, "music.%s.%s:", serverKey, para);
-  if (outputKey) ret.InsF (0, "music.any.%s.%s:", outputKey, para);
-  if (serverKey && outputKey) ret.InsF (0, "music.%s.%s.%s:", serverKey, outputKey, para);
+  if (serverKey) ret.InsertF (0, "music.%s.%s:", serverKey, para);
+  if (outputKey) ret.InsertF (0, "music.any.%s.%s:", outputKey, para);
+  if (serverKey && outputKey) ret.InsertF (0, "music.%s.%s.%s:", serverKey, outputKey, para);
   return ret.Get ();
 }
 
@@ -732,7 +741,7 @@ void CMusicPlayer::Update () {
   else {
     if (playerIsMuted && playerState != plStopped) {
       //~ INFO ("### Unmuting...");
-      Play ();
+      if (envAutoUnmute) Play ();
       playerIsMuted = false;
     }
   }
@@ -977,7 +986,7 @@ void CMusicPlayer::SetServer (int idx) {
     // Try to connect...
     popup = NULL;
     if (view) if (view->IsActive ())  // Show message box only if the music screen is active
-      popup = StartMessageBox (_("Connecting ..."), StringF (&s, "%s:%i", mpdHost.Get (), mpdPort), mbmNone);
+      popup = StartMessageBox (_("Connecting ..."), StringF (&s, "%s:%i", mpdHost.Get (), mpdPort), NULL, mbmNone);
     mpdConnection = mpd_connection_new (mpdHost.Get (), mpdPort, 3000);    // timeout = 3000ms
     ASSERT (mpdConnection != NULL);   // 'mpdConnection == NULL' only occurs when out of memory
     if (popup) StopMessageBox (popup);
@@ -1713,11 +1722,22 @@ bool CMusicPlayer::PlaySong (int idx) {
 
 
 bool CMusicPlayer::IsPlayingForSure (int minDb) {
+  int curDb;
+
   if (playerIsMuted) return true;
   if (errorRecovery || errorPermanent || playerState != plPlaying) return false;
-  if (minDb == -INT_MAX) return true;
-  if (!OutputCanStream (outputIdx)) return true;    // cannot make DB check for non-streaming output
-  return StreamerGetDbLevel () >= minDb;
+  if (minDb == -INT_MAX) {
+    //~ INFO("### CMusicPlayer::IsPlayingForSure (): DB check disabled - reporting success");
+    return true;
+  }
+  if (!OutputCanStream (outputIdx)) {    // cannot make DB check for non-streaming output
+    //~ INFO("### CMusicPlayer::IsPlayingForSure (): Output cannot deliver DB info - reporting success");
+    return true;
+  }
+
+  curDb = StreamerGetDbLevel ();
+  //~ INFOF(("### CMusicPlayer::IsPlayingForSure (): cur = %i db, min = %i db", curDb, minDb));
+  return curDb >= minDb;
 }
 
 

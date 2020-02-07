@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,8 +27,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ContentResolver;
 import android.content.BroadcastReceiver;
+import android.content.res.AssetManager;
 import android.media.AudioManager;
-import android.view.*;
+import android.view.View;
 import android.view.WindowManager;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -39,9 +40,19 @@ import android.content.pm.ActivityInfo;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothProfile;
 
+import android.widget.Toast;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+
 import java.lang.Runtime;
-import java.io.BufferedReader;
+import java.util.concurrent.Semaphore;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 
 import org.freedesktop.gstreamer.GStreamer;
 
@@ -56,6 +67,8 @@ public class Home2l {
 
   protected static Home2lSync2l sync2l = null;
 
+  protected static File home2lRootDir = null;
+
 
   // ***** Contexts *****
 
@@ -68,8 +81,11 @@ public class Home2l {
   public static void init (Activity _activity, View _immView) {
     logDebug ("### Home2l.init () called.");
 
+    // Init global variables...
     activity = _activity;
     immView = _immView;
+    showToast ("Starting WallClock ...", true);
+    home2lRootDir = new File (activity.getFilesDir (), "/home2l");
 
     // Determine host name from property 'net.hostname', since in native code
     // 'gethostname(2)' appears to return "localhost" all the time...
@@ -84,7 +100,7 @@ public class Home2l {
     // Call native initialization...
     initNative ();
     putEnvNative ("sys.machineName", hostName);
-
+    putEnvNative ("sys.rootDir", home2lRootDir.getPath ());
     //~ audioManager = (AudioManager) activity.getSystemService (Context.AUDIO_SERVICE);
 
     // Acquire wakelock...
@@ -106,7 +122,7 @@ public class Home2l {
     if (Home2lConfig.withGstreamer) try {
       GStreamer.init (_activity);
         // Note [2018-02-05]:
-        //   In addition to this, 'gst_init_check ()' will be code inside the Home2l native code.
+        //   In addition to this, 'gst_init_check ()' will be called inside the Home2l native code.
         //   We assume, that both calls are useful and do not harm each other.
     } catch (Exception e) { e.printStackTrace (); }
   }
@@ -137,10 +153,104 @@ public class Home2l {
 
   // ***** Logging from Java code *****
 
-  public static void logDebug (String msg) { Log.d ("home2l", msg); }   // TBD: filter on 'debug' flag
-  public static void logInfo (String msg) { Log.i ("home2l", msg); }
+  public static void logDebug (String msg) { Log.d ("home2l", msg); }   // TBD: filter on 'debug' flag (currently unused)
+  public static void logInfo (String msg) { Log.i ("home2l", msg); }    // TBD: implement toast (currently unused)
   public static void logWarning (String msg) { Log.w ("home2l", msg); }
-  public static void logError (String msg) { Log.e ("home2l", msg); }
+  public static void logError (String msg) { Log.e ("home2l", msg); }   // TBD: print message box & exit (currently unused)
+
+
+
+  // ***** Asset access *****
+
+  public static String assetLoadTextFile (String relPath) {
+    byte[] buf = new byte[4096];
+    int bytes;
+
+    //~ logInfo ("### assetLoadTextFile ('" + relPath + "'");
+    try {
+
+      AssetManager assetManager = activity.getAssets();
+      InputStream src = assetManager.open (relPath);
+        // (Info) To get list of all assets [https://stackoverflow.com/questions/12387637/how-to-access-file-under-assets-folder]:
+        //    String[] files = assetManager.list("");
+      ByteArrayOutputStream dst = new ByteArrayOutputStream();
+      while ((bytes = src.read (buf)) != -1) dst.write (buf, 0, bytes);
+      return dst.toString("UTF-8");
+
+    } catch (Exception e) {
+
+      e.printStackTrace ();
+      return null;
+
+    }
+  }
+
+  public static boolean assetCopyFileToInternal (String relPath) {
+    byte[] buf = new byte[4096];
+    int bytes;
+
+    //~ logInfo ("### assetCopyFileToInternal ('" + relPath + "'");
+    try {
+
+      // Create destination directory as necessary ...
+      File dstFile = new File (home2lRootDir, relPath);
+      File dstDir = dstFile.getParentFile ();
+      if (dstDir != null) dstDir.mkdirs ();
+
+      // Copy the file ...
+      InputStream src = activity.getAssets().open (relPath);
+      OutputStream dst = new FileOutputStream (dstFile);
+      while ((bytes = src.read (buf)) != -1) dst.write (buf, 0, bytes);
+      return true;
+
+    } catch (Exception e) {
+
+      e.printStackTrace ();
+      return false;
+
+    }
+  }
+
+
+
+  // ***** Logging additions / from C/C++ code *****
+
+  // Logging from native code is done using the native function '__android_log_print()'.
+  // The following functions are used from the native logging functions, and they
+  // may be called from Java directly.
+
+  public static void showMessage (final String title, final String msg) {
+
+    final Semaphore dlgSemaphore = new Semaphore (0, true);
+
+    Runnable dlgRunnable = new Runnable() {
+      public void run () {
+        AlertDialog.Builder dlgAlert  = new AlertDialog.Builder (TheActivity ());
+        dlgAlert.setTitle("Home2L: " + title);
+        dlgAlert.setMessage (msg);
+        dlgAlert.setPositiveButton ("OK",
+          new DialogInterface.OnClickListener () {
+            public void onClick (DialogInterface dialog, int which) {
+              dlgSemaphore.release();
+            }
+          });
+        dlgAlert.setCancelable (false);
+        dlgAlert.create ().show ();
+        }
+    };
+
+    logInfo ("### showMessage ('" + title + "', '" + msg + "'");
+    activity.runOnUiThread (dlgRunnable);
+    try {
+      dlgSemaphore.acquire ();
+    } catch (InterruptedException e) {}
+  }
+
+  public static void showToast (final String msg, final boolean showLonger) {
+    activity.runOnUiThread (new Runnable () { public void run () {
+      Toast.makeText (TheActivity(), "Home2L: " + msg, showLonger ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+    }});
+  }
 
 
 

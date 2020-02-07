@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,7 +74,8 @@
 %}
 
 // Types that need to be handled specially...
-typedef long long TTicks;   // should be 'int64_t'; "#include <stdint.h>" apparently does not work
+typedef long long TTicks;     // should be 'int64_t'; "#include <stdint.h>" apparently does not work
+typedef int TTicksMonotonic;  // should be 'int32_t'
 
 
 // Other files to be exported to Python...
@@ -142,9 +143,9 @@ def _BuildSubscriber (id, func, rcSet):
     if (isinstance (rcSet, (list, tuple, set))):
       for x in rcSet: _SubscribeToRcSet (subscr, x)
     else:
-      RcSubscribeToResource (subscr, rcSet)
+      RcSubscribe (subscr, rcSet)
 
-  subscr = RcSubscribe (id)
+  subscr = RcNewSubscriber (id)
   _SubscribeToRcSet (subscr, rcSet)
   subscr.SetInSelectSet (True)
   return subscr;
@@ -156,7 +157,7 @@ def _BuildSubscriber (id, func, rcSet):
 # ****************** RunOnEvent() **************************
 
 
-## Declare a function to run on an event.
+## Define a function to be called on events.
 def RunOnEvent (func, rcSet = None, data = None, id = None):
   """Define a function to be called whenever an event for a set of\n\
   resources occurs.\n\
@@ -198,7 +199,7 @@ def RunOnEvent (func, rcSet = None, data = None, id = None):
   _onEventDict[id] = (func, data, subscr)
 
 
-## Decorator to declare a function to run on an event.
+## Decorator to define a function to be called on events.
 def onEvent (*rcSet):
   """Decorator variant of 'RunOnEvent'.\n\
   \n\
@@ -211,7 +212,7 @@ def onEvent (*rcSet):
   \n\
   """
   def _Decorate (func):
-    def _WrapperFunc (ev, rc, vs, data): data (ev=ev, rc=rc, vs=vs)
+    def _WrapperFunc (ev, rc, vs, data): data (ev, rc, vs)
     RunOnEvent (_WrapperFunc, rcSet, data=func, id=func.__name__)
     return _WrapperFunc
   return _Decorate
@@ -223,9 +224,9 @@ def onEvent (*rcSet):
 # ****************** RunOnUpdate() *************************
 
 
-## Declare a function to run on value/state change.
+## Define a function to be called on value/state changes.
 def RunOnUpdate (func, rcSet, data = None, id = None):
-  """Define a function to be called on value changes of resources.\n\
+  """Define a function to be called on value/state changes of resources.\n\
   \n\
   'rcSet' can either be a 'CResource' object, an URI string or a tuple\n\
   or a list of any of those. 'data' is an optional reference to user\n\
@@ -247,6 +248,8 @@ def RunOnUpdate (func, rcSet, data = None, id = None):
   \n\
   Important: At the invocation of 'func', all resources contained in\n\
   'rcSet' may have changed since the last invocation.\n\
+  (BTW: This is the reason why the function does not have any convenience
+  arguments such as 'rc' and 'vs'.)
   \n\
   If 'rcSet' is not defined, the function 'func' is called with 'rc = None'\n\
   and must then return the set. There is no way to change the set once\n\
@@ -262,15 +265,15 @@ def RunOnUpdate (func, rcSet, data = None, id = None):
   _onUpdateDict[id] = (func, data, subscr)
 
 
-## Decorator to declare a function to run on value/state change.
+## Decorator to define a function to be called on value/state changes.
 def onUpdate (*rcSet):
   """Decorator variant of 'RunOnUpdate'.\n\
   \n\
   This decorator allows to easily define a function executed on value changes\n\
   as follows:\n\
   \n\
-      @onUpdate (<resource set>)\n\
-      def MyFunc (rc, vs):\n\
+      @onUpdate ( <resource set> )\n\
+      def MyFunc ():\n\
         ...\n\
   \n\
   """
@@ -290,6 +293,7 @@ def onUpdate (*rcSet):
 _timerDict = {}
 
 
+## Let a function be called at a given time or periodically.
 def RunAt (func, t = 0, dt = 0, data = None, id = None):
   """Define a function to be called at a given time, optionally repeated\n\
   at a certain interval.\n\
@@ -316,14 +320,14 @@ def RunAt (func, t = 0, dt = 0, data = None, id = None):
   ep.Set (TicksAbsOf (t), int (dt))
 
 
-## Declare a function to run at a certain time.
+## Decorator to let a function be called at a given time or periodically.
 def at (t = 0, dt = 0):
   """Decorator variant of 'RunAt'.\n\
   \n\
   This decorator allows to easily define a function executed at given times\n\
   as follows:\n\
   \n\
-      @at (t = <t>, dt = <interval>)\n\
+      @at (t = <t> [ , dt = <interval> ] )\n\
       def MyTimedFunc ():\n\
         ...\n\
   \n\
@@ -341,8 +345,8 @@ def at (t = 0, dt = 0):
 # ****************** RunDaily() ****************************
 
 
-## Declare a daily function setting permanent requests.
-def RunDaily (func, hostSet, data = None, id = None):
+## Let a function be called daily for setting permanent requests.
+def RunDaily (func, hostSet = None, data = None, id = None):
   """Define a function to be called daily or whenever one of the hosts becomes\n\
   reachable (again).\n\
   \n\
@@ -373,26 +377,31 @@ def RunDaily (func, hostSet, data = None, id = None):
       s.add ("/host/" + host + "/timer/daily")
 
   if not id: id = func.__name__
-  rcSet = set ()
-  _AddToSet (rcSet, hostSet)
+  if hostSet:
+    rcSet = set ()
+    _AddToSet (rcSet, hostSet)
+  else:
+    rcSet = "/local/timer/daily"
   subscr = _BuildSubscriber (id, func, rcSet)
   _dailyDict[id] = (func, data, subscr)
 
 
-## Decorator to declare a function to run on value/state change.
+## Decorator to let a function be called daily for setting permanent requests.
 def daily (*hostSet):
   """Decorator variant of 'RunDaily'.\n\
   \n\
   This decorator allows to easily define a function executed daily or whenever
   a host becomes reachable (again) as follows:\n\
   \n\
-      @daily (<host set>)\n\
+      @daily ( [ <host set> ] )\n\
       def MyFunc (host):\n\
         ...\n\
   \n\
   """
   def _Decorate (func):
-    def _WrapperFunc (host, data): data (host=host)
+    def _WrapperFunc (host, data):
+      if data.__code__.co_argcount == 0: data()     # for the case that no hosts are specified
+      else: data (host)
     RunDaily (_WrapperFunc, hostSet, data=func, id=func.__name__)
     return _WrapperFunc
   return _Decorate
@@ -420,16 +429,23 @@ _driverDict = {}
 _bufferedResources = {}     # stored lists of resources
 
 
-## Define a new driver
-def NewDriver (drvName, func, successState = rcsValid, data = None):
+## Define a new driver.
+def NewDriver (drvName, func, successState = rcsBusy, data = None):
   """Define a new event-based driver.\n\
   \n\
   'drvName' is the unique local id (LID) of the new driver.\n\
-  '(ERcState) successState' is the automatic reply sent out to the system\n\
-  before 'func'is invoked. Typical values are:\n\
+  '(ERcState) successState' determines the automatic reply sent out to the\n\
+  system before 'func' is invoked. Possible values are:\n\
   \n\
-      - 'rcsValid': everything ok (no further action by the driver necessary)\n\
-      - 'rcsBusy': potentially not ok; Driver must report a valid value later.\n\
+    - 'rcsBusy':    (default) 'rcsBusy' with the *old* value is reported;\n\
+                    the application must report a valid and new value later.\n\
+  \n\
+    - 'rcsValid':   the driven value is reported back; no further action by\n\
+                    the driver necessary, but no errors are allowed to happen.\n\
+  \n\
+    - 'rcsUnknown' or 'rcsNoReport':\n\
+                    nothing is reported back now; the application should report\n\
+                    something soon and must report a valid and new value later.\n\
   \n\
   'data' is an optional reference to user data that will be passed\n\
   unchanged to any 'func' invocations.\n\
@@ -453,13 +469,13 @@ def NewDriver (drvName, func, successState = rcsValid, data = None):
     del _bufferedResources[drvName]
 
 
-## Decorator to define a new driver
-def newDriver (drvName, successState = rcsValid):
+## Decorator to define a new driver.
+def newDriver (drvName, successState = rcsBusy):
   """Decorator variant of 'NewDriver'.\n\
   \n\
   This decorator allows to easily define a driver as follows:\n\
   \n\
-      @newDriver (<driver name>, [ <success state>])\n\
+      @newDriver (<driver name>, [ <success state> ] )\n\
       def MyDriverFunc (rc, vs):\n\
         ...\n\
   \n\
@@ -471,7 +487,7 @@ def newDriver (drvName, successState = rcsValid):
   return _Decorate
 
 
-## Define a new resource
+## Define a new resource.
 def NewResource (drvName, rcName, _type, _writable = True):
   """Define a new resource managed by a driver defined by 'NewDriver'."""
   if drvName in _driverDict:
@@ -482,10 +498,10 @@ def NewResource (drvName, rcName, _type, _writable = True):
     return RcGetResource ("/local/" + drvName + "/" + rcName)
 
 
-## Define a new signal
+## Define a new signal.
 def NewSignal (sigName, _type, defaultVal = None):
   """Define a signal resource under '/local/signal/<sigName>."""
-  if defaultVal:
+  if defaultVal == None:
     return RcRegisterSignal (sigName, _type)
   else:
     return RcRegisterSignal (sigName, CRcValueState (_type, defaultVal))
@@ -532,6 +548,7 @@ TTicks TicksOfDate (int dy, int dm, int dd);
 
 %inline %{
 static inline TTicks TicksOfSeconds (int secs) { return TICKS_FROM_SECONDS (secs); }
+static inline TTicks TicksOfSeconds (float secs) { return (float) TICKS_FROM_SECONDS (secs); }
 static inline TTicks TicksOfMillis (int ms) { return ms; }
 %}
 
@@ -547,9 +564,9 @@ static inline const char *_TicksStr (TTicks ticks) {
   TicksToString (&s, ticks);
   return s.Disown ();
 }
-static inline TTicks _TicksFromString (const char *str) {
+static inline TTicks _TicksFromString (const char *str, bool absolute) {
   TTicks t;
-  if (!TicksFromString (str, &t)) return -1;
+  if (!TicksFromString (str, &t, absolute)) return -1;
   return t;
 }
 %}
@@ -591,7 +608,7 @@ def TicksOf (something):
     is returned.\n\
   """
   if isinstance (something, str):
-    t = _TicksFromString (something)
+    t = _TicksFromString (something, False)
     if t >= 0: return t
     else: return None
 
@@ -612,7 +629,7 @@ def TicksOf (something):
 
 
 def TicksAbsOf (something):
-  """Magic wand to convert any to an absolute TTicks value as intuitivley as possible.\n\
+  """Magic wand to convert anything to an absolute TTicks value as intuitivley as possible.\n\
   The function is similar to TicksOf(), but it guarantees to return an absolute time.\n\
   \n\
   - Values of type string are interpreted as time specifications for TicksFromString()\n\
@@ -631,6 +648,11 @@ def TicksAbsOf (something):
   \n\
   - For values of type 'datetime.timedelta', the time relative to now is returned.\n\
   """
+  if isinstance (something, str):
+    t = _TicksFromString (something, true)
+    if t >= 0: return t
+    else: return None
+
   if isinstance (something, int):
     if something > 999999999999: return something
     else: return TicksNow () + something
@@ -828,7 +850,7 @@ def Home2lIterate (maxTime = 0):
       if epLid in _onEventDict:
         func, data, subscr = _onEventDict[epLid]
         while ev:
-          func (ev = ev.Type (), rc = ev.Resource (), vs = ev.ValueState (), data = data)
+          func (ev.Type (), ev.Resource (), ev.ValueState (), data)
           ev = ep.PollEvent ()
       # Check 'RunOnUpdate'...
       elif epLid in _onUpdateDict:
@@ -837,7 +859,9 @@ def Home2lIterate (maxTime = 0):
         while ev:
           if ev.Type () == rceValueStateChanged: lastEv = ev
           ev = ep.PollEvent ()
-        if lastEv: func (data = data)
+        if lastEv:
+          if func.__code__.co_argcount == 1: func (data)
+          else: func ()     # tolerate function without argument
       # Check 'RunDaily'...
       elif epLid in _dailyDict:
         func, data, subscr = _dailyDict[epLid]
@@ -848,20 +872,26 @@ def Home2lIterate (maxTime = 0):
             hostSet.add (host)
           ev = ep.PollEvent ()
         for host in hostSet:
-          func (host = host, data = data)
+          if func.__code__.co_argcount == 2:   func (host, data)
+          elif func.__code__.co_argcount == 1: func (host)
+          else:                                func ()
       else:
         print ("WARNING: Received event on unknown subscriber '" + epLid + "'")
     elif epType == 'D':   # Driver...
-      # Check 'DefDriver'...
+      # Check 'NewDriver'...
       while ev:
         func, data = _driverDict[epLid]
-        func (rc = ev.Resource (), vs = ev.ValueState (), data = data)
+        if func.__code__.co_argcount == 3:
+          func (ev.Resource (), ev.ValueState (), data)
+        else:     # tolerate functions without the 'data' argument ...
+          func (ev.Resource (), ev.ValueState ())
         ev = ep.PollEvent ()
     elif epType == 'T':   # Timer...
       # Check 'RunAt'...
       while ev:
         func, data, ep = _timerDict[epLid]
-        func (data)
+        if func.__code__.co_argcount == 1: func (data)
+        else: func ()     # tolerate functions without an argument
         ev = ep.PollEvent ()
 
 

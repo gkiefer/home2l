@@ -1,5 +1,0 @@
-<map id="CShellSession" name="CShellSession">
-<area shape="rect" id="node2" href="$classCShell.html" title="Abstract base class for shells that can execute system commands. " alt="" coords="5,5,68,32"/>
-<area shape="rect" id="node3" href="$classCShellBare.html" title="Normal shell: Execute commands individually. " alt="" coords="74,95,167,121"/>
-<area shape="rect" id="node4" href="$classCString.html" title="Dynamically allocated string. " alt="" coords="93,5,162,32"/>
-</map>

@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ HOME2L_MOD ?= resources
 # Setup...
 include $(HOME2L_SRC)/Setup.mk
 include $(HOME2L_SRC)/common/Env.mk
-include Resources.mk
+include $(HOME2L_SRC)/resources/Resources.mk
 
 
 # Generic C/C++ flags...
@@ -53,7 +53,7 @@ all: build
 RCSHELL := home2l-shell
 RCSHELL_BIN := $(DIR_OBJ)/$(RCSHELL)
 RCSHELL_LDFLAGS := $(LDFLAGS)
-SRC_RCSHELL := $(SRC_ENV) $(SRC_RC) $(RCSHELL).C
+SRC_RCSHELL := $(SRC) $(RCSHELL).C
 OBJ_RCSHELL := $(SRC_RCSHELL:%.C=$(DIR_OBJ)/%.o)
 
 ifeq ($(WITH_READLINE),1)
@@ -74,7 +74,7 @@ $(RCSHELL_BIN): $(DEP_CONFIG) $(OBJ_RCSHELL)
 
 SERVER := home2l-server
 SERVER_BIN := $(DIR_OBJ)/$(SERVER)
-SRC_SERVER := $(SRC_ENV) $(SRC_RC) $(SERVER).C
+SRC_SERVER := $(SRC) $(SERVER).C
 OBJ_SERVER := $(SRC_SERVER:%.C=$(DIR_OBJ)/%.o)
 
 $(SERVER_BIN): $(DEP_CONFIG) $(OBJ_SERVER)
@@ -90,7 +90,7 @@ $(SERVER_BIN): $(DEP_CONFIG) $(OBJ_SERVER)
 
 PYLIB := home2l
 PYLIB_BIN := $(DIR_OBJ)/_$(PYLIB).so
-SRC_PYLIB := $(SRC_ENV) $(SRC_RC)
+SRC_PYLIB := $(SRC)
 OBJ_PYLIB := $(SRC_PYLIB:%.C=$(DIR_OBJ)/%-pic.o) $(DIR_OBJ)/$(PYLIB)_wrap-pic.o
 
 
@@ -107,13 +107,18 @@ $(DIR_OBJ)/$(PYLIB)_wrap-pic.o: $(DIR_OBJ)/$(PYLIB)_wrap.C
 	@$(CC) -c -fPIC -I$(PYTHON_INCLUDE) $(CFLAGS) $< -o $@
 
 
-$(PYLIB_BIN): $(DEP_CONFIG) $(OBJ_PYLIB) $(DIR_OBJ)/$(PYLIB).py
+$(PYLIB_BIN): $(DEP_CONFIG) $(OBJ_PYLIB)
 	@echo LD $(notdir $(PYLIB_BIN))
 	@$(CC) -shared $(LDFLAGS) -o $@ $(OBJ_PYLIB)
 
 
 .PHONY: pylib
-pylib: $(PYLIB_BIN)
+pylib: $(PYLIB_BIN) $(DIR_OBJ)/$(PYLIB).py
+
+
+.PHONY: test
+test:  $(PYLIB_BIN) $(DIR_OBJ)/$(PYLIB).py
+	PYTHONPATH=$(DIR_OBJ) ./test-rulesapi
 
 
 

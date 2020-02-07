@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name home2l)(type Legacy)(uri /home/gundolf/prog/home2l/src/brownies/circuits/lib/home2l.lib)(options "")(descr ""))
+)

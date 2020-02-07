@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -434,15 +434,22 @@ void CScreen::DelAllWidgets () {
 }
 
 
-void CScreen::DoAddWidget (CWidget **pFirst, CWidget *widget) {
+void CScreen::DoAddWidget (CWidget **pFirst, CWidget *widget, int layer) {
+  CWidget **pNext;
   if (widget->screen == this) return;     // is already added
 
-  // Add before '*pFirst'...
-  widget->screen = this;
+  // Link to 'this' screen...
   widget->canvas = NULL;
-  widget->next = *pFirst;
-  *pFirst = widget;
+  widget->screen = this;
+  widget->screenLayer = layer;
 
+  // Add to the beginning of the list '*pFirst', but after all higher-layer widgets...
+  pNext = pFirst;
+  while (*pNext && (*pNext)->screenLayer > layer) pNext = &((*pNext)->next);
+  widget->next = *pNext;
+  *pNext = widget;
+
+  // Markchanged ...
   Changed ();
 }
 
@@ -518,7 +525,7 @@ bool CScreen::HandleEvent (SDL_Event *ev) {
     }
   }
   //~ INFO ("CScreen::HandleEvent");
-  if (activeScreen) for (CWidget *w = activeScreen->firstWidget; w; w = w->next)
+  for (CWidget *w = firstWidget; w; w = w->next)
     if (w->HandleEvent (ev)) return true;
   return false;
 }

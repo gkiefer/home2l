@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ else ifeq ($(CFG),demo)
   ARCHS ?= $(shell dpkg --print-architecture)
 else
   # Default: All architectures ...
-  ARCHS ?= i386 armhf amd64
+  ARCHS ?= amd64 armhf i386
 endif
 
 
@@ -46,11 +46,11 @@ else ifeq ($(CFG),basic)
   # Basic set ...
   MODS ?= tools resources
 else ifeq ($(CFG),demo)
-  # Fair set to run the demos ...
-  MODS ?= tools resources wallclock locales
+  # Modules for the demo image ...
+  MODS ?= tools resources brownies wallclock doorman locales
 else
   # Default: All modules...
-  MODS ?= tools resources wallclock doorman locales doc
+  MODS ?= tools resources brownies wallclock doorman locales doc
 endif
 
 
@@ -63,7 +63,7 @@ else ifeq ($(CFG),basic)
   DRVS ?= gpio
 else ifeq ($(CFG),demo)
   # Fair set to run the demos ...
-  DRVS ?= gpio demo weather
+  DRVS ?= gpio demo brownies weather
 else
   # Default: All modules...
   DRVS ?= $(shell ls drivers)
@@ -86,7 +86,7 @@ else ifeq ($(CFG),basic)
 else ifeq ($(CFG),demo)
   # Fair set to run the demos ...
   export WITH_ANDROID ?= 0
-  export WITH_PHONE ?= 0
+  export WITH_PHONE ?= 1
   export WITH_GSTREAMER ?= 0
 endif
 
@@ -172,9 +172,10 @@ help:
 	@echo "  clean:     Clean everything (except binary doc files to be checked into the repository)"
 	@echo "  veryclean: Clean really everything"
 	@echo "  uninstall: Remove \$$HOME2L_INSTALL [ /opt/home2l ]"
+	@echo "  docker:    Build the docker showcase image locally"
 	@echo
 	@echo "Variables:"
-	@echo "  ARCHS: List of architectures to build for (available: i386 amd64 armhf) [ all ]"
+	@echo "  ARCHS: List of architectures to build for (available: amd64 armhf i386) [ all ]"
 	@echo "  MODS:  Modules (sub-projects) to build (space-separated list of directory names) [ all ]"
 	@echo "  MOD:   If set, build only the given module (overrides MODS, DRVS)."
 	@echo "  DRVS:  Drivers to build [ all integrated ]"
@@ -203,15 +204,32 @@ help:
 
 
 
+############################## Docker Image ####################################
+
+
+DOCKER_IMAGE=gkiefer/home2l
+
+
+.PHONY: docker
+docker:
+	@TAG="$(BUILD_VERSION)"; TAG=$${TAG%\-*}; [[ "$$TAG" != "" ]] || TAG=work; \
+	echo DOCKER $(DOCKER_IMAGE):$$TAG && \
+	docker build --build-arg BUILD_VERSION=$$TAG -t $(DOCKER_IMAGE):$$TAG -t $(DOCKER_IMAGE):latest .
+
+
+
+
+
 ############################## Main targets ####################################
 
 # The following targets are equivalent to the targets of subprojects and
 # build all subprojects for all architectures.
 
 
-# Export directories...
+# Export directories and other global settings ...
 export HOME2L_BUILD
 export HOME2L_INSTALL
+export BUILD_VERSION := $(BUILD_VERSION)
 
 
 # Note: In the 'build' target, we must pre-generate all directories inside the 'build'
@@ -240,11 +258,13 @@ build:
 	  for A in $(ARCHS); do \
 	    echo -e "\n\n#### Building '$$P' for '$$A'...\n"; \
 	    $(MAKE) -C $$P HOME2L_MOD=$$P ARCH=$$A build-arch || exit 1; \
+	    echo; \
 	  done; \
 	done
 
 
 install:
+	echo ##### BUILD_VERSION=$(BUILD_VERSION) BUILD=$(BUILD)
 	@mkdir -p $(HOME2L_INSTALL); \
 	for P in $(MODS) $(PREP_DRVS); do \
 	  echo -e "\n\n\n############################################################"; \
@@ -273,7 +293,12 @@ clean: clean-build
 
 
 veryclean:
-	$(MAKE) -C doc veryclean
+	@for P in $(MODS) $(PREP_DRVS); do       \
+		echo -e "\n\n#### Cleaning '$$P' very thoroughly ...\n"; \
+		$(MAKE) -C $$P HOME2L_MOD=$$P veryclean || exit 1; \
+		echo; \
+	done
+#~ 	$(MAKE) -C doc veryclean
 
 
 uninstall:

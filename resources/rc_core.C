@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -73,7 +73,7 @@
 
 // ***** Environment settings *****
 
-ENV_PARA_STRING ("rc.config", envRcConfigFile, "etc/resources.conf");
+ENV_PARA_STRING ("rc.config", envRcConfigFile, "resources.conf");
   /* Name of the Resources configuration file
    */
 
@@ -109,17 +109,6 @@ ENV_PARA_STRING ("rc.network", envNetworkStr, "127.0.0.1/32");
    * are accepted by the server.
    */
 
-ENV_PARA_SPECIAL ("rc.resolve.<alias>", const char *, NULL);
-  /* Define a manual network host resolution
-   *
-   * When a network host is contacted, this environment setting is consulted by the client
-   * before any system-wide name resolution is started. This can be used, for example,
-   * with SSH tunnels to map the real target host to something like 'localhost:1234'.
-   *
-   * Another use case is just a hostname resolution independent of a DNS service
-   * or '/etc/hosts' file, which can be useful on Android client devices, for example.
-   */
-
 ENV_PARA_INT ("rc.maxAge", envMaxAge, 60000);
   /* Maximum age (ms) tolerated for resource values and states
    *
@@ -142,15 +131,15 @@ ENV_PARA_INT ("rc.netTimeout", envNetTimeout, 3000);
 ENV_PARA_INT ("rc.netRetryDelay", envNetRetryDelay, 60000);
   /* Time (ms) after which a failed network operation is repeated
    *
-   * Only in the first period of \envref{rc.netRetryDelay} milliseconds, the connection
-   * retries are performed at faster intervals of \envref{rc.netTimeout} ms.
+   * Only in the first period of \refenv{rc.netRetryDelay} milliseconds, the connection
+   * retries are performed at faster intervals of \refenv{rc.netTimeout} ms.
    */
 ENV_PARA_INT ("rc.netIdleTimeout", envNetIdleTimeout, 5000);
   /* Time (ms) after which an unused connection is disconnected
    */
 
 ENV_PARA_INT ("rc.relTimeThreshold", envRelTimeThreshold, 60000);
-  /* Threshold (in ms from now) below which remote requests are sent with relative times.
+  /* Threshold (in ms from now) below which remote requests are sent with relative times
    *
    * This option allows to compensate negative clock skewing effects between
    * different hosts.
@@ -215,11 +204,19 @@ const char *uriRootArr [] = { "local", "host", "alias", "env" };
  */
 
 
-const char *RcGetRealPath (CString *ret, const char *uri, int maxDepth) {
-  CString aliasPart, *s, realUri;
+const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir, int maxDepth) {
+  CString aliasPart, *s, realUri, absUri;
   const char *p;
   int n;
 
+  // Resolve relative path...
+  if (uri[0] != '/' && workDir) {
+    absUri.SetF ("%s/%s", workDir, uri);
+    absUri.PathNormalize ();
+    uri = absUri.Get ();
+  }
+
+  // Handle "local" domain...
   if (uri[0] == '/' && uri[1] == 'l') {
 
     // Handle path in "local" domain...
@@ -227,9 +224,9 @@ const char *RcGetRealPath (CString *ret, const char *uri, int maxDepth) {
     while (p[0] != '\0' && p[-1] != '/') p++;
     ret->SetF ("/host/%s/%s", localHostId.Get (), p);
   }
-  else if (uri[0] == '/' && uri[1] == 'a') {
 
-    // Handle alias...
+  // Handle alias...
+  else if (uri[0] == '/' && uri[1] == 'a') {
     p = uri + 2;
     while (p[0] && p[-1] != '/') p++;
     if (!p[0]) {
@@ -254,7 +251,7 @@ const char *RcGetRealPath (CString *ret, const char *uri, int maxDepth) {
           if (maxDepth > 0 && (*ret)[0] == '/' && (*ret)[1] == 'a') {
             // The alias maps to another alias: Resolve it recursively...
             aliasPart.Set (*ret);      // save contents of 'realUri'
-            ret->Set (RcGetRealPath (&realUri, aliasPart.Get (), maxDepth - 1));
+            ret->Set (RcGetRealPath (&realUri, aliasPart.Get (), NULL, maxDepth - 1));
             //~ INFOF (("#   ('%s') after recursion -> '%s'", uri, realUri.Get ()));
           }
           break;
@@ -273,9 +270,10 @@ const char *RcGetRealPath (CString *ret, const char *uri, int maxDepth) {
       }
     }
   }
+
+  // Not an alias: Return unmodified (full) path ...
   else {
 
-    // Not an alias: Done...
     //~ INFOF (("###   not an alias -> '%s'", uri));
     ret->Set (uri);
   }
@@ -933,6 +931,7 @@ void CRcServer::OnFdReadable () {
   CRcDriver *driver;
   CRcHost *host;
   const char *uri;
+  TTicks t1;
   int n, k, num, verbosity;
 
   if (!receiveBuf.AppendFromFile (fd)) {
@@ -1014,8 +1013,22 @@ void CRcServer::OnFdReadable () {
         rc = argc < 3 ? NULL : GetLocalResource (argv[1]);
         error = true;
         if (rc) switch (line[1]) {
-          case '+': rc->SetRequestFromStr (argv[2]); error = false; break;
-          case '-': rc->DelRequest (argv[2]); error = false; break;
+          case '+':
+            rc->SetRequestFromStr (argv[2]);
+            error = false;
+            break;
+          case '-':
+            line.Split (&argc, &argv, 4);
+            if (argc == 3) {      // no time given ...
+              rc->DelRequest (argv[2], 0);
+              error = false;
+            }
+            else if (argc >= 4) if (argv[3][0] == '-')      // time attribute given ...
+              if (TicksFromString (argv[3] + 1, &t1, true)) {
+                rc->DelRequest (argv[2], t1);
+                error = false;
+              }
+            break;
         }
         break;
 
@@ -1229,7 +1242,7 @@ void CRcServer::PrintInfoAll (FILE *f, int verbosity) {
 void *CConThread::Run () {
   char buf[INET_ADDRSTRLEN+1];
   CString s, newErrStr, hostId, netHost;
-  const char *netHostResolved;
+  //~ const char *netHostResolved;
   int netPort;
   struct addrinfo aHints, *aInfo;
   struct sockaddr_in sockAdr, *pSockAdr;
@@ -1257,13 +1270,6 @@ void *CConThread::Run () {
 
   // Resolve hostname if required...
   if (!port) {
-
-    // Resolve network host to 'localhost' or via the environment if configured so ...
-    if (RESOLVE_LOCALHOST && netHost.Compare (EnvMachineName ()) == 0) netHost.SetC ("localhost");
-    else {
-      netHostResolved = EnvGet (StringF (&s, "rc.resolve.%s", netHost.Get ()));
-      if (netHostResolved) netHost.SetC (netHostResolved);
-    }
 
     // Call 'getaddrinfo' to lookup host name...
     CLEAR (aHints);
@@ -1391,10 +1397,10 @@ CRcHost::CRcHost () {
   sendBufEmpty = true;
   infoBusy = infoComplete = false;
   execBusy = execComplete = execWriteClosed = false;
-  tAge = tRetry = tIdle = 0;
+  tAge = tRetry = tIdle = NEVER;
   ResetFirstRetry ();
   timer.Set (CRcHostTimerCallback, this);
-  tLastAlive = 0;
+  tLastAlive = NEVER;
   conThread = new CConThread ();
 }
 
@@ -1491,9 +1497,11 @@ void CRcHost::RemoteSetRequest (CResource *rc, CRcRequest *req) {
 }
 
 
-void CRcHost::RemoteDelRequest (CResource *rc, const char *reqGid) {
-  CString s;
-  Send (RequestCommand (&s, rc, reqGid, '-'));
+void CRcHost::RemoteDelRequest (CResource *rc, const char *reqGid, TTicks t1) {
+  CString s1, s2;
+  if (t1) s2.SetF ("%s -%s", reqGid, TicksToString (&s1, t1, INT_MAX, true));
+  else s2.SetC (reqGid);
+  Send (RequestCommand (&s1, rc, s2.Get (), '-'));
 }
 
 
@@ -1647,6 +1655,7 @@ void CRcHost::OnFdReadable () {
         if (!vs.SetFromStrFast (argv[2])) { error = true; break; }
         //~ INFOF (("### line = '%s', argv[2] = '%s'", line.Get (), argv[2]));
         rc->ReportValueState (&vs);
+        rc->NotifySubscribers (rceConnected);
         //~ INFOF (("### Received: '%s'", line.Get ()));
         //~ INFOF (("#   vs = '%s'", vs.ToStr (&s)));
         ResetAgeTime ();
@@ -1836,8 +1845,8 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
     // Submit disconnect event to subscribers and invalidate all resources ...
     for (n = 0; n < resourceMap.Entries (); n++) {
       rc = resourceMap.Get (n);
-      rc->ReportNetLost ();
       rc->NotifySubscribers (rceDisconnected);
+      rc->ReportNetLost ();
     }
     Unlock ();
 
@@ -1878,32 +1887,32 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
   // Update all times and timer...
   if (state != hcsRetryWait && state != hcsNewRetryWait) {    // retries can only be initiated in these states...
     // Clear and disable the retry timer...
-    tRetry = 0;
+    tRetry = NEVER;
     resetRetryTime = false;
   }
   if (state != hcsConnected) {    // idle disconnects can only be initiated in this state...
     // Clear and disable the idle timer...
-    tIdle = 0;
+    tIdle = NEVER;
     resetIdleTime = false;
   }
   tNow = ResetTimes (false, resetRetryTime, resetIdleTime);
   // Note: Whether an action is applicable can be decided by the 't...' time variables now.
 
   // Check & handle age timeout ...
-  if (tAge && tNow >= tAge) {
+  if (tAge != NEVER && tNow >= tAge) {
     //~ INFOF (("### Age timout on host '%s' (tNow = %i, tAge = %i)", Id (), (int) tNow, (int) tAge));
     // Acknowledge / disable age time,,,
-    tAge = 0;
+    tAge = NEVER;
     UpdateTimer ();
     // Schedule 'hnoDisconnect'...
     netThread.AddTask ((ENetOpcode) hnoDisconnnect, this);
   }
 
   // Check & handle retry timeout ...
-  if (tRetry && tNow >= tRetry) {
+  if (tRetry != NEVER && tNow >= tRetry) {
     //~ INFOF (("### Retry timout on host '%s' (tNow = %i, tRetry = %i)", Id (), (int) tNow, (int) tRetry));
     // Acknowledge / disable retry time,,,
-    tRetry = 0;
+    tRetry = NEVER;
     UpdateTimer ();
     //~ INFOF (("### Retry timeout ('%s')", Id ()));
     // Schedule a connection attempt now...
@@ -1911,11 +1920,11 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
   }
 
   // Check & handle idle timeout ...
-  if (tIdle && tNow >= tIdle) {
+  if (tIdle != NEVER && tNow >= tIdle) {
     //~ INFOF (("### Idle check for host '%s' (tNow = %i, tIdle = %i)", Id (), (int) tNow, (int) tIdle));
     if (CheckIfIdle ()) {     // Really idle? Yes...
       // Acknowledge / disable idle time,,,
-      tIdle = 0;
+      tIdle = NEVER;
       UpdateTimer ();
       // Schedule 'hnoDisconnect'...
       netThread.AddTask ((ENetOpcode) hnoDisconnnect, this);
@@ -1983,7 +1992,7 @@ void CRcHost::PrintInfoAll (FILE *f, int verbosity) {
 // ***** CShell methods *****
 
 
-bool CRcHost::Start (const char *cmd) {
+bool CRcHost::Start (const char *cmd, bool readStdErr) {
   ASSERTM (false, "'CShell::Start ()' cannot be called for a remote command.");
 }
 
@@ -2156,6 +2165,10 @@ void RcSetupNetworking (bool enableServer) {
              envServerEnabled ? "en" : "dis",
              envServerEnabled == enableServer ? " and" : ", but",
              enableServer ? "en" : "dis"));
+  if (enableServer && !envServerEnabled)
+    DEBUGF (1, ("Set '%s = 1' to enable the server (currently disabled).", envServerEnabledKey));
+      // Debug level, not info to avoid unwanted output by the shell, where the server is
+      // typically, but not always disabled.
 
   // Served interface(s)...
   //~ INFOF (("### envServeInterfaceStr = %s", envServeInterfaceStr));
@@ -2185,44 +2198,56 @@ void RcSetupNetworking (bool enableServer) {
 
 
 // Helper for 'RcReadConfig()'...
-static const char *AddHost (const char *id, char *desc, int defaultPort) {
+static const char *AddHost (const char *id, const char *desc, int defaultPort) {
   CRcHost *host;
-  char *netHost, *p, *endPtr;
+  CString s, sDesc, netHost;
+  const char *netInstance, *netHostAndPort;
   int netPort;
+  bool netHostIsLocal;
+  char *p;
 
   //~ INFOF (("### AddHost ('%s'), localHostId = '%s'", id, localHostId.Get ()));
 
-  // Determine net host name and port...
-  netHost = (char *) id;
-  netPort = defaultPort;
-  if (desc) {
-
-    // Extract net host name ...
-    netHost = strchr (desc, '@');
-    if (netHost)  *(netHost++) = '\0';
-    else netHost = desc;
-
-    // Extract port number...
-    p = strchr (netHost, ':');
-    if (p) {
-      *(p++) = '\0';
-      netPort = (int) strtol (p, &endPtr, 0);
-      if (*endPtr != '\0') return "Invalid port number";
-    }
+  // Determine 'netInstance' and resolved 'netHost', 'netPort' ...
+  sDesc.Set (desc ? desc : id);
+  p = (char *) strchr (sDesc.Get (), '@');    // Extract instance, if present...
+  if (p) {
+    *(p++) = '\0';
+    netInstance = sDesc.Get ();
+    netHostAndPort = p;
   }
+  else {
+    netInstance = NULL;
+    netHostAndPort = sDesc.Get ();
+  }
+  if (!EnvNetResolve (netHostAndPort, &netHost, &netPort, defaultPort))
+    return "Unresolvable host/port";
   if (netPort < 0) return "Unspecified network port";
+
+  // Check, if the host maps to the local host ...
+  netHostIsLocal = false;
+  if (strcmp (netHost.Get (), "localhost") == 0)    // machine name is explicitly "localhost"?
+    netHostIsLocal = true;
+  else if (EnvNetResolve (EnvMachineName (), &s))   // resolve machine name
+    if (strcmp (netHost.Get (), s.Get ()) == 0) {   // 'netHost' matches (resolved) machine name?
+      netHostIsLocal = true;
+      if (RESOLVE_LOCALHOST) netHost.SetC ("localhost");
+        // Explicitly map to 'localhost', so that we can reach this host via the
+        // local network interface, even if external network interfaces are disabled.
+    }
+
   //~ INFOF (("### hostID = '%s', instance = %s', netHost = '%s', netPort = %i", id, desc, netHost, netPort));
 
   // Check for duplicates as foreign hosts ...
   if (hostMap.Find (id) >= 0) {
-    if (desc) return "Redefined host (qualified declarations must be first)";
+    if (desc) return "Redefined host (qualified host declarations must appear before implicit ones)";
     return NULL;    // simple occurence is known => ignore
   }
   if (localHostId.Compare (id) == 0) return NULL;
 
   // Check if we hit the local instance...
-  if (serverEnabled && strcmp (netHost, EnvMachineName ()) == 0)
-    if (!desc || strcmp (desc, EnvInstanceName ()) == 0) {
+  if (serverEnabled && netHostIsLocal)
+    if (!netInstance || strcmp (netInstance, EnvInstanceName ()) == 0) {  // matching instance name?
       //~ INFO ("###   HIT!");
 
       // Hit: It is our host...
@@ -2230,17 +2255,17 @@ static const char *AddHost (const char *id, char *desc, int defaultPort) {
         //~ INFO ("###   Accepted.");
         localHostId.Set (id);
         localPort = netPort;
-        DEBUGF (1, ("Identified myself as local server host '%s' = %s:%i", id, netHost, netPort));
+        DEBUGF (1, ("Identified myself as local server host '%s' = %s:%i", id, netHost.Get (), netPort));
         return NULL;
       }
       else {
-        if (desc) return "Redefined local host (qualified declarations must be first)";
+        if (desc) return "Redefined local host (qualified declarations must appear before implicit ones)";
         return NULL;
       }
     }
 
   // Add to map ...
-  DEBUGF (1, ("Adding remote host '%s' = %s:%i", id, netHost, netPort));
+  DEBUGF (1, ("Adding remote host '%s' = %s:%i", id, netHost.Get (), netPort));
   host = new CRcHost ();
   host->Init (id, netHost, netPort);
   hostMap.Set (id, host);
@@ -2260,7 +2285,7 @@ void RcReadConfig (CString *retSignals) {
   bool error;
 
   // Default config file...
-  fileName = EnvGetHome2lRootPath (&str, envRcConfigFile);
+  fileName = EnvGetHome2lEtcPath (&str, envRcConfigFile);
   ASSERT (fileName != NULL);
   f = fopen (fileName, "rt");
   if (!f) ERRORF (("Unable to open file '%s'", fileName));
@@ -2363,13 +2388,13 @@ void RcRegisterConfigSignals (CString *signals) {
       vs.SetType (RcTypeGetFromName (args[2]));
       if (vs.Type () == rctNone) {
         WARNINGF(("Ignoring invalid signal definition (type error): 'S %s'", lineSet[n]));
-        break;
       }
-      if (!vs.SetFromStr (args[3])) {
+      else if (!vs.SetFromStr (args[3])) {
         WARNINGF(("Ignoring invalid signal definition (value error): 'S %s'", lineSet[n]));
-        break;
       }
-      RcDriversAddSignal (args[1], &vs);
+      else {
+        RcDriversAddSignal (args[1], &vs);
+      }
     }
   }
 }

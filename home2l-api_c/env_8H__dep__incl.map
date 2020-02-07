@@ -1,9 +1,0 @@
-<map id="common/env.H" name="common/env.H">
-<area shape="rect" id="node2" href="$resources_8H.html" title="resources/resources.H" alt="" coords="78,80,241,107"/>
-<area shape="rect" id="node3" href="$ui__base_8H.html" title="wallclock/ui_base.H" alt="" coords="265,80,408,107"/>
-<area shape="rect" id="node4" href="$ui__screen_8H.html" title="wallclock/ui_screen.H" alt="" coords="8,155,164,181"/>
-<area shape="rect" id="node6" href="$system_8H.html" title="wallclock/system.H" alt="" coords="189,155,327,181"/>
-<area shape="rect" id="node7" href="$apps_8H.html" title="wallclock/apps.H" alt="" coords="352,155,479,181"/>
-<area shape="rect" id="node8" href="$alarmclock_8H.html" title="wallclock/alarmclock.H" alt="" coords="503,155,666,181"/>
-<area shape="rect" id="node5" href="$ui__widgets_8H.html" title="wallclock/ui_widgets.H" alt="" coords="5,229,167,256"/>
-</map>

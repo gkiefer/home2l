@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ int CModalWidget::Run (CScreen *_screen) {
 void CModalWidget::Start (CScreen *_screen) {
   if (IsRunning ()) return;
   status = -2;
-  _screen->AddWidget (this);
+  _screen->AddWidget (this, 1);
 }
 
 
@@ -128,15 +128,15 @@ bool CCursorWidget::HandleEvent (SDL_Event *ev) {
 
 
 
-// *********************************************************
-// *                                                       *
-// *                     The widgets                       *
-// *                                                       *
-// *********************************************************
+// *****************************************************************************
+// *                                                                           *
+// *                     The widgets                                           *
+// *                                                                           *
+// *****************************************************************************
 
 
 
-// ***************** CButton *********************
+// *************************** CButton *******************************
 
 
 void CbActivateScreen (CButton *, bool, void *screen) {
@@ -147,6 +147,8 @@ void CbActivateScreen (CButton *, bool, void *screen) {
 
 void CButton::Init () {
   surfLabel = NULL;
+  surfLabelIsOwned = false;
+  hAlign = vAlign = 0;
   cbPushed = NULL;
   cbPushedData = NULL;
   isDown = changed = false;
@@ -155,6 +157,7 @@ void CButton::Init () {
 
 
 void CButton::Done () {
+  if (!surfLabelIsOwned) surfLabel = NULL;
   SurfaceFree (&surfLabel);
   SurfaceFree (&surface);
 }
@@ -197,25 +200,40 @@ void CButton::SetColor (TColor _colNorm, TColor _colDown) {
 }
 
 
-void CButton::SetLabel (SDL_Surface *_icon, SDL_Rect *srcRect) {
-  SDL_Rect r;
+void CButton::SetLabel (SDL_Surface *_icon, SDL_Rect *srcRect, bool takeOwnership) {
 
-  if (!_icon) SurfaceFree (&surfLabel);
-  else {
+  // Clear old label...
+  if (surfLabelIsOwned) SurfaceFree (surfLabel);
+  surfLabel = NULL;
+  surfLabelIsOwned = false;
+
+  if (_icon) {
+
+    // Simple case...
     if (!srcRect) {
-      r = Rect (_icon);
-      srcRect = &r;
+      SurfaceSet (&surfLabel, _icon);
+      surfLabelIsOwned = takeOwnership;
     }
-    SurfaceSet (&surfLabel, CreateSurface (*srcRect));
-    SurfaceBlit (_icon, srcRect, surfLabel, NULL);
+
+    // Sub-image case...
+    else {
+      SurfaceSet (&surfLabel, CreateSurface (*srcRect));
+      SurfaceBlit (_icon, srcRect, surfLabel, NULL);
+      if (takeOwnership) SurfaceFree (_icon);
+      surfLabelIsOwned = true;
+    }
   }
+
+  // Done...
   ChangedSurface ();
 }
 
 
 void CButton::SetLabel (const char *text, TColor textColor, TTF_Font *font) {
+  if (!surfLabelIsOwned) surfLabel = NULL;
   if (!text) SurfaceFree (&surfLabel);
   else SurfaceSet (&surfLabel, FontRenderText (font ? font : BUTTON_DEFAULT_FONT, text, textColor));
+  surfLabelIsOwned = true;
   ChangedSurface ();
 }
 
@@ -226,7 +244,7 @@ void CButton::SetLabel (SDL_Surface *_icon, const char *text, TColor textColor, 
 
   // Catch special cases...
   if (!_icon) { SetLabel (text, textColor, font); return; }
-  if (!text) { SetLabel (_icon); return; }
+  if (!text) { SetLabel (SurfaceDup (_icon), NULL, true); return; }
 
   // Create text surface...
   surfText = FontRenderText (font ? font : BUTTON_DEFAULT_FONT, text, textColor);
@@ -241,10 +259,12 @@ void CButton::SetLabel (SDL_Surface *_icon, const char *text, TColor textColor, 
   rText.x = rAll.w - rText.w;  // right-justify text
 
   // Draw joint surface...
+  if (!surfLabelIsOwned) surfLabel = NULL;
   SurfaceSet (&surfLabel, CreateSurface (rAll.w, rAll.h));
   SDL_FillRect (surfLabel, NULL, ToUint32 (TRANSPARENT));
   SurfaceBlit (_icon, NULL, surfLabel, &rIcon);
   SurfaceBlit (surfText, NULL, surfLabel, &rText);
+  surfLabelIsOwned = true;
 
   // Cleanup & wrap up...
   SDL_FreeSurface (surfText);
@@ -277,8 +297,11 @@ SDL_Surface *CButton::GetSurface () {
     }
 
     // Draw label...
-    if (surfLabel)
-      SurfaceBlit (surfLabel, NULL, surface, NULL, 0, 0, SDL_BLENDMODE_BLEND);
+    if (surfLabel) {
+      r = Rect (surface);
+      RectGrow (&r, -BUTTON_LABEL_BORDER, -BUTTON_LABEL_BORDER);
+      SurfaceBlit (surfLabel, NULL, surface, &r, hAlign, vAlign, SDL_BLENDMODE_BLEND);
+    }
 
     // Done...
     changed = false;
@@ -357,7 +380,7 @@ CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen
 
   ret = new CButton [buttons];
   for (n = 0; n < buttons; n++) {
-    ret[n].Set (layout[n], descTable[n].color, IconGet (descTable[n].iconName, WHITE), descTable[n].text, WHITE);
+    ret[n].Set (layout[n], descTable[n].color, IconGet (descTable[n].iconName, WHITE), _(descTable[n].text), WHITE);
     ret[n].SetCbPushed (descTable[n].cbPushed, screen);
     if (descTable[n].hotkey != SDLK_UNKNOWN) ret[n].SetHotkey (descTable[n].hotkey);
     if (screen) screen->AddWidget (&ret[n]);
@@ -371,7 +394,30 @@ CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen
 
 
 
-// ***************** CListbox ******************************
+// *************************** CFlatButton ***************************
+
+
+SDL_Surface *CFlatButton::GetSurface () {
+  SDL_Rect r;
+
+  if (changed) {
+    SurfaceSet (&surface, CreateSurface (area.w, area.h));
+    SDL_FillRect (surface, NULL, ToUint32 (isDown ? colDown : colNorm));
+    if (surfLabel) {
+      r = Rect (surface);
+      RectGrow (&r, -BUTTON_LABEL_BORDER, -BUTTON_LABEL_BORDER);
+      SurfaceBlit (surfLabel, NULL, surface, &r, hAlign, vAlign, SDL_BLENDMODE_BLEND);
+    }
+    changed = false;
+  }
+  return surface;
+}
+
+
+
+
+
+// *************************** CListbox ******************************
 
 
 CListbox::CListbox () {
@@ -749,7 +795,7 @@ void CListbox::UpdatePool () {
 
 
 
-// ***************** CMenu *********************************
+// *************************** CMenu *********************************
 
 
 #define MENU_FRAME_X 16
@@ -764,6 +810,7 @@ void CMenu::Setup (SDL_Rect _rContainer, int _hAlign, int _vAlign, TColor color,
   rContainer = _rContainer;
   hAlign = _hAlign;
   vAlign = _vAlign;
+  if (!_font) _font = MENU_DEFAULT_FONT;
   SetMode (lmActivate, 7 * FontGetLineSkip (_font) / 4, 1);
   SetFormat (_font, DARK_GREY, WHITE, BLACK, GREY, DARK_GREY);
   rNoCancel = Rect (0, 0, -1, -1);    // indicates "undefined"
@@ -866,11 +913,12 @@ void CMenu::OnPushed (int idx, bool longPush) {
 // ***** High-level functions *****
 
 
-int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign, int _vAlign, TColor color, bool *retLongPush) {
+int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign, int _vAlign,
+             TColor color, TTF_Font *_font, bool *retLongPush) {
   CMenu menu;
   int ret;
 
-  menu.Setup (_rContainer, _hAlign, _vAlign, color);
+  menu.Setup (_rContainer, _hAlign, _vAlign, color, _font);
   ret = menu.Run (CScreen::ActiveScreen (), _itemStr);
   if (retLongPush) *retLongPush = menu.GetStatusLongPush ();
   return ret;
@@ -880,19 +928,19 @@ int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign, int _vAlig
 
 
 
-// ***************** CMessageBox ***************************
+// *************************** CMessageBox ***************************
 
 
 #define MSGBOX_SPACE_X 32
 #define MSGBOX_SPACE_Y 32
 #define MSGBOX_BUTTON_MINW 160
-#define MSGBOX_COLOR DARK_GREY
 
 
 BUTTON_TRAMPOLINE (CbMessageBoxButtonPushed, CMessageBox, OnButtonPushed);
 
 
-void CMessageBox::Setup (int contentW, int contentH, int _buttons, CButton **_buttonArr) {
+void CMessageBox::Setup (const char *title, int contentW, int contentH, int _buttons, CButton **_buttonArr, TColor color) {
+  SDL_Surface *surfTitle;
   SDL_Rect r, rWindow, *layout;
   int n;
 
@@ -900,25 +948,52 @@ void CMessageBox::Setup (int contentW, int contentH, int _buttons, CButton **_bu
   buttonArr = _buttonArr;
   buttons = _buttons;
 
+  // Draw title...
+  surfTitle = title ? FontRenderText (FontGet (fntBold, 32), title, WHITE) : NULL;
+
   // Determine size and set area...
   rWindow.x = rWindow.y = 0;
-  rWindow.w = MAX (contentW, _buttons * (MSGBOX_BUTTON_MINW)) + 2 * MSGBOX_SPACE_X;
-  rWindow.h = contentH + (buttons ? UI_BUTTONS_HEIGHT + MSGBOX_SPACE_Y : 0) + 2 * MSGBOX_SPACE_Y;
+  rWindow.w = contentW;
+  rWindow.h = contentH;
+  if (surfTitle) {
+    rWindow.w = MAX (rWindow.w, surfTitle->w);
+    rWindow.h += MSGBOX_SPACE_Y + surfTitle->h;
+  }
+  if (buttons) {
+    rWindow.w = MAX (rWindow.w, _buttons * (MSGBOX_BUTTON_MINW));
+    rWindow.h += MSGBOX_SPACE_Y + UI_BUTTONS_HEIGHT;
+  }
+
+  RectGrow (&rWindow, 2 * MSGBOX_SPACE_X, MSGBOX_SPACE_Y);
   if (rWindow.w > UI_RES_X) rWindow.w = UI_RES_X;
   if (rWindow.h > UI_RES_Y) rWindow.h = UI_RES_Y;
-  //~ if (rWindow.w < UI_RES_X / 2) rWindow.w = UI_RES_X / 2;
-  //~ if (rWindow.h < UI_RES_Y / 2) rWindow.h = UI_RES_Y / 2;
   RectCenter (&rWindow, RectScreen ());
   SetArea (rWindow);
-  rContent = Rect (MSGBOX_SPACE_X, MSGBOX_SPACE_Y, rWindow.w - 2 * MSGBOX_SPACE_X, rWindow.h - (buttons ? UI_BUTTONS_HEIGHT + MSGBOX_SPACE_Y : 0) - 2 * MSGBOX_SPACE_Y);
+
+  rContent = Rect (MSGBOX_SPACE_X, MSGBOX_SPACE_Y, rWindow.w - 2 * MSGBOX_SPACE_X, rWindow.h - 2 * MSGBOX_SPACE_Y);
+  RectMove (&rContent, rWindow.x, rWindow.y);
+  if (surfTitle) {
+    rContent.y += surfTitle->h + MSGBOX_SPACE_Y;
+    rContent.h -= surfTitle->h + MSGBOX_SPACE_Y;
+  }
+  if (buttons)
+    rContent.h -= UI_BUTTONS_HEIGHT + MSGBOX_SPACE_Y;
 
   // Render background...
   SurfaceSet (&surface, CreateSurface (area.w, area.h));
   r = Rect (surface);
   for (n = 0; n < 64; n++) {
     r.h = (n + 1) * surface->h / 64 - r.y;
-    SDL_FillRect (surface, &r, ToUint32 (ColorBrighter (MSGBOX_COLOR, 32 - n)));
+    SDL_FillRect (surface, &r, ToUint32 (ColorBrighter (color, 32 - n)));
     r.y += r.h;
+  }
+
+  // Render title...
+  if (surfTitle) {
+    r = Rect (surface);
+    RectGrow (&r, 0, -MSGBOX_SPACE_Y);
+    SurfaceBlit (surfTitle, NULL, surface, &r, 0, -1, SDL_BLENDMODE_BLEND);
+    SurfaceFree (surfTitle);
   }
 
   // Place buttons...
@@ -945,39 +1020,35 @@ CButton *CMessageBox::GetStdButton (EMessageButtonId buttonId) {
 }
 
 
-void CMessageBox::Setup (int contentW, int contentH, int buttonMask) {
+void CMessageBox::Setup (const char *title, int contentW, int contentH, int buttonMask, TColor color) {
   int n, _buttons;
 
   _buttons = 0;
   for (n = 0; n < mbiEND; n++) if (buttonMask & (1 << n))
     stdButtonArr[_buttons++] = GetStdButton ((EMessageButtonId) n);
-  Setup (contentW, contentH, _buttons, stdButtonArr);
+  Setup (title, contentW, contentH, _buttons, stdButtonArr, color);
 }
 
 
 void CMessageBox::Setup (const char *title, const char *text, SDL_Surface *icon, int buttonMask, int hAlign, TTF_Font *font) {
-  SDL_Surface *surfText, *surfTitle;
+  SDL_Surface *surfText;
   SDL_Rect r;
   int w, h, d;
 
+  //~ INFOF (("### CMessageBox::Setup (): title = '%s', text = '%s'", title, text));
+
   if (!font) font = MSGBOX_DEFAULT_FONT;
-  surfTitle = title ? FontRenderText (FontGet (fntBold, 36), title, WHITE) : NULL;
   surfText = text ? TextRender (text, CTextFormat (font, WHITE, TRANSPARENT, hAlign)) : NULL;
   h = 0;
   w = 0;
   if (surfText) { w = surfText->w; h = surfText->h; }
   if (icon) { w += MSGBOX_SPACE_X + icon->w; h = MAX (h, icon->h); }
-  if (surfTitle) { w = MAX (w, surfTitle->w); h += MSGBOX_SPACE_Y + surfTitle->h; }
 
-  Setup (w, h, buttonMask);
+  Setup (title, w, h, buttonMask);
 
   r = rContent;
-  if (surfTitle) {
-    SurfaceBlit (surfTitle, NULL, surface, &r, 0, -1, SDL_BLENDMODE_BLEND);
-    r.y += surfTitle->h + MSGBOX_SPACE_Y;
-    r.h -= surfTitle->h + MSGBOX_SPACE_Y;
-    SDL_FreeSurface (surfTitle);
-  }
+  RectMove (&r, -area.x, -area.y);
+  //~ INFOF (("### r = (x = %i, y = %i, w = %i, h = %i)", r.x, r.y, r.w, r.h));
   if (icon) {
     if (surfText) {
       d = (rContent.w - icon->w - surfText->w) / 3;
@@ -991,7 +1062,7 @@ void CMessageBox::Setup (const char *title, const char *text, SDL_Surface *icon,
   }
   if (surfText) {
     SurfaceBlit (surfText, NULL, surface, &r, 0, 0, SDL_BLENDMODE_BLEND);
-    SDL_FreeSurface (surfText);
+    SurfaceFree (surfText);
   }
 }
 
@@ -1001,7 +1072,7 @@ void CMessageBox::Start (CScreen *_screen) {
   screenHasKeyboard = _screen->HasKeyboard ();
   _screen->SetKeyboard (false);
   CModalWidget::Start (_screen);
-  for (int n = 0; n < buttons; n++) _screen->AddWidget (buttonArr[n]);
+  for (int n = 0; n < buttons; n++) _screen->AddWidget (buttonArr[n], 1);
 }
 
 
@@ -1010,8 +1081,8 @@ void CMessageBox::Stop () {
   if (screen) {
     screen->SetKeyboard (screenHasKeyboard);
     for (int n = 0; n < buttons; n++) screen->DelWidget (buttonArr[n]);
-    CModalWidget::Stop ();
   }
+  CModalWidget::Stop ();
 }
 
 
@@ -1082,7 +1153,7 @@ int RunQueryBox (const char *text, SDL_Surface *icon, int hAlign, TTF_Font *font
 }
 
 
-CMessageBox *StartMessageBox (const char *title, const char *text, int buttonMask, SDL_Surface *icon, int hAlign, TTF_Font *font) {
+CMessageBox *StartMessageBox (const char *title, const char *text, SDL_Surface *icon, int buttonMask, int hAlign, TTF_Font *font) {
   CMessageBox *msgBox = new CMessageBox ();
   msgBox->Setup (title, text, icon, buttonMask, hAlign, font);
   msgBox->Start (CScreen::ActiveScreen ());
@@ -1102,7 +1173,7 @@ void StopMessageBox (CMessageBox *msgBox) {
 
 
 
-// ***************** CInputLine ****************************
+// *************************** CInputLine ****************************
 
 
 #define INPUT_SPACE_X 4     // space in the beginning and end of line
@@ -1120,7 +1191,14 @@ class CUndoState {
 
 void CInputLine::Setup (int fontSize) {
   font = FontGet (fntMono, fontSize);   // presently, only mono-type fonts are supported by 'Render' and 'GetCharOfMouseEvent'
-  charWidth = FontGetWidth (font, "X");
+  //~ INFOF(("### FontWidth('') = %i, FontWidth('X') = %i, FontWidth('XX') = %i, FontWidth('I') = %i, FontWidth('II') = %i",
+          //~ FontGetWidth (font, ""), FontGetWidth (font, "X"), FontGetWidth (font, "XX"), FontGetWidth (font, "I"), FontGetWidth (font, "II")));
+  charWidth = FontGetWidth (font, "7");
+    // WORKAROUND [2019-07-29]:
+    //    For some strange reason, after upgrading to Debian 10 (Buster), the string "X"
+    //    no longer worked as a reference character. This is strange, since a) SDL2 is
+    //    still used pre-compiled and statically linked from 'external/sdl' and b)
+    //    the TTF fonts were not changed either.
   wdgMain.SetCursorFormat (RED, SDL_BLENDMODE_MOD);
   SetInput (NULL);    // clear input line
   AddWidget (&wdgMain);
@@ -1184,7 +1262,7 @@ void CInputLine::MoveMark (int _mark0) {
 
 void CInputLine::InsChar (char c) {
   DelMarked ();
-  input.Ins (mark0, c);
+  input.Insert (mark0, c);
   mark0++;
   ChangedInput ();
 }
@@ -1193,7 +1271,7 @@ void CInputLine::InsChar (char c) {
 void CInputLine::InsText (const char *txt, int chars) {
   DelMarked ();
   if (chars < 0) chars = strlen (txt);
-  input.Ins (mark0, txt, chars);
+  input.Insert (mark0, txt, chars);
   mark0 += chars;
   ChangedInput ();
   ChangedMark ();
@@ -1557,7 +1635,7 @@ bool CInputLine::HandleEvent (SDL_Event *ev) {
 
 
 
-// *************************** CSlider ****************************************
+// *************************** CSlider *******************************
 
 
 CSlider::CSlider () {

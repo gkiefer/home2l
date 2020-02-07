@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
 
 
 # This file simulates a house (showhouse) with some example sensors and
-# actors in a text terminal. It is used in the Home2L tutorial and can
-# serve as an example for own Python scripts with Home2L drivers and rules.
+# actors in a text terminal. It is used in the Home2L tutorial and contains
+# several code examples and best practices to serve as an example for own
+# Python scripts with Home2L drivers and rules.
 
 
 from home2l import *
@@ -28,38 +29,51 @@ from home2l import *
 
 
 
+################################################################################
+#                                                                              #
+#                         Initialization                                       #
+#                                                                              #
+################################################################################
 
-######################### Initialization #######################################
+
+# Import the Home2L library ...
+from home2l import *
 
 
-# Init Home2L with enabled server...
+# Init Home2L with the server enabled...
 Home2lInit (server = True)
 
 
 
-
-##### Get reference(s) for remote resource(s) ...
-
-# These are resources that are used, but not defined here
-
+# Get reference(s) to common resources...
 rcDaylight = RcGet ("/alias/daylight")
+rcWeatherWarning = RcGet ("/alias/weatherWarning")
 
 
 
 
 
-############################## Driver "building" ###############################
+################################################################################
+#                                                                              #
+#                              Driver "world"                                  #
+#                                                                              #
+################################################################################
+
+# This section implements a Home2L driver to provide a couple of resources
+# to simulate a virtual world, i.e. the building and the weather.
 
 
 
-##### Define the resources ...
+
+
+#################### Define all driver resources ###############################
 
 # The following resources will be driven by our driver.
-# It is legal to create them before the driver "building" itself.
+# It is legal to create them before the driver "world" itself.
 
 
 # Daylight simulation (sensing)...
-rcSimDaylight = NewResource ("building", "simDaylight", rctBool, False)
+rcSimDaylight = NewResource ("world", "simDaylight", rctBool, False)
   # We create an own resource to simulate day or night based on a user input.
   # Real daylight information is also available by the timer driver at
   # '/local/timer/twiLight/day'. To allow to easily switch between simulated
@@ -67,20 +81,45 @@ rcSimDaylight = NewResource ("building", "simDaylight", rctBool, False)
   # which may be setup to point either at the real daylight or the simulated resource.
 
 
+# Bad weather simulation (sensing)...
+rcSimBadWeather = NewResource ("world", "simBadWeather", rctBool, False)
+  # Resource to simulate bad weather based on a user input.
+  # Real weather warning information will be provided by the "weather" driver
+  # in the future.
+
+
 # Motion simulation (sensing)...
-rcMotion = NewResource ("building", "motion", rctBool, False)
+rcMotion = NewResource ("world", "motion", rctBool, False)
 
 
 # Light (acting)...
-rcLight = NewResource ("building", "light", rctBool, True)
+rcLight = NewResource ("world", "light", rctBool, True)
 
 
 # Door lock (sensing)...
-rcLock = NewResource ("building", "lock", rctBool, False)
+rcLock = NewResource ("world", "lock", rctBool, False)
 
 
-# User input (internal).
-rcInternalInput = NewResource ("building", "internal/input", rctString, False)
+# Window sensors (sensing) ...
+#   Note: 'lid' stands for "local ID" (LID), which is the part of the Unified
+#         Resource Identifier (URI) that follows the driver name. The LID can be
+#         queried any time from a resource by the CResource::Lid() method and
+#         is used in this driver to identify window sensors and actuators.
+rcWindows = {}
+for lid in [ "dining-window-l", "dining-window-r", "kitchen-window",
+             "bedroom-window", "bath-window", "garage-gate" ]:
+  rcWindows[lid] = NewResource ("world", lid, rctWindowState, False)
+
+
+# Actuators for shades and the roof window (acting) ...
+rcActuators = {}
+for lid in [ "living-window", "living-shades", "dining-shades", "kitchen-shades",
+             "bedroom-shades", "bath-shades" ]:
+  rcActuators[lid] = NewResource ("world", lid, rctPercent, True)
+
+
+# User input (internal, sensing) ...
+rcInternalInput = NewResource ("world", "internal/input", rctString, False)
   # This is an internal resource representing a keyboard driver.
   # We make use of the capabilities of the Resources library to deal with the
   # standard (blocking) console input. A background thread queries the
@@ -90,7 +129,56 @@ rcInternalInput = NewResource ("building", "internal/input", rctString, False)
 
 
 
-##### Main driver function and acting resource(s) ...
+#################### Simulation of actuators (rcActuators) #####################
+
+# The following variables and functions help to simulate actuators (shades,
+# roof window) in a natural way. If a new value is driven, the actuator moves
+# to the target postion in steps of 5% each 200 milliseconds (approx.).
+# The dictionary '_actPosToValue' contains the to-values. Actuators not
+# contained there have reached their current target position.
+
+
+_actPos = {}            # current position for all actuators
+_actPosToValue = {}     # to-value of actuators that need to move
+
+
+# Reset all positions to "0" ...
+for name in rcActuators.keys (): _actPos[name] = 0
+
+
+# Update all actuators ...
+def ActuatorsUpdate ():
+  global _actPos
+  global _actPosToValue
+
+  # Update positions ...
+  for lid, toValue in list (_actPosToValue.items ()):
+    pos = _actPos[lid]
+    if toValue == None: toValue = pos
+    if pos > toValue: _actPos[lid] = max (pos - 5, toValue)
+    if pos < toValue: _actPos[lid] = min (pos + 5, toValue)
+    if pos == toValue: del _actPosToValue[lid]
+    # Report value and state ...
+    rcActuators[lid].ReportValue (pos, (rcsBusy, rcsValid) [pos == toValue])
+      # reported state is 'rcsValid' if to-position is reached, else 'rcsBusy
+
+  # Set timer if necessary ...
+  if len(_actPosToValue) > 0:
+    RunAt (ActuatorsUpdate, 200);   # let this method be called again in 200ms
+
+
+# Drive a new value to one actuator identified by the local ID (LID) ...
+def ActuatorsDrive (lid, value):
+  global _actPosToValue
+  _actPosToValue[lid] = value       # put target position into dictionary
+  ActuatorsUpdate ()
+
+
+
+
+
+
+#################### Main driver function and acting resource(s) ###############
 
 # This creates the driver and registers all its previously declared resources.
 #
@@ -98,26 +186,33 @@ rcInternalInput = NewResource ("building", "internal/input", rctString, False)
 # resource needs to be changed. It is responsible for driving new values to
 # acting resources ('rcLight' in this case).
 #
-# Value reporting for sensing resources is in herently done asynchronously, e.g
+# Value reporting for sensing resources is inherently done asynchronously, e.g.
 # by a background thread or an event-triggered function.
 
 
-@newDriver ("building")
+@newDriver ("world", rcsNoReport)
 def DriverFunc (rc, vs):
-  if rc == rcLight:
+  if rc == rcLight:                 # Drive the front door light ...
     # Here, we would have to physically switch on or off the light, depending on 'vs'.
     # Since we only simulate the light, there is no real code here.
-    pass
+    rc.ReportValue (vs)             # Report the new valid value (indicating success)
+
+  elif rc.Lid () in rcActuators:    # Drive the actuator of the given LID ...
+    ActuatorsDrive (rc.Lid (), vs.Value ())
 
 
-# Set default for the light...
-rcLight.SetDefault (False);
+# Set default request for the light...
+rcLight.SetDefault (False)
+
+
+# Report initial actuator states...
+for lid, rc in rcActuators.items (): rc.ReportValue (_actPos[lid])
 
 
 
 
 
-##### Sensing resource: rcInternalInput ...
+######################### Keyboard input (rcInternalInput) #####################
 
 # The showhouse demo is implemented as a console program. We need some
 # asynchronous keyboard input which is neither blocking the main programm
@@ -160,31 +255,37 @@ inputThread.start ()
 
 
 
-##### Sensing resources: rcLock, rcMotion, rcSimDaylight ...
+##### Sensing resources: rcLock, rcMotion, rcSimDaylight, rcSimBadWeather ######
 
-# These resources are handled by an event-triggered function triggered by the
-# keyboard events delivered by the 'rcInternalInput' resource.
+# These resources are handled by an event-triggered function that processes
+# all keyboard events delivered by the 'rcInternalInput' resource.
 
 
 # Internal variables ...
 _valSimDaylight = True
+_valSimBadWeather = False
 _valLock = False
+_valWindowState = 0
 
 
 # Report initial values ...
 rcSimDaylight.ReportValue (_valSimDaylight)
+rcSimBadWeather.ReportValue (_valSimBadWeather)
 rcMotion.ReportValue (False)
 rcLock.ReportValue (_valLock)
+for rc in rcWindows.values (): rc.ReportValue (rcvWindowClosed)
 
 
 # User input handler...
 @onEvent (rcInternalInput)
 def OnInternalInput (ev, rc, vs):
   global _valSimDaylight
+  global _valSimBadWeather
   global _valLock
+  global _valWindowState
 
   if ev != rceValueStateChanged: return
-  c = vs.ValidValue ("?")
+  c = vs.ValidValue ("?")     # get current value ("?" = default, will be ignored)
 
   if c == 'q':    # Quit...
     Home2lStop ()
@@ -193,31 +294,63 @@ def OnInternalInput (ev, rc, vs):
     _valSimDaylight = not _valSimDaylight
     rcSimDaylight.ReportValue (_valSimDaylight)
 
+  if c == 'r':    # Simulate rainy/good weather...
+    _valSimBadWeather = not _valSimBadWeather
+    rcSimBadWeather.ReportValue (_valSimBadWeather)
+
   if c == 'm':    # Simulate motion...
     rcMotion.ReportValue (True)
     # Let the motion be over in 500 ms...
     @at (500)
     def MotionOver (): rcMotion.ReportValue (False)
 
-  if c == 'l':    # Simulate door (un-)locking...
+  if c == 'l':    # Simulate door (un-)locking ...
     _valLock = not _valLock
     rcLock.ReportValue (_valLock)
 
+  if c == 'w':    # Simulate random window opening/closing ...
+    winStates = [
+        {},       # all closed
+        { "bedroom-window"  : rcvWindowOpen,
+          "bath-window"     : rcvWindowOpen },
+        { "dining-window-l" : rcvWindowOpen,
+          "dining-window-r" : rcvWindowOpen,
+          "bath-window"     : rcvWindowTilted,
+          "kitchen-window"  : rcvWindowOpen },
+        { "dining-window-l" : rcvWindowTilted,
+          "dining-window-r" : rcvWindowOpen,
+          "bath-window"     : rcvWindowTilted,
+          "garage-gate"     : rcvWindowOpen   }
+      ]
+    _valWindowState = (_valWindowState + 1) % len (winStates)
+    stateDict = winStates[_valWindowState]
+    for lid, rc in rcWindows.items ():
+      if lid in stateDict:
+        rc.ReportValue (stateDict[lid])
+      else: rc.ReportValue (rcvWindowClosed)
 
 
 
 
-############################## Visualization ###################################
 
-# The visualization is implemented just like a normal autmation rule. It works
+################################################################################
+#                                                                              #
+#                              Visualization                                   #
+#                                                                              #
+################################################################################
+
+# The visualization is implemented just like a normal automation rule. It works
 # by observing all resources that can be visualized (sensing and acting, internal
 # and external). This way, we do not have to take care of regular updates
-# manually - Home2L does this for us. Also, there are mo dependences from other
+# manually - Home2L does this for us. Also, there are no dependences from other
 # code towards the visualization. The visualization can arbitrarily be removed,
 # replaced or left here in parallel with an eventual replacement.
 
 
-@onUpdate (rcDaylight, rcMotion, rcLight, rcLock)
+rcKitchenShades = rcActuators["kitchen-shades"]
+
+
+@onUpdate (rcDaylight, rcWeatherWarning, rcMotion, rcLight, rcLock, rcKitchenShades)
 def UiDraw ():
 
   # Predefine ASCII art...
@@ -233,18 +366,30 @@ def UiDraw ():
     "      | ^^^^  |  |     |         ",
     "--------------####---------------" ]
 
-  # Draw sun or moon ...
-  vs = rcDaylight.ValueState ()
-  if vs.IsValid ():   # neither sun nor moon if day time is unknown
-    if vs.Value() == True:
-      img[0] = img[0][:26] + "  \ /  "
-      img[1] = img[1][:26] + "-- O --"
-      img[2] = img[2][:26] + "  / \  "
+  # Draw outside condition ...
+  if not rcWeatherWarning.ValidValue (False):
+    # Weather is good: Draw sun or moon, depending on day time ...
+    vs = rcDaylight.ValueState ()
+    if vs.IsValid ():   # neither sun nor moon if day time is unknown
+      if vs.Value() == True:
+        img[0] = img[0][:26] + "  \ /  "
+        img[1] = img[1][:26] + "-- O --"
+        img[2] = img[2][:26] + "  / \  "
+      else:
+        img[0] = img[0][:27] +    ".    ."
+        img[1] = img[1][:24] + ".     .  "
+        img[2] = img[2][:24] + "     ) . "
+        img[3] = img[3][:24] + "    .    "
+  else:
+    # Rainy weather ...
+    img[0] = img[0][:26]   + "  / / /"
+    img[1] = img[1][:26]   + " /   / "
+    if rcDaylight.ValidValue (True):
+      img[2] = img[2][:26] + "  / / /"
     else:
-      img[0] = img[0][:27] +    ".    ."
-      img[1] = img[1][:24] + ".     .  "
-      img[2] = img[2][:24] + "     ) . "
-      img[3] = img[3][:24] + "    .    "
+      img[2] = img[2][:24] + ")   / / /"
+    img[3] = img[3][:26]   + " / / / "
+    img[4] = img[4][:26]   + "/ /    "
 
   # Draw person in motion...
   val = rcMotion.ValidValue (False);
@@ -260,16 +405,25 @@ def UiDraw ():
   if rcLock.ValidValue (False) == True:
     img[7] = img[7][:14] + "====" + img[7][18:]
 
+  # Draw kitchen shades...
+  val = rcKitchenShades.ValidValue (0)
+  if val >= 25: img[6] = img[6][:9] + "==" + img[6][11:]
+  if val >= 75: img[7] = img[7][:9] + "==" + img[7][11:]
+
   # Re-draw the screen...
   print ("\033[2J\033[H")
   for s in img: print (s)
-  print ("\n(D)aylight (M)otion (L)ock (Q)uit")
+  print ("\n(M)otion  (L)ock  (W)indows\n(D)aytime (R)ainy weather (Q)uit")
 
 
 
 
 
-#################### Run main loop & finish ####################################
+################################################################################
+#                                                                              #
+#                        Run main loop & finish                                #
+#                                                                              #
+################################################################################
 
 
 # Main event loop ...

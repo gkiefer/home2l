@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,8 +46,8 @@ include $(HOME2L_SRC)/resources/Resources.mk
 
 # Generic C/C++ flags ...
 #~ SANITIZE := -fsanitize=address   #-fsanitize=thread # 'thread' requires libtsan, which is only available for amd64 (Debian Jessie)
-CFLAGS += $(SANITIZE) $(CFLAGS_ENV) $(CFLAGS_RC)
-LDFLAGS += $(LDFLAGS_RC) -rdynamic $(SANITIZE)
+CFLAGS += $(SANITIZE)
+LDFLAGS += -rdynamic $(SANITIZE)
 
 
 # Common targets...
@@ -65,7 +65,7 @@ include ../external/$(PHONE_LIB)/Debian.mk
 
 DOORMAN := home2l-doorman
 DOORMAN_BIN := $(DIR_OBJ)/$(DOORMAN)
-SRC_DOORMAN := $(SRC_ENV) $(SRC_RC) ../common/phone.C ../common/phone-$(PHONE_LIB).C $(DOORMAN).C
+SRC_DOORMAN := $(SRC) ../common/phone.C ../common/phone-$(PHONE_LIB).C $(DOORMAN).C
 OBJ_DOORMAN := $(SRC_DOORMAN:%.C=$(DIR_OBJ)/%.o)
 
 

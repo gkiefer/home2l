@@ -1,0 +1,193 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2020 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This script starts the demo setup and is used a) for the tutorial and
+# b) for testing. The script expects HOME2L_ROOT to point to a fresh installation
+# directory with
+#   a) the original (= tutorial) files installed in $HOME2L_ROOT/etc ,
+#   b) the user home2l established,
+#   c) background processes (etc/init.d/home2l) disabled.
+#
+# It runs:
+#   1. 'home2l-daemon' as a daemon in the background
+#   2. 'home2l-wallclock' in the background
+#   3. 'home2l-showhouse' in the foreground
+#   4. After quitting the 'home2l-showhouse', a shell prompt appears to allow
+#      the user to run own commands.
+
+
+
+
+
+######################### Helper functions #####################################
+
+
+usage () {
+  echo "Usage: ${0##*/} run|start|stop|restart"
+  echo "  run:      Run the demo (entry point for the Docker demo image)"
+  echo "  start:    (Re-)start the Home2L daemon"
+  echo "  stop:     Stop the Home2L daemon"
+  echo "  restart:  Restart the Home2L daemon"
+  echo "  status:   Show the Home2L daemon status"
+}
+
+
+error () {
+  echo "$1"
+  echo
+  usage
+  exit
+}
+
+
+
+
+
+######################### Start/Stop/Restart ###################################
+
+
+cmd_start () {
+  echo -n "Starting home2l-daemon: "
+  if pidof -q home2l-daemon; then
+    echo "(already running)"
+  else
+    if home2l daemon; then
+      echo "OK"
+    else
+      echo "Failed!"
+    fi
+  fi
+}
+
+
+cmd_stop () {
+  OK=0
+  echo -n "Stopping home2l-daemon: "
+  killall -q home2l-daemon && OK=1
+  if [[ "$OK" == "1" ]]; then
+    echo "OK"
+  else
+    echo "(not running)"
+  fi
+}
+
+
+cmd_restart () {
+  cmd_stop
+  cmd_start
+}
+
+
+cmd_status () {
+  if pidof -q home2l-daemon; then
+    echo "home2l-daemon is running."
+  else
+    echo "home2l-daemon is NOT running."
+  fi
+}
+
+
+
+
+
+############################## Run #############################################
+
+
+cmd_run () {
+
+  # Start the WallClock and check if the UI starts up correctly...
+  LOG=/tmp/home2l-wallclock.log
+  home2l wallclock 2> $LOG & PID=$!
+  while ! grep -q 'INFO: Using SDL renderer' $LOG; do   #
+    if [ ! -d /proc/$PID ]; then
+      echo
+      echo "Failed to start the WallClock UI"
+      echo "--------------------------------"
+      echo
+      echo "Oops - apparently, the WallClock UI did not start up as expected."
+      echo "This is due to some X11 issue. If you are running this from inside"
+      echo "a Docker container, please check the following:"
+      echo
+      echo "  1. You need a host running an X server (Xorg), and probably Linux."
+      echo
+      echo "  2. On the host, you must allow the container to access the display:"
+      echo "     $ xhost +local:"
+      echo
+      echo "  3. The container must be run on the same phyiscal machine as the"
+      echo "     Xorg server (other cases have not been tested yet)."
+      echo
+      echo "  4. A proper command line to run the demo is given in the tutorial"
+      echo "     chapter of the Home2L Book."
+      echo
+      echo "If the problem persists, you may do an internet search for"
+      echo "'GUI applications inside Docker' to find alternative ways to run the"
+      echo "X11 application inside the container."
+      echo
+      echo "A detailed error message can be found in $LOG ."
+      echo
+      exit 3
+    fi
+  done
+
+  # Run the daemon ...
+  cmd_restart
+
+  # Run the ShowHouse ...
+  home2l showhouse
+
+  # Run the interactive shell ...
+  #   ... and leave some useful commands in the history first ...
+  cat > ~/.bash_history << EOF
+home2l wallclock 2> $LOG &
+home2l demo restart
+home2l showhouse
+EOF
+  echo
+  exec /bin/bash
+}
+
+
+
+
+
+############################## Main ############################################
+
+
+case $1 in
+  run)
+    cmd_run
+    ;;
+  start)
+    cmd_start
+    ;;
+  stop)
+    cmd_stop
+    ;;
+  restart)
+    cmd_restart
+    ;;
+  status)
+    cmd_status
+    ;;
+  *)
+    usage
+    exit 3
+    ;;
+esac

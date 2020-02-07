@@ -1,0 +1,21 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP Conn_Home2lBus
+D Home2l Brownie Bus connector
+K connector
+F ~
+$ENDCMP
+#
+$CMP Conn_Shades
+D Connector for Home2l shades
+K connector
+F ~
+$ENDCMP
+#
+$CMP Conn_TwoShades
+D Connector for Home2l dual shades
+K connector
+F ~
+$ENDCMP
+#
+#End Doc Library

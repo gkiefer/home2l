@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,11 @@
 WITH_ANDROID ?= 1
 	# Build Android APK (requires Android SDK and NDK to build)
 
-
 # IP phone backend (if WITH_PHONE == 1) ...
 PHONE_LIB := linphone
 #~ PHONE_LIB := pjsip
+
+WITH_GSTREAMER ?= 1
 
 
 
@@ -51,9 +52,8 @@ include $(HOME2L_SRC)/resources/Resources.mk
 
 # Generic C/C++ flags...
 #~ SANITIZE := -fsanitize=address   #-fsanitize=thread # 'thread' requires libtsan, which is only available for amd64 (Debian Jessie)
-CFLAGS += $(SANITIZE) -I. $(CFLAGS_ENV) $(CFLAGS_RC)
-LDFLAGS += $(LDFLAGS_RC) -rdynamic $(SANITIZE)
-SRC := $(SRC_ENV) $(SRC_RC)
+CFLAGS += $(SANITIZE)
+LDFLAGS += -rdynamic $(SANITIZE)
 
 
 # SDL2 ...
@@ -90,7 +90,7 @@ endif
 
 WALLCLOCK := home2l-wallclock
 WALLCLOCK_BIN := $(DIR_OBJ)/$(WALLCLOCK)
-SRC := $(SRC) ui_base.C ui_screen.C ui_widgets.C alarmclock.C system.C apps.C $(WALLCLOCK).C
+SRC := $(SRC) ui_base.C ui_screen.C ui_widgets.C system.C apps.C alarmclock.C floorplan.C $(WALLCLOCK).C
 OBJ := $(SRC:%.C=$(DIR_OBJ)/%.o)
 #~ OBJ := $(SRC:%.C=%-$(ARCH).o)
 
@@ -117,7 +117,8 @@ run: $(WALLCLOCK_BIN)
 
 # Icons...
 icons.build:
-	@bash generate-icons.sh
+	@echo "Generating icons..."; \
+	./generate-icons.sh
 
 
 
@@ -163,19 +164,44 @@ print-config:
 	@echo -I$(APK_BUILD)
 
 
-.PHONY: apk-javaconfig apk-ndk apk apk-ndk-clean apk-clean
+.PHONY: apk-ndk apk-javaconfig apk apk-ndk-clean apk-clean
 apk-ndk: $(APK_NDK_SO)
 apk-javaconfig: $(APK_BUILD)/src/org/home2l/app/Home2lConfig.java
 apk: $(APK)
 
 
-# Note: Target $(APK_NDK_SO) creates the build directory, too. All other targets
-#       requiring $(APK_BUILD) must depend on it.
-
-$(APK_NDK_SO): $(SRC)
+# Note: Target $(APK_BUILD) collects all assets, but its depencies are incomplete.
+#       On changes of the assets (icons, sounds, fonts, localization),
+#       'make apk-clean' must be called manually before.
+#
+$(APK_BUILD): $(DEP_CONFIG) icons.build h2l-sysinfo.sh
 	@echo "Creating/updating Android build dir $(APK_BUILD)..."
 	@mkdir -p $(APK_BUILD)
 	@cp -au android/* $(APK_BUILD)
+	@#
+	@rm -fr $(APK_BUILD)/assets
+	@mkdir -p $(APK_BUILD)/assets
+	@#
+	@mkdir -p $(APK_BUILD)/assets/share/icons
+	@cp -a icons.build/*.bmp $(APK_BUILD)/assets/share/icons
+	@mkdir -p $(APK_BUILD)/assets/share/fonts
+	@cp -a fonts/*.ttf $(APK_BUILD)/assets/share/fonts
+	@mkdir -p $(APK_BUILD)/assets/share/sounds
+	@cp -a sounds/*.wav $(APK_BUILD)/assets/share/sounds
+	@mkdir -p $(APK_BUILD)/assets/bin
+	@cp -a h2l-sysinfo-android.sh $(APK_BUILD)/assets/bin/h2l-sysinfo.sh
+	@#
+	@$(MAKE) -C ../locales HOME2L_INSTALL=$(APK_BUILD)/assets install-indep
+	@#
+	@$(MAKE) -C ../tools etc/floorplan.fpo
+	@cp -a ../tools/etc $(APK_BUILD)/assets
+	@#
+	@(cd $(APK_BUILD)/assets; find * -type f > FILES)
+	@#
+	@echo "Home2l "$(BUILD_VERSION)" "$(BUILD_DATE) > $(APK_BUILD)/assets/VERSION
+
+
+$(APK_NDK_SO): $(SRC) $(APK_BUILD)
 	@$(MAKE) ARCH=android config
 	ndk-build $(APK_JOBS) -s $(APK_NDK_FLAGS)
 
@@ -202,6 +228,7 @@ $(APK_JAVA_CONFIG): $(APK_NDK_SO)
 
 $(APK): $(APK_NDK_SO) $(APK_JAVA_SRC) $(APK_JAVA_CONFIG)
 	cp -vau ../external/linphone/usr/android/lib/liblinphone.jar $(APK_BUILD)/libs && \
+	cp -vau android/src $(APK_BUILD) && \
 	cd $(APK_BUILD) && ant -silent debug
 
 
@@ -212,9 +239,6 @@ apk-ndk-clean:
 apk-clean:
 	rm -fr $(APK_BUILD)
 
-#	rm -fr android/bin android/gen android/libs android/obj android/src/org/home2l/app/Home2lConfig.java # obsolete
-
-
 
 
 
@@ -224,20 +248,40 @@ apk-clean:
 # Debugging on '001' or any other device...
 #   This section is used by the developer as a scratch area for various debugging tasks.
 
-
 ID001=$(shell grep 001 /opt/home2l/etc/androidb.conf | tr -s ' ' '\t' | cut -f3)
 HOST001=inf001wlan  # change this to debug another influence device
 
 
-001-install: 001-install-blob 001-install-apk
+001-install: 001-install-apk 001-install-etc
 
 001-install-blob:
 	home2l rollout -y $(HOST001) -b -e
 
+001-install-etc:
+	@HOME2L_ROOT=/data/data/org.home2l.app/files/home2l; \
+	HOME2L_UID=`adb -s $(ID001) shell stat -t $$HOME2L_ROOT/VERSION | awk '{print $$5}'`; \
+	#echo HOME2L_ROOT=$$HOME2L_ROOT HOME2L_UID=$$HOME2L_UID; \
+	adb -s $(ID001) root; \
+	adb -s $(ID001) shell su $$HOME2L_UID mkdir -p $$HOME2L_ROOT/.update; \
+	adb -s $(ID001) shell su $$HOME2L_UID chmod 777 $$HOME2L_ROOT/.update; \
+	adb -s $(ID001) shell rm -fr $$HOME2L_ROOT/.update/etc; \
+	adb -s $(ID001) push `realpath /opt/home2l/etc` $$HOME2L_ROOT/.update; \
+	adb -s $(ID001) shell su $$HOME2L_UID rm -fr $$HOME2L_ROOT/etc; \
+	adb -s $(ID001) shell su $$HOME2L_UID cp -r $$HOME2L_ROOT/.update/etc $$HOME2L_ROOT/ | grep -v 'etc/gpio\.'; \
+	adb -s $(ID001) shell rm -fr $$HOME2L_ROOT/.update/etc; \
+	adb -s $(ID001) shell su $$HOME2L_UID rmdir $$HOME2L_ROOT/.update; \
+	adb -s $(ID001) shell su $$HOME2L_UID chmod -R 700 $$HOME2L_ROOT/etc; \
+	adb -s $(ID001) unroot || true
+
+#~ 	HOME2L_UID=`adb -s $(ID001) shell su $$HOME2L_UID ls -l $$HOME2L_ROOT/VERSION | awk '{print $$3}'`; \
+#~ 	adb -s $(ID001) shell su chown -R $$HOME2L_UID.$$HOME2L_UID $$HOME2L_ROOT/etc; \
+
+
+#	home2l rollout -y $(HOST001) -b -e
+
 001-install-apk:
 	adb -s $(ID001) install -r $(APK)
 	adb -s $(ID001) logcat -c
-
 
 001-logcat:
 	adb -s $(ID001) logcat -v time home2l:D SDL:V *:E *:W *:I
@@ -334,9 +378,9 @@ endif
 
 
 install-indep:
+	install -Dp -m 755 -t $(HOME2L_INSTALL)/bin home2l-fpc; \
 	install -Dp -m 755 -t $(HOME2L_INSTALL)/bin h2l-sysinfo.sh; \
 	if [[ "$(WITH_ANDROID)" == "1" ]]; then \
-	  install -Dp -m 755 -t $(HOME2L_INSTALL)/bin android-init.sh; \
 	  install -Dp -m 644 $(APK) $(HOME2L_INSTALL)/install/Home2lApp.apk; \
 	fi; \
 	install -Dp -m 644 -t $(HOME2L_INSTALL)/share/icons icons.build/*.bmp; \

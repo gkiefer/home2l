@@ -1,7 +1,0 @@
-<map id="CDictRaw" name="CDictRaw">
-<area shape="rect" id="node2" href="$classCDictFast.html" title="Fast dictionary. " alt="" coords="5,80,121,107"/>
-<area shape="rect" id="node3" href="$classCDictRef.html" title="Dictionary of references. " alt="" coords="145,80,256,107"/>
-<area shape="rect" id="node5" href="$classCDictRef.html" title="CDictRef\&lt; CResource \&gt;" alt="" coords="280,80,452,107"/>
-<area shape="rect" id="node6" href="$classCKeySet.html" title="Set of strings (keys) " alt="" coords="477,80,554,107"/>
-<area shape="rect" id="node4" href="$classCDict.html" title="Flexible dictionary. " alt="" coords="156,155,245,181"/>
-</map>

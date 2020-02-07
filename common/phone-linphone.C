@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -265,7 +265,7 @@ static void ShowRegistrationState (LinphoneCore *lpCore) {
   LinphoneProxyConfig *lpProxyConfig = linphone_core_get_default_proxy_config (lpCore);
 
   DEBUGF (1, ("[Linphone] linphone_core_get_identity: %s", linphone_core_get_identity (lpCore)));
-  DEBUGF (1, ("[Linphone] linphone registration state: %s", linphone_registration_state_to_string (linphone_proxy_config_get_state (lpProxyConfig))));
+  DEBUGF (1, ("[Linphone] linphone registration state: %s", lpProxyConfig ? linphone_registration_state_to_string (linphone_proxy_config_get_state (lpProxyConfig)) : "(none)"));
 }
 
 

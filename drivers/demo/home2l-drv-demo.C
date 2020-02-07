@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -77,8 +77,8 @@ HOME2L_DRIVER(demo) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcVa
       rcTemp->SetDefault (37.2f);
         /* [RC:demo] Example resource of type 'temp'
          */
-      rcWindow = RcRegisterResource (drv, "demoWindow", rctWindow, true);
-      rcWindow->SetDefault (rctWindowClosed);
+      rcWindow = RcRegisterResource (drv, "demoWindow", rctWindowState, true);
+      rcWindow->SetDefault (rcvWindowClosed);
         /* [RC:demo] Example resource of type 'window'
          */
       break;

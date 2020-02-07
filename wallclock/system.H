@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,11 @@
 
 
 /** @file
+ *
  * @addtogroup wallclock
  * @{
  *
- * @defgroup wallclock_system System
- * Accessing system-specific functionalities and hardware.
+ * @addtogroup wallclock_system
  *
  * @nosubgrouping
  *
@@ -52,6 +52,12 @@
 /// @name General ...
 /// @{
 
+
+#if ANDROID
+void SystemPreInit ();    ///< Initializes Android Java JNI and must be called before 'EnvInit ()'.
+#else
+static inline void SystemPreInit () {}
+#endif
 
 void SystemInit ();
 void SystemDone ();
@@ -96,7 +102,7 @@ void SystemDone ();
  */
 
 
-/// System mode
+/// @brief System mode
 enum ESystemMode {
   smNone = -1,          ///< Uninitialized; Value must not be used after initialization.
   smBackground = 0,     ///< Application is in background (e.g. other application in focus).
@@ -115,18 +121,18 @@ static inline void SystemWakeup () { SystemWakeupActive (); }   ///< Unspecific 
 
 
 void SystemActiveLock (const char *reqName);
-  ///< Lock the device in active mode, e.g. during a phone call.
+  ///< @brief Lock the device in active mode, e.g. during a phone call.
   /// @param reqName is the ID of the request as visible in the resource(s).
 void SystemActiveUnlock (const char *reqName);
-  ///< Remove the specified active lock.
+  ///< @brief Remove the specified active lock.
   /// @param reqName is the ID of the request as previously passed to SystemActiveLock().
 
 
 void SystemStandbyLock (const char *reqName);
-  ///< Lock the device in standby mode to prevent the screen to be switched off completely, e.g. during alarm clock wakeup.
+  ///< @brief Lock the device in standby mode to prevent the screen to be switched off completely, e.g. during alarm clock wakeup.
   /// @param reqName is the ID of the request as visible in the resource(s).
 void SystemStandbyUnlock (const char *reqName);
-  ///< Remove the specified standby lock.
+  ///< @brief Remove the specified standby lock.
   /// @param reqName is the ID of the request as previously passed to SystemActiveLock().
 
 
@@ -144,15 +150,15 @@ void SystemStandbyUnlock (const char *reqName);
 
 
 void SystemGoBackground (const char *appStr = NULL);
-  ///< Move the *WallClock* (Android) app into the background.
+  ///< @brief Move the *WallClock* (Android) app into the background.
   /// @param appStr is the other Android app to be launched. By default, the home screen is activated.
 void SystemGoForeground ();
-  ///< Move the *WallClock* (Android) app into the foreground again.
+  ///< @brief Move the *WallClock* (Android) app into the foreground again.
 static inline void SystemLaunchApp (const char *appStr) { SystemGoBackground (appStr); }
-  ///< Launch an (Android) app ...
+  ///< @brief Launch an (Android) app.
 
 void SystemReportUiVisibility (bool foreNotBack);
-  ///< Report background/foreground state from UI system (for 'ui_base.C').
+  ///< @brief Report background/foreground state from UI system (for 'ui_base.C').
 
 
 /// @}
@@ -176,12 +182,15 @@ void SystemReportUiVisibility (bool foreNotBack);
 /// @{
 
 
-class CResource *SystemGetMuteRc ();      ///< Get the "mute" resource.
-
-void SystemMute (const char *reqName);    ///< Mute.
-void SystemUnmute (const char *reqName);  ///< Unmute.
-  ///< @param reqName is the name of the request as visible in the resource(s).
-bool SystemIsMuted ();                    ///< Query the mute state in a polling fashion.
+class CResource *SystemGetMuteRc ();
+  ///< @brief Get the "mute" resource.
+void SystemMute (const char *reqName);
+  ///< @brief Mute.
+void SystemUnmute (const char *reqName);
+  ///< @brief Unmute.
+  /// @param reqName is the name of the request as visible in the resource(s).
+bool SystemIsMuted ();
+  ///< @brief Query the mute state in a polling fashion.
 
 
 /// @}
@@ -220,18 +229,18 @@ void SystemSetAudioPhone ();
 
 
 class CResource *SystemGetBluetoothRc ();
-  ///< Get readable/writable resource to indicate if bluetooth is generally on.
+  ///< @brief Get readable/writable resource to indicate if bluetooth is generally on.
 class CResource *SystemGetBluetoothAudioRc ();
-  ///< Get read-only resource to indicate if BT audio (output) is available.
+  ///< @brief Get read-only resource to indicate if BT audio (output) is available.
 
 bool SystemBluetoothGetState (bool *retBusy = NULL, bool *retAudio = NULL);
-  ///< Return 'true' iff BT is currently on or switching on.
+  ///< @brief Return 'true' iff BT is currently on or switching on.
   /// @param *retBusy indicates whether BT is currently switching state.
   /// @param *retAudio is true, iff an audio device is coupled ("a2dp" or "headset" profile).
 void SystemBluetoothSet (bool enable);
-  ///< Generally enable or disable Bluetooth.
+  ///< @brief Generally enable or disable Bluetooth.
 static inline void SystemBluetoothToggle () { SystemBluetoothSet (!SystemBluetoothGetState ()); }
-  ///< Toggle the Bluetooth enable status.
+  ///< @brief Toggle the Bluetooth enable status.
 
 
 /// @}

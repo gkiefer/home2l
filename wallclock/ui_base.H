@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,12 +24,13 @@
 
 
 /** @file
+ *
  * @defgroup ui UI Toolkit
- * Lightweight UI toolkit based on *SDL2*.
+ * @brief Lightweight UI toolkit based on *SDL2*.
  * @{
  *
  * @defgroup ui_base Base
- * Basic types and functionalities.
+ * @brief Basic types and functionalities.
  * @nosubgrouping
  * @{
  */
@@ -121,17 +122,17 @@ void UiIterate (bool noWait = false);
    * or b) some event handler calls 'CScreen::Run' for a new screen.
    */
 static inline void UiIterateNoWait () { UiIterate (true); }
-  ///< Iterate the application's main event loop; Does not sleep, but returns
+  ///< @brief Iterate the application's main event loop; Does not sleep, but returns
   /// immediately ("yield"-functionality for longer running processes in the UI thread).
 
 
-void UiQuit ();       ///< Quit the application
-bool UiIsClosed ();   ///< Is the application quitting?
+void UiQuit ();       ///< @brief Quit the application
+bool UiIsClosed ();   ///< @brief Is the application quitting?
 
 void UiPushUserEvent (EUserEvent code, void *data1 = NULL, void *data2 = NULL);
 
 static inline void MainThreadCallback (void (*func) (void *), void *data = NULL) { UiPushUserEvent (evMainThreadCallback, (void *) func, data); }
-  ///< Request function 'func' to be called by main thread at next occasion
+  ///< @brief Request function 'func' to be called by main thread at next occasion
 
 
 /// @}
@@ -144,6 +145,7 @@ static inline void MainThreadCallback (void (*func) (void *), void *data = NULL)
 
 
 /// @name SDL audio ...
+///
 /// Audio playing functionality.
 /// The following functions are not thread-safe and must be called from the main thread,
 /// which is the one executing timers.
@@ -155,15 +157,16 @@ static inline void MainThreadCallback (void (*func) (void *), void *data = NULL)
 
 
 void AudioStart (const char *fileName, int repetitions = 1, TTicks repetitionGap = 0);
-  ///< Start playing audio.
+  ///< @brief Start playing audio.
+  ///
   /// The contents of the audio file are enqueued in a non-blocking way for the given number
   /// of repetitions and a playback gap of the given time (if applicable).
   /// If 'repetitions == AUDIO_FOREVER', the audio is repeated forever or until stopped.
 void AudioStop ();
-  ///< Stop playing audio immediately.
+  ///< @brief Stop playing audio immediately.
 
 bool AudioIsPlaying ();
-  ///< Query if audio is still playing.
+  ///< @brief Query if audio is still playing.
   /// If 'false' is returned, the audio device is surely in a stopped state.
 
 
@@ -181,7 +184,8 @@ bool AudioIsPlaying ();
 
 
 #define SELECTED_SDL_PIXELFORMAT SDL_PIXELFORMAT_ARGB8888
-  ///< Selected (SDL) pixel format.
+  ///< @brief Selected (SDL) pixel format.
+  ///
   /// We define a selected pixel format, on which all higher-level routines can rely on for
   /// efficient direct pixel manipulations. All functions in this module (i.e. 'Image*' and 'Font*')
   /// always return surfaces in the correct format. Textures are always created with that format,
@@ -254,11 +258,16 @@ static inline SDL_Color ToSDL_Color (TColor color) {
 #endif
 
 
-TColor ColorSum (TColor col1, TColor col2);   ///< Add two colors (with saturation).
-TColor ColorBrighter (TColor color, int d);   ///< Increase all components by `d` with saturation; `d` may be negative.
+TColor ColorSum (TColor col1, TColor col2);
+  ///< @brief Add two colors (with saturation).
+TColor ColorBrighter (TColor color, int d);
+  ///< @brief Increase all color components by `d` with saturation; `d` may be negative.
 static inline TColor ColorDarker (TColor color, int d) { return ColorBrighter (color, -d); }
-TColor ColorScale (TColor color, int factor); ///< Multiply all components with a factor. 'factor' is a fixpoint number with 8 fractional bits (1.0 == 0x100).
-TColor ColorBlend (TColor color0, TColor color1, int weight1); ///< Blend two colors; 'factor' is a fixpoint-8 number.
+  ///< @brief Decreas all color components by `d` with saturation; `d` may be negative.
+TColor ColorScale (TColor color, int factor);
+  ///< @brief Multiply all components with a factor. 'factor' is a fixpoint number with 8 fractional bits (1.0 == 0x100).
+TColor ColorBlend (TColor color0, TColor color1, int weight1);
+  ///< @brief Blend two colors; 'factor' is a fixpoint-8 number.
 
 
 /// @}
@@ -333,7 +342,8 @@ static inline SDL_Rect Rect (SDL_Texture *tex) {
 }
 
 
-static inline SDL_Rect RectScreen () { return Rect (0, 0, UI_RES_X, UI_RES_Y); }  ///< Rectangle representing the whole UI screen.
+static inline SDL_Rect RectScreen () { return Rect (0, 0, UI_RES_X, UI_RES_Y); }
+  ///< @brief Rectangle representing the whole UI screen.
 
 
 static inline void RectMove (SDL_Rect *rect, int dx, int dy) {
@@ -351,7 +361,7 @@ static inline void RectGrow (SDL_Rect *rect, int dx, int dy) {
 
 
 void RectAlign (SDL_Rect *rect, SDL_Rect container, int hAlign = -1, int vAlign = -1);
-  ///< Align the rectangle 'rect' with an outer rectangle 'container'.
+  ///< @brief Align the rectangle 'rect' with an outer rectangle 'container'.
   /// @param rect Rectangle to align.
   /// @param container Outer rectangle serving as a reference.
   /// @param hAlign Horizontal alignmnent: -1 = left, 0 = center, +1 = right.
@@ -359,7 +369,7 @@ void RectAlign (SDL_Rect *rect, SDL_Rect container, int hAlign = -1, int vAlign 
 
 
 static inline void RectCenter (SDL_Rect *rect, SDL_Rect container) { RectAlign (rect, container, 0, 0); }
-  ///< Center the rectangle 'rect' with respect to an outer rectangle 'container'.
+  ///< @brief Center the rectangle 'rect' with respect to an outer rectangle 'container'.
 
 
 static inline bool RectContains (SDL_Rect *rect, int x, int y) {
@@ -381,9 +391,20 @@ static inline bool RectContains (SDL_Rect *rect, int x, int y) {
 /// @{
 
 
+#define ORIENT(FLIPH, ROT) (((FLIPH) ? 4 : 0) | ((ROT) & 3))
+  ///< @brief Get orientation identifier based on horizontal flipping and a rotation in 90 degree steps clock-wise.
+#define ORIENT_WITH_FLIPV(FLIPH, ROT) (((FLIPH) ? 0 : 4) | (((ROT) + 2) & 3))
+  ///< @brief Get orientation identifier with implied vertical flipping first.
+
+#define ORIENT_FLIPH(ORI) (((ORI) & 4) ? true : false)
+  ///< @brief Get whether horizontal flipping is included in the orientation.
+#define ORIENT_ROT(ORI) ((ORI) & 3)
+  ///< @brief Get the number of rotations.
+
+
 #if SELECTED_SDL_PIXELFORMAT==SDL_PIXELFORMAT_ARGB8888
 
-static inline SDL_Surface *CreateSurface (int w, int h) { return SDL_CreateRGBSurface (0, w, h, 32, COL_MASK_R, COL_MASK_G, COL_MASK_B, COL_MASK_A); }
+static inline SDL_Surface *CreateSurface (int w, int h) { return SDL_CreateRGBSurfaceWithFormat (0, w, h, 32, SELECTED_SDL_PIXELFORMAT); }
 static inline SDL_Surface *CreateSurface (SDL_Rect r) { return CreateSurface (r.w, r.h); }
 static inline SDL_Surface *CreateSurface (SDL_Rect *r) { return CreateSurface (r->w, r->h); }
 
@@ -399,20 +420,39 @@ static inline void SurfaceFree (SDL_Surface *surf) { SDL_FreeSurface (surf); }
 static inline SDL_Surface *SurfaceDup (SDL_Surface *src) { return SDL_ConvertSurface (src, src->format, 0); }
 
 void SurfaceNormalize (SDL_Surface **pSurf);
-  ///< Normalize pixel format to SELECTED_SDL_PIXELFORMAT.
+  ///< @brief Normalize pixel format to SELECTED_SDL_PIXELFORMAT.
 
 void SurfaceRecolor (SDL_Surface *surf, TColor color);
-  ///< Replaces all RGB values with the passed color while leaving alpha values untouched.
+  ///< @brief Replace all RGB values with the passed color while leaving alpha values untouched.
 SDL_Surface *SurfaceGetOpaqueCopy (SDL_Surface *surf, TColor backColor);
-  ///< Create an opaque copy; caller becomes owner of returned surface.
-void SurfaceMakeTransparentMono (SDL_Surface *surf);
-  ///< Copy the R values to the A channel and make all RGB values white
+  ///< @brief Create an opaque copy; caller becomes owner of returned surface.
+void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel = 0xff);
+  ///< @brief Copy the R values to the A channel and make all RGB values white.
+  ///
+  /// 'opaqueLevel' determines what is "white" here. This will be the final color,
+  /// and all pixels originally brighter than this will be fully opaque.
 
 void SurfaceBlit (SDL_Surface *src, SDL_Rect *srcRect, SDL_Surface *dst, SDL_Rect *dstRect = NULL, int hAlign = 0, int vAlign = 0, SDL_BlendMode blendMode = SDL_BLENDMODE_NONE);
-  ///< Blit a surface; It is allowed to leave 'src == NULL', in which case nothing happens.
+  ///< @brief Blit a surface; It is allowed to leave 'src == NULL', in which case nothing happens.
 static inline void SurfaceFill (SDL_Surface *surf, TColor col) { SDL_FillRect (surf, NULL, ToUint32 (col)); }
 static inline void SurfaceFillRect (SDL_Surface *surf, SDL_Rect r, TColor col) { SDL_FillRect (surf, &r, ToUint32 (col)); }
 static inline void SurfaceFillRect (SDL_Surface *surf, SDL_Rect *r, TColor col) { SDL_FillRect (surf, r, ToUint32 (col)); }
+
+SDL_Surface *SurfaceGetScaledDownCopy (SDL_Surface *surf, int factor, bool preserveThinLines = false);
+  ///< @brief Get a copy of the surface, scaled down by a factor in both dimensions.
+  ///
+  /// The dimensions of the original surface should be multiples of 'factor'.
+  /// 'preserveThinLines == true' performs a gamma-correction on the alpha channel to increase small
+  /// alpha values and may be used to avoid that thin lines get averaged out when scaling down.
+SDL_Surface *SurfaceGetFlippedAndRotatedCopy (SDL_Surface *surf, int orient);
+  ///< @brief Get a copy of the surface, which is eventually flipped and then rotated in 90° steps clockwise
+  /// 'surf' must conform to SELECTED_SDL_PIXELFORMAT (see SurfaceNormalize() ).
+
+SDL_Surface *SurfaceReadBmp (const char *fileName);
+  ///< @brief Read a .bmp file.
+  /// @param fileName may either be an absolute path name or relative to HOME2L_ROOT.
+  ///
+  /// On error, a warning is emitted and NULL is returned.
 
 
 
@@ -424,9 +464,11 @@ static inline void SurfaceFillRect (SDL_Surface *surf, SDL_Rect *r, TColor col) 
 #define NETPBM_SUCCESS -1   ///< State code "success" for CNetpbmReader
 
 
-/// Reader for *Netpbm* image files.
-/// This class allows to read a [*Netpbm*](https://en.wikipedia.org/wiki/Netpbm_format)
-/// image file (type 2 or 3) into an *SDL_Surface* object.
+/** @brief Reader for *Netpbm* image files.
+ *
+ * This class allows to read a [*Netpbm*](https://en.wikipedia.org/wiki/Netpbm_format)
+ * image file (type 2 or 3) into an *SDL_Surface* object.
+ */
 class CNetpbmReader {
   public:
     CNetpbmReader () { surf = NULL; state = NETPBM_IDLE; }
@@ -446,7 +488,8 @@ class CNetpbmReader {
     bool Success () { return state == NETPBM_SUCCESS; }
 
     SDL_Surface *Surface () { return Success () ? surf : NULL; }
-      ///< Return surface on success or NULL in all other cases.
+      ///< @brief Return surface on success or NULL in all other cases.
+      ///
       /// For grey images (type 'P2'), the grey value is mapped to the alpha channel,
       /// whereas the RGB channels contain the color 'WHITE'. The color can be changed
       /// using 'SurfaceRecolor', eventually followed by 'SurfaceGetOpaqueCopy'.
@@ -501,8 +544,9 @@ static inline void TextureRender (SDL_Texture *tex, SDL_Rect *srcRect = NULL, SD
 /// @{
 
 
-SDL_Surface *IconGet (const char *name, TColor color = WHITE, TColor bgColor = TRANSPARENT);
-  ///< Get a reference to an icon from the applications *share/icons/* folder.
+SDL_Surface *IconGet (const char *name, TColor color = WHITE, TColor bgColor = TRANSPARENT, int scaleDown = 1, int orient = 0, bool preserveThinLines = false);
+  ///< @brief Get a reference to an icon from the applications *share/icons/* folder.
+  ///
   /// The name is passed without a file name suffix. The returned reference remains owned by
   /// the library, which may perform some caching if icons are used muliple times.
   ///
@@ -537,14 +581,15 @@ enum EFontStyle {
 
 
 TTF_Font *FontGet (EFontStyle style, int size);
-  ///< Get a reference to a font of a specific style and size.
+  ///< @brief Get a reference to a font of a specific style and size.
 
 SDL_Surface *FontRenderText (TTF_Font *font, const char *text, TColor color);
-  ///< Render a text using 'blended' mode of the *SDL2_ttf* library.
+  ///< @brief Render a text using 'blended' mode of the *SDL2_ttf* library.
   /// The returned surface is a new surface of minimal size and must later be free'd
   /// using SurfaceFree().
 SDL_Surface *FontRenderText (TTF_Font *font, const char *text, TColor color, TColor bgColor);
-  ///< Render a text using 'shaded' mode of the *SDL2_ttf* library.
+  ///< @brief Render a text using 'shaded' mode of the *SDL2_ttf* library.
+  /// This mode is considered faster than 'blended' mode.
   /// The returned surface is a new surface of minimal size and must later be free'd
   /// using SurfaceFree().
 
@@ -600,21 +645,22 @@ class CTextSet {
     ~CTextSet () { Clear (); }
 
     void Clear ();
-      ///< Clear everything.
+      ///< @brief Clear everything.
     void AddLines (const char *text, CTextFormat fmt, bool *retAbbreviated = NULL);
-      ///< Add text with a given format.
+      ///< @brief Add text with a given format.
       /// If the 'maxHeight' parameter is set in 'fmt', the text is automatically abbreviated if it is too long.
       /// The value returned via '*retAbbreviated' indicates whether the text was abbreviated.
     int GetHeight ();
-      ///< Accumulated height in pixels according to all previous AddLines() invocations
+      ///< @brief Accumulated height in pixels according to all previous AddLines() invocations
 
     SDL_Surface *Render (SDL_Surface *dst = NULL, SDL_Rect *dstRect = NULL);
-      ///< Render everything and return a new surface containing the text.
-      /// If 'dst' is NULL, a minimum surrounding surface is created automatically, which needs to be free'd later.
-      /// Otherwise, the text is painted into 'dst', and 'dst' is returned.
-      /// 'dstRect' is the sub-area inside 'dst' into which the text will be placed. Note, that
-      /// 'dst == NULL' and 'dstRect' != NULL' usually does not make sense (would define sub-rectangle
-      /// into surface of unknown size).
+      ///< @brief Render everything and return a new surface containing the text.
+      ///
+      /// If 'dst' is NULL, a suitable surface is created, which needs to be free'd later.
+      /// Its dimensions are set to those of 'dstRect' or, if 'dstRect' is NULL, to a minimum
+      /// area required for the text.
+      /// If 'dst' is not NULL, the text is painted into 'dst', and 'dst' is returned.
+      /// 'dstRect' is (if not NULL) the sub-area inside 'dst' into which the text will be placed.
       /// In any case, text reflow and abbreviation is based on the settings in 'fmt' ('maxWidth', 'maxHeight').
       /// Hence, these values in 'fmt' should not be larger than implied limits passed via 'dst'/'dstRect'.
 
@@ -627,7 +673,7 @@ class CTextSet {
 
 // Easy-to-use function(s)...
 SDL_Surface *TextRender (const char *text, CTextFormat fmt, SDL_Surface *dst = NULL, SDL_Rect *dstRect = NULL, bool *retAbbreviated = NULL);
-  ///< Easy-to-use function to typeset a text with a single format.
+  ///< @brief Easy-to-use function to typeset a text with a single format.
 
 
 /// @}

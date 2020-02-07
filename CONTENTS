@@ -18,11 +18,13 @@ Gundolf Kiefer, 2018-11-21
   home2l-api_python       - Python API
   home2l-api_c            - C/C++ API
   home2l-figs             - Some nice figures (mainly for README.md)
-  home2l-showcase.tar.gz  - Virtual machine for the tutorial
+  home2l-demo-vm.tar.gz   - VirtualBox VM suitable for running the tutorial
+
 
 3. Main Modules
 
   resources/
+  brownies/
   wallclock/
   doorman/
 
@@ -31,14 +33,14 @@ Gundolf Kiefer, 2018-11-21
   locales/    - Translations
 
 
-4. Build System
-
-  Makefile
-  Setup.mk
-
-
-5. Other Source Files
+4. Other Source Files
 
   common/     - Common C source files (base, env, phone, streamer)
   drivers/    - Resource drivers (gpio, weather)
   external/   - Scripts and notes for external dependencies
+
+
+5. Build System
+
+  Makefile
+  Setup.mk

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,8 +30,239 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <sys/types.h>  // for 'readdir' & friends
+#include <sys/stat.h>
+#include <dirent.h>     // for 'readdir' & friends
+#include <pwd.h>
+
+
 
 #include "env.H"
+
+
+
+
+
+// ***************** Basic definitions and functions ***************************
+
+
+size_t Write (int fd, const void *buf, size_t count) {
+  ssize_t n, total;
+
+  total = 0;
+  while (count > 0) {
+    n = write (fd, ((const uint8_t *) buf) + total, count);
+    if (n < 0) return total;    // error
+    total += n;
+    count -= n;
+  }
+  return total;
+}
+
+
+size_t Read (int fd, void *buf, size_t count) {
+  ssize_t n, total;
+
+  total = 0;
+  while (count > 0) {
+    n = read (fd, ((uint8_t *) buf) + total, count);
+    if (n <= 0) {
+      if (n == 0) errno = 0;    // end-of-file => 'errno' has not been set
+      return total;             // error or end-of-file
+    }
+    total += n;
+    count -= n;
+  }
+  return total;
+}
+
+
+static bool DoMakeDir (char *absPath, bool setHome2lGroup) {
+  CString s;
+  struct stat fileStat;
+  struct passwd *pwEntry;
+  char *p;
+  bool ok;
+
+  //~ INFOF (("# DoMakeDir ('%s')", absPath));
+
+  // Check if 'absPath' already exists...
+  if (lstat (absPath, &fileStat) == 0) {
+    if (S_ISDIR (fileStat.st_mode)) return true;    // ok (probably), nothing to do
+    WARNINGF (("Cannot create directory '%s': A file with the same name is in the way", absPath));
+    return false;
+  }
+
+  // Make parent directory...
+  p = strrchr (absPath, '/');
+  if (!p || p == absPath) {
+    WARNINGF (("Cannot determine parent directory of '%s'", absPath));
+    return false;   // no parent
+  }
+  *p = '\0';
+  ok = MakeDir (absPath, setHome2lGroup);
+  *p = '/';
+  if (!ok) return false;    // parent creation failed (warning has already been emitted).
+
+  // Make current directory with correct attributes...
+  if (mkdir (absPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+    WARNINGF (("Cannot create directory '%s': %s", absPath, strerror (errno)));
+    ok = false;
+  }
+
+  // Try to set group ownership (failure is not reported as error)...
+  if (setHome2lGroup) {
+#if !ANDROID
+    pwEntry = getpwnam (HOME2L_USER);
+    if (!pwEntry) WARNINGF (("Cannot identify user '" HOME2L_USER "': %s", strerror (errno)));
+    else {
+      //~ INFOF (("# ... chown (%i)", pwEntry->pw_gid));
+      if (chown (absPath, (uid_t) -1, pwEntry->pw_gid) != 0)
+        WARNINGF (("Failed to set group ownership on '%s': %s", absPath, strerror (errno)));
+    }
+#else // !ANDROID
+  if (chmod (absPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0)
+    WARNINGF (("Failed to set permissions for '%s': %s", absPath, strerror (errno)));
+#endif // !ANDROID
+  }
+
+  // Done...
+  return ok;
+}
+
+
+bool MakeDir (const char *relOrAbsPath, bool setHome2lGroup) {
+  CString s;
+  char *realPath;
+  char link[1024];    // buffer for a symbolic link
+  int len;
+
+  EnvGetHome2lRootPath (&s, relOrAbsPath);
+
+  // Try to resolve a symbolic link ...
+  // a) ... using 'readlink', which works if a symbolic link is pointing nowhere yet (e.g. to a tmpfs), 'realpath' would fail on that.
+  len = readlink (s.Get (), link, sizeof (link));
+  if (len >= 0 && len < (int) sizeof (link)) {
+    link[len] = '\0';
+    INFOF (("### link: %s -> %s", s.Get (), link));
+    s.SetC (link);
+  }
+  // b) ... using 'realpath', which is probably more flexible, but fails on a symbolic link pointing to a not-yet created directory.
+  else {
+    realPath = realpath (s.Get (), NULL);
+    if (realPath) s.SetO (realPath);
+    else {
+      WARNINGF (("Failed to resolve path '%s': %s", s.Get (), strerror (errno)));
+      return false;
+    }
+  }
+
+  // Go ahead ...
+  return DoMakeDir ((char *) s.Get (), setHome2lGroup);
+}
+
+
+bool UnlinkTree (const char *relOrAbsPath, const char *skipPattern) {
+  CSplitString skipList;
+  const char *skipItem;
+  CString s;
+  DIR *dir;
+  struct dirent *dirEnt;
+  bool skip;
+  int n;
+
+  //~ INFOF (("### UnlinkTree ('%s', '%s')", relOrAbsPath, skipPattern));
+  dir = opendir (EnvGetHome2lRootPath (&s, relOrAbsPath));
+  if (!dir) {
+    WARNINGF (("Failed to open directory '%s': %s", relOrAbsPath, strerror (errno)));
+    return false;
+  }
+  if (skipPattern) skipList.Set (skipPattern);
+  while ( (dirEnt = readdir (dir)) ) {
+
+    // Check skip conditions ...
+    skip = false;
+    if (dirEnt->d_name[0] == '.' && (dirEnt->d_name[1] == '\0' || (dirEnt->d_name[1] == '.' && (dirEnt->d_name[2] == '\0'))))
+      skip = true;                                          // skip "." and ".."
+    for (n = 0; n < skipList.Entries () && !skip; n++) {    // skip if given by pattern ...
+      skipItem = skipList.Get (n);
+      if (skipItem[0] == '/' && strcmp (skipItem + 1, dirEnt->d_name) == 0) skip = true;
+    }
+
+    // Go ahead...
+    if (skip) {
+      //~ INFOF (("###   skipping '%s'", dirEnt->d_name));
+    } else {
+      s.SetF ("%s/%s", relOrAbsPath, dirEnt->d_name);
+      s.PathNormalize ();
+      //~ INFOF (("###   deleting '%s'", s.Get ()));
+      if (dirEnt->d_type == DT_DIR) {
+        if (!UnlinkTree (s.Get (), NULL)) {
+          closedir (dir);
+          return false;
+        }
+        DEBUGF (2, ("Removing directory '%s'.", s.Get ()));
+        if (rmdir (s.Get ()) != 0) {
+          WARNINGF (("Failed to unlink directory '%s': %s", s.Get (), strerror (errno)));
+          closedir (dir);
+          return false;
+        }
+      }
+      else {
+        DEBUGF (2, ("Removing file '%s'.", s.Get ()));
+        if (unlink (s.Get ()) != 0) {
+          WARNINGF (("Failed to unlink file '%s': %s", s.Get (), strerror (errno)));
+          closedir (dir);
+          return false;
+        }
+      }
+    } // if (skip)
+
+  }
+  closedir (dir);
+  return true;
+}
+
+
+bool ReadDir (const char *relOrAbsPath, class CKeySet *ret) {
+  CString s;
+  DIR *dir;
+  struct dirent *dirEnt;
+  bool skip;
+
+  // Open directory ...
+  dir = opendir (EnvGetHome2lRootPath (&s, relOrAbsPath));
+  if (!dir) {
+    WARNINGF (("Failed to open directory '%s': %s", relOrAbsPath, strerror (errno)));
+    return false;
+  }
+
+  // Read directory ...
+  ret->Clear ();
+  errno = 0;
+  while ( (dirEnt = readdir (dir)) ) {
+
+    // Check skip conditions ...
+    skip = false;
+    if (dirEnt->d_name[0] == '.' && (dirEnt->d_name[1] == '\0' || (dirEnt->d_name[1] == '.' && (dirEnt->d_name[2] == '\0'))))
+      skip = true;                                          // skip "." and ".."
+
+    // Add to dictionary ...
+    if (!skip) {
+      s.SetC (dirEnt->d_name);
+      if (dirEnt->d_type == DT_DIR) s.Append ('/');
+      ret->Set (s.Get ());
+    }
+  }
+
+  // Done ...
+  if (!errno) closedir (dir);
+  if (errno) {
+    WARNINGF (("Failed to read directory '%s': %s", relOrAbsPath, strerror (errno)));
+    return false;
+  }
+  return true;
+}
 
 
 
@@ -54,6 +285,16 @@ ENV_PARA_INT("debug", envDebug, 0);
 
 
 #include <android/log.h>
+
+
+FLogCbMessage *logCbMessage = NULL;
+FLogCbToast *logCbToast = NULL;
+
+
+void LogSetCallbacks (FLogCbMessage *_cbMessage, FLogCbToast *_cbToast) {
+  logCbMessage = _cbMessage;
+  logCbToast = _cbToast;
+}
 
 
 #else // ANDROID
@@ -116,6 +357,9 @@ void LogPara (const char *_logHead, const char* _logFile, int _logLine) {
 
 void LogPrintf (const char *format, ...) {
   char buf [1024];
+#if ANDROID
+  char msg[1024];
+#endif
   va_list ap;
   int prio;
 
@@ -127,6 +371,9 @@ void LogPrintf (const char *format, ...) {
 #if ANDROID
   switch (logHead[0]) {
     case 'I':
+      if (logCbToast)
+        if (buf[0] == '-' && buf[2] == '-' && buf[3] == ' ' && (buf[1] == 't' || buf[1] == 'T'))
+          logCbToast (buf + 4, buf[1] == 'T');
       prio = ANDROID_LOG_INFO;
       break;
     case 'W':
@@ -134,6 +381,11 @@ void LogPrintf (const char *format, ...) {
       prio = ANDROID_LOG_WARN;
       break;
     case 'E':
+      //~ INFOF (("### Error: logCbMessage = %08x", (uint32_t) logCbMessage));
+      if (logCbMessage) {
+        snprintf (msg, sizeof(msg), "%s\n(%s:%i)", buf, logFile, logLine);
+        logCbMessage ("Error", msg);
+      }
       prio = ANDROID_LOG_ERROR;
       break;
     default:
@@ -336,7 +588,7 @@ const char *LangGetText (const char *msgId) {
   while (n1 >= n0) {
     idx = (n0 + n1) / 2;
     c = strcmp (msgId, (const char *) moContent + moTableOriginal[idx].ofs);
-    //~ INFOF(("### Compared '%s' with %i:'%s' -> %i", key, idx, GetKey (idx), c))
+    //~ INFOF(("### Compared '%s' with %i:'%s' -> %i", msgId, idx, (const char *) moContent + moTableOriginal[idx].ofs, c));
     if (c == 0)     return (const char *) moContent + moTableTranslation[idx].ofs;
     else if (c < 0) n1 = idx - 1;
     else            n0 = idx + 1;
@@ -455,11 +707,13 @@ const char *StringF (const char *fmt, ...) {
 }
 
 
-bool IntFromString (const char *str, int *ret) {
+bool IntFromString (const char *str, int *ret, int radix) {
   long lRet;
   char *endPtr;
 
-  lRet = strtol (str, &endPtr, 0);     // '0': accept any base
+  while (str[0] == '0' && str[1] >= '0' && str[1] <= '9') str++;
+    // remove leading 0's to prevent strtol to interpret the number in octal
+  lRet = strtol (str, &endPtr, radix);
   if (*str != '\0' && *endPtr == '\0') {
     *ret = (int) lRet;
     return true;
@@ -469,38 +723,75 @@ bool IntFromString (const char *str, int *ret) {
 }
 
 
+int ValidIntFromString (const char *str, int defaultVal, int radix) {
+  IntFromString (str, &defaultVal, radix);
+  return defaultVal;
+}
+
+
+bool FloatFromString (const char *str, float *ret) {
+  float fRet;
+  char *endPtr;
+
+  fRet = strtof (str, &endPtr);
+  if (*str != '\0' && *endPtr == '\0') {
+    //~ INFOF (("### FloatFromString ('%s') = %f", str, fRet));
+    *ret = fRet;
+    return true;
+  }
+  else
+    return false;
+}
+
+
+float ValidFloatFromString (const char *str, float defaultVal) {
+  FloatFromString (str, &defaultVal);
+  return defaultVal;
+}
+
+
 void StringStrip (char *str, const char *sepChars) {
   char *src, *dst;
 
   if (!sepChars) return;
   src = dst = str;
-  while (strchr (sepChars, src[0]) && src[0]) src++;
+  while (src[0] && strchr (sepChars, src[0])) src++;
   while (src[0]) *dst++ = *src++;
   while (dst > str && strchr (sepChars, dst[-1])) dst--;
   *dst = '\0';
 }
 
 
-void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, const char *sepChars) {
+void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, const char *sepChars, char **retRef) {
   int argc;
-  char *c, sep, *buf;
+  char *c, sep, *buf, *src, *dst;
 
-  // Sanity stuff...
+  // Sanity...
   *retArgc = 0;
   *retArgv = NULL;
+  if (retRef) *retRef = NULL;
   if (!str || !sepChars || !sepChars[0]) return;
+
+  // Copy and strip...
   buf = strdup (str);
-  StringStrip (buf, sepChars);
-  if (!buf[0]) {
+  src = dst = buf;
+  while (src[0] && strchr (sepChars, src[0])) src++;
+  while (src[0]) *dst++ = *src++;
+  while (dst > buf && strchr (sepChars, dst[-1])) dst--;
+  *dst = '\0';
+  if (!buf[0]) {      // buffer empty => return empty array
     free (buf);
     return;
   }
+  if (retRef) *retRef = buf - src + dst;      // return reference pointer
+  //~ INFOF (("### StringSplit: stripped: '%s' -> '%s'", str, buf));
+  //~ ASSERT (buf[strlen(buf)-1] != ' ');
 
   // Pass 0: Unify seperators...
   sep = sepChars[0];
-  for (c = buf; *c; c++) if (strchr (sepChars, *c)) *c = sep;
+  for (c = buf; c[0]; c++) if (strchr (sepChars, c[0])) c[0] = sep;
 
-  // Pass 1: Count arguments...
+  // Pass 1: Count arguments (= word beginnings)...
   argc = 1;
   for (c = buf + 1; c[0]; c++)
     if (c[-1] == sep && c[0] != sep) argc++;
@@ -516,6 +807,11 @@ void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, c
   // Pass 3: Generate terminating null-characters...
   for (c = buf + 1; c < (*retArgv) [argc-1]; c++)
     if (c[-1] != sep && c[0] == sep) c[0] = '\0';
+}
+
+
+bool CharIsWhiteSpace (char c) {
+  return strchr (WHITESPACE, c) != NULL;
 }
 
 
@@ -577,7 +873,10 @@ const char *PathLeaf (const char *str) {
 
 const char *GetAbsPath (CString *ret, const char *relOrAbsPath, const char *defaultPath) {
   //~ INFOF (("EnvGetHome2lRootPath ('%s')", relOrAbsPath));
-  if (relOrAbsPath[0] == '/' || !defaultPath) ret->Set (relOrAbsPath);
+  if (!relOrAbsPath)
+    ret->Set (defaultPath);
+  else if (relOrAbsPath[0] == '/' || !defaultPath)
+    ret->Set (relOrAbsPath);
   else {
     ret->Set (defaultPath);
     ret->Append ("/");
@@ -600,13 +899,24 @@ const char *GetAbsPath (const char *relOrAbsPath, const char *defaultPath) {
 
 
 void CSplitString::Clear () {
-  argc = 0;
   if (argv) {
     free (argv[0]);
     free (argv);
     argv = NULL;
   }
+  argc = 0;
+  ref = NULL;
 }
+
+
+int CSplitString::GetIdx (int pos) {
+  int n;
+
+  for (n = 0; n < argc; n++) if (argv[n] - ref > pos) return n - 1;
+  return argc - 1;
+}
+
+
 
 
 
@@ -761,7 +1071,7 @@ void CString::Del (int n0, int dn) {
 }
 
 
-void CString::Ins (int n0, int dn, int *retInsPos) {
+void CString::Insert (int n0, int dn, int *retInsPos) {
   char *p;
   int len;
 
@@ -773,33 +1083,33 @@ void CString::Ins (int n0, int dn, int *retInsPos) {
 }
 
 
-void CString::Ins (int n0, char c) {
-  Ins (n0, 1, &n0);
+void CString::Insert (int n0, char c) {
+  Insert (n0, 1, &n0);
   ptr[n0] = c;
 }
 
 
-void CString::Ins (int n0, const char *str, int maxLen) {
+void CString::Insert (int n0, const char *str, int maxLen) {
   int len = 0;
   while (str[len] && len < maxLen) len++;
-  Ins (n0, len, &n0);
+  Insert (n0, len, &n0);
   memcpy (ptr + n0, str, len);
 }
 
 
-void CString::InsF (int n0, const char *fmt, ...) {
+void CString::InsertF (int n0, const char *fmt, ...) {
   va_list ap;
   va_start (ap, fmt);
-  InsFV (n0, fmt, ap);
+  InsertFV (n0, fmt, ap);
   va_end (ap);
 }
 
 
-void CString::InsFV (int n0, const char *fmt, va_list ap) {
+void CString::InsertFV (int n0, const char *fmt, va_list ap) {
   CString sub;
 
   sub.SetFV (fmt, ap);
-  Ins (n0, sub.Get ());
+  Insert (n0, sub.Get ());
 }
 
 
@@ -831,6 +1141,12 @@ int CString::RFind (char c) {
 
 int CString::Compare (const char *str2) {
   return strcmp (ptr, str2);
+}
+
+
+void CString::Strip (const char *sepChars) {
+  MakeWriteable ();
+  StringStrip (ptr, sepChars);
 }
 
 
@@ -974,6 +1290,18 @@ bool CString::AppendUnescaped (const char *s) {
 // ***** Path handling *****
 
 
+void CString::PathNormalize () {
+  MakeWriteable ();
+  ::PathNormalize (ptr);
+}
+
+
+void CString::PathRemoveTrailingSlashes () {
+  MakeWriteable ();
+  ::PathRemoveTrailingSlashes (ptr);
+}
+
+
 void CString::PathGo (const char *where) {
   if (where[0] == '/') Set (where);     // go absolute?
   else {
@@ -991,6 +1319,19 @@ void CString::PathGoUp () {
 
 
 // ***** Using CString as a file buffer *****
+
+
+bool CString::ReadFile (const char *relOrAbsPath) {
+  CString s;
+  int fd;
+
+  Clear ();
+  fd = open (EnvGetHome2lRootPath (&s, relOrAbsPath), O_RDONLY);
+  if (fd < 0) return false;
+  while (AppendFromFile (fd));
+  close (fd);
+  return true;
+}
 
 
 bool CString::AppendFromFile (int fd) {
@@ -1013,18 +1354,18 @@ bool CString::AppendFromFile (int fd) {
     }
   }
 
-  // Return 'true' if and only if the end of the stream is reached...
+  // Return 'false' if and only if the end of the stream is reached...
   return n != 0;
 }
 
 
-bool CString::ReadLine (CString *retLine) {
+bool CString::ReadLine (CString *ret) {
   int n;
 
   // Try to return something...
   n = LFind ('\n');
   if (n < 0) return false;
-  if (retLine) retLine->Set (ptr, n);
+  if (ret) ret->Set (ptr, n);
   Del (0, n + 1);
   //~ INFOF(("# ReadLine () -> '%s'", str->Get ()));
   return true;
@@ -1086,7 +1427,7 @@ const char *CRegex::ErrorStr () {
 
 
 bool CRegex::SetPattern (const char *pattern, int cflags) {
-  reValid = ((lastError = regcomp (&re, pattern, cflags)) == 0);
+  reValid = ((lastError = regcomp (&re, pattern ? pattern : "a^", cflags)) == 0);
   //~ INFOF (("### CRegex: Compiling pattern '%s' -> OK = %i", pattern, (int) reValid));
   return reValid;
 }
@@ -1257,7 +1598,7 @@ int CDictRaw::Find (const char *key, int *retInsIdx) {
   while (n1 >= n0) {
     idx = (n0 + n1) / 2;
     c = strcmp (key, GetKey (idx));
-    //~ INFOF(("### Compared '%s' with %i:'%s' -> %i", key, idx, GetKey (idx), c))
+    //~ INFOF(("### Compared '%s' with %i:'%s' -> %i", key, idx, GetKey (idx), c));
     if (c == 0) {
       if (retInsIdx) *retInsIdx = idx;
       return idx;
@@ -1388,9 +1729,10 @@ const char *TicksToString (TTicks ticks, int fracDigits, bool precise) {
 }
 
 
-bool TicksFromString (const char *str, TTicks *ret) {
+bool TicksFromString (const char *str, TTicks *ret, bool absolute) {
   int dy, dm, dd, th, tm, ts, millis;
   long long unsigned lluRet;
+  const char *p;
   int n;
 
   if (str[0] == 't') {
@@ -1406,7 +1748,9 @@ bool TicksFromString (const char *str, TTicks *ret) {
     th = tm = ts = millis = 0;   // preset time
     n = sscanf (str, "%u:%02u:%02u.%03u", &th, &tm, &ts, &millis);
     if (n >= 2) {
-      *ret = DateTimeToTicks (Today (), TIME_OF (th, tm, ts)) + millis;
+      *ret = ( absolute ? DateTimeToTicks (Today (), TIME_OF (th, tm, ts))
+                        : TICKS_FROM_SECONDS (TIME_OF (th, tm, ts)) )
+             + millis;
       return true;
     }
     else return false;
@@ -1423,9 +1767,18 @@ bool TicksFromString (const char *str, TTicks *ret) {
       return true;
     }
     else if (n == 1) {
-      // A single integer is given: interpret it as milliseconds from now ...
-      millis = dy;
-      *ret = TicksNow () + millis;
+      // A single integer is given: interpret it as milliseconds (or time in some other unit) from now ...
+      p = str;
+      while (*p >= '0' && *p <= '9') p++;
+      switch (tolower (*p)) {
+        case 's': millis = TICKS_FROM_SECONDS (dy); break;
+        case 'm': millis = TICKS_FROM_SECONDS (60 * dy); break;
+        case 'h': millis = TICKS_FROM_SECONDS (3600 * dy); break;
+        case 'd': millis = TICKS_FROM_SECONDS (24 * 3600 * dy); break;
+        case 'w': millis = TICKS_FROM_SECONDS (7 * 24 * 3600 * dy); break;
+        default:  millis = dy;
+      }
+      *ret = absolute ? TicksNow () + millis : millis;
       return true;
     }
     else return false;
@@ -2051,14 +2404,6 @@ void CSleeper::Sleep (TTicksMonotonic maxTime) {
 }
 
 
-bool CSleeper::GetCmd (void *retCmdRec) {
-  if (selfPipe[0] < 0) return false;
-  if (!IsReadable (selfPipe[0])) return false;
-  ASSERT (read (selfPipe[0], retCmdRec, cmdRecSize) == cmdRecSize);
-  return true;
-}
-
-
 bool CSleeper::IsReadable (int fd) {
   return fd >= 0 ? (FD_ISSET (fd, &fdSetRead) != 0) : false;
 }
@@ -2066,6 +2411,14 @@ bool CSleeper::IsReadable (int fd) {
 
 bool CSleeper::IsWritable (int fd) {
   return fd >= 0 ? (FD_ISSET (fd, &fdSetWrite) != 0) : false;
+}
+
+
+bool CSleeper::GetCmd (void *retCmdRec) {
+  if (selfPipe[0] < 0) return false;
+  if (!IsReadable (selfPipe[0])) return false;
+  ASSERT (read (selfPipe[0], retCmdRec, cmdRecSize) == cmdRecSize);
+  return true;
 }
 
 
@@ -2157,11 +2510,11 @@ void CShellBare::Done () {
 }
 
 
-bool CShellBare::Start (const char *cmd) {
+bool CShellBare::Start (const char *cmd, bool readStdErr) {
   int pipeToScript[2], pipeFromScript[2];
-  CString s, line;
+  CString s1, s2, sCmd;
 
-  DEBUGF (1, ("Starting shell command on %s: '%s' ...", host ? host : "<localhost>", cmd));
+  DEBUGF (1, (host ? "Starting shell command on host '%2$s': '%1$s' ..." :  "Starting shell command locally: '%s' ...", cmd ? cmd : host ? "<ssh>" : "<bash>", host));
 
   // Preparation ...
   Wait ();
@@ -2187,7 +2540,7 @@ bool CShellBare::Start (const char *cmd) {
     dup2 (pipeToScript[0], STDIN_FILENO);
     close (pipeToScript[1]);
     dup2 (pipeFromScript[1], STDOUT_FILENO);
-    //~ dup2 (pipeFromScript[1], STDERR_FILENO);
+    if (readStdErr) dup2 (pipeFromScript[1], STDERR_FILENO);
     close (pipeFromScript[0]);
 
     // Create a new process group and become its leader ...
@@ -2195,26 +2548,44 @@ bool CShellBare::Start (const char *cmd) {
     if (newProcessGroup) setpgid (0, 0);
 
     // Execute script...
-#if ANDROID == 1
-    if (host) {
-      if (host[0] == '\0' || !strcmp (host, "localhost")) host = NULL;
+    if (host) if (host[0] == '\0') host = NULL;     // Normalize 'host'
+    if (ANDROID && !host && cmd && cmd[0] != '/') {        // Local command with relativ path: prepend HOME2L_ROOT ...
+      sCmd.SetF ("%s/%s", EnvHome2lRoot (), cmd);
+      cmd = sCmd.Get ();
     }
-    // Example: ssh -i /data/home2l/etc/secrets/ssh/<host> -o NoHostAuthenticationForLocalhost=yes home2l@localhost '$HOME2L_ROOT/bin/h2l-sysinfo.sh' 2>&1
-    if (host) line.SetF ("ssh %s %s", host, cmd ? cmd : "/bin/sh");
-    else line.SetC (cmd ? cmd : "/bin/sh");
-    EnvGetHome2lRootPath (&s, "etc/secrets/ssh/");
-    s.Append (EnvMachineName ());
-    execl ("/system/bin/ssh", "/system/bin/ssh", "-i", s.Get (),
-           "-o", "NoHostAuthenticationForLocalhost=yes", "home2l@localhost",
-           line.Get (), NULL);
-      // Note: One must manually ssh to all potential hosts using ADB before this can work (to establish host trusts)
+#if ANDROID
+    if (!host) {
+      //~ INFOF (("### CShellBare: Starting '%s' ...", cmd));
+      execl ("/system/bin/sh", "/system/bin/sh",
+             cmd ? "-c" : NULL, cmd, NULL);
+    }
+    else {
+      execl ("/system/bin/ssh", "/system/bin/ssh",
+             "-i", StringF (&s1, "%s/etc/secrets/ssh/%s", EnvHome2lRoot (), EnvMachineName ()),             // identity
+             "-o", StringF (&s2, "UserKnownHostsFile=%s/etc/secrets/ssh/known_hosts", EnvHome2lRoot ()),    // known hosts
+             "-o", "NoHostAuthenticationForLocalhost=yes",
+             "-o", "LogLevel=QUIET",
+             "-l", "home2l", host,              // remote user and host
+             cmd ? cmd : "/bin/bash", NULL);    // command or shell
+        /*
+         * Example: Pre-test a connection from 'inf629' to '192.168.2.11'
+         *
+         * root@espressowifi:/ # ssh -i /data/data/org.home2l.app/files/home2l/etc/secrets/ssh/inf629 \
+         *                           -o UserKnownHostsFile=/data/data/org.home2l.app/files/home2l/etc/secrets/ssh/known_hosts \
+         *                           home2l@192.168.2.11
+         */
+    }
 #else
     if (!host)
-      execl ("/bin/bash", "/bin/bash", cmd ? "-c" : NULL, cmd, NULL);
+      execl ("/bin/bash", "/bin/bash",
+             cmd ? "-c" : NULL, cmd, NULL);
     else
-      execl ("/usr/bin/ssh", "/usr/bin/ssh", "-l", "home2l", host, cmd ? cmd : "/bin/sh", NULL);
+      execl ("/usr/bin/ssh", "/usr/bin/ssh",
+             "-l", "home2l", host,              // remote user and host
+             cmd ? cmd : "/bin/bash", NULL);    // command or shell
 #endif
-    ERROR ("'execl' failed");   // we should never get here
+    ERRORF (("Failed to start '%s': %$s", cmd, strerror (errno)));
+      // we should never get here
   }
   else {
 
@@ -2262,7 +2633,8 @@ bool CShellBare::DoWaitPid (int options) {
       childPid = -1;
     }
     else if (WIFSIGNALED (status)) {
-      if (WTERMSIG(status) != killSig) WARNINGF(("Child terminated with signal %i", WTERMSIG(status)));
+      if (WTERMSIG(status) != killSig)
+        WARNINGF(("Child terminated with signal %i ('%s')", WTERMSIG(status), strsignal (WTERMSIG(status))));
       childPid = -1;
     }
     else ASSERT (false);
@@ -2300,15 +2672,22 @@ void CShellBare::Kill (int sig) {
 void CShellBare::CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime) {
   fd_set rfds, wfds;
   struct timeval tv;
+  bool waitOnWrite, waitOnRead;
+
+  waitOnWrite = (canWrite && fdToScript > 0);
+  waitOnRead = (canRead && fdFromScript > 0 && !readBufMayContainLine);
 
   TicksMonotonicToStructTimeval (maxTime, &tv);
   FD_ZERO (&wfds);
-  if (canWrite && fdToScript > 0) FD_SET (fdToScript, &wfds);
+  if (waitOnWrite) FD_SET (fdToScript, &wfds);
   FD_ZERO (&rfds);
-  if (canRead && fdFromScript > 0 && !readBufMayContainLine) FD_SET (fdFromScript, &rfds);
+  if (waitOnRead) FD_SET (fdFromScript, &rfds);
 
-  if (FD_ISSET (fdToScript, &wfds) || FD_ISSET (fdFromScript, &rfds))
+  if (waitOnWrite || waitOnRead) {
+    //~ INFOF (("### CShellBare::CheckIO(): select start, waitOnWrite = %i, waitOnRead = %i, fdToScript = %i, fdFromScript = %i", (int) waitOnWrite, (int) waitOnRead, fdToScript, fdFromScript));
     select (MAX (fdToScript, fdFromScript) + 1, &rfds, &wfds, NULL, maxTime >= 0 ? &tv : NULL);
+    //~ INFO ("### CShellBare::CheckIO(): select done");
+  }
 
   if (canWrite) *canWrite = (fdToScript > 0 ? (FD_ISSET (fdToScript, &wfds) != 0) : false);
   if (canRead) *canRead = (readBufMayContainLine ? true : fdFromScript > 0 ? (FD_ISSET (fdFromScript, &rfds) != 0) : false);
@@ -2387,11 +2766,13 @@ void CShellSession::Done () {
 }
 
 
-bool CShellSession::Start (const char *cmd) {
+bool CShellSession::Start (const char *cmd, bool readStdErr) {
   CString line;
 
   Wait ();    // just in case a previous command is still open
-  if (!session.IsRunning ()) if (!session.StartSession ()) return false;
+  if (!session.IsRunning ()) if (!session.StartSession (readStdErr)) return false;
+
+  DEBUGF (1, ("Starting shell command in session: '%s' ...", cmd));
 
   // Submit command...
   //~ line.SetF ("%s << %s; export PS=\"%s $?\"", cmd, shellMagicString, shellMagicString);

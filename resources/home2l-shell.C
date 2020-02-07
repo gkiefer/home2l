@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,9 +69,9 @@ static const char *RcGetAbsPath (const char *uri) {
 }
 
 
-static CDictRaw *RcGetDirectory (ERcPathDomain dom, CRcHost *rcHost, CRcDriver *rcDriver) {
+static const CDictRaw *RcGetDirectory (ERcPathDomain dom, CRcHost *rcHost, CRcDriver *rcDriver) {
   static CKeySet ret;
-  CDictRaw *map;
+  const CDictRaw *map;
   int n, items;
 
   switch (dom) {
@@ -154,7 +154,9 @@ static void PollSubscriber () {
 static bool doQuit = false;
 
 
-static void CmdHelp (int argc, const char **argv);   // implemented in section "Command interpreter"
+// Forward declarations (implemented in section "Command interpreter") ...
+static void ExecuteCmd (const char *cmd);
+static void CmdHelp (int argc, const char **argv);
 
 
 static void CmdQuit (int argc, const char **argv) {
@@ -214,7 +216,7 @@ static void CmdList (int argc, const char **argv) {
   CRcDriver *rcDriver;
   CResource *resource;
   CRcValueState vs;
-  CDictRaw *map;
+  const CDictRaw *map;
   const char *uri, *localPath, *key;
   int n, k;
   bool printList, optAllowNet;
@@ -378,7 +380,7 @@ static void CmdSetRequest (int argc, const char **argv) {
     rc->WaitForRegistration ();
     //~ INFOF (("### reqDef = '%s'", reqDef.Get ()));
     req = new CRcRequest ();
-    req->SetPriority (rcPrioStrong);
+    req->SetPriority (rcPrioAdmin);
     req->SetFromStr (reqDef);
     rc->SetRequest (req);
     rc->PrintInfo ();
@@ -415,9 +417,6 @@ static void CmdDelRequest (int argc, const char **argv) {
     rc->PrintInfo ();
   }
 }
-
-
-static void ExecuteCmd (const char *cmd);
 
 
 static void CmdRequestShortcut (int argc, const char **argv) {
@@ -530,13 +529,13 @@ TCmd commandArr[] = {
             "This command can also be used to just wait for a certain time.\n" },
   { "follow", CmdFollow, NULL, NULL, NULL },
 
-  { "r+", CmdSetRequest, "<rc> <value> [<ropts>]", "Add or change request",
+  { "r+", CmdSetRequest, "<rc> <value> [<ropts>]", "Add or change a request",
             "Request options <attributes> :\n"
-            "  <rc>    : Current resource identifier\n"
-            "  <value> : Value to request\n"
+            "  <rc>    : Resource identifier\n"
+            "  <value> : Requested value\n"
             "  <ropts> : Additional request arguments as supported by 'CRcRequest::SetFromStr ()':\n"
             "             #<id>   : Request ID [default: 'shell']\n"
-            "             *<prio> : Priority (0..15) [Default: 12 (rcPrioStrong)]\n"
+            "             *<prio> : Priority (0..9) [Default: 8 (rcPrioAdmin)]\n"
             "             +<time> : Start time\n"
             "             -<time> : End time\n"
             "             ~<hyst> : Hysteresis in milliseconds\n"
@@ -667,7 +666,7 @@ static char *RlGeneratorCommands (const char *text, int state) {
 
 static char *RlGeneratorUri (const char *text, int state) {
   static int idx, idx1;
-  static CDictRaw *map;
+  static const CDictRaw *map;
   static ERcPathDomain dom;
   static int pathOfs;
   static CString realUri;
@@ -744,7 +743,7 @@ static char **RlCompletionFunction (const char *text, int start, int end) {
 
 
 
-// ******************** main *******************************
+// ******************** main() *****************************
 
 
 int main (int argc, char **argv) {

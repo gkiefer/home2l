@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,14 +22,12 @@
 #include "env.H"
 
 #include <stdlib.h>   // for 'strtol'
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include <unistd.h>   // for 'gethostname', 'isatty'
 #include <fcntl.h>
 #include <fnmatch.h>
-#include <pwd.h>
-#include <grp.h>      // for 'initgroups(3)'
+//~ #include <grp.h>      // for 'initgroups(3)'
 
 #if !ANDROID
 #include <locale.h>
@@ -65,6 +63,7 @@ ENV_PARA_NOVAR ("home2l.buildDate", const char *, buildDate, NULL);
   /* Build date of the Home2L suite (read-only)
    */
 
+
 // Operation software and architecture ...
 ENV_PARA_VAR ("home2l.os", static const char *, buildOS, ANDROID ? "Android" : BUILD_OS);
   /* Operation software environment (Debian / Android) (read-only)
@@ -81,6 +80,7 @@ ENV_PARA_VAR ("home2l.arch", static const char *, buildArch, ANDROID ? NULL : BU
 
 
 // ***** Domain 'sys' *****
+
 
 ENV_PARA_NOVAR("sys.syslog", bool, envSyslog, false);
   /* Set to write all messages to syslog
@@ -121,14 +121,26 @@ ENV_PARA_STRING ("sys.droidId", envDroidId, "000");
    */
 
 // Directories...
-ENV_PARA_STRING ("sys.rootDir", envRootDir, NULL);
+ENV_PARA_VAR ("sys.rootDir", const char*, envRootDir, NULL);
   /* Home2L installation root directory (HOME2L\_ROOT)
    */
-ENV_PARA_STRING ("sys.varDir", envVarDir, "/var/opt/home2l");
-  /* Root directory for variable data
+ENV_PARA_STRING ("sys.etcDir", envEtcDir, NULL);   // Debian: "/etc/home2l" by symlink from "$HOME2L_ROOT/etc"
+  /* Root directory for configuration data (HOME2L\_ROOT/etc)
+   *
+   * This setting can only be modified via the command line or the HOME2L\_CONFIG
+   * environment variable, but *not* in a config file (guess why!).
+   *
+   * The path must be an absolute path.
    */
-ENV_PARA_STRING ("sys.tmpDir", envTmpDir, "/tmp/home2l");
-  /* Root directory for temporary data
+ENV_PARA_STRING ("sys.varDir", envVarDir, "var");  // Debian: "/var/opt/home2l"
+  /* Root directory for variable data (HOME2L\_ROOT/var)
+   *
+   * The path must be an absolute path.
+   */
+ENV_PARA_STRING ("sys.tmpDir", envTmpDir, "tmp");  // Debian: "/tmp/home2l"
+  /* Root directory for temporary data (HOME2L\_ROOT/tmp)
+   *
+   * The path must be an absolute path.
    */
 
 // Locale
@@ -140,6 +152,21 @@ ENV_PARA_STRING ("sys.locale", envSysLocale, NULL);
    * for administrators expect English language skills.
    */
 
+
+
+// ***** Domain 'net' *****
+
+
+ENV_PARA_SPECIAL ("net.resolve.<alias>", const char *, NULL);
+  /* Define a manual network host resolution
+   *
+   * When a network host is contacted, this environment setting is consulted by the client
+   * before any system-wide name resolution is started. This can be used, for example,
+   * with SSH tunnels to map the real target host to something like 'localhost:1234'.
+   *
+   * Another use case is just a hostname resolution independent of a DNS service
+   * or '/etc/hosts' file, which can be useful on Android client devices, for example.
+   */
 
 
 
@@ -157,11 +184,31 @@ int EnvPid () { return envPid; }
 
 const char *EnvInstanceName ()  { return envInstanceName; }
 
-const char *EnvDroidId ()       { return envDroidId; }
+const char *EnvDroidId ()   { return envDroidId; }
 
-const char *EnvHome2lRoot ()  { return envRootDir; }
-const char *EnvHome2lVar ()   { return envVarDir; }
-const char *EnvHome2lTmp ()   { return envTmpDir; }
+
+const char *EnvHome2lRoot () {
+  ASSERT (envRootDir != NULL);
+  return envRootDir;
+}
+
+
+const char *EnvHome2lEtc () {
+  ASSERT (envEtcDir != NULL && envEtcDir[0] == '/');
+  return envEtcDir;
+}
+
+
+const char *EnvHome2lVar () {
+  ASSERT (envVarDir != NULL && envVarDir[0] == '/');
+  return envVarDir;
+}
+
+
+const char *EnvHome2lTmp ()   {
+  ASSERT (envTmpDir != NULL && envTmpDir[0] == '/');
+  return envTmpDir;
+}
 
 
 
@@ -175,13 +222,18 @@ const char *EnvGetHome2lRootPath (CString *ret, const char *relOrAbsPath) {
 }
 
 
+const char *EnvGetHome2lEtcPath (CString *ret, const char *relOrAbsPath) {
+  return GetAbsPath (ret, relOrAbsPath, EnvHome2lEtc ());
+}
+
+
 const char *EnvGetHome2lVarPath (CString *ret, const char *relOrAbsPath) {
-  return GetAbsPath (ret, relOrAbsPath, envVarDir);
+  return GetAbsPath (ret, relOrAbsPath, EnvHome2lVar ());
 }
 
 
 const char *EnvGetHome2lTmpPath (CString *ret, const char *relOrAbsPath) {
-  return GetAbsPath (ret, relOrAbsPath, envTmpDir);
+  return GetAbsPath (ret, relOrAbsPath, EnvHome2lTmp ());
 }
 
 
@@ -190,58 +242,12 @@ bool EnvHaveTerminal () {
 }
 
 
-static bool DoMkdir (char *pn) {
-  // 'pn' is temporarily modified (and restored finally).
-  struct stat fileStat;
-  struct passwd *pwEntry;
-  char *p;
-  bool ok;
-
-  //~ INFOF (("# DoMkDir ('%s')", pn));
-
-  // Check if 'pn' already exists...
-  if (lstat (pn, &fileStat) == 0) {
-    if (S_ISDIR (fileStat.st_mode)) return true;    // ok (probably), nothing to do
-    WARNINGF (("Cannot create directory '%s': A file with the same name is in the way", pn));
-    return false;
-  }
-
-  // Make parent directory...
-  p = strrchr (pn, '/');
-  if (!p || p == pn) {
-    WARNINGF (("Cannot determine parent directory of '%s'", pn));
-    return false;   // no parent
-  }
-  *p = '\0';
-  ok = DoMkdir (pn);
-  *p = '/';
-  if (!ok) return false;    // parent creation failed (warning has already been emitted).
-
-  // Make current directory with correct attributes...
-  if (mkdir (pn, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
-    WARNINGF (("Cannot create directory '%s': %s", pn, strerror (errno)));
-    ok = false;
-  }
-
-  // Try to set group ownership (failure is not reported as error)...
-  pwEntry = getpwnam (HOME2L_USER);
-  if (!pwEntry) WARNINGF (("Cannot identify user '" HOME2L_USER "': %s", strerror (errno)));
-  else {
-    //~ INFOF (("# ... chown (%i)", pwEntry->pw_gid));
-    if (chown (pn, (uid_t) -1, pwEntry->pw_gid) != 0) WARNINGF (("Cannot set group ownership on '%s': %s", pn, strerror (errno)));
-  }
-
-  // Done...
-  return ok;
-}
-
-
 bool EnvMkVarDir (const char *relOrAbsPath) {
   CString absPath;
 
   EnvGetHome2lVarPath (&absPath, relOrAbsPath);
   ASSERT (absPath[0] == '/');
-  return DoMkdir ((char *) absPath.Get ());
+  return MakeDir ((char *) absPath.Get (), true);
 }
 
 
@@ -250,7 +256,67 @@ bool EnvMkTmpDir (const char *relOrAbsPath) {
 
   EnvGetHome2lTmpPath (&absPath, relOrAbsPath);
   ASSERT (absPath[0] == '/');
-  return DoMkdir ((char *) absPath.Get ());
+  return MakeDir ((char *) absPath.Get (), true);
+}
+
+
+
+
+
+// *************************** Networking ********************************
+
+
+bool EnvNetResolve (const char *hostAndPort, CString *retHost, int *retPort, int defaultPort, bool warn) {
+  CString s;
+  char *p, *endPtr;
+  int port;
+  bool ok;
+
+  // Sanity ...
+  ASSERT (hostAndPort != NULL);
+  ok = true;
+
+  // Split and translate...
+  port = 0;       // port found in the given host/port or alias
+  if (ok) {
+    retHost->Set (hostAndPort);
+
+    // Check, if given host/port has a port...
+    p = (char *) strchr (retHost->Get (), ':');
+    if (p) {
+      *p = '\0';
+      port = (int) strtol (p + 1, &endPtr, 0);
+      if (*endPtr != '\0') ok = false;
+    }
+  }
+  if (ok) {
+
+    // Lookup alias...
+    hostAndPort = EnvGet (StringF (&s, "net.resolve.%s", retHost->Get ()));
+    if (hostAndPort) {
+      retHost->Set (hostAndPort);
+
+      // Check, if the alias has a port...
+      p = (char *) strchr (retHost->Get (), ':');
+      if (p) {
+        *p = '\0';
+        if (!port) {      // a locally defined port would dominate
+          port = (int) strtol (p + 1, &endPtr, 0);
+          if (*endPtr != '\0') ok = false;
+        }
+      }
+    }
+  }
+
+  // Done...
+  if (ok) {
+    if (retPort) *retPort = port ? port : defaultPort;
+  }
+  else {
+    if (warn) WARNINGF (("Illegal network host/port specification (must be <host[:port]>): %s", hostAndPort));
+    retHost->Clear ();
+  }
+  return ok;
 }
 
 
@@ -269,7 +335,7 @@ static inline bool IsComment (char c) { return c == ';' || c == '#'; }
 static inline bool IsKeyChar (char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || strchr ("_-./:", c) != NULL; }
 
 
-static void ReadIniFile (const char *fileName, CDictFast<CString> *map) {
+void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
   CString fileBuf, line, valStr, s;
   int fd, lineNo;
   bool relevant, ok, prodVal, varVal, neg;
@@ -282,7 +348,7 @@ static void ReadIniFile (const char *fileName, CDictFast<CString> *map) {
   relevant = true;
   lineNo = 0;
   fd = open (fileName, O_RDONLY);
-  if (fd < 0) ERRORF (("Unable to open '%s'", fileName));
+  if (fd < 0) ERRORF (("Unable to open '%s': %s", fileName, strerror (errno)));
   while (fileBuf.AppendFromFile (fd)) while (fileBuf.ReadLine (&line)) {
     lineNo++;
     line.Strip ();
@@ -365,7 +431,7 @@ static void ReadIniFile (const char *fileName, CDictFast<CString> *map) {
         if (strncmp (key, "include.", 8) == 0) {
           // keys named "include.<some name>" cause to include another configuration file;
           // the path must either be absolute or relative to HOME2L_ROOT
-          ReadIniFile (EnvGetHome2lRootPath (&s, val), map);
+          EnvReadIniFile (EnvGetHome2lRootPath (&s, val), map);
         }
         else {
           valStr.Set (val);
@@ -376,7 +442,6 @@ static void ReadIniFile (const char *fileName, CDictFast<CString> *map) {
   }
   close (fd);
 }
-
 
 
 
@@ -413,12 +478,14 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
   // Host name...
 #if !ANDROID
   if (gethostname (hostName, sizeof (hostName)) != 0) ERROR ("Cannot determine host (machine) name");
-  EnvPut (envMachineNameKey, hostName);
+  envMachineName = EnvPut (envMachineNameKey, hostName);
 #else
-  //   In Android, 'gethostname (2)' just delivers "localhost". Hence we rely on the Java part of the
-  //   app, which must have set the environment variable in advance...
-#endif
+  // In Android, 'gethostname (2)' just delivers "localhost". Hence we rely on the Java part of the
+  // app, which must have set the environment variable in advance (in 'Home2l.init()').
+  // 'envMachineName' is set in 'SystemPreInit ()'.
   envMachineName = EnvGet (envMachineNameKey);
+  ASSERT (envMachineName != NULL);
+#endif
 
   // Process environment...
   envExecPathName = EnvPut (envExecPathNameKey, argv0);
@@ -435,14 +502,20 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
   }
   envInstanceName = EnvPut (envInstanceNameKey, instanceName);
 
-  // Root directories ...
+  // Root & main directories ...
+#if !ANDROID
   str = getenv ("HOME2L_ROOT");
   if (!str) str = getenv ("PWD");
-  if (!str) str = "/data/home2l";   // This is the default path under Android.
+  if (!str) str = "/opt/home2l";    // Default: Assume an /opt installation
   envRootDir = EnvPut (envRootDirKey, str);
-
-  EnvPut (envVarDirKey, envVarDir);
-  EnvPut (envTmpDirKey, envTmpDir);
+#else
+  // In Android, the Java part of the app must have set the environment variable
+  // in advance (in 'Home2l.init()'), and 'envRootDir' is set in 'SystemPreInit ()'.
+  ASSERT (envRootDir != NULL);
+#endif // ANDROID
+  envEtcDir = EnvPut (envEtcDirKey, StringF (&s, "%s/etc", envRootDir));
+  envVarDir = EnvPut (envVarDirKey, StringF (&s, "%s/var", envRootDir));
+  envTmpDir = EnvPut (envTmpDirKey, StringF (&s, "%s/tmp", envRootDir));
 
   // Droid ID...
   len = strlen (envMachineName);
@@ -592,7 +665,8 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
   //~ sectionSet.DumpKeys ();
   //   Read the file...
   str = (char *) EnvGetPath (envConfigKey);     // convert config file path to absolute path
-  ReadIniFile (str, &envMap);
+  //~ INFOF (("### envConfig = %s, HOME2L_ROOT = %s", envConfig, envRootDir));
+  EnvReadIniFile (str, &envMap);
 
   // Parse extra assignments from 'HOME2L_EXTRA' and the command line...
   ReadConfAssignmentsFromEnv ();
@@ -664,9 +738,11 @@ void EnvInitPersistence (bool writeThrough, const char *_varFileName) {
 
   // Check for existince of a var file and eventually load it...
   if (stat (varFileName.Get (), &statBuf) == 0) {
-    ReadIniFile (varFileName.Get (), &envMap);
+    EnvReadIniFile (varFileName.Get (), &envMap);
     CEnvPara::GetAll (true);
   }
+  else
+    EnvMkVarDir (NULL);     // Create the 'var' dir (TBD: create subdirs, if '_varFileName' is given and deep)
 }
 
 
@@ -800,7 +876,7 @@ const char *EnvGetString (const char *key, const char *defaultVal, bool warn) {
 }
 
 
-bool EnvGetPath (const char *key, const char **ret, bool warn) {
+bool EnvGetPath (const char *key, const char **ret, const char *path, bool warn) {
   CString s, *val;
   int idx;
   const char *_ret;
@@ -808,7 +884,7 @@ bool EnvGetPath (const char *key, const char **ret, bool warn) {
   if ( (idx = envMap.Find (key)) < 0) _ret = NULL;
   else {
     val = envMap.Get (idx);
-    val->Set (EnvGetHome2lRootPath (&s, val->Get ()));
+    val->Set (GetAbsPath (&s, val->Get (), path ? path : EnvHome2lRoot ()));
     _ret = val->Get ();
   }
   if (_ret) {
@@ -822,70 +898,29 @@ bool EnvGetPath (const char *key, const char **ret, bool warn) {
 }
 
 
-const char *EnvGetPath (const char *key, const char *defaultVal, bool warn) {
-  EnvGetPath (key, &defaultVal, warn);
+const char *EnvGetPath (const char *key, const char *defaultVal, const char *path, bool warn) {
+  EnvGetPath (key, &defaultVal, path, warn);
   return defaultVal;
 }
 
 
 bool EnvGetHostAndPort (const char *key, CString *retHost, int *retPort, int defaultPort, bool warn) {
-  CString s;
-  const char *sHostPort;
-  char *p, *endPtr;
-  int port;
-  bool ok;
-
-  ok = true;
+  const char *hostAndPort;
 
   // Get key & check existence...
-  sHostPort = EnvGet (key);
-  if (!sHostPort) {
+  hostAndPort = EnvGet (key);
+  if (!hostAndPort) {
     EnvWarn (warn, key);
     retHost->Clear ();
-    ok = false;
+    return false;
   }
 
-  // Split and translate...
-  port = 0;       // port found in the given host/port or alias
-  if (ok) {
-    retHost->Set (sHostPort);
-
-    // Check, if given host/port has a port...
-    p = (char *) strchr (retHost->Get (), ':');
-    if (p) {
-      *p = '\0';
-      port = (int) strtol (p + 1, &endPtr, 0);
-      if (*endPtr != '\0') ok = false;
-    }
-  }
-  if (ok) {
-
-    // Lookup alias...
-    sHostPort = EnvGet (StringF (&s, "rc.resolve.%s", retHost->Get ()));
-    if (sHostPort) {
-      retHost->Set (sHostPort);
-
-      // Check, if the alias has a port...
-      p = (char *) strchr (retHost->Get (), ':');
-      if (p) {
-        *p = '\0';
-        if (!port) {      // a locally defined port would dominate
-          port = (int) strtol (p + 1, &endPtr, 0);
-          if (*endPtr != '\0') ok = false;
-        }
-      }
-    }
-  }
-
-  // Done...
-  if (ok) {
-    if (retPort) *retPort = port ? port : defaultPort;
-  }
-  else {
+  // Resolve...
+  if (!EnvNetResolve (hostAndPort, retHost, retPort, defaultPort, false)) {
     EnvWarn (warn, key, "<host[:port]>");
-    retHost->Clear ();
+    return false;
   }
-  return ok;
+  return true;
 }
 
 
@@ -988,7 +1023,7 @@ const char *EnvGetVal (int idx) {
 }
 
 
-CDictRaw *EnvGetKeySet () {
+const CDictRaw *EnvGetKeySet () {
   return &envMap;
 }
 

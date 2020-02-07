@@ -1,8 +1,0 @@
-<map id="CRcEventDriver" name="CRcEventDriver">
-<area shape="rect" id="node2" href="$classCRcDriver.html" title="Driver for local resources. " alt="" coords="91,171,178,197"/>
-<area shape="rect" id="node3" href="$classCString.html" title="Dynamically allocated string. " alt="" coords="5,81,75,108"/>
-<area shape="rect" id="node4" href="$classCMutex.html" title="Class to wrap (POSIX) mutex objects. " alt="" coords="99,81,170,108"/>
-<area shape="rect" id="node5" href="$classCDictRef.html" title="CDictRef\&lt; CResource \&gt;" alt="" coords="194,81,366,108"/>
-<area shape="rect" id="node6" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants) " alt="" coords="238,5,322,32"/>
-<area shape="rect" id="node7" href="$classCRcEventProcessor.html" title="Event processor. " alt="" coords="203,171,352,197"/>
-</map>

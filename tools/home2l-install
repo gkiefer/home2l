@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 # along with Home2L. If not, see <https://www.gnu.org/licenses/>.
 
 
-# This is the working horse to update a Home2L installation on the local host.
-# It requires root priviledges, and it is required that a line like
+# This is the working horse to update a Home2L installation on the local machine.
+# It requires root privileges, and it is required that a line like
 #
 #  "<admin user name> ALL=NOPASSWD:/opt/home2l/bin/home2l-install"
 #
@@ -64,6 +64,7 @@ error () {
 
 SELF=`realpath $0`
 HOME2L_ROOT=${SELF%/bin/*}
+ASK_CONFIRM=1
 
 
 do_init () {
@@ -78,7 +79,11 @@ do_init () {
   echo
   echo "##### Home2L Initialization #####"
   echo
-  echo "About to install:"
+  if [[ $ASK_CONFIRM == 1 ]]; then
+    echo "About to install:"
+  else
+    echo "Installing:"
+  fi
   echo "  $EXEC_LINK/home2l"
   if [[ "$VAR_DIR" != "" ]]; then
     echo "  $VAR_DIR"
@@ -89,22 +94,53 @@ do_init () {
   if [[ "$WITH_INIT" == "1" ]]; then
     echo "  /etc/init.d/home2l - and start the service"
   fi
-  echo
-  read -p "Continue? (y/N) " ANS
-
+  WITH_USER=1
+  if ! id home2l >/dev/null 2>&1; then
+    echo
+    echo "WARNING: No user 'home2l' found in the system."
+    echo "         This may be ok for a demo, but for a productive system, you should"
+    echo "         stop now and add a user account for all Home2L background activities,"
+    echo "         for example (ommit or change the '--pid 5000' clause at your choice):"
+    echo
+    echo "         # adduser --pid 5000 home2l"
+    WITH_USER=0
+  fi
+  if [[ $ASK_CONFIRM == 1 ]]; then
+    echo
+    read -p "Continue? (y/N) " ANS
+  else
+    ANS="y"
+  fi
   if [[ "$ANS" == "y" ]]; then
     rm -f $EXEC_LINK/home2l
     ln -s $HOME2L_ROOT/bin/home2l $EXEC_LINK/home2l
 
     if [[ "$VAR_DIR" != "" ]]; then
       mkdir -p $VAR_DIR
-      chown home2l.home2l $VAR_DIR
+      if [ -e $HOME2L_ROOT/var ]; then
+        if [[ "`realpath -q $HOME2L_ROOT/var`" != "`realpath -q $VAR_DIR`" ]]; then
+          echo "WARNING: '$HOME2L_ROOT/var' already exists and is NOT equivalent to '$VAR_DIR'!"
+        fi
+      else
+        ln -s $VAR_DIR $HOME2L_ROOT/var
+      fi
+      if [[ "$WITH_USER" == "1" ]]; then
+        chown home2l.home2l $VAR_DIR
+      fi
     fi
     if [[ "$TMP_DIR" != "" ]]; then
       mkdir -p $TMP_DIR
-      chown home2l.home2l $TMP_DIR
+      if [ -e $HOME2L_ROOT/tmp ]; then
+        if [[ "`realpath -q $HOME2L_ROOT/tmp`" != "`realpath -q $TMP_DIR`" ]]; then
+          echo "WARNING: '$HOME2L_ROOT/tmp' already exists and is NOT equivalent to '$TMP_DIR'!"
+        fi
+      else
+        ln -s $TMP_DIR $HOME2L_ROOT/tmp
+      fi
+      if [[ "$WITH_USER" == "1" ]]; then
+        chown home2l.home2l $TMP_DIR
+      fi
     fi
-
 
     if [[ "$WITH_INIT" == "1" ]]; then
       cp $HOME2L_ROOT/install/initd-home2l /etc/init.d/home2l
@@ -135,34 +171,12 @@ if [[ "$UID" != "0" ]]; then
 fi
 
 
-# Set environment ...
-HOSTNAME=`hostname`
-if ! which home2l >/dev/null; then
-  do_init
-  exit 0
-fi
-. `home2l -e`
-
-# Load configuration ...
-CONF=$HOME2L_ROOT/etc/install.conf
-test -e $CONF || error "Cannot find configuration file $CONF"
-. $CONF
-
-# Sanity checks ...
-set -e
-if [[ "$HOME2L_ROOT" == "" ]]; then
-  error "HOME2L_ROOT not set properly."
-fi
-if [[ "$HOSTNAME" == "$MASTER" ]]; then
-  error "This tool cannot be run on the master '$MASTER'."
-fi
-
 # Evaluate command line...
 DO_ETC=0
 DO_BLOB=0
 DO_APK=0
-ASK_CONFIRM=1
-SOURCE=$MASTER_URL
+DO_INIT=0
+SOURCE=
 for ARG in $@; do
   case $ARG in
     -e | --etc)
@@ -178,23 +192,54 @@ for ARG in $@; do
       ASK_CONFIRM=0
       ;;
     -i)
-      do_init
-      exit
+      DO_INIT=1
       ;;
     *)
       SOURCE="$ARG"
       ;;
   esac
 done
-if [[ $DO_ETC == 0 && $DO_BLOB == 0 && $DO_APK == 0 ]]; then
+if [[ $DO_ETC == 0 && $DO_BLOB == 0 && $DO_APK == 0 && $DO_INIT == 0 ]]; then
   DO_ETC=1
   DO_BLOB=1
 fi
 if [[ $DO_BLOB == 1 ]]; then
   DO_APK=0
 fi
+
+
+# Init if requested or required ...
+which home2l >/dev/null || DO_INIT=1
+if [[ $DO_INIT == 1 ]]; then
+  do_init
+  exit 0
+fi
+
+
+# Set environment & load configuration ...
+HOSTNAME=`hostname`
+. `home2l -e`
+CONF=$HOME2L_ROOT/etc/install.conf
+test -e $CONF || error "Cannot find configuration file $CONF"
+. $CONF
+
+
+# Complete args ...
 if [[ "$SOURCE" == "" ]]; then
-  error "Source specification is missing."
+  SOURCE=$MASTER_URL
+  if [[ "$SOURCE" == "" ]]; then
+    error "Source specification is missing."
+  fi
+fi
+
+
+# Sanity checks ...
+set -e
+if [[ "$HOME2L_ROOT" == "" ]]; then
+  error "HOME2L_ROOT not set properly."
+fi
+if [[ "$HOSTNAME" == "$MASTER" ]]; then
+  error "This tool cannot be run on the master '$MASTER'."
 fi
 
 
@@ -229,29 +274,9 @@ fi
 
 # Fix ownership & permissions...
 echo
-HAVE_APP=1
-APP_UID=`stat -c %u /data/data/org.home2l.app 2>/dev/null` || HAVE_APP=0
-if [[ $HAVE_APP == 1 ]]; then
-  echo "# Fixing permissions for an Android host ..."
-  chown -R $APP_UID $HOME2L_ROOT/etc/secrets
-  chmod 550 $HOME2L_ROOT/etc/secrets        2>/dev/null || echo "#   (no '$HOME2L_ROOT/etc/secrets' folder found)"
-  chmod 440 $HOME2L_ROOT/etc/secrets/*      2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets' seems to be empty)"
-  chmod 500 $HOME2L_ROOT/etc/secrets/ssh    2>/dev/null || echo "#   (no '$HOME2L_ROOT/etc/secrets/ssh' folder found)"
-  chmod 400 $HOME2L_ROOT/etc/secrets/ssh/*  2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets/ssh/' seems to be empty)"
-  mkdir -p $HOME2L_ROOT/var $HOME2L_ROOT/tmp
-  chmod 2777  $HOME2L_ROOT/var $HOME2L_ROOT/tmp
-else
-  echo "# Fixing permissions for a Non-Android host ..."
-  chmod 550 $HOME2L_ROOT/etc/secrets    2>/dev/null || echo "#   (no '$HOME2L_ROOT/etc/secrets' folder found)"
-  chmod 440 $HOME2L_ROOT/etc/secrets/*  2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets' seems to be empty)"
-fi
-if [[ $HAVE_APP == 0 && $HOME2L_ROOT == /data/home2l ]]; then
-  echo
-  echo "WARNING: According to HOME2L_ROOT, this seems to be an Android machine."
-  echo "  However, I could not find the Home2l App. You should now install"
-  echo "  the app and must then run this script again. Otherwise, the app may"
-  echo "  not work properly."
-fi
+echo "# Fixing permissions ..."
+chmod 440 `find /opt/home2l/etc/secrets -type f` $HOME2L_ROOT/etc/secrets 2>/dev/null || echo "#   (no files found in '$HOME2L_ROOT/etc/secrets')"
+chmod 550 `find /opt/home2l/etc/secrets -type d` $HOME2L_ROOT/etc/secrets 2>/dev/null || echo "#   ('$HOME2L_ROOT/etc/secrets' not found)"
 
 
 # Restart daemon (if active) and other house-keeping...
@@ -264,6 +289,7 @@ if [[ $DO_BLOB == 1 || $DO_ETC == 1 ]]; then
     service home2l status && service home2l reload
   fi
 fi
+
 
 # Exit successfully...
 exit 0

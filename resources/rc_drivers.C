@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -332,9 +332,10 @@ ENV_PARA_SPECIAL ("drv.<id>", const char *, NULL);
    *   \item The name of a driver .so file (binary driver).
    *   \item The invocation of a script, including arguments.
    *   \item A '1', in which case <id> is used as <arg> (shortcut to enable binary drivers).
+   *   \item If set to '0', the driver setting is ignored.
    * \end{itemize}
    *
-   * Relative paths <name> are search in:
+   * Relative paths <name> are searched in:
    * \begin{itemize}
    *   \item <HOME2L\_ROOT>/etc[/<ARCH>]
    *   \item <HOME2L\_ROOT>/lib/<ARCH>/home2l-drv-<name>.so
@@ -343,7 +344,7 @@ ENV_PARA_SPECIAL ("drv.<id>", const char *, NULL);
    *   \item <HOME2L\_ROOT>/
    * \end{itemize}
    *
-   * Please refer to the \hyperref[sec:drvdev-external]{section on writing external drivers}
+   * Please refer to the \hyperref[sec:resources-drvdev-external]{section on writing external drivers}
    * in for further information on script-based drivers.
    */
 ENV_PARA_INT ("rc.drvMinRunTime", envMinRunTime, 3000);
@@ -542,7 +543,7 @@ void CExtDriver::DriveValue (CResource *rc, CRcValueState *vs) {
 
 
 void CExtDriver::OnShellReadable () {
-  CString line;
+  CString s, line;
   CSplitString arg;
   CResource *rc = NULL;
   CRcValueState vs;
@@ -552,18 +553,23 @@ void CExtDriver::OnShellReadable () {
   while (shell.ReadLine (&line)) {
     //~ INFOF (("From '%s': %s", Lid (), line.Get ()));
     line.Strip ();
-    arg.Set (line.Get (), 3);
+    arg.Set (line.Get (), 5);
     switch (line [0]) {
 
-      case 'd': case 'D':    // d <resource LID> <options>  : declare resource
+      case 'd': case 'D':    // d <resource LID> <type> (ro|wr) [ <default value> [ <default request attrs> ] ] : declare resource
         if (initComplete) {
           WARNINGF (("Declaration of a new resource after the initialization phase by driver '%s' - ignoring: %s", Lid (), line.Get ()));
           break;
         }
-        ok = (arg.Entries () == 3);
+        ok = (arg.Entries () >= 4);
         if (ok) {
-          rc = CResource::Register (this, arg[1], arg[2]);   // [RC:UNDOCUMENTED] External drivers must document themselves
+          rc = CResource::Register (this, arg[1], StringF (&s, "%s %s", arg[2], arg[3]));   // [RC:-] External drivers must document themselves
           ok = (rc != NULL);
+          if (ok && arg.Entries () == 5) {
+            CRcRequest req;
+            req.SetPriority (rcPrioDefault);
+            req.SetFromStr (arg[4]);
+          }
         }
         break;
 
@@ -770,6 +776,7 @@ static const char *drvSearchPath[] = {
 
 
 void RcDriversInit () {
+  CDictFast<CString> drvDict;
   CSplitString args;
   CString s, cmd;
   const char *id, *cmdStr;
@@ -780,25 +787,41 @@ void RcDriversInit () {
   void *dlHandle;
   FRcDriverFunc *driverFunc = NULL;
   const char *errStr;
-  bool ok;
 #endif
+  bool ok;
 
   // Register all internal drivers...
   signalDriver = new CRcDriver ("signal");
   signalDriver->Register ();
   if (envRcTimer) CRcDriver::RegisterAndInit ("timer", RcDriverFunc_timer);
 
-  // Register all binary and external drivers...
-  haveExternals = false;
+  // Make a list of all binary and external drivers...
+  //   Loading binary drivers may change the environment (i.e. add new statically
+  //   declared variables). For this reason, we create a list of all drivers now.
   EnvGetPrefixInterval ("drv.", &idx0, &idx1);
   for (n = idx0; n < idx1; n++) {
-    id = EnvGetKey (n) + 4;                 // 4 == strlen ("drv.") !!
-    if (strchr (id, '.') != NULL) continue;    // Skip keys like "drv.<id>.something"
+    id = EnvGetKey (n) + 4;                   // 4 == strlen ("drv.") !!
+    //~ INFOF (("### Driver #%i: '%s'", n, EnvGetKey (n)));
+    if (strchr (id, '.') != NULL) continue;   // Skip keys like "drv.<id>.something"
     cmdStr = EnvGetVal (n);
-    if (strchr ("1tT+", cmdStr[0]) && cmdStr[1] == '\0') cmdStr = id;    // "true" => set ID as name
+    if (cmdStr[1] == '\0') {
+      if (cmdStr[0] == '0') continue;         // driver is disabled
+      if (cmdStr[0] == '1') cmdStr = id;      // driver is enabled with a "true" => set ID as name
+    }
+    s.SetC (cmdStr);
+    drvDict.Set (id, &s);
+  }
+
+  // Register all binary and external drivers...
+  haveExternals = false;
+  for (n = 0; n < drvDict.Entries (); n++) {
+    id = drvDict.GetKey (n);
+    cmdStr = drvDict.Get (n)->Get ();
+    //~ INFOF (("### Driver #%i: '%s'", n, id));
 
     // Expand (the first component of) command to an absolute path ...
     if (cmdStr[0] != '/') {   // relative path given?
+
       // Split the command and perform a path search...
       args.Set (cmdStr, 2);
       found = false;
@@ -820,7 +843,16 @@ void RcDriversInit () {
       cmdStr = cmd.Get ();
     }
     isBinary = (strcmp (cmdStr + strlen (cmdStr) - 3, ".so") == 0);     // cmd ends with ".so"?
-    INFOF(("Registering %s driver '%s' <%s>", isBinary ? "binary" : "script", id, cmdStr));
+
+    // Sanity ...
+    //   We check for a redefinition here. Otherwise strange (distracting) error messages may occor on dlopen().
+    ok = true;
+    if (RcGetDriver (id) == NULL)
+      INFOF(("Registering %s driver '%s' <%s>", isBinary ? "binary" : "script", id, cmdStr));
+    else {
+      WARNINGF(("Redefinition of driver '%s' - skipping driver from config file.", id));
+      ok = false;
+    }
 
     // Handle binary driver...
     if (isBinary) {
@@ -886,7 +918,8 @@ void RcDriversDone () {
 
 CResource *RcDriversAddSignal (const char *name, ERcType type) {
   ASSERT (signalDriver != NULL);
-  return CResource::Register (signalDriver, name, type, true);  // [RC:UNDOCUMENTED] Signals must be documented by themselves
+  //~ INFOF (("### RcDriversAddSignal ('%s', type = %i)", name, type));
+  return CResource::Register (signalDriver, name, type, true);  // [RC:-] Signals must be documented by themselves
 }
 
 
@@ -894,7 +927,8 @@ CResource *RcDriversAddSignal (const char *name, CRcValueState *vs) {
   CResource *rc;
 
   ASSERT (vs != NULL && signalDriver != NULL);
-  rc = CResource::Register (signalDriver, name, vs->Type (), true);  // [RC:UNDOCUMENTED] Signals must be documented by themselves
+  //~ INFOF (("### RcDriversAddSignal ('%s', %s)", name, vs->ToStr ()));
+  rc = CResource::Register (signalDriver, name, vs->Type (), true);  // [RC:-] Signals must be documented by themselves
   if (vs->IsValid ()) rc->SetDefault (vs);
   return rc;
 }

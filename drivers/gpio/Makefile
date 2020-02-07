@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,10 +32,6 @@ HOME2L_MOD ?= drivers/gpio
 include $(HOME2L_SRC)/Setup.mk
 include $(HOME2L_SRC)/common/Env.mk
 include $(HOME2L_SRC)/resources/Resources.mk
-
-
-# Generic C/C++ flags...
-CFLAGS += $(CFLAGS_ENV) $(CFLAGS_RC)
 
 
 # Common targets...

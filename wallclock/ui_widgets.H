@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,12 @@
 
 
 /** @file
+ *
  * @addtogroup ui
  * @{
  *
  * @defgroup ui_widgets Widgets
- * Collection of UI widgets.
+ * @brief Collection of UI widgets.
  *
  * This module contains the collection of common UI widgets or widget extensions.
  *
@@ -61,7 +62,7 @@
 
 
 /// @defgroup ui_widgets_extensions Extensions
-/// Widget Extensions
+/// @brief Widget Extensions
 /// @{
 
 
@@ -71,41 +72,45 @@
 // *************************** CModalWidget ************************************
 
 
-/** Widget that can pop up on a screen, such as a menu or a message box.
+/** @brief Widget that can pop up on a screen, such as a menu or a message box.
  */
 class CModalWidget: public virtual CWidget {
   public:
 
     /// @name Running the widget ...
     /// @{
-    int Run (CScreen *_screen);  ///< Run the widget until it is cancelled or a status >= 0 is set; return status.
+    int Run (CScreen *_screen);  ///< @brief Run the widget until it is cancelled or a status >= 0 is set; return status.
 
-    virtual void Start (CScreen *_screen);  ///< Just start the modal widget.
-    bool IsRunning ();                      ///< Must be invoked regularly (in each UI iteration), if Run() is not used.
-    virtual void Stop ();                   ///< Remove widget from screen (e.g. useful for inactivity timeout).
+    virtual void Start (CScreen *_screen);  ///< @brief Just start the modal widget.
+    bool IsRunning ();                      ///< @brief Must be invoked regularly (in each UI iteration), if Run() is not used.
+    virtual void Stop ();                   ///< @brief Remove widget from screen (e.g. useful for inactivity timeout).
     /// @}
 
     /// @name Status ...
     /// @{
-    int GetStatus () { return status; }     ///< Get status: -2: running, -1: cancelled (e.g. by touching outside), >= 0: success, user-defined code set by 'SetStatus'.
-    void SetStatus (int _status) { status = _status; }    ///< Set a status code.
+    int GetStatus () { return status; }     ///< @brief Get status: -2: running, -1: cancelled (e.g. by touching outside), >= 0: success, user-defined code set by 'SetStatus'.
+    void SetStatus (int _status) { status = _status; }    ///< @brief Set a status code.
     /// @}
 
     /// @name Behaviour for events outside the widget ...
     /// @{
     void SetNoCancelArea (SDL_Rect _rNoCancel) { rNoCancel = _rNoCancel; }
-      /// Set the no-cancel area.
+      ///< @brief Set the no-cancel area.
+      ///
       /// A touch outside this area is interpreted as a "cancel" operation. Normally and by default, this is equal
       /// to the area of this menu ('rFrame'), but there may be cases where this area needs to be extended,
       /// for example, if a combination of menus are presented simultaneously such as the month/year selector in the calendar app.
     void RemoveNoCancelArea () { SetNoCancelArea (RectScreen ()); }
     /// @}
 
+    /// @name Callbacks...
+    /// @{
+    virtual bool HandleEvent (SDL_Event *ev);     ///< @brief Handle event: must always be called last.
+    /// @}
+
   protected:
     SDL_Rect rNoCancel;
     int status;
-
-    virtual bool HandleEvent (SDL_Event *ev);     // must be called last
 };
 
 
@@ -115,7 +120,7 @@ class CModalWidget: public virtual CWidget {
 // *************************** CCursorWidget ***********************************
 
 
-/** Widget with an additional rectangular cursor.
+/** @brief Widget with an additional rectangular cursor.
  */
 class CCursorWidget: public virtual CWidget {
   public:
@@ -128,15 +133,15 @@ class CCursorWidget: public virtual CWidget {
 
     void SetCbHandleEvent (bool (*_cbHandleEvent) (SDL_Event *, void *), void *_data = NULL) { cbHandleEvent = _cbHandleEvent; cbHandleEventData = _data; }
 
+    virtual void Render (SDL_Renderer *ren);
+    virtual bool HandleEvent (SDL_Event *ev);
+
   protected:
     SDL_Rect cursorArea;
     TColor cursorColor;
     SDL_BlendMode blendMode;
     bool (*cbHandleEvent) (SDL_Event *, void *);
     void *cbHandleEventData;
-
-    virtual void Render (SDL_Renderer *ren);
-    virtual bool HandleEvent (SDL_Event *ev);
 };
 
 
@@ -161,38 +166,42 @@ class CCursorWidget: public virtual CWidget {
 
 
 /// @defgroup ui_widgets_button Button
-/// Push-button widget
+/// @brief Push-button widgets
 /// @{
 
 
-#define BUTTON_DEFAULT_FONT FontGet (fntNormal, 24)   ///< Default font for CButton labels.
+#define BUTTON_DEFAULT_FONT FontGet (fntNormal, 24) ///< @brief Default font for CButton labels.
+#define BUTTON_LABEL_BORDER 8                       ///< @brief Border spacing around labels in pixels.
 
 
 typedef void FCbButtonPushed (class CButton *button, bool longPush, void *data);
-  ///< Function prototype for CButton callbacks.
+  ///< @brief Function prototype for CButton callbacks.
 
 
-/** Macro to create a trampoline from CButton to another class.
- * The class must define a method:
- *
- *     void CLASS_NAME::METHOD_NAME (CButton *button, bool longPush)
- *
- * To the button, the trampoline must be passed by a call like:
- *
- *     CButton::SetCbPushed (CB_NAME, <class object pointer>)
- */
 #define BUTTON_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)                 \
   static void CB_NAME (class CButton *button, bool longPush, void *data) {  \
     ((CLASS_NAME *) data)->METHOD_NAME (button, longPush);                  \
   }
+  ///< @brief Macro to create a trampoline from CButton to another class.
+  ///
+  /// The class must define a method:
+  ///
+  ///     void CLASS_NAME::METHOD_NAME (CButton *button, bool longPush)
+  ///
+  /// To the button, the trampoline must be passed by a call like:
+  ///
+  ///     CButton::SetCbPushed (CB_NAME, <class object pointer>)
+  ///
 
 
 void CbActivateScreen (class CButton *, bool, void *screen);
-  ///< Convenience callback for all sort of "Jump-to-screen" buttons (including home)
-  /// 'data' must point to a valid 'CScreen' object.
+  ///< @brief Convenience callback for all sort of "Jump-to-screen" buttons (including home).
+  /// 'data' must point to a valid @ref CScreen object.
 
 
-/** Push-button widget.
+/** @brief Push-button widget.
+ *
+ * This is the normal push button.
  */
 class CButton: public CWidget {
   public:
@@ -203,7 +212,7 @@ class CButton: public CWidget {
 
     /// @name Quick setup...
     /// @{
-    void Set (SDL_Rect _area, TColor _color);
+    void Set (SDL_Rect _area, TColor _color = GREY);
     void Set (SDL_Rect _area, TColor _color, SDL_Surface *_icon);
     void Set (SDL_Rect _area, TColor _color, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
     void Set (SDL_Rect _area, TColor _color, SDL_Surface *_icon, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
@@ -217,12 +226,21 @@ class CButton: public CWidget {
     void SetColor (TColor _colNorm) { SetColor (_colNorm, _colNorm); }
     void SetColor (TColor _colNorm, TColor _colDown);
 
-    void SetLabel (SDL_Surface *_icon, SDL_Rect *srcRect = NULL);
+    void SetLabel (SDL_Surface *_icon, SDL_Rect *srcRect = NULL, bool takeOwnership = false);
+      ///< @brief Set '_icon' as tbe button label.
+      ///
+      /// By default, the object keeps a reference to '_icon' internally, and the caller must
+      /// keep the icon valid as long as the button object lives or until another label is set.
+      /// If 'takeOwnership == true', the button object will free the surface as soon as appropriate
+      /// (which may be later or very soon, e.g. during this call!). Hence, if the caller cannot
+      /// conveniently keep '_icon' valid, the caller should make a copy (SurfaceDup() ) and
+      /// pass 'takeOwenership = true' here.
     void SetLabel (const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
     void SetLabel (SDL_Surface *_icon, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
     void SetLabel (TColor color, const char *iconName, const char *text = NULL, TTF_Font *font = NULL)
       { SetLabel (iconName ? IconGet (iconName, color) : NULL, text, color, font); }
     void ClearLabel () { SetLabel ((SDL_Surface *) NULL); }
+    void SetLabelAlignment (int _hAlign = 0, int _vAlign = 0) { hAlign = _hAlign; vAlign = _vAlign; }
 
     void SetHotkey (SDL_Keycode _hotkey) { hotkey = _hotkey; }
     /// @}
@@ -233,9 +251,17 @@ class CButton: public CWidget {
     void SetCbPushed (FCbButtonPushed *cb, void *_data = NULL) { cbPushed = cb; cbPushedData = _data; }
     /// @}
 
+    /// @name Callbacks...
+    /// @{
+    virtual SDL_Surface *GetSurface ();
+    virtual bool HandleEvent (SDL_Event *ev);
+    /// @}
+
   protected:
     SDL_Surface *surfLabel;
+    bool surfLabelIsOwned;
     TColor colNorm, colDown;
+    int hAlign, vAlign;
     bool isDown, changed;
 
     FCbButtonPushed *cbPushed;
@@ -243,17 +269,31 @@ class CButton: public CWidget {
 
     SDL_Keycode hotkey;
 
-    /// @name Callbacks...
-    /// @{
-    virtual SDL_Surface *GetSurface ();
-    virtual bool HandleEvent (SDL_Event *ev);
-    /// @}
-
     /// @name Change management...
     /// @{
     void ChangedSurface () { changed = true; CWidget::ChangedSurface (); }
     /// @}
 };
+
+
+
+#define FLATBUTTON_COL_UP   BLACK
+#define FLATBUTTON_COL_DOWN ToColor (0x60, 0x00, 0x00)
+
+
+/** @brief Flat Push-button widget.
+ *
+ * This is a piece of text without a visible button, which behaves just like
+ * a push-button. Examples are the launch buttons on the home screen.
+ */
+class CFlatButton: public CButton {
+  public:
+    CFlatButton () { SetColor (FLATBUTTON_COL_UP, FLATBUTTON_COL_DOWN); }
+
+    virtual SDL_Surface *GetSurface ();
+};
+
+
 
 
 
@@ -272,7 +312,8 @@ typedef struct {
 
 
 CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen *screen);
-  ///< Create a dynamic array of CButton objects for a main button bar.
+  ///< @brief Create a dynamic array of CButton objects for a main button bar.
+  /// 'screen' is passed as the user data field to each button.
   /// If 'screen != NULL', all buttons are added to the screen as widgets.
 
 
@@ -286,7 +327,7 @@ CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen
 
 
 /// @defgroup ui_widgets_listbox Listbox
-/// Listbox widget
+/// @brief Listbox widget
 /// @{
 
 
@@ -300,25 +341,27 @@ enum EListboxMode {
 
 
 typedef void FCbListboxPushed (class CListbox *, int idx, bool longPush, void *data);
-  ///< Callback prototype for CListbox push events.
+  ///< @brief Callback prototype for CListbox push events.
 
 
-/** Macro to create a trampoline to another class.
- * The class must define a method:
- *
- *     void CLASS_NAME::METHOD_NAME (CListbox *listbox, int idx, bool longPush)
- *
- * To the list box, the trampoline must be passed by a call like:
- *
- *     CListbox::SetCbPushed (CB_NAME, <class object pointer>)
- */
 #define LISTBOX_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME) \
   static void CB_NAME (class CListbox *listbox, int idx, bool longPush, void *data) {   \
     ((CLASS_NAME *) data)->METHOD_NAME (listbox, idx, longPush);                        \
   }
+  ///< @brief Macro to create a trampoline to another class.
+  ///
+  /// The class must define a method:
+  ///
+  ///     void CLASS_NAME::METHOD_NAME (CListbox *listbox, int idx, bool longPush)
+  ///
+  /// To the list box, the trampoline must be passed by a call like:
+  ///
+  ///     CListbox::SetCbPushed (CB_NAME, <class object pointer>)
+  ///
 
 
-/// Listbox item.
+/** @brief Listbox item.
+ */
 class CListboxItem {
   public:
     CListboxItem () { text = NULL; data = NULL; surfIcon = NULL; isSelected = isSpecial = false; changed = true; }
@@ -339,7 +382,7 @@ class CListboxItem {
 };
 
 
-/** Listbox widget.
+/** @brief Listbox widget.
  */
 class CListbox: public CCanvas {
   public:
@@ -349,11 +392,11 @@ class CListbox: public CCanvas {
     /// @name Setup ...
     /// @{
     void SetMode (EListboxMode _mode, int _itemHeight, int _itemGap = 1);
-      // 'itemHeight' == 0 indicates variable-height items (Note: presently much worse performance than fixed-height)
-      // implicitly deletes all items
+      ///< @brief 'itemHeight' == 0 indicates variable-height items (Note: presently much worse performance than fixed-height);
+      /// implicitly deletes all items.
     void SetFormat (TTF_Font *_font, TColor colGrid = BLACK, TColor _colLabel = WHITE, TColor _colBack = DARK_DARK_GREY, TColor _colSelected = GREY, TColor _colSpecial = DARK_GREY);
-      // parameters set here are only read in 'RenderItem' & can be ommited (or re-interpreted) if a custom render function is defined.
-      // 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'.
+      ///< @brief Parameters set here are only read in 'RenderItem' & can be ommited (or re-interpreted) if a custom render function is defined.
+      /// 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'.
     void SetArea (SDL_Rect _area) { CCanvas::SetArea (_area); ChangedSetup (); }
     /// @}
 
@@ -391,6 +434,12 @@ class CListbox: public CCanvas {
     void ChangedItems (int idx, int num = 1);    ///< Must be called if items changed and SetItem() was not called.
     /// @}
 
+    /// @name Callbacks...
+    /// @{
+    virtual void Render (SDL_Renderer *ren);
+    virtual bool HandleEvent (SDL_Event *ev);
+    /// @}
+
   protected:
     CListboxItem *itemArr;
     int items;
@@ -413,7 +462,8 @@ class CListbox: public CCanvas {
     /// @name Rendering ...
     /// @{
     virtual SDL_Surface *RenderItem (CListboxItem *item, int idx, SDL_Surface *surf);
-      ///< Render a list box item to an SDL surface and return it.
+      ///< @brief Render a list box item to an SDL surface and return it.
+      ///
       /// This method may be overriden to implement a custom look of the items.
       /// The default implementation renders left-justified label and text from 'CListboxItem::surfLabel' and 'CListbox::text'
       /// according the settings given by 'SetFormat' and interprets 'CListboxItem::isSpecial'.
@@ -421,12 +471,6 @@ class CListbox: public CCanvas {
       /// If 'itemHeight' == 0, the height is arbitrary and the layout will be adapted accordingly.
       /// The caller becomes owner of the returned surface.
       /// 'surf' is the previous surface which can be reused. If it is not NULL, it must be free'd or reused.
-    /// @}
-
-    /// @name Callbacks...
-    /// @{
-    virtual void Render (SDL_Renderer *ren);
-    virtual bool HandleEvent (SDL_Event *ev);
     /// @}
 
     /// @name Change management ...
@@ -453,11 +497,15 @@ class CListbox: public CCanvas {
 
 
 /// @defgroup ui_widgets_menu Menu
-/// Menu widget and function
+/// @brief Menu widget and function
 /// @{
 
 
-/** Menu widget.
+#define MENU_DEFAULT_FONT FontGet (fntNormal, 20) ///< Default font for menus.
+#define MENU_DEFAULT_COLOR DARK_GREY              ///< Default color for menus.
+
+
+/** @brief Menu widget.
  */
 class CMenu: public CListbox, public CModalWidget {
   public:
@@ -467,7 +515,7 @@ class CMenu: public CListbox, public CModalWidget {
     /// @name Setup ...
     /// @{
     void Setup (SDL_Rect _rContainer, int _hAlign = -1, int _vAlign = -1,  // The exact geometry is determined in 'Start'
-                TColor color = DARK_GREY, TTF_Font *_font = FontGet (fntNormal, 20));
+                TColor color = MENU_DEFAULT_COLOR, TTF_Font *_font = NULL);
     /// @}
 
     /// @name Setting menu entries ...
@@ -490,12 +538,19 @@ class CMenu: public CListbox, public CModalWidget {
     /// The following method(s) provide additional information.
     /// @{
     bool GetStatusLongPush () { return hadLongPush; }
-      ///< Return whether the push was a long push.
+      ///< @brief Return whether the push was a long push.
     /// @}
 
     /// @name Misc. ...
     /// @{
     SDL_Rect *GetArea () { return &rFrame; }   // Note: Is different from 'CWidget::area', which here only contains the canvas part of the menu
+    /// @}
+
+    /// @name Callbacks...
+    /// @{
+    virtual void Render (SDL_Renderer *ren);
+    virtual bool HandleEvent (SDL_Event *ev);
+    virtual void OnPushed (int idx, bool longPush);
     /// @}
 
   protected:
@@ -504,24 +559,20 @@ class CMenu: public CListbox, public CModalWidget {
     CString itemStr;
     SDL_Texture *texFrame;
     bool hadLongPush;
-
-    /// @name Callbacks...
-    /// @{
-    virtual void Render (SDL_Renderer *ren);
-    virtual bool HandleEvent (SDL_Event *ev);
-    virtual void OnPushed (int idx, bool longPush);
-    /// @}
 };
 
 
 // Easy-to-use function(s)...
-int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign = -1, int _vAlign = -1, TColor color = DARK_GREY, bool *retLongPush = NULL);
-  ///< Run a menu with a single function call.
+int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign = -1, int _vAlign = -1,
+             TColor color = MENU_DEFAULT_COLOR, TTF_Font *_font = NULL,
+             bool *retLongPush = NULL);
+  ///< @brief Run a menu with a single function call.
   /// @param _itemStr is a string containing the menu items separated by '|'.
   /// @param _rContainer specifies the rectangle in which the menu is placed.
   /// @param _hAlign specifies the horizontal alignment inside the container rectangle.
   /// @param _vAlign specifies the vertical alignment inside the container rectangle.
   /// @param color is the main menu color.
+  /// @param _font is the menu font (if NULL, the default font is used).
   /// @param retLongPush optionally points to a variable which is set if the menu was completed with a long push.
 
 
@@ -535,11 +586,12 @@ int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign = -1, int _
 
 
 /// @defgroup ui_widgets_messagebox Message Box
-/// Message box widget and functions
+/// @brief Message box widget and functions
 /// @{
 
 
 #define MSGBOX_DEFAULT_FONT FontGet (fntNormal, 24)   ///< Default font for message box contents.
+#define MSGBOX_COLOR DARK_GREY
 
 
 /// IDs for standard buttons.
@@ -562,9 +614,9 @@ enum EMessageButtonId {
 #define mbmNone ((int) 0)                     ///< Bit mask for no button
 
 
-/** Message box widget
+/** @brief Message box widget.
  *
- * See CModalWidget for options to run the message box.
+ * See @ref CModalWidget for options to run the message box.
  */
 class CMessageBox: public CModalWidget {
   public:
@@ -573,34 +625,43 @@ class CMessageBox: public CModalWidget {
 
     /// @name Setup ...
     /// @{
-    void Setup (int contentW, int contentH, int _buttons, CButton **_buttonArr);
-      ///< The most flexible way.
+    void Setup (const char *title, int contentW, int contentH, int _buttons, CButton **_buttonArr, TColor color = MSGBOX_COLOR);
+      ///< @brief The most flexible way.
+      ///
       /// 'content' is arbitrary content and must be transparent in empty areas.
-      /// The buttons must be predefined, only the areas of all buttons will be set by 'Setup'.
+      /// The buttons must be predefined, only the areas and the push action of all buttons
+      /// will be (re-)set by 'Setup'.
       /// All parameters must remain valid until the message box is stopped.
       // TBD: FIX this: replace int "int contentW, int contentH" by "SDL_Surface *content"!!!
     CButton *GetStdButton (EMessageButtonId buttonId);
-      ///< Initialize and return a standard button to be used by the previous method.
+      ///< @brief Initialize and return a standard button to be used by the previous method.
 
-    void Setup (int contentW, int contentH, int buttonMask);
-      ///< The easier way, if only standard buttons are used.
+    void Setup (const char *title, int contentW, int contentH, int buttonMask, TColor color = MSGBOX_COLOR);
+      ///< @brief The easier way, if only standard buttons are used.
       /// 'buttonMask' is a bit-wise "or" of the message mask constants ('mbm...').
       // TBD: FIX this: replace int "int contentW, int contentH" by "SDL_Surface *content"!!!
 
     void Setup (const char *title, const char *text, SDL_Surface *icon = NULL, int buttonMask = mbmOk, int hAlign = 0, TTF_Font *font = NULL);
-      ///< The easiest way for standard text boxes.
+      ///< @brief The easiest way for standard text boxes.
+    /// @}
+
+    /// @name Properties ...
+    /// @{
+    SDL_Rect *ContentArea () { return &rContent; }
     /// @}
 
     /// @name Obtaining the result ...
     /// @{
-    int GetChoice () { return GetStatus (); }  ///< Return the number of the button pushed, numbered from right to left; the rightmost button (typically "Cancel") has number 0.
+    int GetChoice () { return GetStatus (); }
+      ///< @brief Return the number of the button pushed, numbered from right to left;
+      /// the rightmost button (typically "Cancel") has number 0.
     /// @}
 
     /// @name Callbacks ...
     /// @{
     virtual void Start (CScreen *_screen);
     virtual void Stop ();
-    void OnButtonPushed (CButton *button, bool);
+    virtual void OnButtonPushed (CButton *button, bool);
     /// @}
 
   protected:
@@ -614,27 +675,31 @@ class CMessageBox: public CModalWidget {
 /// @name Running a message box with a single function call ...
 /// @{
 int RunMessageBox (const char *title, const char *text, int buttonMask = mbmOk, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
+  ///< @brief Run an arbitray message box.
 
 int RunInfoBox (const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
 int RunInfoBox (const char *title, const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
+  ///< @brief Run an info box with an "OK" button.
 int RunWarnBox (const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
 int RunWarnBox (const char *title, const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
+  ///< @brief Run an warning box with an "OK" button.
 int RunErrorBox (const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
 int RunErrorBox (const char *title, const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
+  ///< @brief Run an error box with an "OK" button.
 
 int RunSureBox (const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
 int RunSureBox (const char *title, const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
-  ///< Returns 1 if sure and <= 0 otherwise
+  ///< @brief Run an "Are you sure?" box. Returns 1 if sure and <= 0 otherwise.
 int RunQueryBox (const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
 int RunQueryBox (const char *title, const char *text, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
-  ///< Returns 2 on "yes", 1 on "no" and 0 otherwise
+  ///< @brief Run a "Yes/No/Cancel" query box. Returns 2 on "yes", 1 on "no" and 0 otherwise.
 /// @}
 
 
 /// @name Manually operated message boxes ...
 /// (e.g. for "please wait..." popups)
 /// @{
-CMessageBox *StartMessageBox (const char *title, const char *text, int buttonMask = mbmOk, SDL_Surface *icon = NULL, int hAlign = 0, TTF_Font *font = NULL);
+CMessageBox *StartMessageBox (const char *title, const char *text, SDL_Surface *icon = NULL, int buttonMask = mbmOk, int hAlign = 0, TTF_Font *font = NULL);
 static inline void IterateMessageBox () { UiIterate (); }
 static inline int GetMessageBoxStatus (CMessageBox *msgBox) { return msgBox->GetStatus (); }
 void StopMessageBox (CMessageBox *msgBox);
@@ -651,14 +716,14 @@ void StopMessageBox (CMessageBox *msgBox);
 
 
 /// @defgroup ui_widgets_inputline Input Line
-/// Input line widget
+/// @brief Input line widget
 /// @{
 
 
 #define INPUTLINE_UNDOS 32
 
 
-/** Input line widget
+/** @brief Input line widget.
  */
 class CInputLine: public CCanvas {
   public:
@@ -669,30 +734,31 @@ class CInputLine: public CCanvas {
     /// @{
     void Setup (int fontSize = 24);
     void SetInput (const char *_inputStr = NULL, int _mark0 = 0, int _markD = 0);
-      ///< Set the input contents; implicitly calls 'ClearHistory' afterwards.
-    void ClearHistory ();   ///< Clear the undo & redo history.
+      ///< @brief Set the input contents; implicitly calls 'ClearHistory' afterwards.
+    void ClearHistory ();   ///< @brief Clear the undo & redo history.
     /// @}
 
     /// @name Obtaining the result ...
     /// @{
     void GetResult (CString *ret) { ret->SetFromIso8859 (input.Get ()); }
-    bool Modified ();      ///< Return if anything may have changed.
+    bool Modified ();      ///< @brief Return if anything may have changed.
     /// @}
 
     /// @name Editing ...
     /// @{
-    int GetMark0 () { return mark0; }    ///< Return the cursor position.
+    int GetMark0 () { return mark0; }    ///< @brief Return the cursor position.
     int GetMarkD () { return markD; }
     void SetMark (int _mark0, int _markD = 0);
-    void MoveMark (int _mark0);         ///< Set 'mark0' while leaving 'mark0 + markD' constant.
+    void MoveMark (int _mark0);         ///< @brief Set 'mark0' while leaving 'mark0 + markD' constant.
 
     void InsChar (char c);
     void InsText (const char *txt, int chars = -1);
     void DelMarked ();
     void DelChar (int pos);
 
-    CString *GetInput () { return &input; }    /// Returns String (ISO 8859!) that may be modified arbitrarily, followed by a call to ChangedInput().
-    void ChangedInput ();   ///< To be called if the imput string was changed.
+    CString *GetInput () { return &input; }
+      ///< @brief Return string (ISO 8859!) that may be modified arbitrarily, followed by a call to ChangedInput().
+    void ChangedInput ();   ///< @brief To be called if the imput string was changed.
     /// @}
 
     /// @name Clipboard ...
@@ -715,6 +781,12 @@ class CInputLine: public CCanvas {
     void ApplySuggestion ();
     virtual void CheckSuggestion () { if (cbSuggCheck) cbSuggCheck (this, suggData); }    // called when
     void SetCbCheckSuggestion (void (*_cbSuggCheck) (CInputLine *, void *), void *_suggData) { cbSuggCheck = _cbSuggCheck; suggData = _suggData; }
+    /// @}
+
+    /// @name Callbacks...
+    /// @{
+    virtual void Render (SDL_Renderer *ren);
+    virtual bool HandleEvent (SDL_Event *ev);
     /// @}
 
   protected:
@@ -746,10 +818,8 @@ class CInputLine: public CCanvas {
     void ChangedContent () { changedContent = true; Changed (); }   // input or suggestion
     void ChangedMark ();
 
-    // Callbacks & helpers...
-    virtual void Render (SDL_Renderer *ren);
+    // Helpers...
     int GetCharOfMouseEvent (SDL_Event *ev);
-    virtual bool HandleEvent (SDL_Event *ev);
 };
 
 
@@ -763,7 +833,7 @@ class CInputLine: public CCanvas {
 
 
 /// @defgroup ui_widgets_slider Slider
-/// Horizontal or vertical slider
+/// @brief Horizontal or vertical slider
 /// @{
 
 
@@ -771,22 +841,23 @@ class CInputLine: public CCanvas {
 #define SLIDER_BAR_HEIGHT 16      ///< Default height of a slider bar.
 
 
-/** Macro to define a trampoline to another class.
- * The class must define a method:
- *
- *     void CLASS_NAME::METHOD_NAME (CSlider *slider, int val, int lastVal)
- *
- * To the slider, the trampoline must be passed by a call like:
- *
- *     CSlider::SetCbValueChanged (CB_NAME, <class object pointer>)
- */
 #define SLIDER_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)                         \
   static void CB_NAME (class CSlider *slider, int val, int lastVal, void *data) {   \
     ((CLASS_NAME *) data)->METHOD_NAME (slider, val, lastVal);                      \
   }
+  ///< @brief Macro to define a trampoline to another class.
+  ///
+  /// The class must define a method:
+  ///
+  ///     void CLASS_NAME::METHOD_NAME (CSlider *slider, int val, int lastVal)
+  ///
+  /// To the slider, the trampoline must be passed by a call like:
+  ///
+  ///     CSlider::SetCbValueChanged (CB_NAME, <class object pointer>)
+  ///
 
 
-/** Slider widget
+/** @brief Slider widget.
  */
 class CSlider: public CWidget {
   public:
@@ -798,7 +869,8 @@ class CSlider: public CWidget {
     void SetFormat (TColor _colSlider, TColor _colBarLower, TColor _colBarUpper, TColor _colBack = TRANSPARENT, int _sliderW = SLIDER_WIDTH, int _barH = SLIDER_BAR_HEIGHT);
     void SetArea (SDL_Rect _area);
     void SetInterval (int _val0, int _val1, bool _continuousUpdate = true);
-      ///< Set the logical range of values; Possible values for 'val' are then '_val0 <= val <= _val1'.
+      ///< @brief Set the logical range of values; Possible values for 'val' are then '_val0 <= val <= _val1'.
+      ///
       /// If '_continuousUpdate' is false, OnValueChanged() is only called when the slider is released.
       /// No action callback is invoked, even if the value has been clipped.
     /// @}
@@ -807,13 +879,19 @@ class CSlider: public CWidget {
     /// @{
     int GetValue () { return val; }
     void SetValue (int _val, bool callOnValueChanged = false);
-      ///< Set the current value; The passed value will be clipped to the allowed range.
+      ///< @brief Set the current value; The passed value will be clipped to the allowed range.
     /// @}
 
     /// @name Action callbacks...
     /// @{
     virtual void OnValueChanged (int val, int lastVal);
     void SetCbValueChanged (void (*_cbValueChanged) (class CSlider *, int, int, void *), void *_data = NULL) { cbValueChanged = _cbValueChanged; cbValueChangedData = _data; }
+    /// @}
+
+    /// @name Callbacks...
+    /// @{
+    virtual SDL_Surface *GetSurface ();
+    virtual bool HandleEvent (SDL_Event *ev);
     /// @}
 
   protected:
@@ -826,12 +904,6 @@ class CSlider: public CWidget {
 
     void (*cbValueChanged) (class CSlider *, int, int, void *);
     void *cbValueChangedData;
-
-    /// @name Callbacks...
-    /// @{
-    virtual SDL_Surface *GetSurface ();
-    virtual bool HandleEvent (SDL_Event *ev);
-    /// @}
 
     /// @name Change management...
     /// @{

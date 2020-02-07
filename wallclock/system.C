@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,13 +56,13 @@ ENV_PARA_INT ("ui.offDelay", envOffDelay, 3600000);
   /* Time (ms) until the screen is switched off
    */
 
-ENV_PARA_STRING ("sync2l", sync2lPipeName, NULL);
+ENV_PARA_BOOL ("sync2l", envSync2lEnable, false);
   /* Enable a Sync2l interface to the device's address book via a named pipe
    *
-   * The argument defines the named pipe special file via which the device's
-   * address book can be accessed by the "sync2l" PIM synchronisation tool.
-   * If you do not know that tool (or do not use it), you should not set this
-   * parameter to avoid an unecessary security hole.
+   * If enabled, a named pipe special file 'HOME2L\_ROOT/tmp/sync2l' is created
+   * via which the device's address book can be accessed by the "sync2l" PIM
+   * synchronisation tool. If you do not know that tool (or do not use it), you
+   * should not set this parameter.
    *
    * The pipe is created automatically, and it is made user and group readable
    * and writable (mode 0660, ignoring an eventual umask). It is recommended
@@ -74,7 +74,8 @@ ENV_PARA_STRING ("sync2l", sync2lPipeName, NULL);
 
 
 
-// ***************** Resources **************************
+
+// *************************** Resources (common) ******************************
 
 
 static CResource *rcModeStandby = NULL;
@@ -163,16 +164,18 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
 
     case rcdOpDriveValue: // according to the pending requests, a new value has to be applied
       if (rc == rcMute) {
-        valMute = vs->Bool ();      // cache the value
+        if (vs->IsValid ()) valMute = vs->Bool ();      // cache the value
       }
       else if (rc == rcBluetooth) {
         BluetoothDriveValue (vs);
       }
       else {  // modes (standby, active, background)...
-        if (rc == rcModeStandby) valModeStandby = vs->Bool ();      // cache the value
-        else if (rc == rcModeActive) valModeActive = vs->Bool ();   // cache the value
-        else ASSERT (false);
-        MainThreadCallback (DriveActiveStandbySync);
+        if (vs->IsValid ()) { // ignore all request off events
+          if (rc == rcModeStandby) valModeStandby = vs->Bool ();      // cache the value
+          else if (rc == rcModeActive) valModeActive = vs->Bool ();   // cache the value
+          else ASSERT (false);
+          MainThreadCallback (DriveActiveStandbySync);
+        }
       }
       break;
   }
@@ -182,7 +185,7 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
 
 
 
-// ***************** Debian/PC-specific part ***************
+// *************************** Debian/PC-specific part *************************
 
 
 #if ANDROID == 0
@@ -205,7 +208,7 @@ static inline void BackgroundForegroundDrive (void *data) {}
 
 
 
-// ***************** Android-specific part *****************
+// *************************** Android-specific part ***************************
 
 
 #else // ANDROID == 1
@@ -222,12 +225,30 @@ static inline void BackgroundForegroundDrive (void *data) {}
 #include <string.h>
 
 
+ENV_PARA_STRING ("android.autostart", envAndroidAutostart, NULL);
+  /* Shell script to be executed on startup of the app
+   *
+   * If defined, the named shell script is started and executed in the background
+   * on each start of the app. The path name may either be absolute or relative to
+   * HOME2L\_ROOT. If the name starts with '!', the script is started with root
+   * privileges using 'su'.
+   *
+   * It is allowed to append command line arguments.
+   */
+
+
 
 static JavaVM *javaVM = NULL;
 static JNIEnv *jniEnv = NULL;
 static jclass jniClass = NULL;
 
 static jmethodID midAboutToExit = NULL;
+
+static jmethodID midShowMessage = NULL;
+static jmethodID midShowToast = NULL;
+
+static jmethodID midAssetLoadTextFile = NULL;
+static jmethodID midAssetCopyFileToInternal = NULL;
 
 static jmethodID midSetKeepScreenOn = NULL;
 static jmethodID midSetDisplayBrightness = NULL;
@@ -251,6 +272,322 @@ static jmethodID midBluetoothPoll = NULL;
 
 
 
+// ***** Exception handling ******
+
+
+static void AndroidExceptionCheck () {
+  // Handle exceptions not handled inside Java code,
+  // should be called after each Java method invocation from native code.
+  // Usually, such exceptions must not occur, so that we abort and log as much information as
+  // possible here.
+  if (jniEnv->ExceptionCheck ()) {
+    jniEnv->ExceptionDescribe ();     // Log to stderr first (Android: 'W/System.err')
+    jthrowable exc = jniEnv->ExceptionOccurred ();
+    jmethodID toString = jniEnv->GetMethodID (jniEnv->FindClass("java/lang/Object"), "toString", "()Ljava/lang/String;");
+    jstring s = (jstring) jniEnv->CallObjectMethod (exc, toString);
+    const char *utf = jniEnv->GetStringUTFChars (s, NULL);
+    ABORTF (("Unexpected Java Exception in native code: %s", utf));
+    //~ jniEnv->ReleaseStringUTFChars (s, utf);
+    //~ jniEnv->DeleteLocalRef (s);
+    //~ jniEnv->DeleteLocalRef (exc);
+  }
+}
+
+
+
+
+// ***** Android storage prepartation *****
+
+
+static bool AndroidAssetLoadTextFile (const char *relPath, CString *ret) {
+  // Load a text file from asset
+  jstring jRet, jRelPath = jniEnv->NewStringUTF (relPath);
+  const char *buf;
+
+  //~ INFOF (("### (before) ExceptionOccurred () = %i", (int) jniEnv->ExceptionCheck ()));
+  jRet = (jstring) (jniEnv->CallStaticObjectMethod (jniClass, midAssetLoadTextFile, jRelPath));
+  //~ INFOF (("### (after ) ExceptionOccurred () = %i", (int) jniEnv->ExceptionCheck ()));
+  AndroidExceptionCheck ();
+  jniEnv->DeleteLocalRef (jRelPath);
+
+  if (jniEnv->IsSameObject (jRet, NULL)) {     // if 'jRet' is 'null' ...
+    WARNINGF(("Failed to read asset '%s'.", relPath));
+    return false;
+  }
+
+  // Success ...
+  buf = jniEnv->GetStringUTFChars (jRet, NULL);
+  ret->Set (buf);
+  jniEnv->ReleaseStringUTFChars (jRet, buf);
+  jniEnv->DeleteLocalRef (jRet);
+  return true;
+}
+
+
+static bool AndroidAssetCopyFileToInternal (const char *relPath) {
+  jstring jRelPath;
+  jboolean jOk;
+
+  //~ INFOF (("### Copying '%s'...", relPath));
+
+  // Copy the file ...
+  jRelPath = jniEnv->NewStringUTF (relPath);
+  jOk = jniEnv->CallStaticBooleanMethod (jniClass, midAssetCopyFileToInternal, jRelPath);
+  jniEnv->DeleteLocalRef (jRelPath);
+  AndroidExceptionCheck ();
+
+  // Done ...
+  if (jOk != JNI_TRUE) {
+    WARNINGF(("Failed to copy asset '%s'.", relPath));
+    return false;
+  }
+  return true;
+}
+
+
+/* Native implementations...
+ *
+ * [2019-09-02] Crashed inside:
+ *
+ *    ctx = SDL_RWFromFile (relPath, "r");
+ *
+ * ********** Crash dump: **********
+ * Build fingerprint: 'samsung/espressowifixx/espressowifi:4.2.2/JDQ39/P3110XXDMH1:user/release-keys'
+ * pid: 6495, tid: 6582, name: SDLThread  >>> org.home2l.app <<<
+ * signal 6 (SIGABRT), code -6 (SI_TKILL), fault addr --------
+ * Stack frame #00  pc 000220fc  /system/lib/libc.so (tgkill+12)
+ * Stack frame #01  pc 00013153  /system/lib/libc.so (pthread_kill+50)
+ * Stack frame #02  pc 0001334b  /system/lib/libc.so (raise+10)
+ * Stack frame #03  pc 0001203b  /system/lib/libc.so
+ * Stack frame #04  pc 000219b0  /system/lib/libc.so (abort+4)
+ * Stack frame #05  pc 000471eb  /system/lib/libdvm.so (dvmAbort+78)
+ * Stack frame #06  pc 0004bb57  /system/lib/libdvm.so (dvmDecodeIndirectRef(Thread*, _jobject*)+146)
+ * Stack frame #07  pc 0004e6db  /system/lib/libdvm.so
+ * Stack frame #08  pc 0009ec07  /data/app-lib/org.home2l.app-2/libhome2l-wallclock.so: Routine Internal_Android_JNI_FileOpen at /home/gundolf/prog/home2l/src/external/sdl2/dummy_app/jni/../../src/SDL2/src/core/android/SDL_android.c:1178
+ * Stack frame #09  pc 0009f841  /data/app-lib/org.home2l.app-2/libhome2l-wallclock.so (Android_JNI_FileOpen+84): Routine Android_JNI_FileOpen at /home/gundolf/prog/home2l/src/external/sdl2/dummy_app/jni/../../src/SDL2/src/core/android/SDL_android.c:1323
+ * Stack frame #10  pc 000732a1  /data/app-lib/org.home2l.app-2/libhome2l-wallclock.so (SDL_RWFromFile_REAL+116): Routine SDL_RWFromFile_REAL at /home/gundolf/prog/home2l/src/external/sdl2/dummy_app/jni/../../src/SDL2/src/file/SDL_rwops.c:548
+ * Stack frame #11  pc 0006e4d7  /data/app-lib/org.home2l.app-2/libhome2l-wallclock.so (SDL_RWFromFile+10): Routine SDL_RWFromFile at /home/gundolf/prog/home2l/src/external/sdl2/dummy_app/jni/../../src/SDL2/src/dynapi/SDL_dynapi_procs.h:382
+ * Stack frame #12  pc 0005f3c9  /data/app-lib/org.home2l.app-2/libhome2l-wallclock.so: Routine AndroidAssetLoadTextFile at /home/gundolf/prog/home2l/src/wallclock/system.C:269
+
+static bool AndroidAssetLoadTextFile (const char *relPath, CString *ret) {
+  // Load a text file from asset
+  SDL_RWops *ctx;
+  char *buf;
+  int size;
+
+  ctx = SDL_RWFromFile (relPath, "r");
+  if (!ctx) ERRORF (("Failed to open asset '%s': %s", relPath, SDL_GetError ()));
+
+  size = (int) SDL_RWsize (ctx);
+  if (size < 0) ERRORF (("Failed to get size of asset '%s': %s", relPath, SDL_GetError ()));
+
+  buf = MALLOC(char, size + 1);
+  if (SDL_RWread (ctx, buf, 1, size) < size)
+    ERRORF (("Failed to read asset '%s': %s", relPath, SDL_GetError ()));
+  buf[size] = '\0';
+  ret->SetO (buf);    // pass ownership of 'buf' to CString object
+
+  SDL_RWclose (ctx);
+}
+*/
+
+
+static inline void AndroidPrepareHome2lRoot () {
+  CString s, installedVersion, myVersion;
+  CSplitString fileList;
+  struct stat fileStat;
+  int n;
+  const char *p;
+  bool ok, newEtc;
+
+  //~ INFO ("######### AndroidPrepareHome2lRoot #########");
+
+  // a) Check blob ...
+  ok = false;
+  if (!installedVersion.ReadFile (EnvGetHome2lRootPath (&s, "VERSION")))
+    INFO ("No installed blob found.");
+  else {
+    ASSERT (AndroidAssetLoadTextFile ("VERSION", &myVersion));
+    myVersion.Strip ();
+    installedVersion.Strip ();
+    if (installedVersion.Compare (myVersion.Get ()) != 0) INFO ("Installed blob must be updated.");
+    else {
+      INFO ("Installed blob is up-to-date.");
+      ok = true;
+    }
+  }
+
+  // b) Check for an 'etc' dir ...
+  newEtc = true;
+  if (stat (EnvGetHome2lRootPath (&s, "etc"), &fileStat) == 0)  // Does 'etc' exist ...
+    if (fileStat.st_mode & S_IFDIR)     // ... and is a directory? ...
+      newEtc = false;                   // => Do NOT install a new one.
+  if (newEtc) INFO ("No /etc directory found: Will install a default one.");
+
+  // c) Remove and install new files ...
+  if (!ok) {
+    INFO (newEtc ? "-T- Installing new configuration and updating asset cache..." : "-T- Updating asset cache...");
+    DEBUGF (1, ("Installing new blob %s at '%s'...",
+            newEtc ? "and 'etc' template" : "",
+            EnvHome2lRoot ()));
+
+    // Remove old blob (and eventually '/etc/*') ...
+    UnlinkTree (EnvHome2lRoot (), newEtc ? "/var" : "/var /etc");
+
+    // Get and create all files from asset ...
+    ASSERT (AndroidAssetLoadTextFile ("FILES", &s));
+
+    fileList.Set (s.Get ());
+    for (n = 0; n < fileList.Entries (); n++) {
+      p = fileList.Get (n);
+      if (newEtc || !(p[0] == 'e' && p[1] == 't' && p[2] == 'c' && p[3] == '/')) {
+        DEBUGF (2, ("Installing '%s'...", p));
+        AndroidAssetCopyFileToInternal (p);
+
+        // Make files in 'bin/*' executable...
+        if (p[0] == 'b' && p[1] == 'i' && p[2] == 'n' && p[3] == '/')
+          chmod (EnvGetHome2lRootPath (&s, p), S_IRUSR | S_IWUSR | S_IXUSR);
+      }
+    }
+    AndroidAssetCopyFileToInternal ("VERSION");
+      // The VERSION file must be copied last for the case that the App crashes during the update.
+  }
+
+  // d) Set permissions to make 'var' and 'tmp' accessible from outside ...
+  chmod (EnvHome2lRoot (), S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH);
+  chmod (EnvGetHome2lRootPath (&s, "var"), S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH);
+  chmod (EnvGetHome2lRootPath (&s, "tmp"), S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH);
+}
+
+
+
+
+
+// ***** Logging *****
+
+
+static void AndroidShowMessage (const char *title, const char *msg) {
+  jstring jTitle = jniEnv->NewStringUTF (title),
+          jMsg = jniEnv->NewStringUTF (msg);
+  jniEnv->CallStaticVoidMethod (jniClass, midShowMessage, jTitle, jMsg);
+  AndroidExceptionCheck ();
+  jniEnv->DeleteLocalRef (jTitle);
+  jniEnv->DeleteLocalRef (jMsg);
+}
+
+
+static void AndroidShowToast (const char *msg, bool showLonger) {
+  jstring jMsg = jniEnv->NewStringUTF (msg);
+  jniEnv->CallStaticVoidMethod (jniClass, midShowToast, jMsg, showLonger ? JNI_TRUE : JNI_FALSE);
+  AndroidExceptionCheck ();
+  jniEnv->DeleteLocalRef (jMsg);
+}
+
+
+
+
+
+// ***** Pre-Init *****
+
+
+extern const char *envRootDir, *envRootDirKey;     // defined in 'env.C'
+
+
+static inline void AndroidPreInit () {
+
+  // JNI data structures...
+  javaVM->GetEnv ((void **) &jniEnv, JNI_VERSION_1_6);    // requires 'initNative' to be called from Android before
+  ASSERT(jniEnv != NULL);
+  jniClass = jniEnv->FindClass ("org/home2l/app/Home2l");
+  ASSERT(jniClass != NULL);
+
+  /*********************************************************************
+   *
+   *  Type Signatures [http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html]
+   *
+   * The JNI uses the Java VM’s representation of type signatures.
+   *
+   *  Z - boolean
+   *  B - byte
+   *  C - char
+   *  S - short
+   *  I - int
+   *  J - long
+   *  F - float
+   *  D - double
+   *  L <fully-qualified-class> ;   - fully-qualified-class
+   *  [ type                        -type[]
+   *
+   *  ( arg-types ) ret-type
+   *
+   *  For example, the Java method:
+   *
+   *    long f (int n, String s, int[] arr);
+   *
+   *  has the following type signature:
+   *
+   *    (ILjava/lang/String;[I)J
+   *
+   *********************************************************************/
+
+  midAboutToExit = jniEnv->GetStaticMethodID (jniClass, "aboutToExit", "()V");
+  ASSERT(midAboutToExit != NULL);
+
+  midShowMessage = jniEnv->GetStaticMethodID (jniClass, "showMessage", "(Ljava/lang/String;Ljava/lang/String;)V");
+  ASSERT(midShowMessage != NULL);
+  midShowToast = jniEnv->GetStaticMethodID (jniClass, "showToast", "(Ljava/lang/String;Z)V");
+  ASSERT(midShowToast != NULL);
+
+  midAssetLoadTextFile = jniEnv->GetStaticMethodID (jniClass, "assetLoadTextFile", "(Ljava/lang/String;)Ljava/lang/String;");
+  ASSERT(midAssetLoadTextFile != NULL);
+  midAssetCopyFileToInternal = jniEnv->GetStaticMethodID (jniClass, "assetCopyFileToInternal", "(Ljava/lang/String;)Z");;
+  ASSERT(midAssetCopyFileToInternal != NULL);
+
+  midSetKeepScreenOn = jniEnv->GetStaticMethodID (jniClass, "setKeepScreenOn", "(Z)V");
+  ASSERT(midSetKeepScreenOn != NULL);
+  midSetDisplayBrightness = jniEnv->GetStaticMethodID (jniClass, "setDisplayBrightness", "(F)V");
+  ASSERT(midSetDisplayBrightness != NULL);
+
+  midGoForeground = jniEnv->GetStaticMethodID (jniClass, "goForeground", "()V");
+  ASSERT(midGoForeground != NULL);
+  midGoBackground = jniEnv->GetStaticMethodID (jniClass, "goBackground", "()V");
+  ASSERT(midGoBackground != NULL);
+  midLaunchApp = jniEnv->GetStaticMethodID (jniClass, "launchApp", "(Ljava/lang/String;)V");
+  ASSERT(midLaunchApp != NULL);
+
+  //~ midSetImmersiveMode = jniEnv->GetStaticMethodID (jniClass, "setImmersiveMode", "()V");
+  //~ ASSERT(midSetImmersiveMode != NULL);
+
+  midSetAudioNormal = jniEnv->GetStaticMethodID (jniClass, "setAudioNormal", "()V");
+  ASSERT(midSetAudioNormal != NULL);
+  midSetAudioPhone = jniEnv->GetStaticMethodID (jniClass, "setAudioPhone", "()V");
+  ASSERT(midSetAudioPhone != NULL);
+  //~ midSetAudioRinging = jniEnv->GetStaticMethodID (jniClass, "setAudioRinging", "()V");
+  //~ ASSERT(midSetAudioRinging != NULL);
+
+  midEnableSync2l = jniEnv->GetStaticMethodID (jniClass, "enableSync2l", "(Ljava/lang/String;)V");
+  ASSERT(midEnableSync2l != NULL);
+
+  midBluetoothSet = jniEnv->GetStaticMethodID (jniClass, "bluetoothSet", "(Z)V");
+  ASSERT(midBluetoothSet != NULL);
+  midBluetoothPoll = jniEnv->GetStaticMethodID (jniClass, "bluetoothPoll", "()I");
+  ASSERT(midBluetoothPoll != NULL);
+
+  // Set log callbacks to enable dialogs and toasts ...
+  LogSetCallbacks (AndroidShowMessage, AndroidShowToast);
+
+  // Prepare HOME2l_ROOT (aka asset cache)...
+  envRootDir = EnvGet (envRootDirKey);
+    // This has been set by 'EnvPut' from Java ('Home2l.init()'),
+    // but 'EnvInit ()' has not been called yet, so that 'EnvGetHome2lRootPath ()'
+    // requires this to work!
+  AndroidPrepareHome2lRoot ();
+}
+
+
+
+
+
 // ***** Mode setting *****
 
 
@@ -263,6 +600,7 @@ static void AndroidSetBrightness (float brightness) {
   if (brightness != lastBrightness) {
     //~ INFO ("'AndroidSetBrightness' running");
     jniEnv->CallStaticVoidMethod (jniClass, midSetDisplayBrightness, (jfloat) brightness);
+    AndroidExceptionCheck ();
     lastBrightness = brightness;
   }
 }
@@ -281,6 +619,7 @@ static inline void AndroidSetMode (ESystemMode mode, ESystemMode lastMode) {
       lastDisplayTime = 0;    // make display brightness change immediately
     }
   }
+  AndroidExceptionCheck ();
 }
 
 
@@ -298,12 +637,14 @@ static inline void AndroidGoBackground (const char *appStr) {
     jniEnv->CallStaticVoidMethod (jniClass, midLaunchApp, jAppStr);
     jniEnv->DeleteLocalRef (jAppStr);
   }
+  AndroidExceptionCheck ();
 }
 
 
 static inline void AndroidGoForeground () {
   //~ ABORT ("### AndroidGoForeground () called");
   jniEnv->CallStaticVoidMethod (jniClass, midGoForeground);
+  AndroidExceptionCheck ();
 }
 
 
@@ -490,6 +831,7 @@ static inline void SensorDone () {
 //~
 //~ void SystemSetImmersiveMode () {
   //~ jniEnv->CallStaticVoidMethod (jniClass, midSetImmersiveMode);
+  //~ AndroidExceptionCheck ();
 //~ }
 
 
@@ -499,16 +841,19 @@ static inline void SensorDone () {
 
 void SystemSetAudioNormal () {
   jniEnv->CallStaticVoidMethod (jniClass, midSetAudioNormal);
+  AndroidExceptionCheck ();
 }
 
 
 void SystemSetAudioPhone () {
   jniEnv->CallStaticVoidMethod (jniClass, midSetAudioPhone);
+  AndroidExceptionCheck ();
 }
 
 
 //~ void SystemSetAudioRinging () {
   //~ jniEnv->CallStaticVoidMethod (jniClass, midSetAudioRinging);
+  //~ AndroidExceptionCheck ();
 //~ }
 
 
@@ -517,17 +862,20 @@ void SystemSetAudioPhone () {
 
 
 bool EnableSync2l () {
+  CString sync2lPipeName;
   jstring jPipeName;
   bool ok;
 
   // Check if we want the Sync2l adapter...
-  sync2lPipeName = EnvGetPath (sync2lPipeNameKey);
-  if (!sync2lPipeName) return true;
+  if (!envSync2lEnable) return true;
 
   // Create the pipe and set its permissions...
-  unlink (sync2lPipeName);    // try to unlink previous entry first (no matter if it fails)
-  ok =         ( mkfifo (sync2lPipeName, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0 );                  // create the pipe
-  if (ok) ok = ( chmod (sync2lPipeName, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0);   // set permissions to allow read/write access to owner and group
+  EnvGetHome2lTmpPath (&sync2lPipeName, "sync2l");
+  EnvMkTmpDir (NULL);
+  INFOF (("### sync2lPipeName = %s", sync2lPipeName.Get ()));
+  unlink (sync2lPipeName.Get ());    // try to unlink previous entry first (no matter if it fails)
+  ok =         ( mkfifo (sync2lPipeName.Get (), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0 );                  // create the pipe
+  if (ok) ok = ( chmod (sync2lPipeName.Get (), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0);   // set permissions to allow read/write access to owner and group
   if (!ok) {
     WARNINGF (("Failed to create Sync2l pipe: %s", strerror (errno)));
     return false;
@@ -536,6 +884,7 @@ bool EnableSync2l () {
   // Launch the Java thread serving the pipe...
   jPipeName = jniEnv->NewStringUTF (sync2lPipeName);
   jniEnv->CallStaticVoidMethod (jniClass, midEnableSync2l, jPipeName);
+  AndroidExceptionCheck ();
   jniEnv->DeleteLocalRef (jPipeName);
 
   // Done...
@@ -575,6 +924,9 @@ static void BluetoothIterate (CTimer *, void *) {
   valBluetooth = (jStatus & 1) != 0;
   valBluetoothAudio = (jStatus & 2) != 0;
 
+  // Exception check...
+  AndroidExceptionCheck ();
+
   //~ INFOF (("### BluetoothIterate: BT = %i/%i/%i, BTaudio = %i", (int) valBluetoothDrv, (int) valBluetoothReq, (int) valBluetooth, (int) valBluetoothAudio));
 
   // Report values...
@@ -609,6 +961,7 @@ static void BluetoothDone () {
 
   // Turn off Bluetooth...
   jniEnv->CallStaticVoidMethod (jniClass, midBluetoothSet, JNI_FALSE);
+  AndroidExceptionCheck ();
 }
 
 
@@ -658,77 +1011,32 @@ void Java_org_home2l_app_Home2l_shellCommand (JNIEnv *env, jobject thiz, jstring
 // ***** Init/Done *****
 
 
-static void AndroidInit () {
+static inline void AndroidInit () {
+  CSplitString args;
+  const char *p;
+  CString cmd, execName;
+  bool withSu, withArgs;
 
-  // JNI data structures...
-  javaVM->GetEnv ((void **) &jniEnv, JNI_VERSION_1_6);    // requires 'initNative' to be called from Android before
-  ASSERT(jniEnv != NULL);
-  jniClass = jniEnv->FindClass ("org/home2l/app/Home2l");
-  ASSERT(jniClass != NULL);
+  // Run init script ...
+  if (envAndroidAutostart) {
 
-  /*********************************************************************
-   *
-   *  Type Signatures [http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html]
-   *
-   * The JNI uses the Java VM’s representation of type signatures.
-   *
-   *  Z - boolean
-   *  B - byte
-   *  C - char
-   *  S - short
-   *  I - int
-   *  J - long
-   *  F - float
-   *  D - double
-   *  L <fully-qualified-class> ;   - fully-qualified-class
-   *  [ type                        -type[]
-   *
-   *  ( arg-types ) ret-type
-   *
-   *  For example, the Java method:
-   *
-   *    long f (int n, String s, int[] arr);
-   *
-   *  has the following type signature:
-   *
-   *    (ILjava/lang/String;[I)J
-   *
-   *********************************************************************/
+    // Analyes parameters, resolve executable ...
+    withSu = (envAndroidAutostart[0] == '!');
+    args.Set (envAndroidAutostart + (withSu ? 1 : 0), 2);
+    if (args.Entries () < 1) ERROR (("Illegal setting: %s", envAndroidAutostartKey));
+    withArgs = (args.Entries () > 1);
+    EnvGetHome2lRootPath (&execName, args.Get (0));
 
-  midAboutToExit = jniEnv->GetStaticMethodID (jniClass, "aboutToExit", "()V");
-  ASSERT(midAboutToExit != NULL);
+    // Construct & run command line ...
+    cmd.SetF (withSu ? "su -c '%s%s%s' &" : "%s%s%s &",
+              execName.Get (), withArgs ? " " : "", withArgs ? args.Get (1) : "");
+    //~ s.SetF ("test -x %1$s/etc/android-init.sh && su -c '%1$s/etc/android-init.sh %2$s' &",
+            //~ EnvHome2lRoot (), envAndroidGateway ? envAndroidGateway : CString::emptyStr);
+    INFOF (("### Running '%s'...", cmd.Get ()));
+    system (cmd.Get ());
+  }
 
-  midSetKeepScreenOn = jniEnv->GetStaticMethodID (jniClass, "setKeepScreenOn", "(Z)V");
-  ASSERT(midSetKeepScreenOn != NULL);
-  midSetDisplayBrightness = jniEnv->GetStaticMethodID (jniClass, "setDisplayBrightness", "(F)V");
-  ASSERT(midSetDisplayBrightness != NULL);
-
-  midGoForeground = jniEnv->GetStaticMethodID (jniClass, "goForeground", "()V");
-  ASSERT(midGoForeground != NULL);
-  midGoBackground = jniEnv->GetStaticMethodID (jniClass, "goBackground", "()V");
-  ASSERT(midGoBackground != NULL);
-  midLaunchApp = jniEnv->GetStaticMethodID (jniClass, "launchApp", "(Ljava/lang/String;)V");
-  ASSERT(midLaunchApp != NULL);
-
-  //~ midSetImmersiveMode = jniEnv->GetStaticMethodID (jniClass, "setImmersiveMode", "()V");
-  //~ ASSERT(midSetImmersiveMode != NULL);
-
-  midSetAudioNormal = jniEnv->GetStaticMethodID (jniClass, "setAudioNormal", "()V");
-  ASSERT(midSetAudioNormal != NULL);
-  midSetAudioPhone = jniEnv->GetStaticMethodID (jniClass, "setAudioPhone", "()V");
-  ASSERT(midSetAudioPhone != NULL);
-  //~ midSetAudioRinging = jniEnv->GetStaticMethodID (jniClass, "setAudioRinging", "()V");
-  //~ ASSERT(midSetAudioRinging != NULL);
-
-  midEnableSync2l = jniEnv->GetStaticMethodID (jniClass, "enableSync2l", "(Ljava/lang/String;)V");
-  ASSERT(midEnableSync2l != NULL);
-
-  midBluetoothSet = jniEnv->GetStaticMethodID (jniClass, "bluetoothSet", "(Z)V");
-  ASSERT(midBluetoothSet != NULL);
-  midBluetoothPoll = jniEnv->GetStaticMethodID (jniClass, "bluetoothPoll", "()I");
-  ASSERT(midBluetoothPoll != NULL);
-
-  // Sub-inits & complete...
+  // Init subsystems ...
   SensorInit ();
   BluetoothInit ();
 }
@@ -739,7 +1047,14 @@ static void AndroidInit () {
 
 
 
-// ***************** Common routines ***********************
+// *************************** Common routines *********************************
+
+
+#if ANDROID
+void SystemPreInit () {
+  AndroidPreInit ();
+}
+#endif
 
 
 void SystemInit () {
@@ -757,6 +1072,7 @@ void SystemInit () {
 void SystemDone () {
 #if ANDROID
   jniEnv->CallStaticVoidMethod (jniClass, midAboutToExit);
+  AndroidExceptionCheck ();
   SensorDone ();
   BluetoothDone ();
 #endif

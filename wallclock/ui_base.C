@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,7 +55,13 @@ ENV_PARA_INT ("ui.longPushTolerance", envUiLongPushTolerance, 16);
   /* Tolerance for motion during a long push in pixels
    */
 ENV_PARA_BOOL ("ui.resizable", envUiResizable, true);
-  /* If set to 0, the UI window is not resizable
+  /* Selects whether the UI window is resizable on startup
+   *
+   * This determines the X window's "resizable" option when the application starts.
+   * Under a tiling window manager (e.g. awesome), this also determines whether
+   * the window opens as a floating window (false) or in tiling mode (true).
+   *
+   * The flag can be toggled at runtime by pushing the F12 button.
    */
 ENV_PARA_NOVAR ("ui.audioDev", const char *, envUiAudioDev, NULL);
   /* Audio device for UI signaling (phone ringing, alarm clock)
@@ -122,17 +128,17 @@ void UiIterate (bool noWait) {
   CScreen *activeScreen = CScreen::ActiveScreen ();
   void (*func) (void *);
   ESystemMode newMode, lastMode;
-  TTicksMonotonic t;
+  TTicksMonotonic t, t1;
   bool haveEvent;
   //~ int events;
 
   // Wait for an event...
   //~ INFO ("### Wait for event...");
-  if (sdlPaused) {
+  if (sdlPaused || SDL_HasEvent(SDL_APP_WILLENTERBACKGROUND) || SDL_HasEvent(SDL_APP_DIDENTERBACKGROUND)) {
     //~ INFO ("### Wait for event (Android/background mode) ...");
     // In Android, if the app is paused (-> sdlPaused == true), the function
     // 'Android_PumpEvents ()' in SDL2-2.0.3/src/video/android/SDL_androidevents.c
-    // blocks forever (until resume). To make sure that the Home2L timers continue
+    // blocks forever (until resume) by default. To make sure that the Home2L timers continue
     // working, we try to avoid calling or have SDL calling 'SDL_PumpEvents ()' here...
     haveEvent = (SDL_PeepEvents (&ev, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 1);
     if (!noWait && !haveEvent) {
@@ -146,7 +152,20 @@ void UiIterate (bool noWait) {
   else {
     //~ INFO ("### Wait for event (normal) ...");
     if (noWait) haveEvent = SDL_PollEvent (&ev) == 1;
-    else haveEvent = SDL_WaitEventTimeout (&ev, TimerGetDelay ()) == 1;
+    else {
+      t = TicksMonotonicNow ();               // WORKAROUND (see below)
+      haveEvent = SDL_WaitEventTimeout (&ev, t1 = TimerGetDelay ()) == 1;
+      if (TicksMonotonicNow () - t > 2000) {  // WORKAROUND (see below)
+        WARNINGF (("### SDL_WaitEventTimeout () returned late after %i ms: TimerGetDelay () = %i ms",
+                 TicksMonotonicNow () - t, t1));
+        // WORKAROUND (2019-05-20, SDL 2.07 on Android):
+        //   Sometimes SDL_WaitEventTimeout () repeatedly waits for approx. 1 minute
+        //   instead of the maximum wait time passed after some run time making the UI
+        //   unusable.
+        //   This workaround causes WallClock to abort (and be restarted) if this happens.
+        _exit (3);      // exit explicitly, without showing the Android message box (an wait infinitly for user response)
+      }
+    }
   }
 
   // Handle all available events...
@@ -590,21 +609,38 @@ SDL_Surface *SurfaceGetOpaqueCopy (SDL_Surface *surf, TColor backColor) {
 }
 
 
-void SurfaceMakeTransparentMono (SDL_Surface *surf) {
-  Uint32 *pixels, *line;
+void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel) {
+  Uint32 *pixels, *line, color, alpha, factor;
   int x, y;
 
   ASSERT (COL_MASK_R == 0x00ff0000 && COL_MASK_A == 0xff000000);
+  ASSERT (surf->format->format == SELECTED_SDL_PIXELFORMAT);
 
-  //ASSERT (surf->format->format == SELECTED_SDL_PIXELFORMAT);
   ASSERT (SDL_LockSurface (surf) == 0);
   pixels = (Uint32 *) surf->pixels;
 
   line = pixels;
-  for (y = 0; y < surf->h; y++) {
-    for (x = 0; x < surf->w; x++)
-      line [x] = (line[x] << 8) | 0x00ffffff;
-    line += surf->pitch / sizeof (Uint32);
+  if (opaqueLevel == 0xff) {
+    for (y = 0; y < surf->h; y++) {
+      for (x = 0; x < surf->w; x++)
+        line [x] = (line[x] << 8) | 0x00ffffff;
+      line += surf->pitch / sizeof (Uint32);
+    }
+  }
+  else {
+    ASSERT (opaqueLevel != 0);
+    factor = 0x10000 / ((Uint32) opaqueLevel);   // factor is in range 0x100..0x10000 -> 8 fractional bits
+    color = (Uint32) opaqueLevel;
+    color = color | (color << 8) | (color << 16);
+    for (y = 0; y < surf->h; y++) {
+      for (x = 0; x < surf->w; x++) {
+        alpha = ( (Uint32) ((line[x] >> 16) & 0xff) * factor) >> 8;
+        //~ if (line[x] != 0xff000000) INFOF (("###   pixel = %08x, factor = %x, alpha = %x, color = %08x", line[x], factor, alpha, color));
+        if (alpha > 0xff) alpha = 0xff;
+        line [x] = (alpha << 24) | color;
+      }
+      line += surf->pitch / sizeof (Uint32);
+    }
   }
 
   SDL_UnlockSurface (surf);
@@ -621,6 +657,189 @@ void SurfaceBlit (SDL_Surface *src, SDL_Rect *srcRect, SDL_Surface *dst, SDL_Rec
 
   SDL_SetSurfaceBlendMode (src, blendMode);
   SDL_BlitSurface (src, srcRect, dst, &placeRect);
+}
+
+
+SDL_Surface *SurfaceGetScaledDownCopy (SDL_Surface *surf, int factor, bool preserveThinLines) {
+  SDL_Surface *ret;
+  Uint32 *srcPixels, *dstPixels, *src, *dst, pixel;
+  Uint32 accu[4], weight;
+  int n, x, y, dx, dy, srcPitch, dstPitch;
+
+  // Sanity...
+  if (!surf) return NULL;
+  if (factor == 1) return SurfaceDup (surf);    // Shortcut
+  ASSERT (surf->w % factor == 0 && surf->h % factor == 0);
+  ASSERT (surf->format->format == SELECTED_SDL_PIXELFORMAT);
+
+  // SDL_BlitScaled (surf, NULL, ret, NULL);    // [2019-03-01] SDL2 does not perform interpolation
+
+  // Lock source surface...
+  ASSERT (SDL_LockSurface (surf) == 0);
+  srcPixels = (Uint32 *) surf->pixels;
+  ASSERT (surf->pitch % sizeof (Uint32) == 0);
+  srcPitch = surf->pitch / sizeof (Uint32);
+
+  // Create and lock destination surface...
+  ret = CreateSurface (surf->w / factor, surf->h / factor);
+  ASSERT (SDL_LockSurface (ret) == 0);
+  dstPixels = (Uint32 *) ret->pixels;
+  ASSERT (ret->pitch % sizeof (Uint32) == 0);
+  dstPitch = ret->pitch / sizeof (Uint32);
+
+  // Scale down with avaraging ...
+  weight = 0x10000 / (factor * factor);   // 16 fractional bits
+  for (y = 0; y < ret->h; y++) {
+    dst = dstPixels + y * dstPitch;
+    for (x = 0; x < ret->w; x++) {
+      accu[0] = accu[1] = accu[2] = accu[3] = 0;
+
+      for (dy = 0; dy < factor; dy++) {
+        src = srcPixels + (y * factor + dy) * srcPitch + x * factor;
+        for (dx = 0; dx < factor; dx++) {
+          pixel = *(src++);
+          accu[0] += (pixel >> 24) & 0xff;
+          accu[1] += (pixel >> 16) & 0xff;
+          accu[2] += (pixel >> 8) & 0xff;
+          accu[3] += pixel & 0xff;
+        }
+      }
+
+      for (n = 0; n < 4; n++) accu[n] *= weight;
+      if (preserveThinLines) accu[0] = 0xff0000 * pow ((double) (accu[0] >> 16) * (1.0/255.0), 0.2);
+      pixel =   ((accu[0] << 8)   & 0xff000000)
+              | ( accu[1]         & 0x00ff0000)
+              | ((accu[2] >> 8)   & 0x0000ff00)
+              | ((accu[3] >> 16)  & 0x000000ff);
+      *(dst++) = pixel;
+    }
+  }
+
+  // Done...
+  SDL_UnlockSurface (surf);
+  SDL_UnlockSurface (ret);
+  return ret;
+}
+
+
+SDL_Surface *SurfaceGetFlippedAndRotatedCopy (SDL_Surface *surf, int orient) {
+  SDL_Surface *ret;
+  Uint32 *srcPixels, *dstPixels, *src, *dst, pixel;
+  int x, y, w, h, srcPitch, dstPitch;
+  int rotations;
+  bool flipH, flipV;
+
+  ASSERT (surf->format->format == SELECTED_SDL_PIXELFORMAT);
+
+  flipH = ORIENT_FLIPH (orient);
+  flipV = false;
+  rotations = ORIENT_ROT (orient);
+
+  // Transform rotations > 90° to two flips before the rotation...
+  if (rotations >= 2) {
+    flipH = !flipH;
+    flipV = !flipV;
+    rotations &= 1;
+  }
+
+  // Eventually swap flips to allow to rotate first before flipping...
+  if (rotations) {    // can only be 0 or 1 now
+    flipH = flipV ^ flipH;
+    flipV = flipV ^ flipH;
+    flipH = flipV ^ flipH;
+  }
+
+  // Copy the surface, lock the result and eventually rotate...
+  if (!rotations) {
+
+    // No rotation...
+    ret = SurfaceDup (surf);
+    ASSERT (SDL_LockSurface (ret) == 0);
+    dstPixels = (Uint32 *) ret->pixels;
+    ASSERT (ret->pitch % sizeof (Uint32) == 0);
+    dstPitch = ret->pitch / sizeof (Uint32);
+    w = surf->w;
+    h = surf->h;
+  }
+  else {
+
+    // With rotation: Translate + (un)flip horizontally ...
+    flipH = !flipH;
+    w = surf->h;
+    h = surf->w;
+    ret = CreateSurface (w, h);
+
+    ASSERT (SDL_LockSurface (ret) == 0);
+    dstPixels = (Uint32 *) ret->pixels;
+    ASSERT (ret->pitch % sizeof (Uint32) == 0);
+    dstPitch = ret->pitch / sizeof (Uint32);
+
+    ASSERT (SDL_LockSurface (surf) == 0);
+    srcPixels = (Uint32 *) surf->pixels;
+    ASSERT (surf->pitch % sizeof (Uint32) == 0);
+    srcPitch = surf->pitch / sizeof (Uint32);
+
+    // Travers destination (not source) column-wise and hopefully benefit from write buffers...
+    for (x = 0; x < w; x++) {
+      src = srcPixels + srcPitch * x;
+      dst = dstPixels + x;
+      for (y = 0; y < h; y++) {
+        *dst = *(src++);
+        dst += dstPitch;
+      }
+    }
+
+    SDL_UnlockSurface (surf);
+  }
+
+  // Eventually flip horizontally...
+  if (flipH) {
+    for (y = 0; y < h; y++) {
+      dst = dstPixels + dstPitch * y;
+      src = dst + w-1;
+      while (src > dst) {
+        pixel = *src;
+        *src = *dst;
+        *dst = pixel;
+        //~ *dst = 0xffff0000;
+        src--;
+        dst++;
+      }
+    }
+  }
+
+  // Eventually flip vertically...
+  if (flipV) {
+    for (y = 0; y < h / 2; y++) {
+      dst = dstPixels + dstPitch * y;
+      src = dstPixels + dstPitch * (h-1 - y);
+      for (x = 0; x < w; x++) {
+        pixel = *src;
+        *src = *dst;
+        *dst = pixel;
+        //~ *dst = 0xffff0000;
+        src++;
+        dst++;
+      }
+    }
+  }
+
+  // Done...
+  SDL_UnlockSurface (ret);
+  return ret;
+}
+
+
+SDL_Surface *SurfaceReadBmp (const char *fileName) {
+  CString s;
+  SDL_Surface *ret;
+
+  fileName = EnvGetHome2lRootPath (&s, fileName);
+  DEBUGF (1, ("Loading bitmap '%s'", fileName));
+  ret = SDL_LoadBMP (fileName);
+  SurfaceNormalize (&ret);    // tolerates 'ret == NULL'
+  if (!ret) WARNINGF (("Unable to load bitmap '%s': %s", fileName, SDL_GetError ()));
+  return ret;
 }
 
 
@@ -751,12 +970,13 @@ bool CNetpbmReader::ReadShell (CShell *shell) {
 // *************************** Icon handling ***********************************
 
 
-#define MAX_ICON_NAME 40
+#define MAX_ICON_NAME 64
 
 
 struct TIconCacheItem {
   char name[MAX_ICON_NAME];
   TColor color, bgColor;
+  int scaleDown, orient;
   SDL_Surface *sdlSurface;
   TIconCacheItem *next;
 };
@@ -780,9 +1000,10 @@ static void IconDone () {
 }
 
 
-SDL_Surface *IconGet (const char *name, TColor color, TColor bgColor) {
-  char fileName [300];
-  TIconCacheItem *cacheItem, *matchOtherColor;
+SDL_Surface *IconGet (const char *name, TColor color, TColor bgColor, int scaleDown, int orient, bool preserveThinLines) {
+  char fileName [512];
+  TIconCacheItem *cacheItem, *baseCacheItem;
+  SDL_Surface *surf, *surfBase;
   SDL_Palette *palette;
   SDL_Color sdlColor;
   int n, w;
@@ -791,73 +1012,97 @@ SDL_Surface *IconGet (const char *name, TColor color, TColor bgColor) {
   if (!name) return NULL;
 
   // Lookup in cache...
-  matchOtherColor = NULL;
+  baseCacheItem = NULL;
   for (cacheItem = iconCache; cacheItem; cacheItem = cacheItem->next) {
-    if (strcmp (cacheItem->name, name) == 0) {
+    if (strcmp (cacheItem->name, name) == 0 && cacheItem->scaleDown == scaleDown && cacheItem->orient == orient) {
       if (ToUint32 (cacheItem->color) == ToUint32 (color) && ToUint32 (cacheItem->bgColor) == ToUint32 (bgColor))
-        return cacheItem->sdlSurface; // Cache hit!
+        return cacheItem->sdlSurface;   // Cache hit!
       else
-        if (ToUint32 (cacheItem->bgColor) == ToUint32 (TRANSPARENT)) matchOtherColor = cacheItem;
+        if (ToUint32 (cacheItem->bgColor) == ToUint32 (TRANSPARENT) && cacheItem->scaleDown == 1 && cacheItem->orient == 0)
+          baseCacheItem = cacheItem;  // No hit, but a suitable base image
     }
   }
 
-  // Cache miss...
-  cacheItem = new TIconCacheItem;
-  if (matchOtherColor) {
-
-    // We already have the icon, but with a different color...
-    cacheItem->sdlSurface = SDL_ConvertSurfaceFormat (matchOtherColor->sdlSurface, SELECTED_SDL_PIXELFORMAT, 0);
-    SurfaceRecolor (cacheItem->sdlSurface, color);
-  }
-  else {
+  // Cache miss: Get an appropriate base image (must be transparent, no scaling, uüpright orientation) ...
+  if (!baseCacheItem) {
 
     // Load bitmap file ...
-    snprintf (fileName, 299, "%s/share/icons/%s.bmp", EnvHome2lRoot (), name);
+    snprintf (fileName, sizeof (fileName) - 1, "%s/share/icons/%s.bmp", EnvHome2lRoot (), name);
     DEBUGF (1, ("Loading icon '%s'", fileName));
-    cacheItem->sdlSurface = SDL_LoadBMP (fileName);
-    if (!cacheItem->sdlSurface)
+    surfBase = SDL_LoadBMP (fileName);
+    if (!surfBase)
       ERRORF (("Unable to load bitmap '%s': %s", fileName, SDL_GetError ()));
-    DEBUGF (1, ("  bitmap '%s' loaded, pixel format: %s", fileName, SDL_GetPixelFormatName (cacheItem->sdlSurface->format->format)));
-    palette = cacheItem->sdlSurface->format->palette;
+    DEBUGF (1, ("  bitmap '%s' loaded, pixel format: %s", fileName, SDL_GetPixelFormatName (surfBase->format->format)));
+    palette = surfBase->format->palette;
     if (palette) {
       // We have a palette -> adopt it to the correct color efficiently...
-      SDL_LockSurface (cacheItem->sdlSurface);
+      SDL_LockSurface (surfBase);
       for (n = 0; n < palette->ncolors; n++) {
         sdlColor = palette->colors[n];
         w = sdlColor.r;    // R component becomes opacity => we rely on a true grayscale image
-        if (ToUint32 (bgColor) == ToUint32 (TRANSPARENT)) {
-          sdlColor.a = w;
-          sdlColor.r = color.r;
-          sdlColor.g = color.g;
-          sdlColor.b = color.b;
-        }
-        else {
-          sdlColor = ToSDL_Color (ColorBlend (bgColor, color, w + (w >> 7)));
-        }
+        sdlColor.a = w;
+        sdlColor.r = color.r;
+        sdlColor.g = color.g;
+        sdlColor.b = color.b;
         //INFOF(("  palette[%2i]: %08x -> %08x", n, palette->colors[n], sdlColor));
         palette->colors[n] = sdlColor;
       }
-      SDL_UnlockSurface (cacheItem->sdlSurface);
-      SurfaceNormalize (&cacheItem->sdlSurface);
+      SDL_UnlockSurface (surfBase);
+      SurfaceNormalize (&surfBase);
     }
     else {
-      ERROR ("Unsupported format for 'home2l' (need grayscale + indexed)");
-      //WARNING ("Bitmap format not optimal for efficiency. Ideal would be: grayscale + indexed");
+      ERRORF (("Unsupported format for Home2L icons (need grayscale + indexed): %s", fileName));
+      //WARNING ("Bitmap format not optimal for efficiency. Ideal format would be: grayscale + indexed");
       // TBD: Change gray values to opacity, set color
       //SurfaceNormalize (&newItem.sdlSurface);
       //SurfaceRecolor (newItem.sdlSurface, color);
     }
+
+    // Store base image in cache...
+    baseCacheItem = new TIconCacheItem;
+    strncpy (baseCacheItem->name, name, MAX_ICON_NAME-1);
+    baseCacheItem->sdlSurface = surfBase;
+    baseCacheItem->color = color;
+    baseCacheItem->bgColor = TRANSPARENT;
+    baseCacheItem->scaleDown = 1;
+    baseCacheItem->orient = 0;
+    baseCacheItem->next = iconCache;
+    iconCache = baseCacheItem;
+  }
+  else surfBase = baseCacheItem->sdlSurface;
+  surf = NULL;    // If this remains 'NULL', the base image can be returned.
+
+  // Scale down if required ...
+  if (scaleDown != 1)
+    SurfaceSet (&surf, SurfaceGetScaledDownCopy (surf ? surf: surfBase, scaleDown, preserveThinLines));
+
+  // Rotate and flip if required ...
+  if (orient)
+    SurfaceSet (&surf, SurfaceGetFlippedAndRotatedCopy (surf ? surf : surfBase, orient));
+
+  // Re-color if required...
+  if (ToUint32 (color) != ToUint32 (baseCacheItem->color)) {
+    SurfaceSet (&surf, SurfaceDup (surf ? surf: surfBase));
+    SurfaceRecolor (surf, color);
+  }
+  if (ToUint32 (bgColor) != ToUint32 (TRANSPARENT))
+    SurfaceSet (&surf, SurfaceGetOpaqueCopy (surf ? surf : surfBase, bgColor));
+
+  // Store result in cache if new ...
+  if (surf) {
+    cacheItem = new TIconCacheItem;
+    strncpy (cacheItem->name, name, MAX_ICON_NAME-1);
+    cacheItem->sdlSurface = surf;
+    cacheItem->color = color;
+    cacheItem->bgColor = bgColor;
+    cacheItem->scaleDown = scaleDown;
+    cacheItem->orient = orient;
+    cacheItem->next = iconCache;
+    iconCache = cacheItem;
   }
 
-  // Store in cache...
-  strncpy (cacheItem->name, name, MAX_ICON_NAME-1);
-  cacheItem->color = color;
-  cacheItem->bgColor = bgColor;
-  cacheItem->next = iconCache;
-  iconCache = cacheItem;
-
   // Done...
-  return cacheItem->sdlSurface;
+  return surf ? surf : surfBase;
 }
 
 
@@ -1139,6 +1384,7 @@ SDL_Surface *CTextSet::Render (SDL_Surface *dst, SDL_Rect *dstRect) {
   int dstWidth, dstHeight, w, h;
   int yBottom, yCenter, yTop;
 
+  // Sanity...
   if (!firstItem) return dst;
 
   // Render all items...
@@ -1159,12 +1405,18 @@ SDL_Surface *CTextSet::Render (SDL_Surface *dst, SDL_Rect *dstRect) {
   }
 
   // Create new dst or adjust dimensions to existing one...
-  if (dstRect) frameRect = *dstRect;
+  if (dstRect) {
+    frameRect = *dstRect;
+    if (!dst) {
+      dst = CreateSurface (frameRect);
+      frameRect.x = frameRect.y = 0;
+    }
+  }
   else {
     if (!dst) dst = CreateSurface (dstWidth, dstHeight);
     frameRect = Rect (dst);
   }
-  SDL_FillRect (dst, &frameRect, ToUint32 (firstItem->fmt.bgColor));
+  SurfaceFillRect (dst, &frameRect, firstItem->fmt.bgColor);
 
   // Pass 2: Do the rendering...
   yBottom = frameRect.h;
@@ -1185,7 +1437,7 @@ SDL_Surface *CTextSet::Render (SDL_Surface *dst, SDL_Rect *dstRect) {
     }
     RectMove (&placeRect, frameRect.x + item->fmt.hSpace, frameRect.y + item->fmt.vSpace);
 
-    SDL_BlitSurface (item->surface, NULL, dst, &placeRect);
+    SurfaceBlit (item->surface, NULL, dst, &placeRect);
   }
 
   // Done...
@@ -1195,9 +1447,10 @@ SDL_Surface *CTextSet::Render (SDL_Surface *dst, SDL_Rect *dstRect) {
 
 SDL_Surface *TextRender (const char *text, CTextFormat fmt, SDL_Surface *dst, SDL_Rect *dstRect, bool *retAbbreviated) {
   static const char *nothing = "\n";
+  CTextSet textSet;
+
   if (!text) text = nothing;
   if (!text[0]) text = nothing;
-  CTextSet textSet;
   textSet.AddLines (text, fmt, retAbbreviated);
   return textSet.Render (dst, dstRect);
 }

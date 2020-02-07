@@ -1,0 +1,261 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2020 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+import os
+import subprocess
+import shutil
+import sys
+import math
+import xml.etree.ElementTree as xml
+
+
+# Option defaults...
+verbosity = 0
+dstDir = None
+
+
+
+##### Parse command line #####
+
+
+def Usage (code):
+  print ("Usage: " + sys.argv[0].rsplit('/', 1)[-1] + " [-v] [-d <output dir>] <svg file>\n")
+  exit (code)
+
+try:
+
+  # Parse arguments...
+  args = sys.argv[1:]
+  if args[0] == '-h':
+    Usage (0)
+  if args[0] == '-v':
+    import home2l
+    home2l.Home2lInit ()    # Print banner with version
+    verbosity = 1
+    args = args[1:]
+  if args[0] == '-d':
+    dstDir = args[1].rstrip ('/')
+    args = args[2:]
+
+  # Set 'objDir'...
+  svgName = args[0]
+  fpName = svgName
+  if fpName[-4:] == '.svg': fpName = fpName[:-4]
+  objDir = fpName + ".fpo"
+  if dstDir:
+    objDir = dstDir + "/" + objDir.rsplit('/', 1)[-1]
+
+except IndexError:
+  Usage (3)
+
+
+# Clean up and create object directory ...
+shutil.rmtree (objDir, ignore_errors = True)
+os.makedirs (objDir)
+
+
+# Banner...
+print ("Home2L Floorplan Compiler\n")
+
+
+
+
+
+##### Parse .svg file, read gadgets and write 'map.conf' #####
+
+
+mapName = objDir + "/map.conf"
+mapList = []
+
+sampleName = objDir + "/sample-resources.conf"
+sampleList = []
+
+
+print ("Reading '" + svgName + "'...")
+
+tree = xml.parse (svgName)
+root = tree.getroot()
+width = int (root.get ("width"))
+height = int (root.get ("height"))
+if (width != 128 or height != 64) and (width != 256 or height != 128):
+  raise RuntimeError ("The page size must be exactly 128x64 or 256x128 pixels^2.")
+
+mapList += [ ".scale = {}".format (round (8 - math.log2 (width))) ]
+  # sets 0 for width=256, 1 for width=64
+
+gadgets = root.findall ("{http://www.w3.org/2000/svg}g[@{http://www.inkscape.org/namespaces/inkscape}label='gadgets']/"
+                        + "{http://www.w3.org/2000/svg}use")
+for g in gadgets:
+  gdtId = g.attrib["id"]
+  gdtType = g.attrib["{http://www.w3.org/1999/xlink}href"].lstrip ("#")
+  gdtSubType = ""
+  while gdtType[-1] >= '0' and gdtType[-1] <= '9':
+    gdtSubType = gdtType[-1] + gdtSubType
+    gdtType = gdtType[:-1]
+
+  # Get transformation matrix ...
+  #~ print ("  # " + gdtId)
+  transform = g.attrib["transform"]
+  func, dummy, args = g.attrib["transform"].partition("(")
+  args = args.rstrip(")").split(",")
+  if func == "matrix":
+    matrix = (float (args[0]), float (args[1]), float (args[2]), float (args[3]))
+    x, y = float (args[4]), float (args[5])
+  elif func == "translate":
+    matrix = (1, 0, 0, 1)
+    x, y = float (args[0]), float (args[1])
+  elif func == "rotate":
+    sinA = math.sin (float (args[0]) * (math.pi/180))
+    cosA = math.cos (float (args[0]) * (math.pi/180))
+    matrix = ( cosA, sinA, -sinA, cosA )
+    x = -float (args[1]) * cosA + -float (args[2]) * -sinA + float (args[1])
+    y = -float (args[1]) * sinA + -float (args[2]) *  cosA + float (args[2])
+
+  else:
+    raise RuntimeError ("Unknown 'transform' attribute of element '{}': '{}'".format (gdtId, transform))
+
+  gdtX, gdtY = round (x), round (y - 128 + height)
+  det = matrix[0] * matrix[3] - matrix[1] * matrix[2]
+
+  #~ print ("# {:16} = {}{}:{}".format (gdtId, gdtType, gdtSubType, transform))
+  #~ print ("# {:28} = matrix({},{},{},{},{},{})".format ("", matrix[0], matrix[1], matrix[2], matrix[3], gdtX, gdtY))
+
+  # Get orientation and size, depending on the type ...
+  if gdtType == "win" or gdtType == "shades" or gdtType == "rwin" or gdtType == "garage":
+    gdtOrient = None
+    tolerance = 0.01
+    if abs (matrix[2]) < tolerance:  # north or south
+      if (matrix[3]) < -tolerance: gdtOrient = 2
+      if (matrix[3]) >  tolerance: gdtOrient = 0
+    if abs (matrix[3]) < tolerance:  # west or east
+      if (matrix[2]) < -tolerance: gdtOrient = 1
+      if (matrix[2]) >  tolerance: gdtOrient = 3
+    if gdtOrient == None:
+      raise RuntimeError ("Unable to determine orientation of element '{}': '{}'".format (gdtId, transform))
+
+    if gdtType == "win" and det < 0:
+      gdtOrient = gdtOrient + 4    # for windows: add 4 to orientation if flipped
+
+    if gdtType == "shades":
+      gdtSize = round (math.sqrt (matrix[0] * matrix[0] + matrix[1] * matrix[1]) * 8.0);  # for shades: width in px
+    elif gdtType == "garage":
+      gdtSize = 0
+    else:
+      gdtSize = int (gdtSubType)
+
+  else:   # Icons and text ...
+    gdtOrient = 0
+    gdtSize = round (math.log2 (abs (det)) / 2)     # for icons: log2 of scale factor
+
+  # Store map entry ...
+  mapEntry = "{:16} = {}:{}:{}:{}:{}".format (gdtId, gdtType, gdtX, gdtY, gdtOrient, gdtSize)
+  if verbosity > 0:
+    print ("  {:16}{:12}: x ={:4}, y ={:4}, orient = {}, size = {}". format (gdtId, "(" + gdtType + ")", gdtX, gdtY, gdtOrient, gdtSize))
+  mapList += [ mapEntry ]
+
+  # Store sample resource entries ...
+  aliasFmt = "A " + fpName + "/{:24} sample/signal/fp_{}"
+  if gdtType == "win":
+    sampleEntry = aliasFmt.format (gdtId + "/state", "win");
+  elif gdtType == "shades":
+    sampleEntry = aliasFmt.format (gdtId + "/shades", "shades");
+  elif gdtType == "rwin":
+    sampleEntry = aliasFmt.format (gdtId + "/state", "win");
+    sampleEntry += '\n' + aliasFmt.format (gdtId + "/shades", "shades");
+    sampleEntry += '\n' + aliasFmt.format (gdtId + "/actuator", "actuator");
+  elif gdtType == "temp":
+    sampleEntry = aliasFmt.format (gdtId + "/data", "temp");
+  else:
+    sampleEntry = aliasFmt.format (gdtId + "/state", gdtType);
+  sampleList += [ sampleEntry ]
+
+
+# Write result...
+print ("Writing '" + mapName + "'...")
+mapList.sort ()
+with open (mapName, 'w') as mapFile:
+  mapFile.write ('\n'.join (mapList))
+  mapFile.write ('\n')
+
+print ("Writing '" + sampleName + "'...")
+sampleList.sort ()
+with open (sampleName, 'w') as sampleFile:
+  sampleFile.write (
+    "# Sample snippet for the 'resources.conf' file.\n"
+    "#\n"
+    "# You may adapt and copy the alias definitions to your personal 'resources.conf'\n"
+    "# file.\n"
+    "\n"
+    "\n"
+    "# Server for the sample signals.\n"
+    "#\n"
+    "# The sample signals become available by running\n"
+    "#\n"
+    "#   home2l-server -x sample\n"
+    "#\n"
+    "# on the machine entered as <machine> (enter the name of your machine name here).\n"
+    "\n"
+    "H sample sample@<machine>\n"
+    "\n"
+    "\n"
+    "# Sample signals (may be used for your testing purposes).\n"
+    "\n"
+    "S sample fp_win       window  closed\n"
+    "S sample fp_shades    percent 0.0\n"
+    "S sample fp_actuator  percent 0.0\n"
+    "S sample fp_garage    bool    false\n"
+    "S sample fp_lock      bool    false\n"
+    "S sample fp_motion    bool    false\n"
+    "S sample fp_light     bool    false\n"
+    "S sample fp_mail      bool    false\n"
+    "S sample fp_phone     phone   idle\n"
+    "S sample fp_music     bool    false\n"
+    "S sample fp_wlan      bool    false\n"
+    "S sample fp_bluetooth bool    false\n"
+    "S sample fp_service   bool    false\n"
+    "S sample fp_temp      temp    23.5\n"
+    "\n"
+    "\n"
+    "# Alias definitions.\n"
+    "#\n"
+    "# The following lines define all aliases as expected and referenced by your\n"
+    "# floorplan. Replace the targets with the appropriate physical resources.\n"
+    "\n"
+  )
+  sampleFile.write ('\n'.join (sampleList))
+  sampleFile.write ('\n')
+
+
+
+
+
+##### Generate bitmaps #####
+
+imgBase = objDir + "/mini"
+print ("Creating '" + imgBase + ".bmp'...")
+subprocess.check_call ("inkscape " + svgName + " -i layer1 -C -j -w 256 -h 128 -e " + imgBase + ".png", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.check_call ("convert " + imgBase + ".png +level 0%,80%,1 -colorspace gray -separate -average -colors 256 -compress None BMP3:" + imgBase + ".bmp", shell=True)
+os.unlink (imgBase + ".png")
+
+imgBase = objDir + "/full"
+print ("Creating '" + imgBase + ".bmp'...")
+subprocess.check_call ("inkscape " + svgName + " -i layer1 -C -j -w 1024 -h 512 -e " + imgBase + ".png", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.check_call ("convert " + imgBase + ".png -colorspace gray -separate -average -colors 256 -compress None BMP3:" + imgBase + ".bmp", shell=True)
+os.unlink (imgBase + ".png")

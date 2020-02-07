@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,12 @@
 
 
 /** @file
+ *
  * @addtogroup ui
  * @{
  *
  * @defgroup ui_screen Screen
- * Screen and widget management.
+ * @brief Screen and widget management.
  *
  * A *screen* in this toolkit is similar to what is a window on a desktop system or an "activity" in Android.
  * It represents the present screen contents and covers the whole display. At a time, only one screen can be
@@ -64,11 +65,14 @@
 
 #define UI_BUTTONS_HEIGHT 64    ///< Height of the button bar.
 #define UI_BUTTONS_SPACE 8      ///< Standard spacing between buttons.
-#define UI_BUTTONS_RECT Rect (0, UI_RES_Y - UI_BUTTONS_HEIGHT, UI_RES_X, UI_BUTTONS_HEIGHT)   ///< Button area on the bottom of the display.
-#define UI_BUTTONS_BACKWIDTH (UI_BUTTONS_HEIGHT + UI_BUTTONS_HEIGHT/2)    ///< Standard width of the "back" button,
+
+#define UI_BUTTONS_RECT Rect (0, UI_RES_Y - UI_BUTTONS_HEIGHT, UI_RES_X, UI_BUTTONS_HEIGHT)
+  ///< @brief Button area on the bottom of the display.
+#define UI_BUTTONS_BACKWIDTH (UI_BUTTONS_HEIGHT + UI_BUTTONS_HEIGHT/2)
+  ///< @brief Standard width of the "back" button,
 
 #define UI_USER_RECT Rect (0, 0, UI_RES_X, UI_RES_Y - UI_BUTTONS_HEIGHT - UI_BUTTONS_SPACE)
-  ///< Rectangle describing the screen space usable for applets.
+  ///< @brief Rectangle describing the screen space usable for applets.
 
 
 /// @}
@@ -83,7 +87,8 @@ class CScreen;
 // *************************** CWidget *****************************************
 
 
-/** Base class for all widgets.
+/** @brief Base class for all widgets.
+ *
  * This class is not abstract, but by itself allows to display arbitrary SDL surfaces.
  */
 class CWidget {
@@ -101,6 +106,7 @@ class CWidget {
     SDL_Rect *GetArea () { return &area; }
 
     class CScreen *GetScreen () { return screen; }
+    bool IsOnScreen (class CScreen *_screen) { return screen == _screen; }
     class CCanvas *GetCanvas () { return canvas; }
     /// @}
 
@@ -116,32 +122,41 @@ class CWidget {
     /// This class itself is able to display a non-interactive surface.
     /// @{
     void SetSurface (SDL_Surface *_surface) { surface = _surface; ChangedSurface (); }
-      ///< Set the static surface to display.
-      /// The caller stays owner of surface, must not be deleted afterwards.
+      ///< @brief Set the static surface to display.
+      /// The caller stays owner of surface, must not delete it afterwards.
       /// The surface dimensions must match 'area'.
     virtual SDL_Surface *GetSurface () { return surface; }
-      ///< Get an up-to-date surface or 'NULL' if none is available.
+      ///< @brief Get an up-to-date surface or 'NULL' if none is available.
     /// @}
 
     /// @name Texture-oriented drawing...
     /// @{
     void GetRenderArea (SDL_Rect *ra) { *ra = area; LocalToScreenCoords (&ra->x, &ra->y); }
-      ///< Transpose 'area' to the current screen coordinates to be passed to all SDL rendering functions.
+      ///< @brief Transpose 'area' to the current screen coordinates to be passed to all SDL rendering functions.
     virtual SDL_Texture *GetTexture ();
-      ///< Return an up-to-date texture.
+      ///< @brief Return an up-to-date texture.
+      ///
       /// The default implementation maintains an internal texture that is updated based on
       /// the surface set by SetSurface(). Widgets that generate SDL texture objects directly
       /// may override this method.
     void SetTextureBlendMode (SDL_BlendMode _sdlBlendMode) { sdlBlendMode = _sdlBlendMode; }
-      ///< Set the blend mode for the texture created by the default implementation of GetTexture().
+      ///< @brief Set the blend mode for the texture created by the default implementation of GetTexture().
+      /// The default is SDL_BLENDMODE_NONE.
     virtual void Render (SDL_Renderer *ren);
-      ///< Render this widget.
+      ///< @brief Render this widget.
+      ///
       /// The default implementation uses the 'GetTexture()' method above. By overriding this method
       /// it is possible to define widgets with a custom SDL rendering procedure, which may be more
       /// efficient than preparing a single texture containing the complete widget.
-    void ClearTexture ();   ///< Clear the internally cached texture object to save memory.
+    void ClearTexture ();
+      ///< @brief Clear the internally cached texture object to save memory.
     /// @}
 
+    /// @name Event handling ...
+    /// @{
+    virtual bool HandleEvent (SDL_Event *ev) { return false; }
+      ///< @brief Handle an event and return 'true' if the event was consumed and is to be ignored by later widgets.
+    /// @}
 
   protected:
     friend class CScreen;
@@ -150,17 +165,12 @@ class CWidget {
     CWidget *next;
     class CScreen *screen;
     class CCanvas *canvas;
+    int screenLayer;      // for use by 'CScreen::AddWidget ()': layer of widget in the current context
 
     SDL_Rect area;
     SDL_Surface *surface;
     SDL_Texture *texture;
     SDL_BlendMode sdlBlendMode;
-
-    /// @name Event handling ...
-    /// @{
-    virtual bool HandleEvent (SDL_Event *ev) { return false; }
-      ///< Handle an event and return 'true' if the event was consumed and is to be ignored by later widgets.
-    /// @}
 
     /// @name Change management...
     /// The following methods trigger a redrawing at next occasion. The following conventions
@@ -169,8 +179,8 @@ class CWidget {
     /// 2. All public methods call their change methods => no need to make these public.
     /// 3. The 'Change*()' methods must be very fast (i.e. O(1)) in execution, at least if invoked repeatedly.
     /// @{
-    void ChangedSurface () { Changed (); }  ///< Mark (only) the surface as changed to trigger a redrawing at next occasion
-    void Changed ();                        ///< Anything may have changed: Trigger a redrawing at next occasion
+    void ChangedSurface () { Changed (); }  ///< @brief Mark (only) the surface as changed to trigger a redrawing at next occasion
+    void Changed ();                        ///< @brief Anything may have changed: Trigger a redrawing at next occasion
     /// @}
 
   private:
@@ -187,7 +197,8 @@ class CWidget {
 // *************************** CCanvas *****************************************
 
 
-/** Canvas widget.
+/** @brief Canvas widget.
+ *
  * A *canvas* is a widget with a virtual drawable area, which is not equivalent to the actually visible
  * area. This is the base class for all potentially scrollable widgets such as CListBox or CMenu.
  * Scroll bars are displayed automatically as needed, and wiping finger events are evaluated for scrolling.
@@ -203,7 +214,7 @@ class CCanvas: public virtual CWidget {
 
     /// @name Setup ...
     /// @{
-    void SetDefaults () { SetColors (); SetScrollbarWidth (); }   ///< Set default colors and scrollbar appearance.
+    void SetDefaults () { SetColors (); SetScrollbarWidth (); }   ///< @brief Set default colors and scrollbar appearance.
     void SetColors (TColor _backColor = BLACK, TColor _scrollbarColor = ToColor (255, 255, 255, 32)) {
       backColor = _backColor; scrollbarColor = _scrollbarColor; Changed ();
     }
@@ -215,14 +226,16 @@ class CCanvas: public virtual CWidget {
     /// @name Virtual area and scrolling ...
     /// @{
     void SetVirtArea (SDL_Rect r);
-      ///< Set the virtual area in screen coordinates; ('virtArea' == 'area' represents no displacement);
+      ///< @brief Set the virtual area in screen coordinates; ('virtArea' == 'area' represents no displacement);
       /// The areas of all subwidgets are relative to the virtual area
     SDL_Rect *GetVirtArea () { return &virtArea; }
     void MoveVirtArea (int toX0, int toY0) { SetVirtArea (Rect (toX0, toY0, virtArea.w, virtArea.h)); }
     void LimitVirtArea (SDL_Rect *r = NULL);
-      ///< Move virtual area (or 'r') so that the visible area is completely filled.
-    void ScrollTo (SDL_Rect r, int hAlign = 0, int vAlign = -1);    ///< Scroll such that 'r' is aligned according to '[vh]Align' (-1 = left/up, 0 = center, 1 = right/down).
-    void ScrollIn (SDL_Rect r);      ///< Scroll just enough to get 'r' fully visible.
+      ///< @brief Move virtual area (or 'r') so that the visible area is completely filled.
+    void ScrollTo (SDL_Rect r, int hAlign = 0, int vAlign = -1);
+      ///< @brief Scroll such that 'r' is aligned according to '[vh]Align' (-1 = left/up, 0 = center, 1 = right/down).
+    void ScrollIn (SDL_Rect r);
+      ///< @brief Scroll just enough to get 'r' fully visible.
     /// @}
 
     /// @name Coordinate transformations (screen <-> sub-widget system) ...
@@ -245,18 +258,18 @@ class CCanvas: public virtual CWidget {
     bool IsVisible (CWidget *w) { return IsVisible (w->GetArea ()); }
     /// @}
 
+    /// @name Callbacks...
+    /// @{
+    virtual void Render (SDL_Renderer *ren);
+    virtual bool HandleEvent (SDL_Event *ev);
+      ///< @brief Handle wiping/scrolling events, if virtual area is wider (higher) than physical area.
+    /// @}
+
   protected:
     SDL_Rect virtArea;
     CWidget *firstWidget;
     TColor backColor, scrollbarColor;
     int scrollbarWidth;
-
-    /// @name Callbacks...
-    /// @{
-    virtual void Render (SDL_Renderer *ren);
-    virtual bool HandleEvent (SDL_Event *ev);
-      ///< Handles wiping/scrolling events, if virtual area is wider (higher) than physical area.
-    /// @}
 
   private:
 
@@ -272,7 +285,7 @@ class CCanvas: public virtual CWidget {
 // *************************** CScreen *****************************************
 
 
-/** Screen object.
+/** @brief Screen object.
  */
 class CScreen {
   public:
@@ -286,12 +299,12 @@ class CScreen {
     static void ClassDone () {}
 
     static void Refresh () { Changed (); }
-      ///< Refresh screen (e.g. after the app has been woken up in Android).
+      ///< @brief Refresh screen (e.g. after the app has been woken up in Android).
 
     static void EmulateOff (bool off) { emulateOff = off; Changed (); }
-      ///< Emulate screen off
+      ///< @brief Emulate screen off.
     static void EmulateStandby (bool standby) { emulateStandby = standby; Changed (); }
-      ///< Emulate screen standby mode
+      ///< @brief Emulate screen standby mode.
     /// @}
 
     /// @name (De-)activation ...
@@ -304,8 +317,9 @@ class CScreen {
 
     /// @name Widget management ...
     /// "Add"/"Del" methods do not pass ownership, caller remains owner.
+    /// Layer 0 is the normal screen layer, layer 1 the layer of modal dialogs.
     /// @{
-    void AddWidget (CWidget *widget) { DoAddWidget (&firstWidget, widget); }
+    void AddWidget (CWidget *widget, int layer = 0) { DoAddWidget (&firstWidget, widget, layer); }
     void DelWidget (CWidget *widget) { DoDelWidget (&firstWidget, widget); }
     void DelAllWidgets ();
     /// @}
@@ -313,12 +327,13 @@ class CScreen {
     /// @name Screen stacking ...
     /// @{
     void Run ();
-      ///< Activate the screen, iterate until Return() is called and then return to the previously active screen.
+      ///< @brief Activate the screen, iterate until Return() is called and then return to the previously active screen.
+      ///
       /// It is allowed to call this method from 'HandleEvent', e.g. for modal dialogs.
       /// If another screen is activated by 'Activate', this method returns immediately and does not
       /// switch back to the previous screen.
     void Return () { running = false; }
-      ///< Let Run() return at next occasion.
+      ///< @brief Let Run() return at next occasion.
     /// @}
 
     /// @name On-screen keyboard ...
@@ -349,7 +364,7 @@ class CScreen {
   private:
 
     // Helpers...
-    void DoAddWidget (CWidget **pFirst, CWidget *widget);
+    void DoAddWidget (CWidget **pFirst, CWidget *widget, int layer);
     void DoDelWidget (CWidget **pFirst, CWidget *widget);
 };
 
@@ -365,7 +380,7 @@ class CScreen {
 
 
 SDL_Rect *LayoutRow (SDL_Rect container, const int *format, int items = -1, int space = UI_BUTTONS_SPACE);
-  ///< Layout a row of rectangles.
+  ///< @brief Layout a row of rectangles.
   /// @param container is the surrounding rectangle into which the row is fit.
   /// @param format is an array describing the layout:
   ///         - values > 0 describe fixed-width elements of width |value|.
@@ -373,18 +388,19 @@ SDL_Rect *LayoutRow (SDL_Rect container, const int *format, int items = -1, int 
   ///         - 0 terminates the list (then, 'items' does not need to be set).
   /// @param items is the number of items if set >= 0 (useful if the format array is not 0-terminated).
   /// @param space is the space between the items.
+  ///
   /// If 'format' is ommited (== NULL), 'items' is obligatory, and all items are
   /// layed out with variable width and equal size.
   ///
   /// The returned array has a size equal to the 'format' list (without the 0)
   /// and must be free'd by the caller afterwards.
 SDL_Rect *LayoutRow (SDL_Rect container, int space = UI_BUTTONS_SPACE, ...);
-  ///< Layout a row of rectangles based on a 0-termintated list of format valus passed as variable arguments.
+  ///< @brief Layout a row of rectangles based on a 0-termintated list of format valus passed as variable arguments.
 static inline SDL_Rect *LayoutRowEqually (SDL_Rect container, int items, int space = UI_BUTTONS_SPACE) { return LayoutRow (container, (const int *) NULL, items, space); }
-  ///< Layout a row of 'items' rectangles with equal width.
+  ///< @brief Layout a row of 'items' rectangles with equal width.
 
 SDL_Rect *LayoutCol (SDL_Rect container, const int *format, int items = -1, int space = UI_BUTTONS_SPACE);
-  ///< Layout a column of rectangles.
+  ///< @brief Layout a column of rectangles.
   /// @param container is the surrounding rectangle into which the column is fit.
   /// @param format is an array describing the layout:
   ///         - values > 0 describe fixed-height elements of height |value|.
@@ -392,18 +408,21 @@ SDL_Rect *LayoutCol (SDL_Rect container, const int *format, int items = -1, int 
   ///         - 0 terminates the list (then, 'items' does not need to be set).
   /// @param items is the number of items if set >= 0 (useful if the format array is not 0-terminated).
   /// @param space is the space between the items.
+  ///
   /// If 'format' is ommited (== NULL), 'items' is obligatory, and all items are
   /// layed out with variable width and equal size.
   ///
   /// The returned array has a size equal to the 'format' list (without the 0)
   /// and must be free'd by the caller afterwards.
+  ///
 SDL_Rect *LayoutCol (SDL_Rect container, int space = UI_BUTTONS_SPACE, ...);
-  ///< Layout a column of rectangles based on a 0-termintated list of format valus passed as variable arguments.
+  ///< @brief Layout a column of rectangles based on a 0-termintated list of format valus passed as variable arguments.
 static inline SDL_Rect *LayoutColEqually (SDL_Rect container, int items, int space = UI_BUTTONS_SPACE) { return LayoutRow (container, (const int *) NULL, items, space); }
-  ///< Layout a column of 'items' rectangles with equal width.
+  ///< @brief Layout a column of 'items' rectangles with equal width.
 
 SDL_Rect *LayoutMatrix (SDL_Rect container, const int *hFormat, const int *vFormat, int hItems = -1, int vItems = -1, int hSpace = UI_BUTTONS_SPACE, int vSpace = UI_BUTTONS_SPACE);
-  ///< Layout a matrix of variable-size elements.
+  ///< @brief Layout a matrix of variable-size elements.
+  ///
   /// 'hFormat' and 'vFormat' are the formats in horizontal and vertical direction, respectively
   /// The returned array has a size equal to |hFormat| * |vFormat| and is organized in lines.
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ class CGpioPin {
 
     void OnUnregister ();
 
-    void DriveValue (CRcValueState *value);
+    void DriveValue (CRcValueState *vs);
 
     void Iterate (TTicks now);  // [T:timer]
 
@@ -77,7 +77,10 @@ void CGpioPin::DriveValue (CRcValueState *vs) {
   bool ok;
 
   //~ INFOF (("### CGpioPin (%s): DriveValue (%s)", rc->Uri (), v->ToStr ()));
+
+  // Sanity ...
   ASSERT (!isInput);
+  if (!vs->IsValid ()) return;    // without requests just leave the previous value
 
   // Write new value to sysfs...
   ok = (lseek (fd, 0, SEEK_SET) == 0);
@@ -213,8 +216,7 @@ static void PinsInit (CRcDriver *drv) {
     // Create GPIO record...
     if (ok) {
       lid.Set (dirEntry->d_name, q - dirEntry->d_name);
-      rc = CResource::Register (drv, lid.Get (), rctBool, !isInput);
-        /* [RC:-] */
+      rc = CResource::Register (drv, lid.Get (), rctBool, !isInput);    // [RC:-]
       pin = new CGpioPin (rc, fd, isInput);
       rc->SetDriverData (pin);
       if (isInput) {

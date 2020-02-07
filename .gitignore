@@ -5,6 +5,8 @@
 *.[od]
 *.so
 *.tar.*
+*.elf
+*.hex
 
 *.log
 
@@ -16,8 +18,13 @@
 *.ap_.d
 *.dex
 *.dex.d
+*.fpo
 
 *.geany
+
+home2l-*.amd64
+home2l-*.i386
+home2l-*.armhf
 
 .nfs*
 core

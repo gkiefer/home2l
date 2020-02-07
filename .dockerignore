@@ -1,0 +1,55 @@
+# Git ...
+.git
+**/*.nogit*
+
+
+# Intermediate files ...
+**/*~
+**/*.bak
+**/*.o
+**/*.d
+**/*.so
+**/*.tar.*
+**/*.elf
+**/*.hex
+
+**/*.log
+
+**/*.class
+**/*.jar
+**/*.apk
+
+**/home2l-*.amd64
+**/home2l-*.i386
+**/home2l-*.armhf
+**/*.fpo
+
+**/.nfs*
+**/core
+
+
+# Externals unless required ...
+external
+!external/sdl2/Debian.mk
+!external/mpdclient/Debian.mk
+!external/linphone/Debian.mk
+!external/pjsip/Debian.mk
+!external/gstreamer/Debian.mk
+
+
+# Unused sources ...
+doc/home2l-api_c
+doc/home2l-api_python
+doc/home2l-book.*
+doc/ref_*
+doc/svg-inkscape
+
+brownies/circuits
+
+#wallclock/icons.build
+wallclock/android
+
+
+# Documentation ...
+README.*
+home2l-*

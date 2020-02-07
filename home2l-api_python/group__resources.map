@@ -1,8 +1,0 @@
-<map id="Resources" name="Resources">
-<area shape="rect" id="node1" href="$group__resources__general.html" title="Top&#45;level functionality of the Resources library &#45; most commonly used functions can be found here..." alt="" coords="195,5,273,32"/>
-<area shape="rect" id="node2" href="$group__resources__subscribe.html" title="Low&#45;level access to the C/C++ subscriber classes. " alt="" coords="181,56,287,83"/>
-<area shape="rect" id="node3" href="$group__resources__directory.html" title="Querying local metadata (for interactive debugging). " alt="" coords="165,107,303,133"/>
-<area shape="rect" id="node5" href="$group__resources__values.html" title="Basic definitions for values and their types and state. " alt="" coords="143,157,325,184"/>
-<area shape="rect" id="node6" href="$group__resources__requests.html" title="Low&#45;level access to the C/C++ request class. " alt="" coords="193,208,275,235"/>
-<area shape="rect" id="node7" href="$group__resources__rc.html" title="Accessing resource objects. " alt="" coords="167,259,301,285"/>
-</map>

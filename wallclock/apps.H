@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,12 +24,28 @@
 
 
 /** @file
+ *
  * @defgroup wallclock WallClock
- * API to implement new *WallClock* applets.
+ * @brief API to implement new *WallClock* applets.
  * @{
  *
+ * @defgroup wallclock_system System
+ * @brief Accessing system-specific functionalities and hardware.
+ *
+ * @defgroup wallclock_floorplan Floorplan
+ * @brief Floorplan visualization.
+ *
+ * @defgroup wallclock_alarmclock Alarm Clock
+ * @brief Interacting with the integrated alarm clock.
+ *
+ * @defgroup wallclock_phone Phone
+ * @brief Interacting with the phone applet.
+ *
+ * @defgroup wallclock_music Music Player
+ * @brief Interacting with the music player.
+ *
  * @defgroup wallclock_apps Applets
- * Managing applets.
+ * @brief Managing applets.
  *
  * ### Developing new applets
  *
@@ -103,7 +119,7 @@ enum EAppOperation {
 
 
 typedef void *FAppFunc (int appOp, void *data);
-  ///< Prototype for applet entry functions.
+  ///< @brief Prototype for applet entry functions.
   /// Example: `void *AppPhoneFunc (int appOp, void *data)`
 
 
@@ -137,21 +153,23 @@ extern TTF_Font *fntAppLabel;                               ///< Default font fo
 #define APP_SET_LAUNCHER(BTN, ICON_NAME, TEXT, HOTKEY) \
             ((CButton *) (BTN))->SetLabel (COL_APP_LABEL, ICON_NAME "-48", TEXT, fntAppLabel); \
             ((CButton *) (BTN))->SetHotkey (HOTKEY);
-  ///< Set launcher appearance (standard color) and hotkey; Typical use: initialization.
+  ///< @brief Set launcher appearance (standard color) and hotkey; Typical use: initialization.
+  ///
   /// Example:
   /// @code
   /// APP_SET_LAUNCHER(data, "ic_foobar", "FooBar", SDLK_f);
   /// @endcode
 #define APP_SET_LABEL(BTN, ICON_NAME, TEXT, COLOR) \
             ((CButton *) (BTN))->SetLabel ((COLOR), ICON_NAME "-48", TEXT, fntAppLabel)
-  ///< Set launcher appearance; Typical use is to change color or label.
+  ///< @brief Set launcher appearance; Typical use is to change color or label.
+  ///
   /// Example:
   /// @code
   /// APP_SET_LAUNCHER(data, "ic_foobar", "FooBar", COL_APP_LIVE);
   /// @endcode
 #define APP_SET_HOTKEY(BTN, HOTKEY) \
             ((CButton *) (BTN))->SetHotkey (HOTKEY);
-  ///< Set the hotkey.
+  ///< @brief Set the hotkey.
 ///@}
 
 

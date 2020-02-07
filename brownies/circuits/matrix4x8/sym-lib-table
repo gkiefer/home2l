@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name home2l)(type Legacy)(uri /home/gundolf/prog/home2l/src/brownies/circuits/lib/home2l.lib)(options "")(descr ""))
+  (lib (name 250-404_000-012)(type Legacy)(uri /home/gundolf/prog/home2l/src/brownies/circuits/lib/250-404_000-012.lib)(options "")(descr ""))
+  (lib (name 250-408_000-012)(type Legacy)(uri /home/gundolf/prog/home2l/src/brownies/circuits/lib/250-408_000-012.lib)(options "")(descr ""))
+)

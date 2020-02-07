@@ -13,7 +13,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2018 Gundolf Kiefer
+# (C) 2015-2020 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ test -r /etc/default/home2l && . /etc/default/home2l
 ##### Preset and read configuration #####
 
 
-RUN_ADB=0
+START_ADB=0
 SETUP_GPIO=0
 
 test -r  $HOME2L_ROOT/etc/init.conf && . $HOME2L_ROOT/etc/init.conf
@@ -98,11 +98,8 @@ case "$1" in
           chmod g+w /sys/class/leds/*/*
         fi
 
-        # (Re-)Start ADB if enabled...
-        if [[ "$RUN_ADB" == "1" ]]; then
-          # Kill an eventually running ADB, remove an eventually left-over socket file and then start the ADB server...
-          killall -q adb
-          rm -fr /tmp/5037
+        # Start ADB if selected so and ADB not already running ...
+        if [[ "$START_ADB" == "1" ]]; then
           su home2l -c "adb start-server" > /dev/null
         fi
 
@@ -124,11 +121,6 @@ case "$1" in
                    log_end_msg 0 ;;
                 *) log_end_msg 1 ;;
         esac
-
-        # Stop ADB if enabled...
-        if [[ "$RUN_ADB" == "1" ]]; then
-          su home2l -c "adb kill-server"
-        fi
         ;;
   restart|reload|force-reload)
         $0 stop

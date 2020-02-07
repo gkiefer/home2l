@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -179,13 +179,18 @@ void CTask::Process () {
          *          Hence, we must check for negative numbers to avoid unappropriate and very long retry waiting.
          */
       if (lifeTime >= envMinRunTime || lifeTime < 0) {
-        LogF (LOG_INFO, "Task '%s' has died (exit code %i) - restarting now.", id.Get (), ExitCode ());
+        LogF (LOG_INFO,
+              ExitCode () >= 0 ? "Task '%s' has exited (code %i) - restarting now."
+                               : "Task '%s' has died - restarting now.",
+              id.Get (), ExitCode ());
         startTime = 0;  // -> mark to restart now
       }
       else {
-        LogF (LOG_INFO, "Task '%s' has died (exit code %i) after only %i second(s) - restarting in %i seconds.",
-            id.Get (), ExitCode (),
-            (int) SECONDS_FROM_TICKS (lifeTime), (int) SECONDS_FROM_TICKS (envRetryWait - lifeTime));
+        LogF (LOG_INFO,
+              ExitCode () >= 0 ? "Task '%s' has exited (code %i) after only %i second(s) - restarting in %i seconds."
+                               : "Task '%s' has died after only %3$i second(s) - restarting in %4$i seconds.",
+              id.Get (), ExitCode (),
+              (int) SECONDS_FROM_TICKS (lifeTime), (int) SECONDS_FROM_TICKS (envRetryWait - lifeTime));
         retryTimer.Set (startTime + envRetryWait, 0, CbRetryTimer, this);   // -> restart later
         startTime = -1; // -> suspend
       }
@@ -193,7 +198,7 @@ void CTask::Process () {
     if (startTime == 0) {
       // (Re-)Start the task...
       LogF (LOG_INFO, "Starting task '%s'...", id.Get ());
-      Start (cmd.Get ());
+      Start (cmd.Get (), true);
       startTime = now;
       retryTimer.Clear ();
     }
@@ -237,7 +242,7 @@ int main (int argc, char **argv) {
 
   // Daemonize...
   if (!foregroundMode) {
-    if (daemon (0, 0) != 0) ERRORF (("Cannot daemonize: %s", strerror (errno)));
+    if (daemon (0, 0) != 0) ERRORF (("Failed to daemonize: %s", strerror (errno)));
   }
 
   // Write PID file if set...
@@ -308,7 +313,7 @@ int main (int argc, char **argv) {
 
     // Handle signals...
     if (sleeper.GetCmd (&sig)) {
-      LogF (LOG_INFO, "Received signal '%s' (%i)", strsignal (sig), sig);
+      LogF (LOG_INFO, "Received signal %i ('%s')", sig, strsignal (sig));
       switch (sig) {
         case SIGTERM:
         case SIGINT:

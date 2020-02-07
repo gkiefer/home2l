@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2018 Gundolf Kiefer
+ *  (C) 2015-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -114,7 +114,7 @@ enum ERcPathDomain {
 
 #define RcPathIsDir(DOMAIN) ((DOMAIN) < rcpResource)
 
-const char *RcGetRealPath (CString *ret, const char *uri, int maxDepth = 8);
+const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir = NULL, int maxDepth = 8);
   // Resolve alias or '/local' path (up to at most 'maxDepth' levels of indirection) and return real path.
   // If the real path is equal to 'uri' (i.e. no resolution was necessary), '*ret' may contain a pointer to 'uri'
   // been set by 'CString::SetC ()'. Hence, 'uri' must live as long as '*ret'.
@@ -439,7 +439,7 @@ class CRcHost: public CNetRunnable, public CShell {
     void RemoteSubscribe (CRcSubscriber *subscr, CResource *rc);
     void RemoteUnsubscribe (CRcSubscriber *subscr, CResource *rc);
     void RemoteSetRequest (CResource *rc, CRcRequest *req);
-    void RemoteDelRequest (CResource *rc, const char *reqGid);
+    void RemoteDelRequest (CResource *rc, const char *reqGid, TTicks t1);
 
     bool RemoteInfoResource (CResource *rc, int verbosity, CString *retText);
       // returns info on a resource, output format equivalent to 'CResource::GetInfo ()'
@@ -471,7 +471,7 @@ class CRcHost: public CNetRunnable, public CShell {
     void UnlockResources () { Unlock (); }
 
     // CShell functions (TBD: untested, potentialy incomplete)...
-    virtual bool Start (const char *cmd);
+    virtual bool Start (const char *cmd, bool readStdErr = false);
     virtual bool StartRestricted (const char *name, const char *args = NULL);
     virtual bool IsRunning () { return execBusy; }
     virtual void Wait ();
@@ -501,7 +501,7 @@ class CRcHost: public CNetRunnable, public CShell {
       // Returns the current time.
     void ResetAgeTime () { ResetTimes (true, false, false); }
     void ResetRetryTime () { ResetTimes (false, true, false); }
-    void ResetFirstRetry () { tFirstRetry = 0; }
+    void ResetFirstRetry () { tFirstRetry = NEVER; }
     void ResetIdleTime () { ResetTimes (false, false, true); }
     void UpdateTimer () { ResetTimes (false, false, false); }
 
