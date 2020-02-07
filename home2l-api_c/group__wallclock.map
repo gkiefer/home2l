@@ -1,0 +1,8 @@
+<map id="WallClock" name="WallClock">
+<area shape="rect" id="node2" href="$group__wallclock__alarmclock.html" title="Interacting with the integrated alarm clock. " alt="" coords="138,5,233,32"/>
+<area shape="rect" id="node3" href="$group__wallclock__apps.html" title="Managing applets. " alt="" coords="152,56,219,83"/>
+<area shape="rect" id="node4" href="$group__wallclock__music.html" title="Interacting with the music player. " alt="" coords="136,107,235,133"/>
+<area shape="rect" id="node5" href="$group__wallclock__system.html" title="Accessing system&#45;specific functionalities and hardware. " alt="" coords="152,157,219,184"/>
+<area shape="rect" id="node6" href="$group__wallclock__floorplan.html" title="Floorplan visualization. " alt="" coords="148,208,223,235"/>
+<area shape="rect" id="node7" href="$group__wallclock__phone.html" title="Interacting with the phone applet. " alt="" coords="156,259,215,285"/>
+</map>

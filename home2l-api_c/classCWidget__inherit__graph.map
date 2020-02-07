@@ -1,0 +1,13 @@
+<map id="CWidget" name="CWidget">
+<area shape="rect" id="node2" href="$classCButton.html" title="Push&#45;button widget. " alt="" coords="41,80,112,107"/>
+<area shape="rect" id="node5" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="143,80,221,107"/>
+<area shape="rect" id="node9" href="$classCCursorWidget.html" title="Widget with an additional rectangular cursor. " alt="" coords="245,80,357,107"/>
+<area shape="rect" id="node10" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box. " alt="" coords="381,80,489,107"/>
+<area shape="rect" id="node12" href="$classCSlider.html" title="Slider widget. " alt="" coords="513,80,579,107"/>
+<area shape="rect" id="node3" href="$classCFlatButton.html" title="Flat Push&#45;button widget. " alt="" coords="23,155,115,181"/>
+<area shape="rect" id="node4" href="$classCWidgetFloorplan.html" title="Floorplan widget. " alt="" coords="5,229,132,256"/>
+<area shape="rect" id="node6" href="$classCInputLine.html" title="Input line widget. " alt="" coords="139,155,225,181"/>
+<area shape="rect" id="node7" href="$classCListbox.html" title="Listbox widget. " alt="" coords="249,155,323,181"/>
+<area shape="rect" id="node8" href="$classCMenu.html" title="Menu widget. " alt="" coords="291,229,355,256"/>
+<area shape="rect" id="node11" href="$classCMessageBox.html" title="Message box widget. " alt="" coords="399,155,507,181"/>
+</map>

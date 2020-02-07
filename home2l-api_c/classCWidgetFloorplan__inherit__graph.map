@@ -1,0 +1,6 @@
+<map id="CWidgetFloorplan" name="CWidgetFloorplan">
+<area shape="rect" id="node2" href="$classCFlatButton.html" title="Flat Push&#45;button widget. " alt="" coords="5,155,97,181"/>
+<area shape="rect" id="node3" href="$classCButton.html" title="Push&#45;button widget. " alt="" coords="16,80,87,107"/>
+<area shape="rect" id="node4" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="15,5,88,32"/>
+<area shape="rect" id="node5" href="$classCTimer.html" title="Timer class. " alt="" coords="121,155,187,181"/>
+</map>

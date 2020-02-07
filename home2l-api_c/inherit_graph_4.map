@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants). " alt="" coords="5,107,88,133"/>
+<area shape="rect" id="node2" href="$classCDictFast.html" title="Fast dictionary. " alt="" coords="162,5,277,32"/>
+<area shape="rect" id="node3" href="$classCDictFast.html" title="CDictFast\&lt; int \&gt;" alt="" coords="159,56,279,83"/>
+<area shape="rect" id="node4" href="$classCDictRef.html" title="Dictionary of references. " alt="" coords="165,107,274,133"/>
+<area shape="rect" id="node6" href="$classCDictRef.html" title="CDictRef\&lt; CResource \&gt;" alt="" coords="136,157,303,184"/>
+<area shape="rect" id="node7" href="$classCKeySet.html" title="Set of strings (keys). " alt="" coords="182,208,257,235"/>
+<area shape="rect" id="node5" href="$classCDict.html" title="Flexible dictionary. " alt="" coords="351,107,439,133"/>
+</map>
