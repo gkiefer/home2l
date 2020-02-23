@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -70,7 +70,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Input line widget. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00736">736</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00781">781</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -98,13 +98,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:a8e229bbfb41606531e23660ec223b503"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the undo &amp; redo history. <br /></td></tr>
 <tr class="separator:a8e229bbfb41606531e23660ec223b503"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Obtaining the result ...</div></td></tr>
-<tr class="memitem:a9cc771093f3a7036f3c5c77720f74a8b"><td class="memItemLeft" align="right" valign="top"><a id="a9cc771093f3a7036f3c5c77720f74a8b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>GetResult</b> (<a class="el" href="classCString.html">CString</a> *ret)</td></tr>
-<tr class="separator:a9cc771093f3a7036f3c5c77720f74a8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20a2ceec17989aae7cd5dde0c202dd34"><td class="memItemLeft" align="right" valign="top"><a id="a20a2ceec17989aae7cd5dde0c202dd34"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCInputLine.html#a20a2ceec17989aae7cd5dde0c202dd34">Modified</a> ()</td></tr>
-<tr class="memdesc:a20a2ceec17989aae7cd5dde0c202dd34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return if anything may have changed. <br /></td></tr>
-<tr class="separator:a20a2ceec17989aae7cd5dde0c202dd34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae9a06383ea7e663e42a6973878bb7c4e"><td class="memItemLeft" align="right" valign="top"><a id="ae9a06383ea7e663e42a6973878bb7c4e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCInputLine.html#ae9a06383ea7e663e42a6973878bb7c4e">GetInput</a> (<a class="el" href="classCString.html">CString</a> *ret)</td></tr>
+<tr class="memdesc:ae9a06383ea7e663e42a6973878bb7c4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the current string. <br /></td></tr>
+<tr class="separator:ae9a06383ea7e663e42a6973878bb7c4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0570d7e13b7908b1fe91a400c6b59dc3"><td class="memItemLeft" align="right" valign="top"><a id="a0570d7e13b7908b1fe91a400c6b59dc3"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCInputLine.html#a0570d7e13b7908b1fe91a400c6b59dc3">InputModified</a> ()</td></tr>
+<tr class="memdesc:a0570d7e13b7908b1fe91a400c6b59dc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return if anything may have changed. <br /></td></tr>
+<tr class="separator:a0570d7e13b7908b1fe91a400c6b59dc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Editing ...</div></td></tr>
 <tr class="memitem:a33120954f5b02b11677918438fd5b207"><td class="memItemLeft" align="right" valign="top"><a id="a33120954f5b02b11677918438fd5b207"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCInputLine.html#a33120954f5b02b11677918438fd5b207">GetMark0</a> ()</td></tr>
@@ -328,7 +329,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Render this widget. </p>
-<p>The default implementation uses the '<a class="el" href="classCWidget.html#a0013bd8c0c7ac4948d64a76557efc4a8" title="Return an up-to-date texture. ">GetTexture()</a>' method above. By overriding this method it is possible to define widgets with a custom SDL rendering procedure, which may be more efficient than preparing a single texture containing the complete widget. </p>
+<p>The default implementation uses the '<a class="el" href="classCWidget.html#a0013bd8c0c7ac4948d64a76557efc4a8" title="Return an up-to-date texture. ">GetTexture()</a>' method above. By overriding this method it is possible to define widgets with a custom SDL rendering procedure, which may be more efficient than preparing a single texture containing the complete widget.</p>
+<p>It is allowed to pass 'ren == NULL', in which case all textures and internal data structures are (re-)calculated, but nothing is actually rendered. </p>
 
 <p>Reimplemented from <a class="el" href="classCCanvas.html#a183698d551a658d6151b64de2a160f37">CCanvas</a>.</p>
 

@@ -286,7 +286,7 @@ SWIG_PY := $(HOME2L_BUILD)/$(HOST_ARCH)/resources/home2l.py
 
 
 $(SWIG_PY): $(API_PYTHON_SRC)
-	@make -C ../resources ARCH=$(HOST_ARCH) $(SWIG_PY)
+	@$(MAKE) -C ../resources ARCH=$(HOST_ARCH) $(SWIG_PY)
 
 
 $(API_PYTHON): api_python.doxygen ../home2l-figs/home2l-icon-web.png api_python.py $(SWIG_PY)

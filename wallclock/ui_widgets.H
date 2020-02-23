@@ -178,15 +178,19 @@ typedef void FCbButtonPushed (class CButton *button, bool longPush, void *data);
   ///< @brief Function prototype for CButton callbacks.
 
 
-#define BUTTON_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)                 \
-  static void CB_NAME (class CButton *button, bool longPush, void *data) {  \
-    ((CLASS_NAME *) data)->METHOD_NAME (button, longPush);                  \
+#define BUTTON_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)             \
+  void CB_NAME (class CButton *button, bool longPush, void *data) {     \
+    ((CLASS_NAME *) data)->METHOD_NAME (button, longPush);              \
   }
   ///< @brief Macro to create a trampoline from CButton to another class.
   ///
   /// The class must define a method:
   ///
   ///     void CLASS_NAME::METHOD_NAME (CButton *button, bool longPush)
+  ///
+  /// If the method is protected, the following line may be added to the class:
+  ///
+  ///     friend CB_NAME (CButton *, bool, void *);
   ///
   /// To the button, the trampoline must be passed by a call like:
   ///
@@ -221,6 +225,7 @@ class CButton: public CWidget {
 
     /// @name Set parameters...
     /// @{
+
     void SetArea (SDL_Rect _area);
 
     void SetColor (TColor _colNorm) { SetColor (_colNorm, _colNorm); }
@@ -236,13 +241,20 @@ class CButton: public CWidget {
       /// conveniently keep '_icon' valid, the caller should make a copy (SurfaceDup() ) and
       /// pass 'takeOwenership = true' here.
     void SetLabel (const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
+      ///< @brief Set text-only label.
     void SetLabel (SDL_Surface *_icon, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
+      ///< @brief Set icon (and optionally text) label. The icon has its own color(s).
     void SetLabel (TColor color, const char *iconName, const char *text = NULL, TTF_Font *font = NULL)
       { SetLabel (iconName ? IconGet (iconName, color) : NULL, text, color, font); }
+      ///< @brief Set icon (and optionally text) label. Both have the same color.
     void ClearLabel () { SetLabel ((SDL_Surface *) NULL); }
-    void SetLabelAlignment (int _hAlign = 0, int _vAlign = 0) { hAlign = _hAlign; vAlign = _vAlign; }
+      ///< @brief Remove label.
+    void SetLabelAlignment (int _hAlign = 0, int _vAlign = 0) { hAlign = _hAlign; vAlign = _vAlign; ChangedSurface (); }
+      ///< @brief Set/change label alignment.
 
     void SetHotkey (SDL_Keycode _hotkey) { hotkey = _hotkey; }
+      ///< @brief Set hotkey which activates the button callback.
+
     /// @}
 
     /// @name Set actions...
@@ -331,12 +343,15 @@ CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen
 /// @{
 
 
+#define LISTBOX_ITEM_BORDER 4     ///< @brief Border spacing around labels in pixels.
+
+
 /// List box mode
 enum EListboxMode {
   lmReadOnly,       ///< Listbox is read-only, no selection & interaction.
   lmActivate,       ///< Items act like push-buttons, activation callback can be defined.
-  lmSelectSingle,   ///< Items are exclusivly selectable.
-  lmSelectAny       ///< Items are arbitrarily selectable.
+  lmSelectSingle,   ///< Items are exclusivly selectable (activation callback can be defined, too).
+  lmSelectAny       ///< Items are arbitrarily selectable (activation callback can be defined, too).
 };
 
 
@@ -344,15 +359,19 @@ typedef void FCbListboxPushed (class CListbox *, int idx, bool longPush, void *d
   ///< @brief Callback prototype for CListbox push events.
 
 
-#define LISTBOX_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME) \
-  static void CB_NAME (class CListbox *listbox, int idx, bool longPush, void *data) {   \
-    ((CLASS_NAME *) data)->METHOD_NAME (listbox, idx, longPush);                        \
+#define LISTBOX_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)                      \
+  void CB_NAME (class CListbox *listbox, int idx, bool longPush, void *data) {    \
+    ((CLASS_NAME *) data)->METHOD_NAME (listbox, idx, longPush);                  \
   }
   ///< @brief Macro to create a trampoline to another class.
   ///
   /// The class must define a method:
   ///
   ///     void CLASS_NAME::METHOD_NAME (CListbox *listbox, int idx, bool longPush)
+  ///
+  /// If the method is protected, the following line may be added to the class:
+  ///
+  ///     friend CB_NAME (CButton *, int, bool, void *);
   ///
   /// To the list box, the trampoline must be passed by a call like:
   ///
@@ -364,18 +383,26 @@ typedef void FCbListboxPushed (class CListbox *, int idx, bool longPush, void *d
  */
 class CListboxItem {
   public:
-    CListboxItem () { text = NULL; data = NULL; surfIcon = NULL; isSelected = isSpecial = false; changed = true; }
+    CListboxItem () { text = NULL; iconName = NULL; iconSurf = NULL; isSelected = isSpecial = false; data = NULL; changed = true; }
 
     bool IsSelected () { return isSelected; }
 
-    const char *text;        ///< Reference to (optional) text (class is not owner).
-    SDL_Surface *surfIcon;   ///< Reference to (optional) icon surface (class is not owner).
+    void SetLabel (const char *_text, const char *_iconName = NULL) { text = _text; iconName = _iconName; iconSurf = NULL; }
+      ///< @brief Set label with a text and icon, both are optional.
+      /// The icon is recolored as the text.
+    void SetLabel (const char *_text, SDL_Surface *_iconSurf) { text = _text; iconName = NULL; iconSurf = _iconSurf; }
+      ///< @brief Set label with a text and icon, both are optional.
+      /// The icon has its own color(s).
 
     bool isSpecial;   ///< Item is special, e.g. a head line.
     void *data;       ///< Reference to optional user data.
 
   protected:
     friend class CListbox;
+
+    const char *text;
+    const char *iconName;
+    SDL_Surface *iconSurf;
 
     bool isSelected;
     bool changed;       ///< If set, item will be re-rendered at next occasion
@@ -394,8 +421,11 @@ class CListbox: public CCanvas {
     void SetMode (EListboxMode _mode, int _itemHeight, int _itemGap = 1);
       ///< @brief 'itemHeight' == 0 indicates variable-height items (Note: presently much worse performance than fixed-height);
       /// implicitly deletes all items.
-    void SetFormat (TTF_Font *_font, TColor colGrid = BLACK, TColor _colLabel = WHITE, TColor _colBack = DARK_DARK_GREY, TColor _colSelected = GREY, TColor _colSpecial = DARK_GREY);
-      ///< @brief Parameters set here are only read in 'RenderItem' & can be ommited (or re-interpreted) if a custom render function is defined.
+    void SetFormat (TTF_Font *_font, int _hAlign = -1, TColor colGrid = BLACK,
+                    TColor _colLabel = WHITE, TColor _colBack = DARK_DARK_GREY,
+                    TColor _colLabelSelected = WHITE, TColor _colBackSelected = GREY,
+                    TColor _colLabelSpecial = WHITE, TColor _colBackSpecial = DARK_GREY);
+      ///< @brief Except 'colGrid', all parameters set here are only read in 'RenderItem' & can be ommited (or re-interpreted) if a custom render function is defined.
       /// 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'.
     void SetArea (SDL_Rect _area) { CCanvas::SetArea (_area); ChangedSetup (); }
     /// @}
@@ -405,10 +435,17 @@ class CListbox: public CCanvas {
     void Clear () { SetItems (0); }
     void SetItems (int _items);
     int GetItems () { return items; }
-    void SetItem (int idx, const char *_text, SDL_Surface *_surfIcon = NULL, bool _isSpecial = false, void *data = NULL);
+
+    void SetItem (int idx, const char *_text, const char *_iconName = NULL, bool _isSpecial = false, void *data = NULL);
+    void SetItem (int idx, const char *_text, SDL_Surface *_iconSurf, bool _isSpecial = false, void *data = NULL);
     CListboxItem *GetItem (int idx) { return &itemArr[idx]; }
 
+    int GetItemHeight () { return itemHeight; }
+    int GetItemLabelWidth (int idx);
+      ///< Retrieve the label (net) width of an item (e.g. to optimize geometry).
     SDL_Rect GetItemRect (int idx);
+      ///< Get the area of an item.
+
     void ScrollTo (int idx, int vAlign = -1) { CCanvas::ScrollTo (GetItemRect (idx), 0, vAlign); Changed (); }
     void ScrollIn (int idx) { CCanvas::ScrollIn (GetItemRect (idx)); Changed (); }
     /// @}
@@ -416,14 +453,14 @@ class CListbox: public CCanvas {
     /// @name Content selection ...
     /// @{
     void SelectItem (int idx, bool _isSelected = true);   // for 'lmSelectSingle', 'lmSelectAny'
-    void SelectAll (bool _isSelected = true);    // 'lmSelectAny'
-    void SelectNone () { SelectAll (false); }    // 'lmSelectSingle', 'lmSelectAny'
+    void SelectAll (bool _isSelected = true);             // 'lmSelectAny'
+    void SelectNone () { SelectAll (false); }             // 'lmSelectSingle', 'lmSelectAny'
     /// @}
 
     /// @name Returning results ...
     /// @{
     bool ItemIsSelected (int idx) { return itemArr[idx].isSelected; }
-    int GetSelectedItem () { return selectedItem; }  // 'lmSelectSingle' only
+    int GetSelectedItem () { return selectedItem; }       // 'lmSelectSingle' only
 
     virtual void OnPushed (int idx, bool longPush) { if (cbPushed) cbPushed (this, idx, longPush, cbPushedData); }
     void SetCbPushed (FCbListboxPushed *_cbPushed, void *_data = NULL) { cbPushed = _cbPushed; cbPushedData = _data; }
@@ -457,7 +494,8 @@ class CListbox: public CCanvas {
 
     // Infos for 'RenderItem' only...
     TTF_Font *font;
-    TColor colLabel, colBack, colSelected, colSpecial;
+    int hAlign;
+    TColor colLabel, colBack, colLabelSelected, colBackSelected, colLabelSpecial, colBackSpecial;
 
     /// @name Rendering ...
     /// @{
@@ -465,8 +503,8 @@ class CListbox: public CCanvas {
       ///< @brief Render a list box item to an SDL surface and return it.
       ///
       /// This method may be overriden to implement a custom look of the items.
-      /// The default implementation renders left-justified label and text from 'CListboxItem::surfLabel' and 'CListbox::text'
-      /// according the settings given by 'SetFormat' and interprets 'CListboxItem::isSpecial'.
+      /// The default implementation renders an icon and text (or one of both) as defined by CListboxItem::SetLabe()
+      /// according the settings given by SetFormat() and interprets CListboxItem::isSpecial().
       /// The dimensions of the returned surface must match 'area.w' and 'itemHeight' (if >= 0).
       /// If 'itemHeight' == 0, the height is arbitrary and the layout will be adapted accordingly.
       /// The caller becomes owner of the returned surface.
@@ -591,7 +629,14 @@ int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign = -1, int _
 
 
 #define MSGBOX_DEFAULT_FONT FontGet (fntNormal, 24)   ///< Default font for message box contents.
-#define MSGBOX_COLOR DARK_GREY
+#define MSGBOX_TITLE_FONT FontGet (fntBold, 32)       ///< Title font for message boxes.
+
+#define MSGBOX_COLOR DARK_GREY                        ///< Default color for message boxes.
+
+#define MSGBOX_SPACE_X 32                             ///< Horizontal space around message box contents.
+#define MSGBOX_SPACE_Y 32                             ///< Vertical space around message box contents and between the title and contents.
+#define MSGBOX_BUTTON_MINWIDTH 160                        ///< Minimum width of message box buttons.
+
 
 
 /// IDs for standard buttons.
@@ -625,7 +670,7 @@ class CMessageBox: public CModalWidget {
 
     /// @name Setup ...
     /// @{
-    void Setup (const char *title, int contentW, int contentH, int _buttons, CButton **_buttonArr, TColor color = MSGBOX_COLOR);
+    void Setup (const char *title, int contentW, int contentH, int _buttons, CButton **_buttonArr, TColor color = MSGBOX_COLOR, int titleHAlign = 0);
       ///< @brief The most flexible way.
       ///
       /// 'content' is arbitrary content and must be transparent in empty areas.
@@ -740,8 +785,9 @@ class CInputLine: public CCanvas {
 
     /// @name Obtaining the result ...
     /// @{
-    void GetResult (CString *ret) { ret->SetFromIso8859 (input.Get ()); }
-    bool Modified ();      ///< @brief Return if anything may have changed.
+    void GetInput (CString *ret) { ret->SetFromIso8859 (input.Get ()); }
+                                ///< @brief Retrieve the current string.
+    bool InputModified ();      ///< @brief Return if anything may have changed.
     /// @}
 
     /// @name Editing ...
@@ -823,13 +869,71 @@ class CInputLine: public CCanvas {
 };
 
 
+/** @brief Screen with an input line widget.
+ *
+ * Since the on-screen keyboard requires some space, it is useful to use @ref CInputLine
+ * indirectly with this screen. It shows an input line on top and a button bar below.
+ * The button bar shows a back/escape button on the left, an "OK" and standard editing buttons
+ * on the right and may contain optional user buttons in the center.
+ */
+class CInputScreen: public CScreen {
+  public:
+    CInputScreen () {}
+    ~CInputScreen () {}
+
+    /// @name Setup ...
+    /// @{
+    void Setup (const char *inputPreset, TColor color = GREY, int userBtns = 0, CButton **userBtnList = NULL, const int *userBtnWidth = NULL);
+      ///< Set up the screen.
+      /// @param inputPreset is the preset for the input string.
+      /// @param color is the user button color.
+      /// @param userBtns is the number of user buttons.
+      /// @param userBtnList is a list of pointers to the user button (may be NULL if userBtns == 0).
+      /// @param userBtnWidth is a list of width arguments for the user button (see @ref LayoutRow(); may be NULL if userBtns == 0).
+      /// For the user buttons, the area and color are set according to the parameters.
+      /// The label must be set by the caller.
+    /// @}
+
+    /// @name Accessing the input line ...
+    /// @{
+    CInputLine *InputLine () { return &wdgInput; }
+    void SetInput (const char *_inputStr=NULL, int _mark0=0, int _markD=0) { wdgInput.SetInput (_inputStr, _mark0, _markD); }
+      ///< see @ref CInputLine::SetInput ().
+    void GetInput (CString *ret) { wdgInput.GetInput (ret); }
+      ///< see @ref CInputLine::GetInput ().
+    bool InputModified () { return wdgInput.InputModified (); }
+      ///< see @ref CInputLine::InputModified ().
+    /// @}
+
+  protected:
+    CInputLine wdgInput;
+    CButton btnBack, btnUndo, btnRedo, btnCut, btnCopy, btnPaste, btnOk;
+
+    /// @name Callbacks for derived classes ...
+    /// @{
+    virtual void Commit () { Return (); }
+      ///< Called on push of the "OK" button. May call @ref Return() on success or not to continue editing.
+    virtual void Cancel () { Return (); }
+      ///< Called on push of the "back" button and after an eventual "are you sure?" confirmation.
+      /// Must call @ref Return().
+    virtual void OnUserButtonPushed (CButton *btn, bool longPush) {}
+      ///< Called on push of any user button.
+    /// @}
+
+  private:
+    friend void CbInputScreenOnButtonPushed (CButton *, bool, void *);
+
+    void OnButtonPushed (CButton *btn, bool longPush);
+};
+
+
 /// @}  // ui_widgets_inputline
 
 
 
 
 
-// *************************** CSlider ****************************************
+// *************************** CSlider *****************************************
 
 
 /// @defgroup ui_widgets_slider Slider
@@ -841,15 +945,19 @@ class CInputLine: public CCanvas {
 #define SLIDER_BAR_HEIGHT 16      ///< Default height of a slider bar.
 
 
-#define SLIDER_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)                         \
-  static void CB_NAME (class CSlider *slider, int val, int lastVal, void *data) {   \
-    ((CLASS_NAME *) data)->METHOD_NAME (slider, val, lastVal);                      \
+#define SLIDER_TRAMPOLINE(CB_NAME, CLASS_NAME, METHOD_NAME)                   \
+  void CB_NAME (class CSlider *slider, int val, int lastVal, void *data) {    \
+    ((CLASS_NAME *) data)->METHOD_NAME (slider, val, lastVal);                \
   }
   ///< @brief Macro to define a trampoline to another class.
   ///
   /// The class must define a method:
   ///
   ///     void CLASS_NAME::METHOD_NAME (CSlider *slider, int val, int lastVal)
+  ///
+  /// If the method is protected, the following line may be added to the class:
+  ///
+  ///     friend CB_NAME (CButton *, int, int, void *);
   ///
   /// To the slider, the trampoline must be passed by a call like:
   ///

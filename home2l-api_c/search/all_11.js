@@ -16,8 +16,8 @@ var searchData=
   ['rcgethost',['RcGetHost',['../group__resources__directory.html#ga0bbb0444c1cf365c5b52588863e2ba7e',1,'RcGetHost(int n):&#160;resources.H'],['../group__resources__directory.html#ga5ab8afe678712bc1db327e52f68747fb',1,'RcGetHost(const char *id):&#160;resources.H']]],
   ['rcgethostid',['RcGetHostId',['../group__resources__directory.html#ga0b29a1356745cfd7fa137b6dcd622593',1,'resources.H']]],
   ['rcgethosts',['RcGetHosts',['../group__resources__directory.html#gad4dcf97487c0ca59fe0ee8a80d7c0803',1,'resources.H']]],
-  ['rcgetuserrequestattrs',['RcGetUserRequestAttrs',['../group__resources__requests.html#ga905a64250323b1cf0c9c664c4324b58b',1,'resources.H']]],
-  ['rcgetuserrequestid',['RcGetUserRequestId',['../group__resources__requests.html#ga61b629d7ef3521e2c0902d8c8c47fc75',1,'resources.H']]],
+  ['rcgetuserrequestattrs',['RcGetUserRequestAttrs',['../group__resources__requests.html#ga9eb603b175cfe65fb89154d0bb96c75f',1,'resources.H']]],
+  ['rcgetuserrequestid',['RcGetUserRequestId',['../group__resources__requests.html#ga80c0199d3895471a9fd151433a69a480',1,'resources.H']]],
   ['rcinit',['RcInit',['../group__resources__general.html#ga94a199787d552360dbe916e1825557f0',1,'resources.H']]],
   ['rciterate',['RcIterate',['../group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b',1,'resources.H']]],
   ['rclocalhostid',['RcLocalHostId',['../group__resources__directory.html#ga3443639c62fafc8058bb5f5e9c0ceac5',1,'resources.H']]],
@@ -128,6 +128,7 @@ var searchData=
   ['runmenu',['RunMenu',['../group__ui__widgets__menu.html#ga4566b64831409973dcaaa2dbab070e03',1,'ui_widgets.H']]],
   ['runmessagebox',['RunMessageBox',['../group__ui__widgets__messagebox.html#ga2bca790ebafc7d8491625c06805f1b16',1,'ui_widgets.H']]],
   ['runquerybox',['RunQueryBox',['../group__ui__widgets__messagebox.html#ga0c8186d42599fd95184f334a1bf38c6e',1,'ui_widgets.H']]],
+  ['runresourcedialog',['RunResourceDialog',['../group__wallclock__floorplan.html#gae58f34797272a87dcd2305f6dcaad1e7',1,'floorplan.H']]],
   ['runsurebox',['RunSureBox',['../group__ui__widgets__messagebox.html#ga0c3d8be056b9412baae4814b6b84339c',1,'ui_widgets.H']]],
   ['runwarnbox',['RunWarnBox',['../group__ui__widgets__messagebox.html#ga5c7d5da9d957078bb045e7ff5650021d',1,'ui_widgets.H']]]
 ];

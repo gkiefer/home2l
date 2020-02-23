@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -96,14 +96,12 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga61b629d7ef3521e2c0902d8c8c47fc75"><td class="memItemLeft" align="right" valign="top"><a id="ga61b629d7ef3521e2c0902d8c8c47fc75"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga61b629d7ef3521e2c0902d8c8c47fc75">RcGetUserRequestId</a> ()</td></tr>
-<tr class="memdesc:ga61b629d7ef3521e2c0902d8c8c47fc75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the configured request ID for user interactions. <br /></td></tr>
-<tr class="separator:ga61b629d7ef3521e2c0902d8c8c47fc75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga905a64250323b1cf0c9c664c4324b58b"><td class="memItemLeft" align="right" valign="top"><a id="ga905a64250323b1cf0c9c664c4324b58b"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga905a64250323b1cf0c9c664c4324b58b">RcGetUserRequestAttrs</a> ()</td></tr>
-<tr class="memdesc:ga905a64250323b1cf0c9c664c4324b58b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the configured request attributes for user interactions. <br /></td></tr>
-<tr class="separator:ga905a64250323b1cf0c9c664c4324b58b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga80c0199d3895471a9fd151433a69a480"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga80c0199d3895471a9fd151433a69a480">RcGetUserRequestId</a> ()</td></tr>
+<tr class="memdesc:ga80c0199d3895471a9fd151433a69a480"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the request ID for user interactions (see 'rc.userReqId').  <a href="#ga80c0199d3895471a9fd151433a69a480">More...</a><br /></td></tr>
+<tr class="separator:ga80c0199d3895471a9fd151433a69a480"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga9eb603b175cfe65fb89154d0bb96c75f">RcGetUserRequestAttrs</a> ()</td></tr>
+<tr class="memdesc:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the default request attributes for user interactions (see 'rc.userReqAttrs').  <a href="#ga9eb603b175cfe65fb89154d0bb96c75f">More...</a><br /></td></tr>
+<tr class="separator:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Request Priorities</h2></td></tr>
@@ -143,6 +141,47 @@ Request Priorities</h2></td></tr>
 <tr class="memdesc:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Necessary actions to avoid damage (e.g. close roof window on bad weather) <br /></td></tr>
 <tr class="separator:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ga80c0199d3895471a9fd151433a69a480"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga80c0199d3895471a9fd151433a69a480">&#9670;&nbsp;</a></span>RcGetUserRequestId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * RcGetUserRequestId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the request ID for user interactions (see 'rc.userReqId'). </p>
+<p>Get the configured request ID for user interactions. </p>
+
+</div>
+</div>
+<a id="ga9eb603b175cfe65fb89154d0bb96c75f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga9eb603b175cfe65fb89154d0bb96c75f">&#9670;&nbsp;</a></span>RcGetUserRequestAttrs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char * RcGetUserRequestAttrs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the default request attributes for user interactions (see 'rc.userReqAttrs'). </p>
+<p>Get the configured request attributes for user interactions. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

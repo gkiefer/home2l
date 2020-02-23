@@ -1492,7 +1492,7 @@ static const char *RequestCommand (CString *ret, CResource *rc, const char *reqD
 
 void CRcHost::RemoteSetRequest (CResource *rc, CRcRequest *req) {
   CString s1, s2;
-  Send (RequestCommand (&s1, rc, req->ToStr (&s2, false, envRelTimeThreshold), '+'));
+  Send (RequestCommand (&s1, rc, req->ToStr (&s2, true, false, envRelTimeThreshold), '+'));
   //~ INFOF (("### RemoteSetRequest: '%s'", s1.Get ()));
 }
 
@@ -1631,17 +1631,17 @@ void CRcHost::OnFdReadable () {
 
           // (Re-)Submit all subscriptions ...
           //~ INFOF (("### (Re-)submitting subscribers of '%s'...", rc->Uri ()));
-          num = rc->LockSubscribers ();
+          num = rc->LockLocalSubscribers ();
           if (num > 0) {
             for (k = 0; k < num; k++) {
-              subscr = rc->GetSubscriber (k);
+              subscr = rc->GetLocalSubscriber (k);
               //~ INFOF (("### Re-submit subscriber '%s'", subscr->Gid ()));
               sendBuf.Append (SubscribeCommand (&s, subscr, rc, '+'));
               sendBuf.Append ('\n');
             }
             netThread.AddTask ((ENetOpcode) hnoSend, this);   // Schedule a write-out
           }
-          rc->UnlockSubscribers ();
+          rc->UnlockLocalSubscribers ();
         }
         break;
 

@@ -10,7 +10,6 @@ var searchData=
   ['minitimerreset',['MinitimerReset',['../group__brownies__firmware.html#ga699bb69e238b5d2fde56eabc7e577eff',1,'core.h']]],
   ['minitimerstart',['MinitimerStart',['../group__brownies__firmware.html#ga4785ba391c2f18d1cf2ff6092a7f6032',1,'core.h']]],
   ['minitimerstop',['MinitimerStop',['../group__brownies__firmware.html#ga0558f04dd0e1ae57acf3afcd0662c66d',1,'core.h']]],
-  ['modified',['Modified',['../classCInputLine.html#a20a2ceec17989aae7cd5dde0c202dd34',1,'CInputLine']]],
   ['monthname',['MonthName',['../group__common__datetime.html#gaf01c747f3a2621f76b5d31e3cdf487b4',1,'base.H']]],
   ['monthnameshort',['MonthNameShort',['../group__common__datetime.html#ga0646719df4804b641955b36a95cf82aa',1,'base.H']]],
   ['movemark',['MoveMark',['../classCInputLine.html#abdfab2dc5dba4c48d89aeb23efe527c4',1,'CInputLine']]]

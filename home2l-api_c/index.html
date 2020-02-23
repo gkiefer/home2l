@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -76,7 +76,7 @@ $(function() {
 <h3>Coding Conventions</h3>
 <p>Obviously, the source files are no pure C, but have a C++ suffix, are compiled with a C++ compiler, and contain classes. However, for portability, efficiency and readability reasons, C++ language features are used only in a limited way. The reason for using C++ at all instead of pure C are the base classes and the UI modules, where operand overloading (base classes) and inheritance with virtual mathods (UI classes) are very helpful to improve the readability of code.</p>
 <p>For these reasons, the following conventions apply:</p><ol type="1">
-<li>All C code is C99-compliant and C++-compliant. All C++ code complies to C++98 (the GCC default in before GCC 6.1).</li>
+<li>All C code is C99-compliant and C++-compliant. All C++ code complies to C++98 (the GCC default in GCC 6.1).</li>
 <li>No classes or templates from standard C++ libraries are used (STL/libstdc++).</li>
 <li>From C++, only the following syntax constructs are generally used:<ul>
 <li>classes with constructors, destructors, methods, either virtual or not</li>

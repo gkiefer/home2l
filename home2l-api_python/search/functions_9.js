@@ -1,6 +1,6 @@
 var searchData=
 [
   ['lid',['Lid',['../classhome2l_1_1CResource.html#a28c97d7347e7727486163c2a9699ff70',1,'home2l.CResource.Lid()'],['../classhome2l_1_1CRcSubscriber.html#a28c97d7347e7727486163c2a9699ff70',1,'home2l.CRcSubscriber.Lid()']]],
-  ['lockrequests',['LockRequests',['../classhome2l_1_1CResource.html#a4b7734d88d87056e46d6521ffff990d3',1,'home2l::CResource']]],
-  ['locksubscribers',['LockSubscribers',['../classhome2l_1_1CResource.html#a2e81378b2bce08588516f0be920a55fd',1,'home2l::CResource']]]
+  ['locklocalrequests',['LockLocalRequests',['../classhome2l_1_1CResource.html#a3c1b04e7dfd6846947eb62a65390e039',1,'home2l::CResource']]],
+  ['locklocalsubscribers',['LockLocalSubscribers',['../classhome2l_1_1CResource.html#a24a1e1aba190065f757ac9d918a8603e',1,'home2l::CResource']]]
 ];

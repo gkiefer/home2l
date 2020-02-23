@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -84,7 +84,7 @@ $(function() {
 , <a class="el" href="classCDictFast.html#a874eff2a5e5bf9c435027069c4112625">CDictFast&lt; T &gt;</a>
 , <a class="el" href="classCDictRef.html#ac95f540d598bf74b28ee992452afd102">CDictRef&lt; T &gt;</a>
 , <a class="el" href="classCRcEventTimer.html#a101095562b3714c63d1dc438b1b1c306">CRcEventTimer</a>
-, <a class="el" href="classCRcRequest.html#afd28978d06b35236470f9be5bb2d5fe7">CRcRequest</a>
+, <a class="el" href="classCRcRequest.html#ae604c0e65c439397c555d6802f0ba60f">CRcRequest</a>
 , <a class="el" href="classCSplitString.html#a2b6226ed72db99a1266b5d2e484a3df6">CSplitString</a>
 , <a class="el" href="classCString.html#ab68926267ea57e18fe54b75ae3fafc75">CString</a>
 , <a class="el" href="classCTimer.html#a9bccd1fe9cff22191b4ca74f59ff1e31">CTimer</a>
@@ -126,7 +126,7 @@ $(function() {
 : <a class="el" href="classCString.html#a3676f446ed398442ccef870b2110a7f8">CString</a>
 </li>
 <li>SetFormat()
-: <a class="el" href="classCListbox.html#a77064b9ef8d50ea9eae75061fed7202b">CListbox</a>
+: <a class="el" href="classCListbox.html#a6d747294e49bc9a16b9a68d96aa48bcd">CListbox</a>
 </li>
 <li>SetFromIso8859()
 : <a class="el" href="classCString.html#a26f88ca71e25982dcbe3cc61260139d7">CString</a>
@@ -158,6 +158,9 @@ $(function() {
 : <a class="el" href="classCShellBare.html#a741ac1445c631d96cf26fa25a0a23d8d">CShellBare</a>
 , <a class="el" href="classCShellSession.html#a6d37db3c121fcbf64cc977fe9b1346ec">CShellSession</a>
 </li>
+<li>SetHotkey()
+: <a class="el" href="classCButton.html#ad6ee4941d8438349ed0c39843715f39d">CButton</a>
+</li>
 <li>SetHysteresis()
 : <a class="el" href="classCRcRequest.html#a4ef5fe8718b90a3b12f5010e4a0f2649">CRcRequest</a>
 </li>
@@ -166,6 +169,7 @@ $(function() {
 </li>
 <li>SetInput()
 : <a class="el" href="classCInputLine.html#abd15aa3dd0da9f0c900cbe54f0797fce">CInputLine</a>
+, <a class="el" href="classCInputScreen.html#a67f8398215970f0d25226e2686bba588">CInputScreen</a>
 </li>
 <li>SetInSelectSet()
 : <a class="el" href="classCRcEventProcessor.html#a1879b9cd4375e2132e5f9ee4edcc9484">CRcEventProcessor</a>
@@ -178,6 +182,10 @@ $(function() {
 </li>
 <li>SetLabel()
 : <a class="el" href="classCButton.html#a07cfd2bca03d23052202540cace591f6">CButton</a>
+, <a class="el" href="classCListboxItem.html#a88663aedd09cc6101c809b32b9ad7d08">CListboxItem</a>
+</li>
+<li>SetLabelAlignment()
+: <a class="el" href="classCButton.html#a14066132600c80225abf85a1149b2867">CButton</a>
 </li>
 <li>SetMode()
 : <a class="el" href="classCListbox.html#aa0ba30de9840ac2442cb43dff74f2fd8">CListbox</a>
@@ -201,7 +209,7 @@ $(function() {
 : <a class="el" href="classCRcRequest.html#a459a962103eefedd9473ea616bb96339">CRcRequest</a>
 </li>
 <li>SetRequest()
-: <a class="el" href="classCResource.html#a6a72b2ecf233941df0f1b1ef8b743604">CResource</a>
+: <a class="el" href="classCResource.html#a190386243a04a189fb275865b3b00eaf">CResource</a>
 </li>
 <li>SetRequestFromStr()
 : <a class="el" href="classCResource.html#a8cf8b54b248c37de6553089003badac3">CResource</a>
@@ -243,7 +251,8 @@ $(function() {
 : <a class="el" href="classCString.html#a9242dd2139e29f1e2fe06dc5c42e7aae">CString</a>
 </li>
 <li>Setup()
-: <a class="el" href="classCMessageBox.html#af44c87e4da33384ad1f187fa608e39f4">CMessageBox</a>
+: <a class="el" href="classCInputScreen.html#a1008565486f9f4045cd204cd8e3f3752">CInputScreen</a>
+, <a class="el" href="classCMessageBox.html#aec8b5f4d64b47ad3ee494523c549968e">CMessageBox</a>
 , <a class="el" href="classCPhone.html#a286078d54d786b6302c534f4c8d23946">CPhone</a>
 , <a class="el" href="classCWidgetFloorplan.html#a34c29c8ae22bc725cabbbea558cf073b">CWidgetFloorplan</a>
 </li>
@@ -322,9 +331,6 @@ $(function() {
 </li>
 <li>Surface()
 : <a class="el" href="classCNetpbmReader.html#a52be9b21c5077f2af89c6b435654b424">CNetpbmReader</a>
-</li>
-<li>surfIcon
-: <a class="el" href="classCListboxItem.html#abc0f38d8710403d0a3613fbaeeca4b33">CListboxItem</a>
 </li>
 </ul>
 </div><!-- contents -->

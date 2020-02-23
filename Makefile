@@ -167,12 +167,16 @@ help:
 	@echo
 	@echo "Targets:"
 	@echo "  help:      Print this help"
+	@echo
 	@echo "  build:     Build everything (default target)"
 	@echo "  install:   Install to \$$HOME2L_INSTALL [ /opt/home2l ]"
 	@echo "  clean:     Clean everything (except binary doc files to be checked into the repository)"
 	@echo "  veryclean: Clean really everything"
 	@echo "  uninstall: Remove \$$HOME2L_INSTALL [ /opt/home2l ]"
-	@echo "  docker:    Build the docker showcase image locally"
+	@echo
+	@echo "  docker:        Build the docker showcase image locally (current working directory)"
+	@echo "  docker-master: Build the docker showcase image for the master branch"
+	@echo "  docker-run:    Run the docker showcase image (latest)"
 	@echo
 	@echo "Variables:"
 	@echo "  ARCHS: List of architectures to build for (available: amd64 armhf i386) [ all ]"
@@ -208,13 +212,33 @@ help:
 
 
 DOCKER_IMAGE=gkiefer/home2l
+DOCKER_MASTER=https://github.com/gkiefer/home2l.git
 
 
+# Build from local working directory ...
 .PHONY: docker
 docker:
 	@TAG="$(BUILD_VERSION)"; TAG=$${TAG%\-*}; [[ "$$TAG" != "" ]] || TAG=work; \
 	echo DOCKER $(DOCKER_IMAGE):$$TAG && \
 	docker build --build-arg BUILD_VERSION=$$TAG -t $(DOCKER_IMAGE):$$TAG -t $(DOCKER_IMAGE):latest .
+
+
+# Build from local master branch ...
+.PHONY: docker-master
+docker-master:
+	@rm -fr $(HOME2L_BUILD)/docker && mkdir -p $(HOME2L_BUILD)/docker && \
+	git clone -b master --single-branch file://$$PWD $(HOME2L_BUILD)/docker/home2l && \
+	export BUILD_VERSION= && \
+	$(MAKE) -C $(HOME2L_BUILD)/docker/home2l docker
+
+
+# Run the container (latest) ...
+.PHONY: docker-run
+docker-run:
+	@xhost +local: && \
+	docker run -ti --rm --tmpfs /tmp --name home2l-showcase --hostname home2l-showcase \
+	  -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --device /dev/snd \
+	  gkiefer/home2l
 
 
 

@@ -448,17 +448,17 @@ void CScreenPhone::Setup () {
   btnCall.SetHotkey (SDLK_RETURN);
   btnCall.SetCbPushed (CbActionButton, (void *) paCall);
 
-  btnBack.SetLabel (IconGet ("ic-back-48"));
+  btnBack.SetLabel (WHITE, "ic-back-48");
   btnBack.SetColor (DARK_GREY);
   btnBack.SetHotkey (SDLK_ESCAPE);
   btnBack.SetCbPushed (CbActionButton, (void *) paBack);
 
-  btnBackspace.SetLabel (IconGet ("ic-backspace-48"));
+  btnBackspace.SetLabel (WHITE, "ic-backspace-48");
   btnBackspace.SetColor (DARK_GREY);
   btnBackspace.SetHotkey (SDLK_BACKSPACE);
   btnBackspace.SetCbPushed (CbDialButton, (void *) '<');
 
-  btnAcceptMuted.SetLabel (IconGet ("ic-videocam-48"));
+  btnAcceptMuted.SetLabel (WHITE, "ic-videocam-48");
   btnAcceptMuted.SetColor (DARK_GREEN);
   btnAcceptMuted.SetHotkey (SDLK_v);
   btnAcceptMuted.SetCbPushed (CbActionButton, (void *) paAcceptMuted);
@@ -471,12 +471,12 @@ void CScreenPhone::Setup () {
   btnCam.SetCbPushed (CbActionButton, (void *) paCam);
   SetCamOn (true);
 
-  btnDoor.SetLabel (IconGet ("ic-key-48"));
+  btnDoor.SetLabel (WHITE, "ic-key-48");
   btnDoor.SetColor (DARK_YELLOW);
   btnDoor.SetHotkey (SDLK_o);
   btnDoor.SetCbPushed (CbActionButton, (void *) paDoor);
 
-  btnTransfer.SetLabel (IconGet ("ic-redo-48"));
+  btnTransfer.SetLabel (WHITE, "ic-redo-48");
   btnTransfer.SetColor (DARK_GREY);
   btnTransfer.SetHotkey (SDLK_t);
   btnTransfer.SetCbPushed (CbActionButton, (void *) paTransfer);
@@ -611,12 +611,12 @@ void CScreenPhone::OnPhoneStateChanged (EPhoneState oldState) {
   wdgVideoSmall.SetStream (-1);
 
   if (newState < psTransferIdle) {
-    btnHangup.SetLabel (IconGet ("ic-call_end-48"));
-    btnCall.SetLabel (IconGet ("ic-phone-48"));
+    btnHangup.SetLabel (WHITE, "ic-call_end-48");
+    btnCall.SetLabel (WHITE, "ic-phone-48");
   }
   else {
-    btnHangup.SetLabel (IconGet ("ic-undo-48"));
-    btnCall.SetLabel (IconGet ("ic-redo-48"));
+    btnHangup.SetLabel (WHITE, "ic-undo-48");
+    btnCall.SetLabel (WHITE, "ic-redo-48");
   }
 
   // Check if peer is a door phone...
@@ -774,14 +774,14 @@ void CScreenPhone::ShowInfo (const char *msg) {
 
 
 void CScreenPhone::SetMicOn (bool on) {
-  btnMic.SetLabel (IconGet (on ? "ic-mic-48" : "ic-mic_off-48"));
+  btnMic.SetLabel (WHITE, on ? "ic-mic-48" : "ic-mic_off-48");
   btnMic.SetColor (on ? DARK_GREY : BLACK);
   phone.SetMicOn (on);
 }
 
 
 void CScreenPhone::SetCamOn (bool on) {
-  btnCam.SetLabel (IconGet (on ? "ic-videocam-48" : "ic-videocam_off-48"));
+  btnCam.SetLabel (WHITE, on ? "ic-videocam-48" : "ic-videocam_off-48");
   btnCam.SetColor (on ? DARK_GREY : BLACK);
   phone.SetCamOn (on);
   //~ wdgVideoSmall.SetStream (on ? 1 : -1);

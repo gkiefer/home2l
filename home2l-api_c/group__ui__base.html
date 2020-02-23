@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -201,6 +201,12 @@ static Uint32&#160;</td><td class="memItemRight" valign="bottom"><b>ToUint32</b>
 <tr class="memitem:gaf7f9050ad558c9c8694936eee9931622"><td class="memItemLeft" align="right" valign="top"><a id="gaf7f9050ad558c9c8694936eee9931622"></a>
 static TColor&#160;</td><td class="memItemRight" valign="bottom"><b>ToColor</b> (SDL_Color sdlCol)</td></tr>
 <tr class="separator:gaf7f9050ad558c9c8694936eee9931622"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga992ea1d05b8d20521e41d1638d0ecbb0"><td class="memItemLeft" align="right" valign="top"><a id="ga992ea1d05b8d20521e41d1638d0ecbb0"></a>
+static bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (const TColor &amp;col1, const TColor &amp;col2)</td></tr>
+<tr class="separator:ga992ea1d05b8d20521e41d1638d0ecbb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafb638376f2cf710fb78abd16bf3a8548"><td class="memItemLeft" align="right" valign="top"><a id="gafb638376f2cf710fb78abd16bf3a8548"></a>
+static bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const TColor &amp;col1, const TColor &amp;col2)</td></tr>
+<tr class="separator:gafb638376f2cf710fb78abd16bf3a8548"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad1dbc3423d832c3445dab14d1dda5051"><td class="memItemLeft" align="right" valign="top"><a id="gad1dbc3423d832c3445dab14d1dda5051"></a>
 static SDL_Color&#160;</td><td class="memItemRight" valign="bottom"><b>ToSDL_Color</b> (TColor color)</td></tr>
 <tr class="separator:gad1dbc3423d832c3445dab14d1dda5051"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -332,6 +338,9 @@ Geometry helpers ...</h2></td></tr>
 <tr class="memitem:ga2e9928aa2daa2d27a0fd060f20e1d913"><td class="memItemLeft" align="right" valign="top"><a id="ga2e9928aa2daa2d27a0fd060f20e1d913"></a>
 static SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><b>Rect</b> (int x, int y, int w, int h)</td></tr>
 <tr class="separator:ga2e9928aa2daa2d27a0fd060f20e1d913"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadf5a8580c7abb846b498566dd0b4cce7"><td class="memItemLeft" align="right" valign="top"><a id="gadf5a8580c7abb846b498566dd0b4cce7"></a>
+static SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><b>Rect</b> (int w, int h)</td></tr>
+<tr class="separator:gadf5a8580c7abb846b498566dd0b4cce7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gafc454dd784d63ac67b69be70995fc4a0"><td class="memItemLeft" align="right" valign="top"><a id="gafc454dd784d63ac67b69be70995fc4a0"></a>
 static SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><b>Rect</b> (SDL_Surface *surf)</td></tr>
 <tr class="separator:gafc454dd784d63ac67b69be70995fc4a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -402,9 +411,8 @@ SDL_Surface *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 <tr class="memitem:ga253ea9222aee6b3698400601da7dde89"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ui__base.html#ga253ea9222aee6b3698400601da7dde89">SurfaceMakeTransparentMono</a> (SDL_Surface *surf, Uint8 opaqueLevel=0xff)</td></tr>
 <tr class="memdesc:ga253ea9222aee6b3698400601da7dde89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy the R values to the A channel and make all RGB values white.  <a href="#ga253ea9222aee6b3698400601da7dde89">More...</a><br /></td></tr>
 <tr class="separator:ga253ea9222aee6b3698400601da7dde89"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga5018ac25b277fb9c6fcb052fd493fc86"><td class="memItemLeft" align="right" valign="top"><a id="ga5018ac25b277fb9c6fcb052fd493fc86"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ui__base.html#ga5018ac25b277fb9c6fcb052fd493fc86">SurfaceBlit</a> (SDL_Surface *src, SDL_Rect *srcRect, SDL_Surface *dst, SDL_Rect *dstRect=NULL, int hAlign=0, int vAlign=0, SDL_BlendMode blendMode=SDL_BLENDMODE_NONE)</td></tr>
-<tr class="memdesc:ga5018ac25b277fb9c6fcb052fd493fc86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blit a surface; It is allowed to leave 'src == NULL', in which case nothing happens. <br /></td></tr>
+<tr class="memitem:ga5018ac25b277fb9c6fcb052fd493fc86"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ui__base.html#ga5018ac25b277fb9c6fcb052fd493fc86">SurfaceBlit</a> (SDL_Surface *src, SDL_Rect *srcRect, SDL_Surface *dst, SDL_Rect *dstRect=NULL, int hAlign=0, int vAlign=0, SDL_BlendMode blendMode=SDL_BLENDMODE_NONE)</td></tr>
+<tr class="memdesc:ga5018ac25b277fb9c6fcb052fd493fc86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blit a surface; It is allowed to leave 'src == NULL', in which case nothing happens.  <a href="#ga5018ac25b277fb9c6fcb052fd493fc86">More...</a><br /></td></tr>
 <tr class="separator:ga5018ac25b277fb9c6fcb052fd493fc86"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga9cd8ec14be4e70bf29301da3a06b8fd5"><td class="memItemLeft" align="right" valign="top"><a id="ga9cd8ec14be4e70bf29301da3a06b8fd5"></a>
 static void&#160;</td><td class="memItemRight" valign="bottom"><b>SurfaceFill</b> (SDL_Surface *surf, TColor col)</td></tr>
@@ -541,7 +549,7 @@ SDL_Surface *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 <p>We define a selected pixel format, on which all higher-level routines can rely on for efficient direct pixel manipulations. All functions in this module (i.e. 'Image*' and 'Font*') always return surfaces in the correct format. Textures are always created with that format, or the texture creation fails completely.</p>
 <p>The format must be selected carefully to match the underlying hardware architecture for performance reasons. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__base_8H_source.html#l00186">186</a> of file <a class="el" href="ui__base_8H_source.html">ui_base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__base_8H_source.html#l00184">184</a> of file <a class="el" href="ui__base_8H_source.html">ui_base.H</a>.</p>
 
 </div>
 </div>
@@ -580,7 +588,7 @@ SDL_Surface *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="ui__base_8H_source.html#l00573">573</a> of file <a class="el" href="ui__base_8H_source.html">ui_base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__base_8H_source.html#l00588">588</a> of file <a class="el" href="ui__base_8H_source.html">ui_base.H</a>.</p>
 
 </div>
 </div>
@@ -727,6 +735,78 @@ SDL_Surface *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 
 <p>Copy the R values to the A channel and make all RGB values white. </p>
 <p>'opaqueLevel' determines what is "white" here. This will be the final color, and all pixels originally brighter than this will be fully opaque. </p>
+
+</div>
+</div>
+<a id="ga5018ac25b277fb9c6fcb052fd493fc86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5018ac25b277fb9c6fcb052fd493fc86">&#9670;&nbsp;</a></span>SurfaceBlit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SurfaceBlit </td>
+          <td>(</td>
+          <td class="paramtype">SDL_Surface *&#160;</td>
+          <td class="paramname"><em>src</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SDL_Rect *&#160;</td>
+          <td class="paramname"><em>srcRect</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SDL_Surface *&#160;</td>
+          <td class="paramname"><em>dst</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SDL_Rect *&#160;</td>
+          <td class="paramname"><em>dstRect</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>hAlign</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>vAlign</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SDL_BlendMode&#160;</td>
+          <td class="paramname"><em>blendMode</em> = <code>SDL_BLENDMODE_NONE</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Blit a surface; It is allowed to leave 'src == NULL', in which case nothing happens. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">src</td><td>is the source surface. </td></tr>
+    <tr><td class="paramname">srcRect</td><td>is the part of the source surface to be blit (default = complete surface). </td></tr>
+    <tr><td class="paramname">dst</td><td>is the destination surface. </td></tr>
+    <tr><td class="paramname">dstRect</td><td>is the part of the destination surface to be rendered into (default = complete surface). </td></tr>
+    <tr><td class="paramname">hAlign</td><td>is the horizontal alignment, if the destination rectangle has a different size (typically larger) than the source rectangle. </td></tr>
+    <tr><td class="paramname">vAlign</td><td>is the vertical alignment, if the destination rectangle has a different size (typically larger) than the source rectangle. </td></tr>
+    <tr><td class="paramname">blendMode</td><td>is the SDL blend mode. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

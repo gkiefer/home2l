@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -77,7 +77,7 @@ $(function() {
 <li>(Meta) = Methods to access meta data; for shells or similar services. </li>
 </ul>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00867">867</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00872">872</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -231,8 +231,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:a20806af055ab6c2f0abefca4b001f470"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
-(App) Placing requests ...</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrpf391f15421ba93c15c8f4c1b88c95f58"></a>In order to accomodate multiple concurrent "write" operations to the same resource, a concept of "requests" is applied here.</p>
+(App) Requests ...</h2></td></tr>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp7fe3fde9722d7ce29ae31dd9bf8f71e2"></a>In order to accomodate multiple concurrent "write" operations to the same resource, a concept of "requests" is applied here.</p>
 <p>Each participant can add (and later remove) a request for a certain value to the resource, and the system will always select the value of the request with the highest priority. It is legal to call this method with 'this == NULL'. (Only) in this case, 'rcUri' is evaluated and must contain a valid URI. </p>
 </td></tr>
 <tr class="memitem:a40a338f0f23445b422a3eb3caa73b05c"><td class="memItemLeft" align="right" valign="top"><a id="a40a338f0f23445b422a3eb3caa73b05c"></a>
@@ -279,6 +279,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:acf38d08f829c00e153de13d0b2269c17"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#acf38d08f829c00e153de13d0b2269c17">DelRequest</a> (const char *reqGid=NULL, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> t1=0)</td></tr>
 <tr class="memdesc:acf38d08f829c00e153de13d0b2269c17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete a request.  <a href="#acf38d08f829c00e153de13d0b2269c17">More...</a><br /></td></tr>
 <tr class="separator:acf38d08f829c00e153de13d0b2269c17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab22a9307731c499ab6a26f15fb98f5ff"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#ab22a9307731c499ab6a26f15fb98f5ff">GetRequest</a> (<a class="el" href="classCRcRequest.html">CRcRequest</a> *ret, const char *reqGid, bool allowNet=true)</td></tr>
+<tr class="memdesc:ab22a9307731c499ab6a26f15fb98f5ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query a request by its request GID.  <a href="#ab22a9307731c499ab6a26f15fb98f5ff">More...</a><br /></td></tr>
+<tr class="separator:ab22a9307731c499ab6a26f15fb98f5ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 (App) Emulate classical "read" and "write" operations ...</h2></td></tr>
@@ -388,26 +391,26 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a08ad778b8decb6a8a18285921425b288"><td class="memItemLeft" align="right" valign="top"><a id="a08ad778b8decb6a8a18285921425b288"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>PrintInfo</b> (FILE *f=stdout, int verbosity=1, bool allowNet=true)</td></tr>
 <tr class="separator:a08ad778b8decb6a8a18285921425b288"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa1c5ae2b0282652ce9b526561fc43cc0"><td class="memItemLeft" align="right" valign="top"><a id="aa1c5ae2b0282652ce9b526561fc43cc0"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#aa1c5ae2b0282652ce9b526561fc43cc0">LockSubscribers</a> ()</td></tr>
-<tr class="memdesc:aa1c5ae2b0282652ce9b526561fc43cc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return number of all active subscribers for a resource and locks this object. During the locked state, other operations are also locked out, so the caller should use this carefully and unlock as soon as possible. On error, a warning is emitted, but all successfully read subscribers are returned. <br /></td></tr>
-<tr class="separator:aa1c5ae2b0282652ce9b526561fc43cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9d50a4d174fe4d973b50ffb7550086ec"><td class="memItemLeft" align="right" valign="top"><a id="a9d50a4d174fe4d973b50ffb7550086ec"></a>
-<a class="el" href="classCRcSubscriber.html">CRcSubscriber</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetSubscriber</b> (int n)</td></tr>
-<tr class="separator:a9d50a4d174fe4d973b50ffb7550086ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2651e6887b924a36de0744096ba74dc"><td class="memItemLeft" align="right" valign="top"><a id="ae2651e6887b924a36de0744096ba74dc"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockSubscribers</b> ()</td></tr>
-<tr class="separator:ae2651e6887b924a36de0744096ba74dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9045bd3756d4a687c0ff0c7811d90fa8"><td class="memItemLeft" align="right" valign="top"><a id="a9045bd3756d4a687c0ff0c7811d90fa8"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#a9045bd3756d4a687c0ff0c7811d90fa8">LockRequests</a> ()</td></tr>
-<tr class="memdesc:a9045bd3756d4a687c0ff0c7811d90fa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return number of active requests for a resource and locks this object. During the locked state, other operations are also locked out, so the caller should use this carefully and unlock as soon as possible. On error, a warning is emitted, but all successfully read requests are returned. <br /></td></tr>
-<tr class="separator:a9045bd3756d4a687c0ff0c7811d90fa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ab3291f44026db6f1d8d088fea9c9ec"><td class="memItemLeft" align="right" valign="top"><a id="a0ab3291f44026db6f1d8d088fea9c9ec"></a>
-<a class="el" href="classCRcRequest.html">CRcRequest</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetRequest</b> (int n)</td></tr>
-<tr class="separator:a0ab3291f44026db6f1d8d088fea9c9ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9b2cb7f728f8084ffaebb4355950df14"><td class="memItemLeft" align="right" valign="top"><a id="a9b2cb7f728f8084ffaebb4355950df14"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockRequests</b> ()</td></tr>
-<tr class="separator:a9b2cb7f728f8084ffaebb4355950df14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b906e340c10fea4a2d46c12dd978e6f"><td class="memItemLeft" align="right" valign="top"><a id="a3b906e340c10fea4a2d46c12dd978e6f"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#a3b906e340c10fea4a2d46c12dd978e6f">LockLocalSubscribers</a> ()</td></tr>
+<tr class="memdesc:a3b906e340c10fea4a2d46c12dd978e6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return number of all active local subscribers for a resource and lock this object. During the locked state, other operations are also locked out, so the caller should use this carefully and unlock as soon as possible. On error, a warning is emitted, but all successfully read subscribers are returned. <br /></td></tr>
+<tr class="separator:a3b906e340c10fea4a2d46c12dd978e6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f8790303461233e0907a48b908554b6"><td class="memItemLeft" align="right" valign="top"><a id="a6f8790303461233e0907a48b908554b6"></a>
+<a class="el" href="classCRcSubscriber.html">CRcSubscriber</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetLocalSubscriber</b> (int n)</td></tr>
+<tr class="separator:a6f8790303461233e0907a48b908554b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3ca2df735905e510b7500d9f85e618f"><td class="memItemLeft" align="right" valign="top"><a id="ab3ca2df735905e510b7500d9f85e618f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockLocalSubscribers</b> ()</td></tr>
+<tr class="separator:ab3ca2df735905e510b7500d9f85e618f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae768caa21c2d7528e08c9a9ef0ed477b"><td class="memItemLeft" align="right" valign="top"><a id="ae768caa21c2d7528e08c9a9ef0ed477b"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#ae768caa21c2d7528e08c9a9ef0ed477b">LockLocalRequests</a> ()</td></tr>
+<tr class="memdesc:ae768caa21c2d7528e08c9a9ef0ed477b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return number of active requests for a local resource and lock this object. During the locked state, other operations are also locked out, so the caller should use this carefully and unlock as soon as possible. On error, a warning is emitted, but all successfully read requests are returned. <br /></td></tr>
+<tr class="separator:ae768caa21c2d7528e08c9a9ef0ed477b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b9dcf82f20e854d2b406371dc700a72"><td class="memItemLeft" align="right" valign="top"><a id="a3b9dcf82f20e854d2b406371dc700a72"></a>
+<a class="el" href="classCRcRequest.html">CRcRequest</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetLocalRequest</b> (int n)</td></tr>
+<tr class="separator:a3b9dcf82f20e854d2b406371dc700a72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab250ff7de520c5d72b22284d16fb6097"><td class="memItemLeft" align="right" valign="top"><a id="ab250ff7de520c5d72b22284d16fb6097"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockLocalRequests</b> ()</td></tr>
+<tr class="separator:ab250ff7de520c5d72b22284d16fb6097"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 (Meta/App) Properties for internal or special use (semi-static and dynamic) ...</h2></td></tr>
@@ -569,7 +572,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Subscribe to this resource. The caller remains owner of 'subscr'. </p>
 <p>If the present value of 'this' is known, an initial notification with the current value is sent to the subscriber. 'this' is returned to allow short constructs like "rc = RcGetResource (...)-&gt;Subscribe (subscr)". </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01006">1006</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01012">1012</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -605,7 +608,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01028">1028</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01036">1036</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -718,6 +721,52 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 </div>
 </div>
+<a id="ab22a9307731c499ab6a26f15fb98f5ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab22a9307731c499ab6a26f15fb98f5ff">&#9670;&nbsp;</a></span>GetRequest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CResource::GetRequest </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classCRcRequest.html">CRcRequest</a> *&#160;</td>
+          <td class="paramname"><em>ret</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>reqGid</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>allowNet</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Query a request by its request GID. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ret</td><td>is the returned <a class="el" href="classCRcRequest.html">CRcRequest</a> object. </td></tr>
+    <tr><td class="paramname">reqGid</td><td>is the request ID. </td></tr>
+    <tr><td class="paramname">allowNet</td><td>specifies wether network access (and eventual blocking/waiting) is allowed.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>If the resource cannot be queried (e.g. because it is unreachable or non-existing), 'ret-&gt;<a class="el" href="classCResource.html#af7beb1b98668f15297dce952d127a94c" title="Get the global ID. ">Gid()</a>' will return an empty string. Otherwise, 'ret-&gt;<a class="el" href="classCResource.html#af7beb1b98668f15297dce952d127a94c" title="Get the global ID. ">Gid()</a>' will be non-empty and equal to 'reqGid'.</p>
+<p>If the resource can be queried successfully, but no such request exists, 'ret-&gt;Value()' will have a state of <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a> and 'ret-&gt;IsCompatible()' will return 'true'. If an incompatible request has been set, 'ret-&gt;IsCompatible()' will return 'false'. </p>
+
+</div>
+</div>
 <a id="ac7159b946cd0221d0979c0b78db1c1b4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac7159b946cd0221d0979c0b78db1c1b4">&#9670;&nbsp;</a></span>Register()</h2>
 
@@ -768,7 +817,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </ul>
 <p>Details on the documentation system can be found in the Home2L Book. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01096">1096</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01122">1122</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>

@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['lmactivate',['lmActivate',['../group__ui__widgets__listbox.html#ggae18194fab8694a0a63686214ae7a0631ab3aa132cc3101837589d8b1a09bf3ecb',1,'ui_widgets.H']]],
-  ['lmreadonly',['lmReadOnly',['../group__ui__widgets__listbox.html#ggae18194fab8694a0a63686214ae7a0631ab5d1649eb3aaa40713522cee4a76042f',1,'ui_widgets.H']]],
-  ['lmselectany',['lmSelectAny',['../group__ui__widgets__listbox.html#ggae18194fab8694a0a63686214ae7a0631a0ecace8854f10185d939c4bb646b1c6e',1,'ui_widgets.H']]],
-  ['lmselectsingle',['lmSelectSingle',['../group__ui__widgets__listbox.html#ggae18194fab8694a0a63686214ae7a0631afeaf139ca7af1917f37fa9fff4d513e7',1,'ui_widgets.H']]]
+  ['ifelvi2c',['ifElvI2c',['../group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccda7f3b53952eb6ae6a78f38fc9292f0faf',1,'brownies.H']]],
+  ['ifi2cdev',['ifI2cDev',['../group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccdadef111b1c18623d59824b4fd047f1ad8',1,'brownies.H']]],
+  ['ifnone',['ifNone',['../group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccdad8b3b6b57451d9dfd6c86300ebd5dacd',1,'brownies.H']]],
+  ['ifsocket',['ifSocket',['../group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccda0e8cbe356477aebf1aa10bde5a4b9fd9',1,'brownies.H']]]
 ];

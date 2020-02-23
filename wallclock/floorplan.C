@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2020 Gundolf Kiefer
+ *  (C) 2019-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -87,25 +87,37 @@ ENV_PARA_INT ("floorplan.motionRetention", envFloorplanMotionRetention, 300);
 // ***** Documentation of per-gadget options *****
 
 
-// TBD: Implement and document default options
-// TBD: Implement 'shades' option in code
-
-
-ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.shades", bool, false);
+ENV_PARA_BOOL ("floorplan.rwin.shades", envFloorplanRwinShades, false);
+  /* Enable/disable the shades resource for roof window (rwin) gadgets.
+   *
+   * This sets the default for any \refenv{floorplan.gadgets.<gadgetID>.shades}
+   * setting.
+   */
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.shades", bool, NODEFAULT);
   /* For roof window (rwin) gadgets: Enable shades resource
    *
    * If \texttt{<gadgetID>} refers to a roof window with electric shades,
    * this option should be set 'true' and a resource referred by
    * \texttt{/alias/<floorplan>/<gadget>/shades} is used to control it.
+   *
+   * By default, the \refenv{floorplan.rwin.shades} setting is used.
    */
 
 
-ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.actuator", bool, false);
+ENV_PARA_BOOL ("floorplan.rwin.actuator", envFloorplanRwinActuator, false);
+  /* Enable/disable the actuator resource for roof window (rwin) gadgets.
+   *
+   * This sets the default for any \refenv{floorplan.gadgets.<gadgetID>.actuator}
+   * setting.
+   */
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.actuator", bool, NODEFAULT);
   /* For roof window (rwin) gadgets: Enable an actuator resource
    *
    * If \texttt{<gadgetID>} refers to a roof window with an actuator for opening/closing,
    * this option should be set 'true' and a resource referred by
    * \texttt{/alias/<floorplan>/<gadget>/actuator} is used to control it.
+   *
+   * By default, the \refenv{floorplan.rwin.actuator} setting is used.
    */
 
 
@@ -142,37 +154,6 @@ enum EFloorplanViewLevel {
 
 #define FP_MAX_VIEWS ((int) fvlZoom)  //  ((int) fvlEND)
 #define FP_MAX_GADGET_RESOURCES 4     // Maximum average number of resources the gadgets can depend on
-
-
-enum EGadgetType {
-  gtNone = 0,
-
-  // Windows, shades and gates...
-  gtWindow,
-  gtShades,
-  gtRoofWindow,
-  gtGarage,
-
-  // Icon-like ...
-  gtLock,
-  gtMotion,
-  gtLight,
-  gtMail,
-  gtPhone,
-  gtMusic,
-  gtWlan,
-  gtBluetooth,
-  gtService,
-
-  // Text...
-  gtTemp,
-
-  // Zoom...
-  gtZoom,
-
-  // End...
-  gtEND
-};
 
 
 static inline bool GadgetTypeIsIcon (EGadgetType t) { return t >= gtLock && t <= gtService; }
@@ -388,37 +369,6 @@ class CFloorplan {
 // ***************** View-related classes ***********************
 
 
-class CResourceDialog: public CMessageBox {
-  public:
-    CResourceDialog () { surfInfo = NULL; choices = 0; }
-    ~CResourceDialog () { wdgInfo.SetSurface (NULL); SurfaceFree (surfInfo); FREEP(choiceVal); }
-
-    void Setup (const char *title, CResource *_rc, int _choices, const char *_choiceText[], const char *_choiceReq[], TColor color);
-    void UpdateRcInfo (bool withText = false);
-
-    int Run (CScreen *_screen);
-
-    // Callbacks...
-    virtual void Start (CScreen *_screen);    // Must add own widgets
-    virtual void Stop ();                     // Must del own widgets
-    void OnListboxPushed (class CListbox *, int idx, bool longPush);
-
-  protected:
-    CButton btnAuto, *btnArray[2];
-
-    CListbox wdgChoices;
-
-    CCanvas cvsInfo;
-    CWidget wdgInfo;
-    SDL_Surface *surfInfo;
-
-    CResource *rc;
-    int choices;
-    const char **choiceText, **choiceReq;
-    float *choiceVal;
-};
-
-
 class CScreenFloorplan: public CScreen, public CTimer {
   public:
     CScreenFloorplan ();
@@ -434,6 +384,9 @@ class CScreenFloorplan: public CScreen, public CTimer {
     void OnButtonPushed (CButton *btn, bool longPush);
     virtual bool HandleEvent (SDL_Event *ev);
 
+    // Updating ...
+    void UpdateRequest (ERctUseState useStateReq = (ERctUseState) -1);
+
   protected:
     CFloorplan *floorplan;
     EFloorplanViewLevel view;
@@ -447,7 +400,7 @@ class CScreenFloorplan: public CScreen, public CTimer {
     CFlatButton *wdgPoolPushable;
 
     CButton *buttonBar;
-    ERctUseState lastUseState;
+    ERctUseState lastUseState, lastUseStateReq;
     bool haveAlert;
 };
 
@@ -485,70 +438,473 @@ static CRcRequest *NewUserRequest () {
 // *************************** CResourceDialog & friends ***********************
 
 
-#define RCDLG_STATUS_CANCEL 0   // "Cancel" button was pushed
-#define RCDLG_STATUS_DELREQ 1   // "Auto" button was pushed
-#define RCDLG_STATUS_OK 2       // Some action has been performed, the box can just be closed now.
+#define RCDLG_PERCENT_STEPS 6         // Number of buttons for 'rctPercent' resources (steps including 0% and 100%
+#define RCDLG_HORIZONTAL_THRESHOLD 2  // Up to this number of choices are put in a horizontal layout with buttons instead of a listbox.
+
+#define RCDLG_VALUE_BUTTON_WIDTH 160  // width of the value button
+#define RCDLG_CHOICE_MINWIDTH 160     // minimum width of a choice button or listbox
+
+#define RCDLG_COL_CHOICE    BLACK     // color of (unselected) choice buttons or list items
+#define RCDLG_COL_SELECTED  (color)   // color of selected choice ('color' = selected color variable)
+//~ #define RCDLG_COL_CHOICE    ColorDarker (color, 0x40)
+//~ #define RCDLG_COL_SELECTED  (color)
 
 
+class CResourceDialog: public CMessageBox {
+  public:
+    CResourceDialog ();
+    ~CResourceDialog () { Clear (); }
+    void Clear ();
+
+    void Setup (CResource *_rc, EGadgetType _subType, const char *_title);
+
+    void SetLayout (bool _withInfo);
+    void UpdateRequest (bool fetchReq);   // to be called if the request changed.
+    void UpdateView ();                   // to be called if the resource value/state changed.
+    int Run (CScreen *_screen);           // always returns 0
+
+    // Callbacks...
+    virtual void Start (CScreen *_screen);    // Must add own widgets
+    virtual void Stop ();                     // Must del own widgets
+    void OnButtonPushed (class CButton *, bool longPush);
+    void OnListboxPushed (class CListbox *, int idx, bool longPush);
+
+  protected:
+    CString title;
+    TColor color;
+    CResource *rc;
+    EGadgetType subType;
+    CRcRequest request;   // current own request (e.g. with GID "#user")
+
+    CButton btnValue;
+    bool valueNotPlusButton;
+
+    int choices;
+    CListbox wdgChoices;
+    CButton btnChoices[RCDLG_HORIZONTAL_THRESHOLD];
+    int btnChoicesSelected;
+    CString *choiceText;
+    float *choiceVal;     // common type for values (string types are not supported)
+
+    CButton btnBack, btnAuto, btnEdit;
+
+    bool withInfo;
+    CCanvas cvsInfo;
+    CWidget wdgInfo;
+    SDL_Surface *surfInfo;
+};
+
+
+class CScreenResourceEdit: public CInputScreen {
+  public:
+    CScreenResourceEdit () { inputReq = NULL; }
+    ~CScreenResourceEdit () { if (inputReq) delete inputReq; }
+
+    void Setup (CResource *_rc, CRcRequest *req) {
+      rc = _rc;
+      if (req) {
+        req->Convert (_rc, false);
+        CInputScreen::Setup (req->ToStr (false, false, 0, req->Priority () == rcPrioUser ? "#*@i" : "#@i"));
+      }
+      else {
+        CString s;
+        s.SetF (" %s", envFloorplanReqAttrs ? envFloorplanReqAttrs : RcGetUserRequestAttrs ());
+        CInputScreen::Setup (s.Get ());
+      }
+    }
+
+    CRcRequest *GetRequest () { CRcRequest *ret = inputReq; inputReq = NULL; return ret; }
+      ///< Get request and ownership of the request object.
+
+  protected:
+    CResource *rc;
+    CRcRequest *inputReq;
+
+    // Callbacks ...
+    virtual void Commit () {
+      CString s;
+      bool ok;
+
+      // Create a request object and check it ...
+      inputReq = new CRcRequest ();
+      inputReq->SetGid (RcGetUserRequestId ());   // mainly to have 'inputReq->Convert()' print warnings with the correct ID
+      inputReq->SetPriority (rcPrioUser);         // set default
+      GetInput (&s);
+      ok = inputReq->SetFromStr (s.Get ());
+      if (ok) {
+        inputReq->Convert (rc);
+        ok = inputReq->IsCompatible ();
+      }
+
+      // Report error or complete ...
+      if (ok) Return ();
+      else {
+        delete inputReq;
+        inputReq = NULL;
+        RunErrorBox (_("Syntax error in request specification"));
+      }
+    }
+};
+
+
+BUTTON_TRAMPOLINE(CbResourceDialogOnButtonPushed, CResourceDialog, OnButtonPushed);
 LISTBOX_TRAMPOLINE(CbResourceDialogOnListboxPushed, CResourceDialog, OnListboxPushed);
 
 
-void CResourceDialog::Setup (const char *title, CResource *_rc, int _choices, const char *_choiceText[], const char *_choiceReq[], TColor color) {
-  SDL_Rect rChoices, rInfo;
-  int n, itemHeight;
+CResourceDialog::CResourceDialog () {
+  rc = NULL;
+  subType = gtNone;
+  valueNotPlusButton = false;
+  surfInfo = NULL;
 
-  // Store parameters...
-  rc = _rc;
-  choices = _choices;
-  choiceText = _choiceText;
-  choiceReq = _choiceReq;
-  choiceVal = MALLOC (float, _choices);
-  for (n = 0; n < _choices; n++) {
-    if (!_choiceReq[n]) choiceVal[n] = NAN;
-    else if (sscanf (_choiceReq[n], "%f", &choiceVal[n]) != 1) choiceVal[n] = NAN;
-  }
+  choices = 0;
+  btnChoicesSelected = -1;
+  choiceText = NULL;
+  choiceVal = NULL;
 
-  // Buttons...
-  btnArray[0] = GetStdButton (mbiCancel);
-
-  btnAuto.SetLabel (_("Auto"));
-  btnAuto.SetColor (BLACK);
-  btnAuto.SetHotkey (SDLK_a);
-  btnArray[1] = &btnAuto;
-
-  // Geometry...
-  itemHeight = 400 / _choices;
-  if (itemHeight < 32) itemHeight = 32;
-  if (itemHeight > 128) itemHeight = 128;
-  rChoices = Rect (0, 0, 256, (itemHeight + 1) * _choices - 1);
-  rInfo = Rect (rChoices.w + 32, 0, 640, rChoices.h - 64);
-
-  // Init base class and adapt geometry ...
-  CMessageBox::Setup (title, rInfo.x + rInfo.w, rInfo.h, 2, btnArray, ColorBlend(GREY, color, 0x40));
-  RectMove (&rChoices, rContent.x, rContent.y - 64);
-  RectMove (&rInfo, rContent.x, rContent.y);
-  rInfo.w = rContent.x + rContent.w - rInfo.x;    // adapt (eventually shrink) right border to window
-
-  // Prepare listbox...
-  wdgChoices.SetMode (lmActivate, itemHeight);
-  wdgChoices.SetFormat (FontGet (fntMono, 24), DARK_GREY, WHITE, BLACK, GREY, DARK_GREY);
-  wdgChoices.SetArea (rChoices);
-  wdgChoices.SetCbPushed (CbResourceDialogOnListboxPushed, this);
-  wdgChoices.SetItems (_choices);
-  for (n = 0; n < _choices; n++) wdgChoices.SetItem (n, _choiceText[n]);
-
-  // Prepare infobox...
-  wdgInfo.SetArea (Rect (0, 0, 1, 1));
-  wdgInfo.SetTextureBlendMode (SDL_BLENDMODE_BLEND);
-
-  cvsInfo.SetArea (rInfo);
-  cvsInfo.SetColors (TRANSPARENT);
-  cvsInfo.SetTextureBlendMode (SDL_BLENDMODE_BLEND);
-  cvsInfo.AddWidget (&wdgInfo);
+  withInfo = false;
+  surfInfo = NULL;
 }
 
 
-void CResourceDialog::UpdateRcInfo (bool withText) {
+void CResourceDialog::Clear () {
+  wdgInfo.SetSurface (NULL);
+  SurfaceFree (&surfInfo);
+  if (choices) {
+    delete [] choiceText;
+    free (choiceVal);
+    choices = 0;
+  }
+}
+
+
+void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_title) {
+  ERcType rcType;
+  bool reverse;
+  int n, idx, itemHeight;
+
+  // Store parameters ...
+  Clear ();
+  rc = _rc;
+  subType = _subType;
+  withInfo = false;
+
+  // Set title ...
+  title.Clear ();
+  if (_title) title.Set (_title);
+  else switch (_subType) {
+    case gtWindow:
+    case gtRoofWindow:  title.SetC (_("Window"));     break;
+    case gtShades:      title.SetC (_("Shades"));     break;
+    case gtLight:       title.SetC (_("Light"));      break;
+    case gtMail:        title.SetC (_("Mail"));       break;
+    case gtPhone:       title.SetC (_("Phone"));      break;
+    case gtMusic:       title.SetC (_("Music"));      break;
+    case gtWlan:        title.SetC (_("Wifi Access Point"));  break;
+    case gtBluetooth:   title.SetC (_("Bluetooth"));  break;
+    case gtService:     title.SetC (_("Service"));    break;
+    default:
+      title.SetC (rc->Uri ());
+  }
+
+  // Analyse type and prepare choices and color ...
+  color = DARK_BLUE;
+  rcType = rc->Type ();
+  switch (rcType) {
+
+    case rctBool:
+      choices = 2;
+      choiceText = new CString [2];
+      choiceVal = MALLOC (float, 2);
+      choiceText[0].SetC (_("Off"));
+      choiceVal[0] = 0.0;
+      choiceText[1].SetC (_("On"));
+      choiceVal[1] = 1.0;
+      break;
+
+    case rctPercent:
+      reverse = (_subType == gtWindow || _subType == gtRoofWindow);
+      choices = RCDLG_PERCENT_STEPS;
+      choiceText = new CString [RCDLG_PERCENT_STEPS];
+      choiceVal = MALLOC (float, RCDLG_PERCENT_STEPS);
+      for (n = 0; n < RCDLG_PERCENT_STEPS; n++) {
+        idx = reverse ? (RCDLG_PERCENT_STEPS - 1 - n) : n;
+        choiceVal[idx] = (n * 100.0) / (RCDLG_PERCENT_STEPS - 1);
+        choiceText[idx].SetF ("%.0f", choiceVal[idx]);
+      }
+      switch (_subType) {
+        case gtShades:
+          choiceText[0].SetC (_("0% = Up"));
+          choiceText[RCDLG_PERCENT_STEPS-1].SetC (_("100% = Down"));
+          break;
+        case gtWindow:
+        case gtRoofWindow:
+          color = DARK_RED;
+          choiceText[0].SetC (_("100% = Open"));
+          choiceText[RCDLG_PERCENT_STEPS-1].SetC (_("0% = Closed"));
+          break;
+        default:
+          break;
+      }
+      break;
+
+    default:
+      if (RcTypeIsEnumType (rcType)) {
+        choices = RcTypeGetEnumValues (rcType);
+        choiceText = new CString [choices];
+        choiceVal = MALLOC (float, choices);
+        for (n = 0; n < choices; n++) {
+          choiceText[n].SetC (RcTypeGetEnumValue (rcType, n, true));
+          choiceVal[n] = (float) n;
+        }
+      }
+      // Default: Leave empty (choices = 0)
+  }
+  valueNotPlusButton = !RcTypeIsEnumType (rcType) && (rcType != rctBool);
+
+  // Prepare buttons or listbox for choices...
+  if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
+    // Listbox ...
+    itemHeight = 360 / choices;
+    if (itemHeight < 32) itemHeight = 32;
+    if (itemHeight > 128) itemHeight = 128;
+    wdgChoices.SetMode (lmSelectSingle, itemHeight);
+    wdgChoices.SetFormat (
+        FontGet (fntMono, 24), 0, DARK_GREY,    // font, alignment, grid
+        WHITE, RCDLG_COL_CHOICE,                // normal (label, back)
+        WHITE, RCDLG_COL_SELECTED,              // selected = requested state (label, back)
+        YELLOW, RCDLG_COL_CHOICE                // special = real state (label, back)
+      );
+    wdgChoices.SetCbPushed (CbResourceDialogOnListboxPushed, this);
+    wdgChoices.SetItems (choices);
+    for (n = 0; n < choices; n++) wdgChoices.SetItem (n, choiceText[n]);
+    wdgChoices.Render (NULL);     // Dummy render pass to set/update the virtual area
+  }
+  else if (choices > 0) {
+    // Horizontal buttons (typically 2 for "on" and "off") ...
+    for (n = 0; n < choices; n++) {
+      CButton *btn = &btnChoices[n];
+      btn->SetColor (RCDLG_COL_CHOICE);
+      btn->SetCbPushed (CbResourceDialogOnButtonPushed, this);
+    }
+    btnChoicesSelected = -1;
+  }
+  else ASSERT (choices == 0);
+
+  // Prepare general buttons ...
+  btnValue.SetColor (GREY);
+  btnValue.SetHotkey (SDLK_i);
+  btnValue.SetCbPushed (CbResourceDialogOnButtonPushed, this);
+
+  btnBack.SetColor (GREY);
+  btnBack.SetLabel (WHITE, "ic-back-48");
+  btnBack.SetHotkey (SDLK_ESCAPE);
+  btnBack.SetCbPushed (CbResourceDialogOnButtonPushed, this);
+
+  btnAuto.SetColor (RCDLG_COL_CHOICE);
+  btnAuto.SetLabel (_("Auto"), WHITE);
+  btnAuto.SetHotkey (SDLK_a);
+  btnAuto.SetCbPushed (CbResourceDialogOnButtonPushed, this);
+
+  btnEdit.SetColor (GREY);
+  btnEdit.SetLabel (WHITE, "ic-edit-48");
+  btnEdit.SetHotkey (SDLK_e);
+  btnEdit.SetCbPushed (CbResourceDialogOnButtonPushed, this);
+
+  // Prepare infobox ...
+  wdgInfo.SetArea (Rect (0, 0, 1, 1));
+  wdgInfo.SetTextureBlendMode (SDL_BLENDMODE_BLEND);
+
+  cvsInfo.SetColors (TRANSPARENT);
+  cvsInfo.SetTextureBlendMode (SDL_BLENDMODE_BLEND);
+  cvsInfo.AddWidget (&wdgInfo);
+
+  // Set layout and update contents ...
+  SetLayout (false);
+
+  // Read own request and initialize choices selection based on it ...
+  UpdateRequest (true);
+}
+
+
+void CResourceDialog::SetLayout (bool _withInfo) {
+  SDL_Rect r, *layout;
+  int n, w, h, wContent, hContent, wChoiceMax = 0;
+
+  withInfo = _withInfo;
+
+  // Step 1: Determine desired content area ...
+
+  //   ... title row ...
+  wContent = FontGetWidth (MSGBOX_TITLE_FONT, title.Get ()) + MSGBOX_SPACE_X
+             + (valueNotPlusButton ? RCDLG_VALUE_BUTTON_WIDTH : UI_BUTTONS_HEIGHT);
+  hContent = 0;
+
+  //   ... choices and info area ...
+  if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
+
+    // vertical listbox ...
+    wChoiceMax = RCDLG_CHOICE_MINWIDTH;
+    for (n = 0; n < choices; n++) {
+      w = wdgChoices.GetItemLabelWidth (n) + MSGBOX_SPACE_X;
+      if (w > wChoiceMax) wChoiceMax = w;
+    }
+    w = wChoiceMax;
+    h = wdgChoices.GetVirtArea ()->h;
+    if (withInfo) w = UI_RES_X;               // with info: get all we can
+  }
+  else if (choices > 0) {
+
+    // horizontal buttons ...
+    w = choices * (RCDLG_CHOICE_MINWIDTH + UI_BUTTONS_SPACE) - UI_BUTTONS_SPACE;
+    h = UI_BUTTONS_HEIGHT;
+    if (withInfo) {
+      if (w < UI_RES_X*3/4) w = UI_RES_X*3/4;   // with info: get 3/4 of the screen horizontally ...
+      h = UI_RES_Y;                             // ... and all we can vertically
+    }
+  }
+  else {
+
+    // no choices, info only ...
+    if (withInfo) {
+      w = UI_RES_X*3/4;   // with info: get 3/4 of the screen horizontally ...
+      h = UI_RES_Y;       // ... and all we can vertically
+    }
+    else w = h = 0;       // without info: need nothing
+  }
+  wContent = MAX (wContent, w);
+  hContent += h;
+
+  //   ... buttons ...
+  w = 2 * RCDLG_CHOICE_MINWIDTH + 2 * UI_BUTTONS_SPACE;
+  wContent = MAX (wContent, w);
+  hContent += MSGBOX_SPACE_Y;     // add space between choices and buttons
+  hContent += UI_BUTTONS_HEIGHT;
+
+
+  // Step 2: Setup message box ...
+  CMessageBox::Setup (title.Get (),
+                      wContent, hContent,
+                      0, NULL,        // no standard buttons
+                      MSGBOX_COLOR,
+                      -1);            // title left-justified
+  // TBD: Move to a target position?
+
+
+  // Step 3: Layout contents ...
+
+  //   ... title row ...
+  r = Rect (valueNotPlusButton ? RCDLG_VALUE_BUTTON_WIDTH : UI_BUTTONS_HEIGHT, UI_BUTTONS_HEIGHT);
+  RectAlign (&r, *GetArea (), 1, -1);
+  r.x -= MSGBOX_SPACE_X;
+  r.y += (MSGBOX_SPACE_Y / 2);
+  btnValue.SetArea (r);
+  if (!valueNotPlusButton) btnValue.SetLabel (withInfo ? "-" : "+", WHITE, FontGet (fntNormal, 32));
+
+  //   ... choices and info area ...
+  h = rContent.h - MSGBOX_SPACE_Y - UI_BUTTONS_HEIGHT;    // height available for this area
+  if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
+
+    // vertical listbox ...
+    r = Rect (withInfo ? MIN (wChoiceMax, UI_RES_X / 2) : wChoiceMax * 3/2, wdgChoices.GetVirtArea ()->h);
+    if (r.w > rContent.w) r.w = rContent.w;
+    if (r.h > h) r.h = h;
+    RectAlign (&r, rContent, withInfo ? -1 : 0, -1);
+    wdgChoices.SetArea (r);
+
+    if (withInfo) {
+      r = Rect (rContent.w - wdgChoices.GetArea ()->w - MSGBOX_SPACE_X, rContent.h - (UI_BUTTONS_HEIGHT + MSGBOX_SPACE_Y));
+      RectAlign (&r, rContent, 1, -1);
+      cvsInfo.SetArea (r);
+    }
+  }
+  else if (choices > 0) {
+
+    // horizontal buttons ...
+    r = Rect (rContent.w, UI_BUTTONS_HEIGHT);
+    RectAlign (&r, rContent, 0, 1);
+    r.y -= MSGBOX_SPACE_Y + UI_BUTTONS_HEIGHT;    // move up by space for standard buttons
+    layout = LayoutRowEqually (r, choices);
+    for (n = 0; n < choices; n++) btnChoices[n].SetArea (layout[n]);
+    free (layout);
+
+    if (withInfo) {
+      r = Rect (rContent.w, rContent.h - 2 * (UI_BUTTONS_HEIGHT + MSGBOX_SPACE_Y));
+      RectAlign (&r, rContent, 0, -1);
+      cvsInfo.SetArea (r);
+    }
+  }
+  else {
+
+    // no choices, info only ...
+    if (withInfo) {
+      r = rContent;
+      r.h -= (MSGBOX_SPACE_Y + UI_BUTTONS_HEIGHT);    // make space for standard buttons
+      cvsInfo.SetArea (r);
+    }
+  }
+
+  //   ... buttons ...
+  r = Rect (rContent.w, UI_BUTTONS_HEIGHT);
+  RectAlign (&r, rContent, 0, 1);
+  layout = LayoutRow (r, UI_BUTTONS_SPACE, -1, -2, -1, 0);
+  btnBack.SetArea (layout[0]);
+  btnAuto.SetArea (layout[1]);
+  btnEdit.SetArea (layout[2]);
+  free (layout);
+
+  // Add/delete info widget ...
+  if (screen) {
+    if (withInfo) screen->AddWidget (&cvsInfo, 1);
+    else screen->DelWidget (&cvsInfo);
+  }
+
+  // Done ...
+  UpdateView ();
+}
+
+
+void CResourceDialog::UpdateRequest (bool fetchReq) {
+  int n, idx;
+
+  //~ INFOF (("### UpdateRequest (%i) ...", (int) fetchReq));
+
+  // Read own request ...
+  if (fetchReq) rc->GetRequest (&request, RcGetUserRequestId ());
+  request.Convert (rc, false);   // In case of an incompatibility, a warning would have been emitted before.
+  //~ INFOF (("###   request = '%s'", request.ToStr ()));
+
+  // Match it against the choices ...
+  idx = -1;
+  if (request.Value ()->IsKnown () && request.IsCompatible ()) {
+    for (n = 0; n < choices; n++) if (choiceVal[n] == request.Value ()->ValidFloat (NAN)) {
+      idx = n;
+      break;
+    }
+  }
+  //~ INFOF (("###   idx = %i", idx));
+
+  // Update choice listbox or buttons ...
+  if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
+    if (idx >= 0) wdgChoices.SelectItem (idx);
+    else wdgChoices.SelectNone ();
+  }
+  else {
+    btnChoicesSelected = idx;
+    for (n = 0; n < choices; n++)
+      btnChoices[n].SetColor (n == btnChoicesSelected ? RCDLG_COL_SELECTED : RCDLG_COL_CHOICE);
+  }
+
+  // Set color of "Auto" button ...
+  btnAuto.SetColor (request.Value ()->IsValid () ? RCDLG_COL_CHOICE : RCDLG_COL_SELECTED);
+
+  // Update info view ...
+  if (withInfo) UpdateView ();
+}
+
+
+void CResourceDialog::UpdateView () {
+  CRcValueState vs;
   CTextSet textSet;
   CSplitString lines;
   CString s;
@@ -557,8 +913,13 @@ void CResourceDialog::UpdateRcInfo (bool withText) {
   int n, mark0, mark1;
   bool mark;
 
-  // Highlight current value...
-  rcVal = rc->ValidFloat (NAN);
+  rc->GetValueState (&vs);
+
+  // Set value button ...
+  if (valueNotPlusButton) btnValue.SetLabel (vs.ToStr (), YELLOW);
+
+  // Highlight current value or its neighbors ...
+  rcVal = vs.ValidFloat (NAN);
   mark0 = mark1 = -1;
   if (!isnan (rcVal)) for (n = 0; n < choices; n++) if (!isnan (choiceVal[n])) {
     if (choiceVal[n] <= rcVal) {
@@ -574,14 +935,21 @@ void CResourceDialog::UpdateRcInfo (bool withText) {
   // 'mark1' points to next larger (or equal) value.
   for (n = 0; n < choices; n++) {
     mark = (n == mark0 || n == mark1) ? true : false;
-    if (wdgChoices.GetItem (n)->isSpecial != mark) {
-      wdgChoices.GetItem (n)->isSpecial = mark;
-      wdgChoices.ChangedItems (n);
+    if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
+      // vertical choices (listbox) ...
+      if (wdgChoices.GetItem (n)->isSpecial != mark) {
+        wdgChoices.GetItem (n)->isSpecial = mark;
+        wdgChoices.ChangedItems (n);
+      }
+    }
+    else {
+      // horizontal choices (buttons) ...
+      btnChoices[n].SetLabel (choiceText[n], mark ? YELLOW : WHITE);
     }
   }
 
   // Set info text...
-  if (withText) {
+  if (withInfo) {
     rc->GetInfo (&s, 1);
     for (p = (char *) s.Get (); *p && *p != '\n'; p++) if (*p == '=' && p > s.Get ()) { p[-1] = '\n'; break; }
       // Insert a line break before the '=' in the first line to improve readability.
@@ -602,115 +970,140 @@ void CResourceDialog::UpdateRcInfo (bool withText) {
 
 
 void CResourceDialog::Start (CScreen *_screen) {
+  int n;
+
   CMessageBox::Start (_screen);
   if (_screen) {
-    _screen->AddWidget (&wdgChoices, 1);
-    _screen->AddWidget (&cvsInfo, 1);
+    _screen->AddWidget (&btnValue, 1);
+
+    if (choices > RCDLG_HORIZONTAL_THRESHOLD)
+      _screen->AddWidget (&wdgChoices, 1);
+    else
+      for (n = 0; n < choices; n++) _screen->AddWidget (&btnChoices[n], 1);
+    if (withInfo) _screen->AddWidget (&cvsInfo, 1);
+
+    _screen->AddWidget (&btnBack, 1);
+    _screen->AddWidget (&btnAuto, 1);
+    _screen->AddWidget (&btnEdit, 1);
   }
 }
 
 
 void CResourceDialog::Stop () {
+  int n;
+
   if (screen) {
-    screen->DelWidget (&wdgChoices);
+    screen->DelWidget (&btnValue);
+
+    if (choices > RCDLG_HORIZONTAL_THRESHOLD)
+      screen->DelWidget (&wdgChoices);
+    else
+      for (n = 0; n < choices; n++) screen->DelWidget (&btnChoices[n]);
     screen->DelWidget (&cvsInfo);
+
+    screen->DelWidget (&btnBack);
+    screen->DelWidget (&btnAuto);
+    screen->DelWidget (&btnEdit);
   }
   CMessageBox::Stop ();
 }
 
 
 int CResourceDialog::Run (CScreen *_screen) {
-  CRcValueState vs, vsLast;
+  CRcSubscriber subscr;
+  CRcEvent ev;
+  bool update;
+
+  subscr.Register ("rcdialog");
+  subscr.AddResource (rc);
 
   Start (_screen);
-  UiIterate ();
-  rc->GetValueState (&vsLast);
-  UpdateRcInfo (true);
+  UpdateView ();
   while (IsRunning ()) {
     UiIterate ();
-    rc->GetValueState (&vs);
-    if (!vs.Equals (&vsLast)) {
-      UpdateRcInfo (true);
-      vsLast = vs;
+    update = false;
+    while (subscr.PollEvent (&ev)) if (ev.Type () == rceValueStateChanged) update = true;
+    if (update) {
+      UpdateView ();
+      UpdateRequest (true);
     }
   }
-  if (status == RCDLG_STATUS_DELREQ) rc->DelRequest (RcGetUserRequestId ());
-  return status;
+  return 0;
 }
 
 
-void CResourceDialog::OnListboxPushed (class CListbox *, int idx, bool longPush) {
+void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
+  int idx;
+
+  if (btn == &btnValue) {
+    SetLayout (!withInfo);
+  }
+  else if (btn == &btnBack) {
+    Stop ();
+  }
+  else if (btn == &btnAuto) {
+    btnChoicesSelected = -1;
+    OnListboxPushed (NULL, -1, longPush);
+  }
+  else if (btn == &btnEdit) {
+    CScreenResourceEdit scrEdit;
+    CRcRequest *req;
+    CScreen *myScreen = screen;
+
+    Stop ();          // stop message box (would not survive switching to the edit screen)
+    scrEdit.Setup (rc, request.Value ()->IsValid () ? &request : NULL);
+    scrEdit.Run ();
+    req = scrEdit.GetRequest ();
+    if (req) {
+      req->SetGid (RcGetUserRequestId ());    // force user GID
+      request.Set (req);
+      if (req->Value ()->IsValid ()) rc->SetRequest (req);
+      else rc->DelRequest (req->Gid ());
+    }
+    UpdateRequest (false);
+    Start (myScreen); // start the message box again
+  }
+  else {
+    idx = btn - &btnChoices[0];
+    if (idx >= 0 && idx < RCDLG_HORIZONTAL_THRESHOLD) {
+      btnChoicesSelected = idx;
+      OnListboxPushed (NULL, idx, longPush);
+    }
+  }
+}
+
+
+void CResourceDialog::OnListboxPushed (class CListbox *lb, int idx, bool longPush) {
+  // This method also handles the horizontal layout case, in which case 'lb == NULL'.
   CRcRequest *req;
-  const char *reqDef;
 
-  // Check if we have to set or remove a request...
-  reqDef = choiceReq[idx];
-  if (reqDef) if (!reqDef[0]) reqDef = NULL;
-
-  // Set request...
-  if (reqDef) {
+  if (lb) idx = wdgChoices.GetSelectedItem ();    // in the listbox case: check if the selection has just been unselected (= auto)
+  if (idx < 0) {
+    rc->DelRequest (RcGetUserRequestId ());
+    request.Reset ();
+  }
+  else {
     req = NewUserRequest ();
-    req->SetFromStr (reqDef);
+    req->SetValue (choiceVal[idx]);
+    request.Set (req);                            // store as current request
     rc->SetRequest (req);
   }
-
-  // Done...
-  SetStatus (reqDef ? RCDLG_STATUS_OK : RCDLG_STATUS_DELREQ);
-  Stop ();
+  UpdateRequest (false);
+  if (!longPush && !withInfo) Stop ();
 }
 
 
-void RunResourceDialog (const char *title, CResource *rc, int choices, const char *choiceText[], const char *choiceReq[], TColor color) {
+
+
+
+// ***** RunResourceDialog() *****
+
+
+void RunResourceDialog (CResource *rc, EGadgetType subType, const char *title) {
   CResourceDialog dlg;
 
-  dlg.Setup (title, rc, choices, choiceText, choiceReq, color);
+  dlg.Setup (rc, subType, title);
   dlg.Run (CScreen::ActiveScreen ());
-}
-
-
-void RunShadesDialog (CResource *rc) {
-  static const int choices = 6;
-  char choiceText[choices][8], choiceReq[choices][8];
-  const char *choiceTextRef[choices], *choiceReqRef[choices];
-  int n;
-
-  for (n = 0; n < choices; n++) {
-    snprintf (choiceText[n], 8, "%3i%%", n * 20);
-    choiceTextRef[n] = choiceText[n];
-    snprintf (choiceReq[n], 8, "%i", n * 20);
-    choiceReqRef[n] = choiceReq[n];
-  }
-  choiceTextRef[0] = _("  0% = Up");
-  choiceTextRef[choices-1] = _("100% = Down");
-
-  RunResourceDialog (_("Shades"), rc, choices, choiceTextRef, choiceReqRef, COL_FP_MAIN);
-}
-
-
-void RunActuatorDialog (CResource *rc) {
-  static const int choices = 6;
-  char choiceText[choices][8], choiceReq[choices][8];
-  const char *choiceTextRef[choices], *choiceReqRef[choices];
-  int n;
-
-  for (n = 0; n < choices; n++) {
-    snprintf (choiceText[n], 8, "%3i%%", 100 - n * 20);
-    choiceTextRef[n] = choiceText[n];
-    snprintf (choiceReq[n], 8, "%i", 100 - n * 20);
-    choiceReqRef[n] = choiceReq[n];
-  }
-  choiceTextRef[0] = _("100% = Open");
-  choiceTextRef[choices-1] = _("  0% = Closed");
-
-  RunResourceDialog (_("Window"), rc, choices, choiceTextRef, choiceReqRef, DARK_RED);
-}
-
-
-void RunServiceDialog (CResource *rc, const char *title) {
-  const char *choiceText[2] = { _("   On"), _("   Off") };
-  static const char *choiceReq[2] = { "1", "0" };
-
-  RunResourceDialog (title, rc, 2, choiceText, choiceReq, COL_FP_MAIN);
 }
 
 
@@ -1114,7 +1507,7 @@ void CGadgetShades::OnPushed (CButton *btn, bool longPush) {
   CRcRequest *req;
 
   if (longPush) {
-    if (rcShades->ValidFloat (-1.0) == 0.0) {
+    if (rcShades->ValidFloat (NAN) == 0.0) {
       req = NewUserRequest ();
       req->SetValue (100.0f);
       rcShades->SetRequest (req);
@@ -1123,7 +1516,7 @@ void CGadgetShades::OnPushed (CButton *btn, bool longPush) {
       rcShades->DelRequest (RcGetUserRequestId ());
   }
 
-  else RunShadesDialog (rcShades);
+  else RunResourceDialog (rcShades, gtShades);
 }
 
 
@@ -1175,9 +1568,9 @@ void CGadgetRoofWindow::InitSub (int _x, int _y, int _orient, int _size) {
 
   // Resources...
   rcState = GetGadgetResource (this, "state");
-  rcShades = EnvGetBool (GetGadgetEnvKey (this, "shades")) ?
+  rcShades = EnvGetBool (GetGadgetEnvKey (this, "shades"), envFloorplanRwinShades) ?
               GetGadgetResource (this, "shades") : NULL;
-  rcActuator = EnvGetBool (GetGadgetEnvKey (this, "actuator")) ?
+  rcActuator = EnvGetBool (GetGadgetEnvKey (this, "actuator"), envFloorplanRwinActuator) ?
                 GetGadgetResource (this, "actuator") : NULL;
   RegisterResource (rcState);
   RegisterResource (rcShades);
@@ -1312,9 +1705,21 @@ void CGadgetRoofWindow::OnPushed (CButton *btn, bool longPush) {
   CRcRequest *req;
 
   if (longPush) {   // long push ...
-    if (rcActuator) RunActuatorDialog (rcActuator);
-    else if (rcShades) {
-      if (rcShades->ValidFloat (-1.0) == 0.0) {
+    if (rcActuator) {
+      if (rcShades)   // have both shades and actuator: Run actuator dialog ...
+        RunResourceDialog (rcActuator, gtRoofWindow);
+      else {          // have actuator only: auto-set actuator (dialog would appear on simple push) ...
+        if (rcActuator->ValidFloat (NAN) == 0.0) {
+          req = NewUserRequest ();
+          req->SetValue (100.0f);
+          rcActuator->SetRequest (req);
+        }
+        else
+          rcActuator->DelRequest (RcGetUserRequestId ());
+      }
+    }
+    else if (rcShades) {    // have shades only: auto-set shades ...
+      if (rcShades->ValidFloat (NAN) == 0.0) {
         req = NewUserRequest ();
         req->SetValue (100.0f);
         rcShades->SetRequest (req);
@@ -1324,8 +1729,8 @@ void CGadgetRoofWindow::OnPushed (CButton *btn, bool longPush) {
     }
   }
   else {            // simple push ...
-    if (rcShades) RunShadesDialog (rcShades);
-    else if (rcActuator) RunActuatorDialog (rcActuator);
+    if (rcShades) RunResourceDialog (rcShades, gtShades);
+    else if (rcActuator) RunResourceDialog (rcActuator, gtRoofWindow);
   }
 }
 
@@ -1657,7 +2062,7 @@ void CGadgetIcon::OnPushed (CButton *btn, bool longPush) {
     case gtLight:
     case gtWlan:
     case gtService:
-      if (!longPush) {
+      if (longPush) {
         if (rcState->ValidBool (true)) rcState->DelRequest (RcGetUserRequestId ());
         else {
           req = NewUserRequest ();
@@ -1666,11 +2071,7 @@ void CGadgetIcon::OnPushed (CButton *btn, bool longPush) {
         }
       }
       else
-        RunServiceDialog (rcState,
-            gdtType == gtWlan ? _("Wifi Access Point") :
-            gdtType == gtLight ? _("Light") :
-              _("Service")
-          );
+        RunResourceDialog (rcState, gdtType);
       break;
 
     default:
@@ -2444,8 +2845,10 @@ void CScreenFloorplan::Setup (CFloorplan *_floorplan, TTicksMonotonic _tInterval
 
   // Button bar ...
   SETA (buttonBar, CreateMainButtonBar (btnIdFpEND, fpButtons, this));
-  lastUseState = rcvUseDay;
-  buttonBar[btnIdFpUseDay].SetColor (COL_FP_MAIN_DARKER);
+  lastUseState = (ERctUseState) -1;
+  ASSERT (btnIdFpUseDay - 1 == btnIdFpUseAuto);
+  buttonBar[btnIdFpUseDay + lastUseStateReq].SetColor (COL_FP_MAIN_DARKER);
+  UpdateRequest ();
 }
 
 
@@ -2540,9 +2943,10 @@ void CScreenFloorplan::OnTime () {
   // Update button bar...
   useState = floorplan->GetValidUseState ();
   if (useState != lastUseState) {
-    buttonBar[btnIdFpUseDay + lastUseState].SetColor (COL_FP_MAIN);
-    buttonBar[btnIdFpUseDay + useState].SetColor (COL_FP_MAIN_DARKER);
+    if (lastUseState >= 0) buttonBar[btnIdFpUseDay + lastUseState].SetLabel (WHITE, fpButtons[btnIdFpUseDay + lastUseState].iconName);
+    if (useState >= 0) buttonBar[btnIdFpUseDay + useState].SetLabel (YELLOW, fpButtons[btnIdFpUseDay + useState].iconName);
     lastUseState = useState;
+    UpdateRequest ();
   }
 
   // Handle alert...
@@ -2558,25 +2962,32 @@ void CScreenFloorplan::OnTime () {
 void CScreenFloorplan::OnButtonPushed (CButton *btn, bool longPush) {
   CResource *rc = floorplan->UseStateRc ();
   CRcRequest *req;
+  ERctUseState useStateReq;
   EBtnIdFloorplan btnId = ((EBtnIdFloorplan) (btn - buttonBar));
 
   if (!rc) return;
 
+  useStateReq = lastUseStateReq;
+
   switch (btnId) {
     case btnIdFpUseAuto:
       rc->DelRequest (RcGetUserRequestId ());
+      useStateReq = (ERctUseState) -1;
       break;
     case btnIdFpUseDay:
     case btnIdFpUseNight:
     case btnIdFpUseLeaving:
     case btnIdFpUseVacation:
       req = NewUserRequest ();
-      req->SetValue ((int) btnId - (int) btnIdFpUseDay);
+      useStateReq = (ERctUseState) (btnId - btnIdFpUseDay);
+      req->SetValue (useStateReq);
       rc->SetRequest (req);
       break;
     default:
       ASSERT (false);
   }
+
+  UpdateRequest (useStateReq);
 }
 
 
@@ -2617,6 +3028,25 @@ bool CScreenFloorplan::HandleEvent (SDL_Event *ev) {
 }
 
 
+void CScreenFloorplan::UpdateRequest (ERctUseState useStateReq) {
+  CRcRequest req;
+
+  ASSERT (btnIdFpUseDay - 1 == btnIdFpUseAuto);
+  //~ INFOF (("### CScreenFloorplan::UpdateRequest (%i) ...", (int) useStateReq));
+
+  if (useStateReq < (ERctUseState) 0) {
+    floorplan->UseStateRc ()->GetRequest (&req, RcGetUserRequestId ());
+    //~ INFOF (("###   request = '%s'", req.ToStr ()));
+    useStateReq = (ERctUseState) req.Value ()->ValidEnumIdx (rctUseState, -1);
+  }
+
+  if (useStateReq != lastUseStateReq) {
+    ASSERT (btnIdFpUseDay - 1 == btnIdFpUseAuto);
+    buttonBar[btnIdFpUseDay + lastUseStateReq].SetColor (COL_FP_MAIN);
+    buttonBar[btnIdFpUseDay + useStateReq].SetColor (COL_FP_MAIN_DARKER);
+    lastUseStateReq = useStateReq;
+  }
+}
 
 
 

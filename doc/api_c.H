@@ -50,7 +50,7 @@
  *
  * For these reasons, the following conventions apply:
  * 1. All C code is C99-compliant and C++-compliant. All C++ code complies to C++98
- *    (the GCC default in before GCC 6.1).
+ *    (the GCC default in GCC 6.1).
  * 2. No classes or templates from standard C++ libraries are used (STL/libstdc++).
  * 3. From C++, only the following syntax constructs are generally used:
  *    - classes with constructors, destructors, methods, either virtual or not

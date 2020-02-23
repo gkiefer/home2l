@@ -9,8 +9,8 @@ var searchData=
   ['len',['Len',['../classCString.html#ab381a7edcdfb14ac607398f12ccb0e1e',1,'CString']]],
   ['lid',['Lid',['../classCResource.html#a2cb71f9e7c9f777ff8ebe5ddcc7c9e22',1,'CResource']]],
   ['limitvirtarea',['LimitVirtArea',['../classCCanvas.html#a659dd525495890e8dfc09cfb8f131126',1,'CCanvas']]],
-  ['lockrequests',['LockRequests',['../classCResource.html#a9045bd3756d4a687c0ff0c7811d90fa8',1,'CResource']]],
-  ['locksubscribers',['LockSubscribers',['../classCResource.html#aa1c5ae2b0282652ce9b526561fc43cc0',1,'CResource']]],
+  ['locklocalrequests',['LockLocalRequests',['../classCResource.html#ae768caa21c2d7528e08c9a9ef0ed477b',1,'CResource']]],
+  ['locklocalsubscribers',['LockLocalSubscribers',['../classCResource.html#a3b906e340c10fea4a2d46c12dd978e6f',1,'CResource']]],
   ['logstack',['LogStack',['../group__common__logging.html#gab0f1ea671d51c7c52f8b79af9988cdaa',1,'base.H']]],
   ['logtosyslog',['LogToSyslog',['../group__common__logging.html#ga59354e7b87fccf99042e996cbbaa29f2',1,'base.H']]]
 ];

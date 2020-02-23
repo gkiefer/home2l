@@ -586,6 +586,8 @@ class CRcValueState {
     ///
     /// Use these methods for remote resources. The relaxed typing will help to avoid run-time errors.
     ///
+    /// **Note:** These methods may invoke @ref Convert() for the target type and thus modify the object.
+    ///
     /// @{
     ERcState GetValue (bool *retBool);
     ERcState GetValue (int *retInt);
@@ -600,15 +602,18 @@ class CRcValueState {
     /// These methods always return a valid value of the respective type. If 'GetValue' would
     /// return 'rcsUnknown', the default value is returned. 'this == NULL' is tolerated.
     /// Returned strings are only accessible as long as 'this' remains live and unchanged!
+    ///
+    /// **Note:** These methods may invoke @ref Convert() for the target type and thus modify the object.
+    ///
     /// @{
-    bool          ValidBool (bool defaultVal = false) const;
-    int           ValidInt (int defaultVal = 0) const;
-    float         ValidFloat (float defaultVal = 0.0) const;
-    const char *  ValidString (const char *defaultVal = CString::emptyStr) const;
-    TTicks        ValidTime (TTicks defaultVal = 0) const;
+    bool          ValidBool (bool defaultVal = false);
+    int           ValidInt (int defaultVal = 0);
+    float         ValidFloat (float defaultVal = 0.0);
+    const char *  ValidString (const char *defaultVal = CString::emptyStr);
+    TTicks        ValidTime (TTicks defaultVal = 0);
 
-    int           ValidTrigger (int defaultVal = 0) const                       { return ValidInt (defaultVal); }
-    const char *  ValidMutex (const char *defaultVal = CString::emptyStr) const { return ValidString (defaultVal); }
+    int           ValidTrigger (int defaultVal = 0)                       { return ValidInt (defaultVal); }
+    const char *  ValidMutex (const char *defaultVal = CString::emptyStr) { return ValidString (defaultVal); }
 
     int           ValidUnitInt (ERcType _type, int defaultVal = 0) const;
     float         ValidUnitFloat (ERcType _type, float defaultVal = 0.0) const;
@@ -1003,6 +1008,7 @@ class CResource /* final */ {
     /// This way, more up-to-date information may be obtained, but state/value transitions may be missed.
     ///
     /// @{
+
     CResource *Subscribe (CRcSubscriber *subscr) { SubscribePAL (subscr); return this; }
       ///< @brief Subscribe to this resource. The caller remains owner of 'subscr'.
       ///
@@ -1011,9 +1017,10 @@ class CResource /* final */ {
       /// 'this' is returned to allow short constructs like "rc = RcGetResource (...)->Subscribe (subscr)".
     void Unsubscribe (CRcSubscriber *subscr) { UnsubscribePAL (subscr); }
       ///< @brief Unsubscribe to this resource.
+
     /// @}
 
-    /// @name (App) Placing requests ...
+    /// @name (App) Requests ...
     /// In order to accomodate multiple concurrent "write" operations to the same resource,
     /// a concept of "requests" is applied here.
     ///
@@ -1023,6 +1030,7 @@ class CResource /* final */ {
     /// It is legal to call this method with 'this == NULL'. (Only) in this case, 'rcUri' is evaluated and must contain a valid URI.
     ///
     /// @{
+
     void SetRequestFromObj (CRcRequest *_request);
 #ifndef SWIG
     void SetRequest (CRcRequest *_request) { SetRequestFromObj (_request); }
@@ -1067,12 +1075,28 @@ class CResource /* final */ {
       /// @param reqGid is the global request identifierr (GID) and identifies the request.
       ///    If set to 'NULL', the instance name is used.
       /// @param t1 is the time at which the request is to be deleted (optional).
+
+    void GetRequest (CRcRequest *ret, const char *reqGid, bool allowNet = true);
+      ///< @brief Query a request by its request GID.
+      /// @param ret is the returned @ref CRcRequest object.
+      /// @param reqGid is the request ID.
+      /// @param allowNet specifies wether network access (and eventual blocking/waiting) is allowed.
+      ///
+      /// If the resource cannot be queried (e.g. because it is unreachable or non-existing),
+      /// 'ret->Gid()' will return an empty string. Otherwise, 'ret->Gid()' will be non-empty and equal to
+      /// 'reqGid'.
+      ///
+      /// If the resource can be queried successfully, but no such request exists, 'ret->Value()' will
+      /// have a state of @ref rcsUnknown and 'ret->IsCompatible()' will return 'true'.
+      /// If an incompatible request has been set, 'ret->IsCompatible()' will return 'false'.
+
     /// @}
 
     /// @name (App) Emulate classical "read" and "write" operations ...
     /// The use of the following methods is not recommended.
     /// However, their implementations may be illustrative examples on how to work with subscriptions or requests.
     /// @{
+
 #ifndef SWIG
     void ReadValueState (CRcValueState *retValueState, int maxTime = -1);
       ///< @brief Perform a blocking read to obtain an up-to-date value from the driver.
@@ -1083,7 +1107,9 @@ class CResource /* final */ {
       ///< @brief Write a value by issueing or updating a request with the given global id.
       /// The implementation of this method can be used as a tutorial on working with requests.
     void UnWrite (const char *reqGid = "rclib") { DelRequest (reqGid); }
+
     /// @}
+
 
 
     // ***** For drivers *****
@@ -1181,21 +1207,21 @@ class CResource /* final */ {
 #endif
     void PrintInfo (FILE *f = stdout, int verbosity = 1, bool allowNet = true);
 
-    int LockSubscribers ();
-      ///< @brief Return number of all active subscribers for a resource and locks this object.
+    int LockLocalSubscribers ();
+      ///< @brief Return number of all active local subscribers for a resource and lock this object.
       /// During the locked state, other operations are also locked out, so the caller should
       /// use this carefully and unlock as soon as possible.
       /// On error, a warning is emitted, but all successfully read subscribers are returned.
-    CRcSubscriber *GetSubscriber (int n);
-    void UnlockSubscribers () { Unlock (); }
+    CRcSubscriber *GetLocalSubscriber (int n);
+    void UnlockLocalSubscribers () { Unlock (); }
 
-    int LockRequests ();
-      ///< @brief Return number of active requests for a resource and locks this object.
+    int LockLocalRequests ();
+      ///< @brief Return number of active requests for a local resource and lock this object.
       /// During the locked state, other operations are also locked out, so the caller should
       /// use this carefully and unlock as soon as possible.
       /// On error, a warning is emitted, but all successfully read requests are returned.
-    CRcRequest *GetRequest (int n);
-    void UnlockRequests () { Unlock (); }
+    CRcRequest *GetLocalRequest (int n);
+    void UnlockLocalRequests () { Unlock (); }
 
     /// @}
 
@@ -1896,6 +1922,12 @@ class CRcSubscriber: public CRcEventProcessor {
 #define RCREQ_NONE INT_MAX     ///< Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis
 
 
+const char *RcGetUserRequestId ();
+  ///< @brief Get the request ID for user interactions (see 'rc.userReqId').
+const char *RcGetUserRequestAttrs ();
+  ///< @brief Get the default request attributes for user interactions (see 'rc.userReqAttrs').
+
+
 /** @brief Request description object
  *
  * Request objects define the request for a certain value together with some
@@ -1922,6 +1954,8 @@ class CRcRequest {
   public:
     CRcRequest () { Reset (); }   ///< @brief Default constructor
 #ifndef SWIG
+    CRcRequest (CRcRequest *req) { Reset (); Set (req); }
+      ///< @brief Construct by cloning an existing request object (the origin is set, not cloned).
     CRcRequest (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
       ///< @brief Construct with value and optional attributes.
     CRcRequest (bool        _value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE) { Reset (); Set (_value, _gid, _priority, _t0, _t1, _hysteresis); }
@@ -1942,11 +1976,13 @@ class CRcRequest {
     /// @{
 
     void Reset ();
-      ///< @brief Clear the value and set default attributes.
+      ///< @brief Clear the value and set default attributes (@ref RCREQ_NONE or equivalent; priority = @ref rcPrioNormal; origin to here and now).
 
+    void Set (CRcRequest *req);
+      ///< @brief Define a request by copying attributes from another. The origin is not copied.
     void Set (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
       ///< @brief Define a request with all parameters and attributes.
-      /// @param _value is the requested value; Only the type and value are used, the state does not have any effect.
+      /// @param _value is the requested value; Only the type and value are used, the state is irrelevant besides the convention that 'rcsUnknown' indicates that no value set.
       /// @param _gid is the user-defined global ID (GID);  If 'NULL', the instance name is used as the GID.
       /// @param _priority is the request priority attribute.
       /// @param _t0 is the activation (on/start) time attribute (optional; 0 = since ever).
@@ -1985,9 +2021,9 @@ class CRcRequest {
 
     /// @name Type conversion/setting ...
     /// @{
-    void Convert (CResource *rc);
+    void Convert (CResource *rc, bool warn = true);
       ///< @brief Try to convert type to match the given resource and set 'isCompatible' according to the success.
-      /// On failure (incompatible types), a warning is emitted.
+      /// On failure (incompatible types), a warning is emitted if 'warn == true'.
     /// @}
 
     /// @name Getting properties ...
@@ -2063,16 +2099,23 @@ class CRcRequest {
       ///
       /// On success, 'true' is returned. On error, a warning is emmited.
 
-    const char *ToStr (CString *ret, bool beautiful = false, TTicks relativeTimeThreshold = 0);
+    const char *ToStr (CString *ret, bool precise = true, bool tabular = false, TTicks relativeTimeThreshold = 0, const char *skipAttrs = CString::emptyStr);
       ///< @brief Return a string in the format accepted by SetFromStr().
       ///
-      /// If 't0' or 't1' are defined, in the future, and in less then 'relativeTimeThreshold' milliseconds
-      /// from now, the time settings are output relative to the current time. This is useful if the
-      /// request string is to be transmitted to another computer with a slightly different local time.
-      /// (Example: A door opener request is timed for 1 second. If the server's local clock deviates from
-      /// the local one by more than one second, this request may be completely ignored.)
+      /// @param ret stores the result.
+      /// @param precise decides whether the value is written in a bit-precise (and potentially not human-readabl)
+      ///    way. It is passed to CRcValueState::ToStr().
+      /// @param tabular inserts spaces and aligns fields to make a table if multiple such strings are printed after each other.
+      /// @param relativeTimeThreshold allows to pass relative times in some cases.
+      ///     If 't0' or 't1' are defined, in the future, and in less than 'relativeTimeThreshold' milliseconds
+      ///     from now, the time settings are output relative to the current time. This is useful if the
+      ///     request string is to be transmitted to another computer with a slightly different local time.
+      ///     (Example: A door opener request is timed for 1 second. If the server's local clock deviates from
+      ///     the local one by more than one second, this request may be completely ignored.)
+      /// @param skipAttrs allows to selectively skip some attributs from the output. The parameter is a string
+      ///     with the initial characters of the attributes to be skipped.
       ///
-    const char *ToStr (bool beautiful = false, TTicks relativeTimeThreshold = 0);
+    const char *ToStr (bool precise = false, bool tabular = false, TTicks relativeTimeThreshold = 0, const char *skipAttrs = CString::emptyStr);
       ///< @brief (TTS) Return a string in the format accepted by SetFromStr().
 
     /// @}

@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -71,7 +71,7 @@ $(function() {
 <div class="textblock"><p>Message box widget. </p>
 <p>See <a class="el" href="classCModalWidget.html">CModalWidget</a> for options to run the message box. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00629">629</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00674">674</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -87,15 +87,15 @@ Inheritance diagram for CMessageBox:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Setup ...</div></td></tr>
-<tr class="memitem:af44c87e4da33384ad1f187fa608e39f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCMessageBox.html#af44c87e4da33384ad1f187fa608e39f4">Setup</a> (const char *title, int contentW, int contentH, int _buttons, <a class="el" href="classCButton.html">CButton</a> **_buttonArr, TColor color=MSGBOX_COLOR)</td></tr>
-<tr class="memdesc:af44c87e4da33384ad1f187fa608e39f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The most flexible way.  <a href="#af44c87e4da33384ad1f187fa608e39f4">More...</a><br /></td></tr>
-<tr class="separator:af44c87e4da33384ad1f187fa608e39f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5dfb23217d653d36110c3d0880316f11"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCMessageBox.html#a5dfb23217d653d36110c3d0880316f11">Setup</a> (const char *title, int contentW, int contentH, int _buttons, <a class="el" href="classCButton.html">CButton</a> **_buttonArr, TColor color=<a class="el" href="group__ui__widgets__messagebox.html#ga79605e87b8cfea22aaf39811c43a4885">MSGBOX_COLOR</a>, int titleHAlign=0)</td></tr>
+<tr class="memdesc:a5dfb23217d653d36110c3d0880316f11"><td class="mdescLeft">&#160;</td><td class="mdescRight">The most flexible way.  <a href="#a5dfb23217d653d36110c3d0880316f11">More...</a><br /></td></tr>
+<tr class="separator:a5dfb23217d653d36110c3d0880316f11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4beb5ce4548e5ea2994d18e319764253"><td class="memItemLeft" align="right" valign="top"><a id="a4beb5ce4548e5ea2994d18e319764253"></a>
 <a class="el" href="classCButton.html">CButton</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCMessageBox.html#a4beb5ce4548e5ea2994d18e319764253">GetStdButton</a> (<a class="el" href="group__ui__widgets__messagebox.html#gac3cc67a3fe1fabe783f38edcf34af00a">EMessageButtonId</a> buttonId)</td></tr>
 <tr class="memdesc:a4beb5ce4548e5ea2994d18e319764253"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize and return a standard button to be used by the previous method. <br /></td></tr>
 <tr class="separator:a4beb5ce4548e5ea2994d18e319764253"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aec8b5f4d64b47ad3ee494523c549968e"><td class="memItemLeft" align="right" valign="top"><a id="aec8b5f4d64b47ad3ee494523c549968e"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCMessageBox.html#aec8b5f4d64b47ad3ee494523c549968e">Setup</a> (const char *title, int contentW, int contentH, int buttonMask, TColor color=MSGBOX_COLOR)</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCMessageBox.html#aec8b5f4d64b47ad3ee494523c549968e">Setup</a> (const char *title, int contentW, int contentH, int buttonMask, TColor color=<a class="el" href="group__ui__widgets__messagebox.html#ga79605e87b8cfea22aaf39811c43a4885">MSGBOX_COLOR</a>)</td></tr>
 <tr class="memdesc:aec8b5f4d64b47ad3ee494523c549968e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The easier way, if only standard buttons are used. 'buttonMask' is a bit-wise "or" of the message mask constants ('mbm...'). <br /></td></tr>
 <tr class="separator:aec8b5f4d64b47ad3ee494523c549968e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af84b0d859f4da505c4cb52fc02438a93"><td class="memItemLeft" align="right" valign="top"><a id="af84b0d859f4da505c4cb52fc02438a93"></a>
@@ -218,8 +218,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:aea96f68d24f882c7469b3e6e0d10ae80 inherit pro_methods_classCWidget"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="af44c87e4da33384ad1f187fa608e39f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af44c87e4da33384ad1f187fa608e39f4">&#9670;&nbsp;</a></span>Setup()</h2>
+<a id="a5dfb23217d653d36110c3d0880316f11"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5dfb23217d653d36110c3d0880316f11">&#9670;&nbsp;</a></span>Setup()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -258,7 +258,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">TColor&#160;</td>
-          <td class="paramname"><em>color</em> = <code>MSGBOX_COLOR</code>&#160;</td>
+          <td class="paramname"><em>color</em> = <code><a class="el" href="group__ui__widgets__messagebox.html#ga79605e87b8cfea22aaf39811c43a4885">MSGBOX_COLOR</a></code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>titleHAlign</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

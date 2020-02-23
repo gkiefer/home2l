@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-0-g010f* (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -107,8 +107,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa908c2a9ba44e6e87d9c6935aa2e3a36"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1210395da1628f971cdde01c995362cb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CRcRequest.html#a1210395da1628f971cdde01c995362cb">SetHysteresis</a> (self, _hysteresis)</td></tr>
 <tr class="separator:a1210395da1628f971cdde01c995362cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a99c8ba46b40caeb8c53c2ead53c84f51"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CRcRequest.html#a99c8ba46b40caeb8c53c2ead53c84f51">Convert</a> (self, rc)</td></tr>
-<tr class="separator:a99c8ba46b40caeb8c53c2ead53c84f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab25946581c2c3d75e4d2e1a4f9990d1a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CRcRequest.html#ab25946581c2c3d75e4d2e1a4f9990d1a">Convert</a> (self, rc, warn=True)</td></tr>
+<tr class="separator:ab25946581c2c3d75e4d2e1a4f9990d1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39a7a56d4b7bc94436ca27c8b1d432fc"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CRcRequest.html#a39a7a56d4b7bc94436ca27c8b1d432fc">IsCompatible</a> (self)</td></tr>
 <tr class="separator:a39a7a56d4b7bc94436ca27c8b1d432fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b9ed409b951831e8a134adf721be399"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CRcRequest.html#a6b9ed409b951831e8a134adf721be399">Gid</a> (self)</td></tr>
@@ -183,7 +183,8 @@ Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis)
+<pre class="fragment">Set(CRcRequest self, CRcRequest req)
+Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis)
 Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat)
 Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1)
 Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0)
@@ -395,8 +396,8 @@ SetValue(CRcRequest self, TTicks _value)
 <pre class="fragment">SetHysteresis(CRcRequest self, TTicks _hysteresis)</pre> 
 </div>
 </div>
-<a id="a99c8ba46b40caeb8c53c2ead53c84f51"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a99c8ba46b40caeb8c53c2ead53c84f51">&#9670;&nbsp;</a></span>Convert()</h2>
+<a id="ab25946581c2c3d75e4d2e1a4f9990d1a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab25946581c2c3d75e4d2e1a4f9990d1a">&#9670;&nbsp;</a></span>Convert()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -411,7 +412,13 @@ SetValue(CRcRequest self, TTicks _value)
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rc</em>&#160;</td>
+          <td class="paramname"><em>rc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>warn</em> = <code>True</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -420,7 +427,9 @@ SetValue(CRcRequest self, TTicks _value)
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Convert(CRcRequest self, CResource rc)</pre> 
+<pre class="fragment">Convert(CRcRequest self, CResource rc, bool warn=True)
+Convert(CRcRequest self, CResource rc)
+</pre> 
 </div>
 </div>
 <a id="a39a7a56d4b7bc94436ca27c8b1d432fc"></a>
@@ -684,11 +693,15 @@ SetValue(CRcRequest self, TTicks _value)
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">ToStr(CRcRequest self, CString * ret, bool beautiful=False, TTicks relativeTimeThreshold=0) -&gt; char const
-ToStr(CRcRequest self, CString * ret, bool beautiful=False) -&gt; char const
+<pre class="fragment">ToStr(CRcRequest self, CString * ret, bool precise=True, bool tabular=False, TTicks relativeTimeThreshold=0, char const * skipAttrs) -&gt; char const
+ToStr(CRcRequest self, CString * ret, bool precise=True, bool tabular=False, TTicks relativeTimeThreshold=0) -&gt; char const
+ToStr(CRcRequest self, CString * ret, bool precise=True, bool tabular=False) -&gt; char const
+ToStr(CRcRequest self, CString * ret, bool precise=True) -&gt; char const
 ToStr(CRcRequest self, CString * ret) -&gt; char const
-ToStr(CRcRequest self, bool beautiful=False, TTicks relativeTimeThreshold=0) -&gt; char const
-ToStr(CRcRequest self, bool beautiful=False) -&gt; char const
+ToStr(CRcRequest self, bool precise=False, bool tabular=False, TTicks relativeTimeThreshold=0, char const * skipAttrs) -&gt; char const
+ToStr(CRcRequest self, bool precise=False, bool tabular=False, TTicks relativeTimeThreshold=0) -&gt; char const
+ToStr(CRcRequest self, bool precise=False, bool tabular=False) -&gt; char const
+ToStr(CRcRequest self, bool precise=False) -&gt; char const
 ToStr(CRcRequest self) -&gt; char const *
 </pre> 
 </div>

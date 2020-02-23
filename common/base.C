@@ -139,22 +139,19 @@ bool MakeDir (const char *relOrAbsPath, bool setHome2lGroup) {
 
   EnvGetHome2lRootPath (&s, relOrAbsPath);
 
-  // Try to resolve a symbolic link ...
+  // Try to resolve a symbolic links in the path ...
   // a) ... using 'readlink', which works if a symbolic link is pointing nowhere yet (e.g. to a tmpfs), 'realpath' would fail on that.
   len = readlink (s.Get (), link, sizeof (link));
   if (len >= 0 && len < (int) sizeof (link)) {
     link[len] = '\0';
-    INFOF (("### link: %s -> %s", s.Get (), link));
+    DEBUGF (1, ("Resolving link: %s -> %s", s.Get (), link));
     s.SetC (link);
   }
   // b) ... using 'realpath', which is probably more flexible, but fails on a symbolic link pointing to a not-yet created directory.
   else {
     realPath = realpath (s.Get (), NULL);
     if (realPath) s.SetO (realPath);
-    else {
-      WARNINGF (("Failed to resolve path '%s': %s", s.Get (), strerror (errno)));
-      return false;
-    }
+    else DEBUGF (1, ("No resolvable symbolic links on the path '%s': %s", s.Get (), strerror (errno)));
   }
 
   // Go ahead ...

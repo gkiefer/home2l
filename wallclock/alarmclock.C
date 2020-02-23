@@ -578,15 +578,15 @@ class CScreenSetAlarmClock: public CScreen {
 };
 
 
-BUTTON_TRAMPOLINE(CbOnButtonPushed, CScreenSetAlarmClock, OnButtonPushed)
-SLIDER_TRAMPOLINE(CbOnSliderValueChanged, CScreenSetAlarmClock, OnSliderValueChanged)
+static BUTTON_TRAMPOLINE(CbOnButtonPushed, CScreenSetAlarmClock, OnButtonPushed)
+static SLIDER_TRAMPOLINE(CbOnSliderValueChanged, CScreenSetAlarmClock, OnSliderValueChanged)
 
 
 void CScreenSetAlarmClock::UpdateVisibility () {
   int n;
 
   // Set main button contents ...
-  btnEnable.SetLabel (IconGet ("ic-alarm-48"), enabled ? _("Enabled") : _("Disabled"));
+  btnEnable.SetLabel (WHITE, "ic-alarm-48", enabled ? _("Enabled") : _("Disabled"));
   btnEnable.SetColor (enabled ? COL_AC_MAIN : DARK_GREY);
 
   // Add/delete widgets as appropriate ...

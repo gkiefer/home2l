@@ -13,6 +13,7 @@ var searchData=
   ['info',['INFO',['../group__common__logging.html#gab00aa1228ee77e56e9f25b3ab45bdf7e',1,'base.H']]],
   ['infof',['INFOF',['../group__common__logging.html#gaf5a8f45a48bac17949861468fbd700d1',1,'base.H']]],
   ['init',['INIT',['../group__brownies__firmware.html#ga412fb64e5e6b739af8c7dde4a2c06157',1,'base.h']]],
+  ['inputmodified',['InputModified',['../classCInputLine.html#a0570d7e13b7908b1fe91a400c6b59dc3',1,'CInputLine::InputModified()'],['../classCInputScreen.html#acdfeea9579fb82f13275b0dc46457afe',1,'CInputScreen::InputModified()']]],
   ['instid',['InstId',['../classCRcEventProcessor.html#af50c7ef9d5a34e47d32e6408f2e40c3a',1,'CRcEventProcessor::InstId()'],['../classCRcEventTimer.html#ac178eb332326f2cfc195ec2585d69ccf',1,'CRcEventTimer::InstId()'],['../classCRcSubscriber.html#a25356f5e6ec305f29cbb07af3c9cb4f3',1,'CRcSubscriber::InstId()'],['../classCRcEventDriver.html#a08492f9ca7aefa97661e8b473ec5e70f',1,'CRcEventDriver::InstId()']]],
   ['interface_2eh',['interface.h',['../interface_8h.html',1,'']]],
   ['interrupt',['Interrupt',['../classCRcEventProcessor.html#af8f0dc10d3d8548324baba4240552dec',1,'CRcEventProcessor']]],

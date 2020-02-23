@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -158,10 +158,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> CB_NAME (<span class="keyword">class</span> <a class="code" href="classCButton.html">CButton</a> *button, <span class="keywordtype">bool</span> longPush, <span class="keywordtype">void</span> *data) {  \</div><div class="line">    ((CLASS_NAME *) data)-&gt;METHOD_NAME (button, longPush);                  \</div><div class="line">  }</div><div class="ttc" id="classCButton_html"><div class="ttname"><a href="classCButton.html">CButton</a></div><div class="ttdoc">Push-button widget. </div><div class="ttdef"><b>Definition:</b> <a href="ui__widgets_8H_source.html#l00210">ui_widgets.H:210</a></div></div>
+<b>Value:</b><div class="fragment"><div class="line"><span class="keywordtype">void</span> CB_NAME (<span class="keyword">class</span> <a class="code" href="classCButton.html">CButton</a> *button, <span class="keywordtype">bool</span> longPush, <span class="keywordtype">void</span> *data) {     \</div><div class="line">    ((CLASS_NAME *) data)-&gt;METHOD_NAME (button, longPush);              \</div><div class="line">  }</div><div class="ttc" id="classCButton_html"><div class="ttname"><a href="classCButton.html">CButton</a></div><div class="ttdoc">Push-button widget. </div><div class="ttdef"><b>Definition:</b> <a href="ui__widgets_8H_source.html#l00214">ui_widgets.H:214</a></div></div>
 </div><!-- fragment -->
 <p>Macro to create a trampoline from <a class="el" href="classCButton.html" title="Push-button widget. ">CButton</a> to another class. </p>
 <p>The class must define a method: </p><pre class="fragment">void CLASS_NAME::METHOD_NAME (CButton *button, bool longPush)
+</pre><p>If the method is protected, the following line may be added to the class: </p><pre class="fragment">friend CB_NAME (CButton *, bool, void *);
 </pre><p>To the button, the trampoline must be passed by a call like: </p><pre class="fragment">CButton::SetCbPushed (CB_NAME, &lt;class object pointer&gt;)</pre> 
 <p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00181">181</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 

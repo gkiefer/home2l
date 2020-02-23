@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -78,20 +78,20 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a6798d64dd9f7de09aff3cad500ef20d7"><td class="memItemLeft" align="right" valign="top"><a id="a6798d64dd9f7de09aff3cad500ef20d7"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCString.html#a6798d64dd9f7de09aff3cad500ef20d7">CString</a> (<a class="el" href="classCString.html">CString</a> &amp;str)</td></tr>
-<tr class="memdesc:a6798d64dd9f7de09aff3cad500ef20d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. <br /></td></tr>
-<tr class="separator:a6798d64dd9f7de09aff3cad500ef20d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4866844f29a912ee7eb7afcb641ffb8f"><td class="memItemLeft" align="right" valign="top"><a id="a4866844f29a912ee7eb7afcb641ffb8f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCString.html#a4866844f29a912ee7eb7afcb641ffb8f">CString</a> (const <a class="el" href="classCString.html">CString</a> &amp;str)</td></tr>
+<tr class="memdesc:a4866844f29a912ee7eb7afcb641ffb8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. <br /></td></tr>
+<tr class="separator:a4866844f29a912ee7eb7afcb641ffb8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Initialization...</div></td></tr>
 <tr class="memitem:a8576722a26c9eaeff83b5a6e8c268a50"><td class="memItemLeft" align="right" valign="top"><a id="a8576722a26c9eaeff83b5a6e8c268a50"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>Clear</b> ()</td></tr>
 <tr class="separator:a8576722a26c9eaeff83b5a6e8c268a50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a080ef15da9e7860f3dc184ed8fe96586"><td class="memItemLeft" align="right" valign="top"><a id="a080ef15da9e7860f3dc184ed8fe96586"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (<a class="el" href="classCString.html">CString</a> *str)</td></tr>
-<tr class="separator:a080ef15da9e7860f3dc184ed8fe96586"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2270caf48f6087dc01a2cb6785caf542"><td class="memItemLeft" align="right" valign="top"><a id="a2270caf48f6087dc01a2cb6785caf542"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (<a class="el" href="classCString.html">CString</a> *str, int n0, int dn=INT_MAX)</td></tr>
-<tr class="separator:a2270caf48f6087dc01a2cb6785caf542"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a754025cdbc8bdffe04fd9034c04cffbe"><td class="memItemLeft" align="right" valign="top"><a id="a754025cdbc8bdffe04fd9034c04cffbe"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (const <a class="el" href="classCString.html">CString</a> *str)</td></tr>
+<tr class="separator:a754025cdbc8bdffe04fd9034c04cffbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6acefb3a08209f88fe4bcea95f34e6e3"><td class="memItemLeft" align="right" valign="top"><a id="a6acefb3a08209f88fe4bcea95f34e6e3"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (const <a class="el" href="classCString.html">CString</a> *str, int n0, int dn=INT_MAX)</td></tr>
+<tr class="separator:a6acefb3a08209f88fe4bcea95f34e6e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab68926267ea57e18fe54b75ae3fafc75"><td class="memItemLeft" align="right" valign="top"><a id="ab68926267ea57e18fe54b75ae3fafc75"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCString.html#ab68926267ea57e18fe54b75ae3fafc75">Set</a> (const char *str, int maxLen=INT_MAX)</td></tr>
 <tr class="memdesc:ab68926267ea57e18fe54b75ae3fafc75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set (substring) from 'str'. <br /></td></tr>
@@ -126,10 +126,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:a56f9cc9c7c6dea3be93505c6d60ffe25"><td class="mdescLeft">&#160;</td><td class="mdescRight">'this' will be ISO-8859-encoded string, the source is expected to be (normal) UTF-8 <br /></td></tr>
 <tr class="separator:a56f9cc9c7c6dea3be93505c6d60ffe25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Read access ...</div></td></tr>
-<tr class="memitem:a5036610a9a3439f6bdb397ab38800f3c"><td class="memItemLeft" align="right" valign="top"><a id="a5036610a9a3439f6bdb397ab38800f3c"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCString.html#a5036610a9a3439f6bdb397ab38800f3c">Get</a> ()</td></tr>
-<tr class="memdesc:a5036610a9a3439f6bdb397ab38800f3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer. <br /></td></tr>
-<tr class="separator:a5036610a9a3439f6bdb397ab38800f3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5cd16eafe48041e5af94aea053ac479"><td class="memItemLeft" align="right" valign="top"><a id="ad5cd16eafe48041e5af94aea053ac479"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCString.html#ad5cd16eafe48041e5af94aea053ac479">Get</a> () const</td></tr>
+<tr class="memdesc:ad5cd16eafe48041e5af94aea053ac479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer. <br /></td></tr>
+<tr class="separator:ad5cd16eafe48041e5af94aea053ac479"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab381a7edcdfb14ac607398f12ccb0e1e"><td class="memItemLeft" align="right" valign="top"><a id="ab381a7edcdfb14ac607398f12ccb0e1e"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCString.html#ab381a7edcdfb14ac607398f12ccb0e1e">Len</a> ()</td></tr>
 <tr class="memdesc:ab381a7edcdfb14ac607398f12ccb0e1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the length. <br /></td></tr>
@@ -249,9 +249,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a9fd32c87346d4cb3a25d850f74539fec"><td class="memItemLeft" align="right" valign="top"><a id="a9fd32c87346d4cb3a25d850f74539fec"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator const char *</b> ()</td></tr>
 <tr class="separator:a9fd32c87346d4cb3a25d850f74539fec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7d7e8bc92e8bfc28bc853232caa7ed8"><td class="memItemLeft" align="right" valign="top"><a id="ac7d7e8bc92e8bfc28bc853232caa7ed8"></a>
-<a class="el" href="classCString.html">CString</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classCString.html">CString</a> &amp;str)</td></tr>
-<tr class="separator:ac7d7e8bc92e8bfc28bc853232caa7ed8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7648a46b28bc76cfb7d62ef0051bd5a8"><td class="memItemLeft" align="right" valign="top"><a id="a7648a46b28bc76cfb7d62ef0051bd5a8"></a>
+<a class="el" href="classCString.html">CString</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classCString.html">CString</a> &amp;str)</td></tr>
+<tr class="separator:a7648a46b28bc76cfb7d62ef0051bd5a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d1c227c5aad3c54ac47502ec9754110"><td class="memItemLeft" align="right" valign="top"><a id="a1d1c227c5aad3c54ac47502ec9754110"></a>
 <a class="el" href="classCString.html">CString</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const char *str)</td></tr>
 <tr class="separator:a1d1c227c5aad3c54ac47502ec9754110"><td class="memSeparator" colspan="2">&#160;</td></tr>

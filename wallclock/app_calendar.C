@@ -577,7 +577,7 @@ class CEventsBox: public CListbox {
 };
 
 
-class CScreenCalEdit: public CScreen {
+class CScreenCalEdit: public CInputScreen {
   public:
     CScreenCalEdit () { fileNo = 0; }
     ~CScreenCalEdit () {}
@@ -588,17 +588,21 @@ class CScreenCalEdit: public CScreen {
   protected:
     friend class CScreenCalMain;
 
-    CInputLine wdgInput;
-    CButton btnBack, btnTrash, btnSplitRepeated, btnCalNo, btnUndo, btnRedo, btnCut, btnCopy, btnPaste, btnDatePrev, btnDateNext, btnOk;
+    CButton btnTrash, btnSplitRepeated, btnCalNo, btnDatePrev, btnDateNext;
 
     CCalViewData *viewData;
     int origFileNo, origLineNo, fileNo, lineNo;
     TDate date;
     CString extraLines[2];   // extra lines to be added to the reminders file (e.g. when splitting repeated reminders)
 
-    virtual bool HandleEvent (SDL_Event *ev);
+    // Helpers ...
+    void CommitOrDelete (bool commitNoDelete);
 
-    void Commit (bool deleteCurrent = false);
+    // Callbacks ...
+    virtual void Commit () { CommitOrDelete (true); }
+      ///< Called on push of the "OK" button. May call @ref Return() on success or not to continue editing.
+    virtual void OnUserButtonPushed (CButton *btn, bool longPush);
+      ///< Called on pushing any user button.
 };
 
 
@@ -654,7 +658,10 @@ static CScreenCalEdit *scrCalEdit = NULL;
 void CEventsBox::Setup (CCalViewData *_viewData) {
   viewData = _viewData;
   SetMode (lmActivate, 48, 1);
-  SetFormat (FontGet (fntNormal, 16), COL_EVGRID, COL_EVTEXT, COL_EVBACK, COL_EVSELECTED, COL_EVHEAD);
+  SetFormat (FontGet (fntNormal, 16), -1, COL_EVGRID,
+              COL_EVTEXT, COL_EVBACK,
+              COL_EVTEXT, COL_EVSELECTED,
+              COL_EVTEXT, COL_EVHEAD);
   CCanvas::SetColors (BLACK, ToColor (0, 0, 0, 128));
   fontBold = fontHead = FontGet (fntBold, 16);
 }
@@ -671,8 +678,8 @@ SDL_Surface *CEventsBox::RenderItem (CListboxItem *item, int idx, SDL_Surface *s
   int n;
 
   if (!surf) surf = CreateSurface (area.w, itemHeight);
-  backColor = item->isSpecial ? colSpecial : colBack;
-  if (item->IsSelected () || (item->isSpecial && calEntry->GetDate () == viewData->GetRefDate ())) backColor = colSelected;
+  backColor = item->isSpecial ? colBackSpecial : colBack;
+  if (item->IsSelected () || (item->isSpecial && calEntry->GetDate () == viewData->GetRefDate ())) backColor = colBackSelected;
   SDL_FillRect (surf, NULL, ToUint32 (backColor));
 
   d = calEntry->GetDate ();
@@ -722,11 +729,9 @@ SDL_Surface *CEventsBox::RenderItem (CListboxItem *item, int idx, SDL_Surface *s
 // ***************** CScreenCalEdit ************************
 
 
-#define INPUT_HEIGHT 96
-
-
 bool CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
-  SDL_Rect *layout;
+  static const int userBtnWidth [] = { -1, -2, -1, -1, -1 };
+  CButton *userBtnList [] = { &btnTrash, &btnCalNo, &btnSplitRepeated, &btnDatePrev, &btnDateNext };
   CCalFile *calFile;
   int n;
 
@@ -734,150 +739,88 @@ bool CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
   viewData = _viewData;
   origFileNo = _fileNo;
   origLineNo = lineNo = _lineNo;
-  if (origFileNo >= 0) fileNo = origFileNo;    // else: take last file number
+  if (origFileNo >= 0) fileNo = origFileNo;    // take last file number unless '_fileNo' is >= 0
   date = _viewData->GetRefDate ();
 
   // Load file...
   if (!viewData->LoadFile (fileNo)) return false;
 
-  // Input line...
-  SetKeyboard (true);   // enable on-screen keyboard
-  wdgInput.Setup ();
-  wdgInput.SetArea (Rect (0, 0, UI_RES_X, INPUT_HEIGHT));
-  if (fileNo >= 0 && lineNo >= 0) wdgInput.SetInput (viewData->GetFile (fileNo)->GetLine (lineNo));
-  AddWidget (&wdgInput);
-
-  // Buttons...
-  layout = LayoutRow (Rect (0, INPUT_HEIGHT + 32, UI_RES_X, UI_BUTTONS_HEIGHT), UI_BUTTONS_SPACE,
-                      -1, -1, -1, -2, -1, -1, -1, -1, -1, -1, -1, -1, 0);
-  n = 0;
-  btnBack.Set (layout[n++], COL_BUTTONS, IconGet ("ic-back-48"));
-  btnBack.SetHotkey (SDLK_ESCAPE);
-  AddWidget (&btnBack);
-
-  btnTrash.Set (layout[n++], COL_BUTTONS, IconGet ("ic-delete_forever-48"));
-  AddWidget (&btnTrash);
-
-  btnSplitRepeated.Set (layout[n++], DARK_GREY /* COL_BUTTONS */, IconGet ("ic-repeat_one-48", GREY));
-  AddWidget (&btnSplitRepeated);
-
-  calFile = viewData->GetFile (fileNo);
-  btnCalNo.Set (layout[n++], ColorScale (calFile->GetColor (), 0xc0), calFile->GetName ());
-  AddWidget (&btnCalNo);
-
-  btnUndo.Set (layout[n++], COL_BUTTONS, IconGet ("ic-undo-48"));
-  AddWidget (&btnUndo);
-
-  btnRedo.Set (layout[n++], COL_BUTTONS, IconGet ("ic-redo-48"));
-  AddWidget (&btnRedo);
-
-  btnCut.Set (layout[n++], COL_BUTTONS, IconGet ("ic-cut-48"));
-  AddWidget (&btnCut);
-
-  btnCopy.Set (layout[n++], COL_BUTTONS, IconGet ("ic-copy-48"));
-  AddWidget (&btnCopy);
-
-  btnPaste.Set (layout[n++], COL_BUTTONS, IconGet ("ic-paste-48"));
-  AddWidget (&btnPaste);
-
-  btnDatePrev.Set (layout[n++], DARK_GREY /* COL_BUTTONS */, "-", GREY);   // TBD
-  AddWidget (&btnDatePrev);
-
-  btnDateNext.Set (layout[n++], DARK_GREY /* COL_BUTTONS */, "+", GREY);   // TBD
-  AddWidget (&btnDateNext);
-
-  btnOk.Set (layout[n++], COL_BUTTONS, "OK");
-  btnOk.SetHotkey (SDLK_RETURN);
-  AddWidget (&btnOk);
-
-  // Output ...
+  // Output buffer ...
   for (n = 0; n < (int) (sizeof (extraLines) / sizeof (CString)); n++) extraLines[n].Clear ();
 
-  // Done...
+  // Buttons & layout ...
+  CInputScreen::Setup (
+      (fileNo >= 0 && lineNo >= 0) ? viewData->GetFile (fileNo)->GetLine (lineNo) : NULL,
+      COL_BUTTONS, sizeof (userBtnList) / sizeof (userBtnList[0]), userBtnList, userBtnWidth
+    );
+
+  btnTrash.SetLabel (WHITE, "ic-delete_forever-48");
+
+  //~ btnSplitRepeated.SetColor (DARK_GREY);
+  btnSplitRepeated.SetLabel (GREY, "ic-repeat_one-48");   // not implemented yet (TBD)
+
+  calFile = viewData->GetFile (fileNo);
+  btnCalNo.SetColor (ColorScale (calFile->GetColor (), 0xc0));
+  btnCalNo.SetLabel (calFile->GetName ());
+
+  //~ btnDatePrev.SetColor (DARK_GREY);
+  btnDatePrev.SetLabel ("-", GREY);   // not implemented yet (TBD)
+
+  //~ btnDateNext.SetColor (DARK_GREY);
+  btnDateNext.SetLabel ("+", GREY);   // not implemented yet (TBD)
+
+  // Done ...
   return true;
 }
 
 
-bool CScreenCalEdit::HandleEvent (SDL_Event *ev) {
-  bool ret;
+void CScreenCalEdit::OnUserButtonPushed (CButton *btn, bool longPush) {
 
-  if (CScreen::HandleEvent (ev)) return true;
-  ret = false;
-  switch (ev->type) {
-    case SDL_USEREVENT:
-      ret = true;
-      if (ev->user.code == evButtonPushed) {
-
-        // Button "Back"...
-        if (ev->user.data1 == &btnBack) {
-          if (!wdgInput.Modified ()) Return ();
-          else if (RunSureBox (_("Discard changes?")) == 1) Return ();
-        }
-
-        // Buttons "Cut", "Copy" and "Paste"...
-        else if (ev->user.data1 == &btnUndo) wdgInput.Undo ();
-        else if (ev->user.data1 == &btnRedo) wdgInput.Redo ();
-        else if (ev->user.data1 == &btnCut) wdgInput.ClipboardCut ();
-        else if (ev->user.data1 == &btnCopy) wdgInput.ClipboardCopy ();
-        else if (ev->user.data1 == &btnPaste) wdgInput.ClipboardPaste ();
-
-        // Button 'btnTrash'...
-        else if (ev->user.data1 == &btnTrash) {
-          if (RunSureBox (_("Really remove the current entry?")) == 1)
-            Commit (true);
-        }
-
-        // Button "Select calendar"....
-        else if (ev->user.data1 == &btnCalNo) {
-          CMenu menu;
-          CCalFile *calFile;
-          SDL_Rect r;
-          int n, cals, calArr[MAX_CALS];
-
-          // Turn off keyboard to generate space for the menu...
-          SetKeyboard (false);
-
-          // Setup menu...
-          cals = 0;
-          for (n = 0; n < MAX_CALS; n++) if (viewData->GetFile (n)->IsDefined ()) calArr[cals++] = n;
-          r.x = btnCalNo.GetArea ()->x;
-          r.y = btnCalNo.GetArea ()->y + btnCalNo.GetArea ()->h;
-          r.w = UI_RES_X - r.x;
-          r.h = UI_RES_Y - r.y;
-          menu.Setup (r, -1, -1, COL_BUTTONS);
-          menu.SetItems (cals);
-          for (n = 0; n < cals; n++) menu.SetItem (n, viewData->GetFile (calArr[n])->GetName ());
-
-          // Run menu...
-          n = menu.Run (this);
-
-          // Turn on keyboard again...
-          SetKeyboard (true);
-
-          // Evaluate selection...
-          if (n >= 0) {
-            fileNo = calArr[n];
-            calFile = viewData->GetFile (fileNo);
-            btnCalNo.SetColor (ColorScale (calFile->GetColor (), 0xc0));
-            btnCalNo.SetLabel (calFile->GetName ());
-          }
-        }
-
-        // Button "OK" ...
-        else if (ev->user.data1 == &btnOk) {
-          Commit ();
-        }
-
-        // TBD: else ...
-      }
-      else ret = false;
-      break;
+  // Button 'btnTrash'...
+  if (btn == &btnTrash) {
+    if (RunSureBox (_("Really remove the current entry?")) == 1)
+      CommitOrDelete (false);
   }
-  return ret;
+
+  // Button "Select calendar"....
+  else if (btn == &btnCalNo) {
+    CMenu menu;
+    CCalFile *calFile;
+    SDL_Rect r;
+    int n, cals, calArr[MAX_CALS];
+
+    // Turn off keyboard to generate space for the menu...
+    SetKeyboard (false);
+
+    // Setup menu...
+    cals = 0;
+    for (n = 0; n < MAX_CALS; n++) if (viewData->GetFile (n)->IsDefined ()) calArr[cals++] = n;
+    r.x = btnCalNo.GetArea ()->x;
+    r.y = btnCalNo.GetArea ()->y + btnCalNo.GetArea ()->h;
+    r.w = UI_RES_X - r.x;
+    r.h = UI_RES_Y - r.y;
+    menu.Setup (r, -1, -1, COL_BUTTONS);
+    menu.SetItems (cals);
+    for (n = 0; n < cals; n++) menu.SetItem (n, viewData->GetFile (calArr[n])->GetName ());
+
+    // Run menu...
+    n = menu.Run (this);
+
+    // Turn on keyboard again...
+    SetKeyboard (true);
+
+    // Evaluate selection...
+    if (n >= 0) {
+      fileNo = calArr[n];
+      calFile = viewData->GetFile (fileNo);
+      btnCalNo.SetColor (ColorScale (calFile->GetColor (), 0xc0));
+      btnCalNo.SetLabel (calFile->GetName ());
+    }
+  }
 }
 
 
-void CScreenCalEdit::Commit (bool deleteCurrent) {
+void CScreenCalEdit::CommitOrDelete (bool commitNoDelete) {
   CString s, patch, input;
   CCalFile *calFile;
   int n, oldLines, newLines;
@@ -886,7 +829,7 @@ void CScreenCalEdit::Commit (bool deleteCurrent) {
   if (!viewData->LoadFile (fileNo)) return;
 
   // Patch for new file...
-  if (!deleteCurrent) wdgInput.GetResult (&input);
+  if (commitNoDelete) wdgInput.GetInput (&input);
   //   ... count lines to replace...
   oldLines = (fileNo == origFileNo && origLineNo >= 0) ? 1 : 0;
   //   ... count new lines ...
@@ -1269,10 +1212,10 @@ void CScreenCalMain::EventListUpdate () {
   lastDate = 0;
   for (ce = viewData.GetFirstCalEntry (); ce; ce = ce->GetNext ()) {
     if (ce->GetDate () != lastDate) {
-      wdgEvents.SetItem (idx++, NULL, NULL, true, ce);    // add heading item
+      wdgEvents.SetItem (idx++, NULL, (const char *) NULL, true, ce);    // add heading item
       lastDate = ce->GetDate ();
     }
-    wdgEvents.SetItem (idx++, NULL, NULL, false, ce);     // add as normal item
+    wdgEvents.SetItem (idx++, NULL, (const char *) NULL, false, ce);     // add as normal item
     //~ INFOF (("### idx++ = %3i, %s %s", idx, TicksToString (DateTimeToTicks (ce->GetDate (), ce->GetTime ())), ce->GetMessage ()));
   }
 }
@@ -1461,6 +1404,8 @@ void CScreenCalMain::RunEditScreen (int _fileNo, int _lineNo) {
 
   SystemActiveLock ("_calendar");
   if (!scrCalEdit) scrCalEdit = new CScreenCalEdit ();
+
+  // Load file...
   if (scrCalEdit->Setup (&viewData, _fileNo, _lineNo)) {
     if (_lineNo < 0) {
       d = GetRefDate ();

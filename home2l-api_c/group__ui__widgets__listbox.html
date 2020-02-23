@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -93,6 +93,10 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:ga687b6613999e121b9b3c4517b6e84940"><td class="memItemLeft" align="right" valign="top"><a id="ga687b6613999e121b9b3c4517b6e84940"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ui__widgets__listbox.html#ga687b6613999e121b9b3c4517b6e84940">LISTBOX_ITEM_BORDER</a>&#160;&#160;&#160;4</td></tr>
+<tr class="memdesc:ga687b6613999e121b9b3c4517b6e84940"><td class="mdescLeft">&#160;</td><td class="mdescRight">Border spacing around labels in pixels. <br /></td></tr>
+<tr class="separator:ga687b6613999e121b9b3c4517b6e84940"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadaaa8b28c9db45ac9a3a2f2094938439"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ui__widgets__listbox.html#gadaaa8b28c9db45ac9a3a2f2094938439">LISTBOX_TRAMPOLINE</a>(CB_NAME,  CLASS_NAME,  METHOD_NAME)</td></tr>
 <tr class="memdesc:gadaaa8b28c9db45ac9a3a2f2094938439"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to create a trampoline to another class.  <a href="#gadaaa8b28c9db45ac9a3a2f2094938439">More...</a><br /></td></tr>
 <tr class="separator:gadaaa8b28c9db45ac9a3a2f2094938439"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,12 +150,13 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> CB_NAME (<span class="keyword">class</span> <a class="code" href="classCListbox.html">CListbox</a> *listbox, <span class="keywordtype">int</span> idx, <span class="keywordtype">bool</span> longPush, <span class="keywordtype">void</span> *data) {   \</div><div class="line">    ((CLASS_NAME *) data)-&gt;METHOD_NAME (listbox, idx, longPush);                        \</div><div class="line">  }</div><div class="ttc" id="classCListbox_html"><div class="ttname"><a href="classCListbox.html">CListbox</a></div><div class="ttdoc">Listbox widget. </div><div class="ttdef"><b>Definition:</b> <a href="ui__widgets_8H_source.html#l00395">ui_widgets.H:395</a></div></div>
+<b>Value:</b><div class="fragment"><div class="line"><span class="keywordtype">void</span> CB_NAME (<span class="keyword">class</span> <a class="code" href="classCListbox.html">CListbox</a> *listbox, <span class="keywordtype">int</span> idx, <span class="keywordtype">bool</span> longPush, <span class="keywordtype">void</span> *data) {    \</div><div class="line">    ((CLASS_NAME *) data)-&gt;METHOD_NAME (listbox, idx, longPush);                  \</div><div class="line">  }</div><div class="ttc" id="classCListbox_html"><div class="ttname"><a href="classCListbox.html">CListbox</a></div><div class="ttdoc">Listbox widget. </div><div class="ttdef"><b>Definition:</b> <a href="ui__widgets_8H_source.html#l00422">ui_widgets.H:422</a></div></div>
 </div><!-- fragment -->
 <p>Macro to create a trampoline to another class. </p>
 <p>The class must define a method: </p><pre class="fragment">void CLASS_NAME::METHOD_NAME (CListbox *listbox, int idx, bool longPush)
+</pre><p>If the method is protected, the following line may be added to the class: </p><pre class="fragment">friend CB_NAME (CButton *, int, bool, void *);
 </pre><p>To the list box, the trampoline must be passed by a call like: </p><pre class="fragment">CListbox::SetCbPushed (CB_NAME, &lt;class object pointer&gt;)</pre> 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00351">351</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00366">366</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 
 </div>
 </div>
@@ -174,13 +179,13 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ggae18194fab8694a0a63686214ae7a0631ab3aa132cc3101837589d8b1a09bf3ecb"></a>lmActivate&#160;</td><td class="fielddoc"><p>Items act like push-buttons, activation callback can be defined. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggae18194fab8694a0a63686214ae7a0631afeaf139ca7af1917f37fa9fff4d513e7"></a>lmSelectSingle&#160;</td><td class="fielddoc"><p>Items are exclusivly selectable. </p>
+<tr><td class="fieldname"><a id="ggae18194fab8694a0a63686214ae7a0631afeaf139ca7af1917f37fa9fff4d513e7"></a>lmSelectSingle&#160;</td><td class="fielddoc"><p>Items are exclusivly selectable (activation callback can be defined, too). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ggae18194fab8694a0a63686214ae7a0631a0ecace8854f10185d939c4bb646b1c6e"></a>lmSelectAny&#160;</td><td class="fielddoc"><p>Items are arbitrarily selectable. </p>
+<tr><td class="fieldname"><a id="ggae18194fab8694a0a63686214ae7a0631a0ecace8854f10185d939c4bb646b1c6e"></a>lmSelectAny&#160;</td><td class="fielddoc"><p>Items are arbitrarily selectable (activation callback can be defined, too). </p>
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00339">339</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00354">354</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 
 </div>
 </div>

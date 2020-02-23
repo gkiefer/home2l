@@ -37,7 +37,7 @@
 
 
 static inline void SetClipRect (SDL_Renderer *ren, SDL_Rect *r) {
-  SDL_RenderSetClipRect (ren, r);
+  if (ren) SDL_RenderSetClipRect (ren, r);
 }
 
 
@@ -67,17 +67,19 @@ static inline void SetClipRect (SDL_Renderer *ren, SDL_Rect *r) {
   SDL_Rect argR;
   int winW, winH, rX, rY;
 
-  if (!r) SDL_RenderSetClipRect (ren, NULL);
-  else {
-    UiGetWindowSize (&winW, &winH);
-    argR = *r;
-    rX = winW * UI_RES_Y;
-    rY = winH * UI_RES_X;
-    if (rX > rY) argR.x += (winW * UI_RES_Y / winH - UI_RES_X) / 2;
-      // window is wider than visible part => shift clip rectangle to the right
-    if (rY > rX) argR.y -= (winH * UI_RES_X / winW - UI_RES_Y) / 2;
-      // window is taller than visible part => shift clip rectangle up
-    SDL_RenderSetClipRect (ren, &argR);
+  if (ren) {
+    if (!r) SDL_RenderSetClipRect (ren, NULL);
+    else {
+      UiGetWindowSize (&winW, &winH);
+      argR = *r;
+      rX = winW * UI_RES_Y;
+      rY = winH * UI_RES_X;
+      if (rX > rY) argR.x += (winW * UI_RES_Y / winH - UI_RES_X) / 2;
+        // window is wider than visible part => shift clip rectangle to the right
+      if (rY > rX) argR.y -= (winH * UI_RES_X / winW - UI_RES_Y) / 2;
+        // window is taller than visible part => shift clip rectangle up
+      SDL_RenderSetClipRect (ren, &argR);
+    }
   }
 }
 
@@ -144,7 +146,7 @@ void CWidget::Render (SDL_Renderer *ren) {
   SDL_Rect r;
 
   tex = GetTexture ();
-  if (tex) {
+  if (ren && tex) {
     GetRenderArea (&r);
     SDL_RenderCopy (ren, tex, NULL, &r);
   }
@@ -261,29 +263,33 @@ void CCanvas::Render (SDL_Renderer *ren) {
   SetClipRect (ren, &renArea);
 
   // Fill background...
-  SDL_SetRenderDrawBlendMode (ren, sdlBlendMode);
-  SDL_SetRenderDrawColor (ren, backColor.r, backColor.g, backColor.b, backColor.a);
-  SDL_RenderFillRect (ren, NULL);
+  if (ren) {
+    SDL_SetRenderDrawBlendMode (ren, sdlBlendMode);
+    SDL_SetRenderDrawColor (ren, backColor.r, backColor.g, backColor.b, backColor.a);
+    SDL_RenderFillRect (ren, NULL);
+  }
 
   // Render all sub-widgets...
   RenderList (firstWidget, ren);
 
   // Render scroll bars...
-  SDL_SetRenderDrawBlendMode (ren, SDL_BLENDMODE_BLEND);
-  SDL_SetRenderDrawColor (ren, scrollbarColor.r, scrollbarColor.g, scrollbarColor.b, scrollbarColor.a);
-  if (virtArea.h > renArea.h) {    // vertical scrollbar...
-    r.w = scrollbarWidth;
-    r.x = renArea.x + area.w - r.w;
-    r.h = area.h * area.h / virtArea.h;
-    r.y = renArea.y + (area.h - r.h) * (area.y - virtArea.y) / (virtArea.h - area.h);
-    SDL_RenderFillRect (ren, &r);
-  }
-  if (virtArea.w > renArea.w) {    // horizontal scrollbar...
-    r.h = scrollbarWidth;
-    r.y = renArea.y + area.h - r.h;
-    r.w = area.w * area.w / virtArea.w;
-    r.x = renArea.x + (area.w - r.w) * (area.x - virtArea.x) / (virtArea.w - area.w);
-    SDL_RenderFillRect (ren, &r);
+  if (ren) {
+    SDL_SetRenderDrawBlendMode (ren, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor (ren, scrollbarColor.r, scrollbarColor.g, scrollbarColor.b, scrollbarColor.a);
+    if (virtArea.h > renArea.h) {    // vertical scrollbar...
+      r.w = scrollbarWidth;
+      r.x = renArea.x + area.w - r.w;
+      r.h = area.h * area.h / virtArea.h;
+      r.y = renArea.y + (area.h - r.h) * (area.y - virtArea.y) / (virtArea.h - area.h);
+      SDL_RenderFillRect (ren, &r);
+    }
+    if (virtArea.w > renArea.w) {    // horizontal scrollbar...
+      r.h = scrollbarWidth;
+      r.y = renArea.y + area.h - r.h;
+      r.w = area.w * area.w / virtArea.w;
+      r.x = renArea.x + (area.w - r.w) * (area.x - virtArea.x) / (virtArea.w - area.w);
+      SDL_RenderFillRect (ren, &r);
+    }
   }
 
   // Unset clipping...

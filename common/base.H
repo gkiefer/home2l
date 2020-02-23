@@ -537,15 +537,15 @@ const char *ToIso8859 (const char *str);
 class CString {
   public:
     CString () { size = 0; ptr = (char *) emptyStr; }
-    CString (CString& str) { size = 0; Set (str.Get ()); }    ///< Copy constructor
+    CString (const CString& str) { size = 0; Set (str.Get ()); }    ///< Copy constructor
     CString (const char *str, int maxLen = INT_MAX) { size = 0; Set (str, maxLen); }
     ~CString () { if (size) free (ptr); }
 
     /// @name Initialization...
     ///@{
     void Clear () { SetC (emptyStr); }
-    void Set (CString *str) { Set (str->Get ()); }
-    void Set (CString *str, int n0, int dn = INT_MAX) { Set (str->Get () + n0, dn); }
+    void Set (const CString *str) { Set (str->Get ()); }
+    void Set (const CString *str, int n0, int dn = INT_MAX) { Set (str->Get () + n0, dn); }
     void Set (const char *str, int maxLen = INT_MAX);
       ///< @brief Set (substring) from 'str'.
     void SetF (const char *fmt, ...);
@@ -587,7 +587,7 @@ class CString {
 
     /// @name Read access ...
     ///@{
-    const char *Get () { return ptr; }    ///< Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer
+    const char *Get () const { return ptr; }    ///< Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer
     int Len () { return strlen (ptr); }   ///< Get the length.
     bool IsEmpty () { return ptr[0] == '\0'; }  ///< Check, if empty.
     ///@}
@@ -677,7 +677,7 @@ class CString {
     /// @{
     operator const char * () { return ptr; }
 
-    CString& operator = (CString &str) { Set (str); return *this; }
+    CString& operator = (const CString &str) { Set (str.Get ()); return *this; }
     CString& operator = (const char *str) { Set (str); return *this; }
     char& operator [] (int n) { return ptr [n]; }
     CString operator + (const char *str);

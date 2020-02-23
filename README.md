@@ -37,7 +37,7 @@ What is New?
 * **_Home2L Brownies_**: Simple and efficient **automation bus to interconnect cheap 8-bit microcontrollers**
   for do-it-yourself sensor or actor hardware.
 
-* **Interactive floorplan** for all kinds of gadgets (windows, shades, lights, phones, computers, services, ...).
+* **Interactive floor plan** for all kinds of gadgets (windows, shades, lights, phones, computers, services, ...).
 
 * **Docker image** and improved tutorial for getting started quickly
 

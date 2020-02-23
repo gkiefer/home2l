@@ -538,7 +538,7 @@ void CScreenHome::Setup () {
   rcAccessPoint = CResource::Get (envAccessPointRc);
 
   btnBluetooth.SetArea (Rect (RADIOS_X, RADIOS_Y + RADIO_H, RADIO_W, RADIO_H));
-  btnBluetooth.SetLabel (IconGet ("ic-bluetooth-48", COL_APP_LABEL_LIVE));
+  btnBluetooth.SetLabel (COL_APP_LABEL_LIVE, "ic-bluetooth-48");
   btnBluetooth.SetCbPushed (CbScreenHomeOnButtonPushed, this);
 
   // Data displays ...
@@ -567,7 +567,7 @@ void CScreenHome::Setup () {
   if (wdgFloorplan.IsOk ()) AddWidget (&wdgFloorplan);
 
   // Subscribe to resources ...
-  subscr.Register ("ScreenHome");
+  subscr.Register ("homescreen");
 
 #if SUBSCRIBE_PERMANENTLY
   SubscribeAll ();
@@ -683,7 +683,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
           DelWidget (&btnAccessPoint);
         else {
           col = vs->IsValid () ? (vs->ValidBool (false) ? COL_APP_LABEL_LIVE : COL_APP_LABEL) : COL_APP_LABEL_BUSY;
-          btnAccessPoint.SetLabel (IconGet ("ic-wifi_tethering-48", col));
+          btnAccessPoint.SetLabel (col, "ic-wifi_tethering-48");
           AddWidget (&btnAccessPoint);
         }
       }

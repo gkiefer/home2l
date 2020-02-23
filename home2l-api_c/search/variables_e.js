@@ -5,6 +5,5 @@ var searchData=
   ['shadespos',['shadesPos',['../structSBrEeprom.html#ac806f313521779a79184bdf8c26d9e60',1,'SBrEeprom']]],
   ['shadesspeeddown',['shadesSpeedDown',['../structSBrConfigRecord.html#a221ea9d89be9d44c3dd121d62c865485',1,'SBrConfigRecord']]],
   ['shadesspeedup',['shadesSpeedUp',['../structSBrConfigRecord.html#a8a6e4f039be414d898b67be77794d034',1,'SBrConfigRecord']]],
-  ['status',['status',['../structSBrReply.html#a6ab5f2f84edca3530f2a1553c55a9335',1,'SBrReply']]],
-  ['surficon',['surfIcon',['../classCListboxItem.html#abc0f38d8710403d0a3613fbaeeca4b33',1,'CListboxItem']]]
+  ['status',['status',['../structSBrReply.html#a6ab5f2f84edca3530f2a1553c55a9335',1,'SBrReply']]]
 ];

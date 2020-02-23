@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -70,7 +70,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Menu widget. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00518">518</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00556">556</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -140,10 +140,10 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>OnPushed</b> 
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#aa0ba30de9840ac2442cb43dff74f2fd8">SetMode</a> (<a class="el" href="group__ui__widgets__listbox.html#gae18194fab8694a0a63686214ae7a0631">EListboxMode</a> _mode, int _itemHeight, int _itemGap=1)</td></tr>
 <tr class="memdesc:aa0ba30de9840ac2442cb43dff74f2fd8 inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">'itemHeight' == 0 indicates variable-height items (Note: presently much worse performance than fixed-height); implicitly deletes all items. <br /></td></tr>
 <tr class="separator:aa0ba30de9840ac2442cb43dff74f2fd8 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77064b9ef8d50ea9eae75061fed7202b inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a77064b9ef8d50ea9eae75061fed7202b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a77064b9ef8d50ea9eae75061fed7202b">SetFormat</a> (TTF_Font *_font, TColor colGrid=BLACK, TColor _colLabel=WHITE, TColor _colBack=DARK_DARK_GREY, TColor _colSelected=GREY, TColor _colSpecial=DARK_GREY)</td></tr>
-<tr class="memdesc:a77064b9ef8d50ea9eae75061fed7202b inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters set here are only read in 'RenderItem' &amp; can be ommited (or re-interpreted) if a custom render function is defined. 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'. <br /></td></tr>
-<tr class="separator:a77064b9ef8d50ea9eae75061fed7202b inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d747294e49bc9a16b9a68d96aa48bcd inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a6d747294e49bc9a16b9a68d96aa48bcd"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a6d747294e49bc9a16b9a68d96aa48bcd">SetFormat</a> (TTF_Font *_font, int _hAlign=-1, TColor colGrid=BLACK, TColor _colLabel=WHITE, TColor _colBack=DARK_DARK_GREY, TColor _colLabelSelected=WHITE, TColor _colBackSelected=GREY, TColor _colLabelSpecial=WHITE, TColor _colBackSpecial=DARK_GREY)</td></tr>
+<tr class="memdesc:a6d747294e49bc9a16b9a68d96aa48bcd inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Except 'colGrid', all parameters set here are only read in 'RenderItem' &amp; can be ommited (or re-interpreted) if a custom render function is defined. 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'. <br /></td></tr>
+<tr class="separator:a6d747294e49bc9a16b9a68d96aa48bcd inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ee9bcddf07ff70ecc486fc5cefc6d5d inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a4ee9bcddf07ff70ecc486fc5cefc6d5d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetArea</b> (SDL_Rect _area)</td></tr>
 <tr class="separator:a4ee9bcddf07ff70ecc486fc5cefc6d5d inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,14 +156,25 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItems</b> (int _it
 <tr class="memitem:a8105108eb6ec88d372e8bba4c4ca3a12 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a8105108eb6ec88d372e8bba4c4ca3a12"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>GetItems</b> ()</td></tr>
 <tr class="separator:a8105108eb6ec88d372e8bba4c4ca3a12 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad238a388c4d49d1763c222b46c959699 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="ad238a388c4d49d1763c222b46c959699"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItem</b> (int idx, const char *_text, SDL_Surface *_surfIcon=NULL, bool _isSpecial=false, void *data=NULL)</td></tr>
-<tr class="separator:ad238a388c4d49d1763c222b46c959699 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2767b87e84a5557f841c8d21a78ced2a inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a2767b87e84a5557f841c8d21a78ced2a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItem</b> (int idx, const char *_text, const char *_iconName=NULL, bool _isSpecial=false, void *data=NULL)</td></tr>
+<tr class="separator:a2767b87e84a5557f841c8d21a78ced2a inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a330cbb63ea719daebad65bc04d02d929 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a330cbb63ea719daebad65bc04d02d929"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItem</b> (int idx, const char *_text, SDL_Surface *_iconSurf, bool _isSpecial=false, void *data=NULL)</td></tr>
+<tr class="separator:a330cbb63ea719daebad65bc04d02d929 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a522560b84f8d0e399ae8a1b044fb4352 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a522560b84f8d0e399ae8a1b044fb4352"></a>
 <a class="el" href="classCListboxItem.html">CListboxItem</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetItem</b> (int idx)</td></tr>
 <tr class="separator:a522560b84f8d0e399ae8a1b044fb4352 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca211c4e9adee6b8b669a28d35b1fc91 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="aca211c4e9adee6b8b669a28d35b1fc91"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>GetItemHeight</b> ()</td></tr>
+<tr class="separator:aca211c4e9adee6b8b669a28d35b1fc91 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaea38d55165bac4bbe473398c247029 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="adaea38d55165bac4bbe473398c247029"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#adaea38d55165bac4bbe473398c247029">GetItemLabelWidth</a> (int idx)</td></tr>
+<tr class="memdesc:adaea38d55165bac4bbe473398c247029 inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the label (net) width of an item (e.g. to optimize geometry). <br /></td></tr>
+<tr class="separator:adaea38d55165bac4bbe473398c247029 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01ec45c4470936ebdf3c8b969d77539f inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a01ec45c4470936ebdf3c8b969d77539f"></a>
-SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><b>GetItemRect</b> (int idx)</td></tr>
+SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a01ec45c4470936ebdf3c8b969d77539f">GetItemRect</a> (int idx)</td></tr>
+<tr class="memdesc:a01ec45c4470936ebdf3c8b969d77539f inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the area of an item. <br /></td></tr>
 <tr class="separator:a01ec45c4470936ebdf3c8b969d77539f inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c4ddbc76dea66d4972363d938103d78 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a6c4ddbc76dea66d4972363d938103d78"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>ScrollTo</b> (int idx, int vAlign=-1)</td></tr>
@@ -377,7 +388,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Render this widget. </p>
-<p>The default implementation uses the '<a class="el" href="classCWidget.html#a0013bd8c0c7ac4948d64a76557efc4a8" title="Return an up-to-date texture. ">GetTexture()</a>' method above. By overriding this method it is possible to define widgets with a custom SDL rendering procedure, which may be more efficient than preparing a single texture containing the complete widget. </p>
+<p>The default implementation uses the '<a class="el" href="classCWidget.html#a0013bd8c0c7ac4948d64a76557efc4a8" title="Return an up-to-date texture. ">GetTexture()</a>' method above. By overriding this method it is possible to define widgets with a custom SDL rendering procedure, which may be more efficient than preparing a single texture containing the complete widget.</p>
+<p>It is allowed to pass 'ren == NULL', in which case all textures and internal data structures are (re-)calculated, but nothing is actually rendered. </p>
 
 <p>Reimplemented from <a class="el" href="classCListbox.html#a60b44dabea4a2e6a2554c007d704d99a">CListbox</a>.</p>
 

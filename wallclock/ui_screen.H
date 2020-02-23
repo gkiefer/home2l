@@ -148,6 +148,9 @@ class CWidget {
       /// The default implementation uses the 'GetTexture()' method above. By overriding this method
       /// it is possible to define widgets with a custom SDL rendering procedure, which may be more
       /// efficient than preparing a single texture containing the complete widget.
+      ///
+      /// It is allowed to pass 'ren == NULL', in which case all textures and internal data structures
+      /// are (re-)calculated, but nothing is actually rendered.
     void ClearTexture ();
       ///< @brief Clear the internally cached texture object to save memory.
     /// @}

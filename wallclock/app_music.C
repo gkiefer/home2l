@@ -1840,7 +1840,7 @@ bool CMusicPlayer::SkipBack () {
 void CListboxDirectory::Setup (SDL_Rect _area) {
   TTF_Font *_font = FontGet (fntNormal, 24);
   SetMode (lmActivate, FontGetLineSkip (_font) + 8, 0);
-  SetFormat (_font, TRANSPARENT, WHITE, TRANSPARENT, RED, COL_DISPLAY);
+  SetFormat (_font, -1, TRANSPARENT, WHITE, TRANSPARENT);
   SetArea (_area);
   SetTextureBlendMode (SDL_BLENDMODE_BLEND);
 }
@@ -1870,10 +1870,10 @@ SDL_Surface *CListboxDirectory::RenderItem (CListboxItem *item, int idx, SDL_Sur
   // Determine front and back color...
   if (idx != playingSong) {
     col0 = colBack;
-    col1 = item->IsSelected () ? colSpecial : colLabel;
+    col1 = item->IsSelected () ? COL_DISPLAY : WHITE;
   }
   else {
-    col0 = item->IsSelected () ? colSpecial : colLabel;
+    col0 = item->IsSelected () ? COL_DISPLAY : WHITE;
     col1 = colBack;
   }
 
@@ -2154,7 +2154,7 @@ void CScreenMusicMain::UpdateBluetooth () {
     else col = btAudio ? YELLOW : LIGHT_BLUE;
   }
   if (ToUint32 (col) != ToUint32 (lastBtCol)) {
-    buttonBar[btnIdMmBluetooth].SetLabel (IconGet (mmButtons[btnIdMmBluetooth].iconName, col));
+    buttonBar[btnIdMmBluetooth].SetLabel (col, mmButtons[btnIdMmBluetooth].iconName);
     lastBtCol = col;
   }
 }
@@ -2362,10 +2362,7 @@ void CScreenMusicMain::OnServerChanged (int idx, bool errorRecovery, bool errorP
 
   // Set label...
   color = (errorPermanent ? GREY : WHITE);
-  buttonBar[btnIdMmSelServer].SetLabel (
-      IconGet ("ic-tape-48", color),
-      idx >= 0 ? player.ServerName (idx) : NULL, color
-    );
+  buttonBar[btnIdMmSelServer].SetLabel (color, "ic-tape-48", idx >= 0 ? player.ServerName (idx) : NULL);
 
   // Propagate further updates...
   dispHaveServer = player.ServerConnected ();
@@ -2391,12 +2388,12 @@ void CScreenMusicMain::OnStreamerStateChanged (EStreamerState state) {
     case strError:  col = GREY;       break;
     default:        col = WHITE;
   }
-  buttonBar[btnIdMmSelOutput].SetLabel (IconGet (mmButtons[btnIdMmSelOutput].iconName, col));
+  buttonBar[btnIdMmSelOutput].SetLabel (col, mmButtons[btnIdMmSelOutput].iconName);
 }
 
 
 void CScreenMusicMain::OnRepeatModeChanged (bool repeatOn) {
-  buttonBar[btnIdMmRepeatMode].SetLabel  (IconGet (repeatOn ? "ic-repeat-48" : "ic-repeat_off-48"));
+  buttonBar[btnIdMmRepeatMode].SetLabel (WHITE, repeatOn ? "ic-repeat-48" : "ic-repeat_off-48");
 }
 
 
@@ -2439,7 +2436,7 @@ void CScreenMusicMain::OnDirChanged (int idx0, int idx1) {
   // Update list...
   listDir.SetItems (entries);
   for (n = idx0; n < idx1; n++)
-    listDir.SetItem (n, NULL, NULL, false, player.DirEntry (n));
+    listDir.SetItem (n, NULL, (const char *) NULL, false, player.DirEntry (n));
 
   // Scroll to playing song if applicable...
   listDir.SetPlayingSong (player.DirPlayingIdx ());
@@ -2486,7 +2483,7 @@ void CScreenMusicMain::OnPlayerStateChanged (EPlayerState state) {
   UpdateActiveState ();
 
   // Set play/pause button label...
-  btnPlayPause.SetLabel (IconGet (state == plPlaying ? "ic-pause-96" : "ic-play-96"));
+  btnPlayPause.SetLabel (WHITE, state == plPlaying ? "ic-pause-96" : "ic-play-96");
 
   // Update display...
   if (dispHaveServer) {     // display is not off?

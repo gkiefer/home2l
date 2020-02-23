@@ -15,6 +15,7 @@ var searchData=
   ['cdictref_3c_20cresource_20_3e',['CDictRef&lt; CResource &gt;',['../classCDictRef.html',1,'']]],
   ['cflatbutton',['CFlatButton',['../classCFlatButton.html',1,'']]],
   ['cinputline',['CInputLine',['../classCInputLine.html',1,'']]],
+  ['cinputscreen',['CInputScreen',['../classCInputScreen.html',1,'']]],
   ['ckeyset',['CKeySet',['../classCKeySet.html',1,'']]],
   ['clistbox',['CListbox',['../classCListbox.html',1,'']]],
   ['clistboxitem',['CListboxItem',['../classCListboxItem.html',1,'']]],

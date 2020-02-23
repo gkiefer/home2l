@@ -4,6 +4,7 @@ var searchData=
   ['id',['Id',['../classCBrownie.html#a78e5575ab327a4de1f9d1c95d7d332f3',1,'CBrownie']]],
   ['ifname',['IfName',['../classCBrownieLink.html#ab99a1bf7537583281b72d077a6f9bc54',1,'CBrownieLink']]],
   ['iftype',['IfType',['../classCBrownieLink.html#a6ca5e16b7fd06da8a9ac61f03e406e3e',1,'CBrownieLink']]],
+  ['inputmodified',['InputModified',['../classCInputLine.html#a0570d7e13b7908b1fe91a400c6b59dc3',1,'CInputLine::InputModified()'],['../classCInputScreen.html#acdfeea9579fb82f13275b0dc46457afe',1,'CInputScreen::InputModified()']]],
   ['instid',['InstId',['../classCRcEventProcessor.html#af50c7ef9d5a34e47d32e6408f2e40c3a',1,'CRcEventProcessor::InstId()'],['../classCRcEventTimer.html#ac178eb332326f2cfc195ec2585d69ccf',1,'CRcEventTimer::InstId()'],['../classCRcSubscriber.html#a25356f5e6ec305f29cbb07af3c9cb4f3',1,'CRcSubscriber::InstId()'],['../classCRcEventDriver.html#a08492f9ca7aefa97661e8b473ec5e70f',1,'CRcEventDriver::InstId()']]],
   ['interrupt',['Interrupt',['../classCRcEventProcessor.html#af8f0dc10d3d8548324baba4240552dec',1,'CRcEventProcessor']]],
   ['intfromstring',['IntFromString',['../group__common__strings.html#gadecde891c6c5670fbec5182208e3f626',1,'base.H']]],

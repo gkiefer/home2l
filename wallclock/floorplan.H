@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2020 Gundolf Kiefer
+ *  (C) 2019-2020 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,28 +48,68 @@
 #define COL_FP_MAIN_DARKER ColorDarker (DARK_BLUE, 0x40)  ///< @internal
 
 
-void FloorplanInit ();
-void FloorplanDone ();
+/** Gadget Type
+ *
+ * These constants are used to identify a gadget type and for the resource dialog.
+ */
+enum EGadgetType {
+  gtNone = 0,
 
-void FloorplanActivate ();
-  ///< @brief Activate the floorplan screen.
+  /// @name Windows, shades and gates...
+  /// {
+  gtWindow,       ///< window with a state of @ref ERctWindowState.
+  gtShades,       ///< shades (type @ref rctPercent)
+  gtRoofWindow,   ///< roof window, optionally including shades
+  gtGarage,       ///< garage door (open/close)
+  /// }
 
-class CFloorplan *FloorplanGetMain ();
-  ///< @brief Get a reference to the main floorplan (for CWidgetFloorplan::Setup() ).
+  /// @name Icon-like ...
+  /// {
+  gtLock,         ///< door lock
+  gtMotion,       ///< motion status
+  gtLight,        ///< light
+  gtMail,         ///< mail box
+  gtPhone,        ///< phone (with state @ref ERctPhoneState)
+  gtMusic,        ///< music player
+  gtWlan,         ///< Wifi access point
+  gtBluetooth,    ///< Bluetooth
+  gtService,      ///< some generic service
+  /// }
 
-void FloorplanUnsubscribeAll ();
-  ///< @brief Unsubscribe all resources of the floorplan.
+  /// @name Text...
+  /// {
+  gtTemp,
+  /// }
+
+  /// @name Meta ...
+  /// {
+  gtZoom,
+  gtEND
+  /// }
+};
+
+
+
+
+
+// *************************** Resource Dialog *********************************
+
+
+void RunResourceDialog (class CResource *rc, EGadgetType subType = gtNone, const char *title = NULL);
+  ///< @brief Run a dialog allowing to edit, add or delete a user request.
   ///
-  /// On activation of the floorplan screen (FloorplanActivate () ) or some floorplan
-  /// widget (CWidgetFloorplan), the resource subscriptions are updated to
-  /// fit the screen or widget. On deactivation, nothing is changed.
-  /// This function explicitly unsubscribes all resources to save power and CPU time.
+  /// @param rc is the resource.
+  /// @param subType is a subtype indication. For example, if 'rc->Type()' is @ref rctPercent, setting the
+  ///    subtype to @ref gtWindow will optimize the UI for a window opener ("%100" at the top), if set to
+  ///    @ref gtShades, the UI presents a UI for shades ("0%" at the top).
+  /// @param title is the title of the dialog. If set to NULL, the title will be derived from 'subType'.
+  ///    If 'subType == gtNone', a generic default title will be shown.
 
 
 
 
 
-// *************************** CWidgetFloorplan ***********************************
+// *************************** CWidgetFloorplan ********************************
 
 
 /** @brief Floorplan widget.
@@ -107,6 +147,30 @@ class CWidgetFloorplan: public CFlatButton, public CTimer {
 
     SDL_Surface *mapSurf;
 };
+
+
+
+
+
+// *************************** Top-Level ***************************************
+
+
+void FloorplanInit ();
+void FloorplanDone ();
+
+void FloorplanActivate ();
+  ///< @brief Activate the floorplan screen.
+
+class CFloorplan *FloorplanGetMain ();
+  ///< @brief Get a reference to the main floorplan (for CWidgetFloorplan::Setup() ).
+
+void FloorplanUnsubscribeAll ();
+  ///< @brief Unsubscribe all resources of the floorplan.
+  ///
+  /// On activation of the floorplan screen (FloorplanActivate () ) or some floorplan
+  /// widget (CWidgetFloorplan), the resource subscriptions are updated to
+  /// fit the screen or widget. On deactivation, nothing is changed.
+  /// This function explicitly unsubscribes all resources to save power and CPU time.
 
 
 

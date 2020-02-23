@@ -27,15 +27,15 @@
 
 
 
-// *********************************************************
-// *                                                       *
-// *               Useful widget extensions                *
-// *                                                       *
-// *********************************************************
+// *****************************************************************************
+// *                                                                           *
+// *                         Useful widget extensions                          *
+// *                                                                           *
+// *****************************************************************************
 
 
 
-// ***************** CModalWidget **************************
+// *************************** CModalWidget ************************************
 
 
 /* This is a widget that can pop up on a screen, such as
@@ -102,14 +102,14 @@ bool CModalWidget::HandleEvent (SDL_Event *ev) {
 
 
 
-// ***************** CCursorWidget *************************
+// *************************** CCursorWidget ***********************************
 
 
 void CCursorWidget::Render (SDL_Renderer *ren) {
   SDL_Rect r;
 
   CWidget::Render (ren);
-  if (cursorArea.w && cursorArea.h) {
+  if (ren && cursorArea.w && cursorArea.h) {
     r = Rect (area.x + cursorArea.x, area.y + cursorArea.y, cursorArea.w, cursorArea.h);
     LocalToScreenCoords (&r.x, &r.y);
     SDL_SetRenderDrawBlendMode (ren, blendMode);
@@ -136,7 +136,7 @@ bool CCursorWidget::HandleEvent (SDL_Event *ev) {
 
 
 
-// *************************** CButton *******************************
+// *************************** CButton *****************************************
 
 
 void CbActivateScreen (CButton *, bool, void *screen) {
@@ -194,9 +194,11 @@ void CButton::SetArea (SDL_Rect _area) {
 
 
 void CButton::SetColor (TColor _colNorm, TColor _colDown) {
-  colNorm = _colNorm;
-  colDown = _colDown;
-  ChangedSurface ();
+  if (_colNorm != colNorm || _colDown != colDown) {
+    colNorm = _colNorm;
+    colDown = _colDown;
+    ChangedSurface ();
+  }
 }
 
 
@@ -253,10 +255,8 @@ void CButton::SetLabel (SDL_Surface *_icon, const char *text, TColor textColor, 
   rIcon = Rect (_icon);
   rText = Rect (surfText);
   rAll = Rect (0, 0, rIcon.w + rIcon.w / 4 + rText.w, MAX (rIcon.h, rText.h));
-  RectCenter (&rIcon, rAll);
-  rIcon.x = 0;    // left-justify icon
-  RectCenter (&rText, rAll);
-  rText.x = rAll.w - rText.w;  // right-justify text
+  RectAlign (&rIcon, rAll, -1, 0);    // left-justify icon
+  RectAlign (&rText, rAll, 1, 0);     // right-justify text
 
   // Draw joint surface...
   if (!surfLabelIsOwned) surfLabel = NULL;
@@ -274,7 +274,6 @@ void CButton::SetLabel (SDL_Surface *_icon, const char *text, TColor textColor, 
 
 void CButton::OnPushed (bool longPush) {
   if (cbPushed) cbPushed (this, longPush, cbPushedData);
-  UiPushUserEvent (longPush ? evButtonPushedLong : evButtonPushed, this, cbPushedData);
 }
 
 
@@ -394,7 +393,7 @@ CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen
 
 
 
-// *************************** CFlatButton ***************************
+// *************************** CFlatButton *************************************
 
 
 SDL_Surface *CFlatButton::GetSurface () {
@@ -417,7 +416,7 @@ SDL_Surface *CFlatButton::GetSurface () {
 
 
 
-// *************************** CListbox ******************************
+// *************************** CListbox ****************************************
 
 
 CListbox::CListbox () {
@@ -449,13 +448,19 @@ void CListbox::SetMode (EListboxMode _mode, int _itemHeight, int _itemGap) {
 }
 
 
-void CListbox::SetFormat (TTF_Font *_font, TColor colGrid, TColor _colLabel, TColor _colBack, TColor _colSelected, TColor _colSpecial) {
-  font = _font;
+void CListbox::SetFormat (TTF_Font *_font, int _hAlign, TColor colGrid,
+                    TColor _colLabel, TColor _colBack,
+                    TColor _colLabelSelected, TColor _colBackSelected,
+                    TColor _colLabelSpecial, TColor _colBackSpecial) {
   SetColors (colGrid);
+  font = _font;
+  hAlign = _hAlign;
   colLabel = _colLabel;
   colBack = _colBack;
-  colSelected = _colSelected;
-  colSpecial = _colSpecial;
+  colLabelSelected = _colLabelSelected;
+  colBackSelected = _colBackSelected;
+  colLabelSpecial = _colLabelSpecial;
+  colBackSpecial = _colBackSpecial;
   ChangedSetup ();
 }
 
@@ -487,15 +492,37 @@ void CListbox::SetItems (int _items) {
 }
 
 
-void CListbox::SetItem (int idx, const char *_text, SDL_Surface *_surfIcon, bool _isSpecial, void *data) {
-  CListboxItem *item;
+void CListbox::SetItem (int idx, const char *_text, const char *_iconName, bool _isSpecial, void *data) {
+  CListboxItem *item = &itemArr[idx];
 
-  item = &itemArr[idx];
-  item->text = _text;
-  item->surfIcon = _surfIcon;
+  item->SetLabel (_text, _iconName);
   item->isSpecial = _isSpecial;
   item->data = data;
   ChangedItems (idx);
+}
+
+
+void CListbox::SetItem (int idx, const char *_text, SDL_Surface *_iconSurf, bool _isSpecial, void *data) {
+  CListboxItem *item = &itemArr[idx];
+
+  item->SetLabel (_text, _iconSurf);
+  item->isSpecial = _isSpecial;
+  item->data = data;
+  ChangedItems (idx);
+}
+
+
+int CListbox::GetItemLabelWidth (int idx) {
+  CListboxItem *item = &itemArr[idx];
+  int width = 0;
+
+  if (item->text) {
+    width = FontGetWidth (font, item->text);
+    if (item->iconSurf || item->iconName) width += itemHeight / 4;    // add space between icon and text
+  }
+  if (item->iconSurf) width += item->iconSurf->w;
+  else if (item->iconName) width += IconGet (item->iconName)->w;
+  return width;
 }
 
 
@@ -526,7 +553,8 @@ void CListbox::SelectItem (int idx, bool _isSelected) {
 
   if (idx < 0 || idx >= items) return;
   if (item->isSelected != _isSelected) {
-    if (mode != lmSelectAny && _isSelected) SelectItem (selectedItem, false);
+    //~ INFOF (("### CListbox::SelectItem (%i): %i -> %i", idx, item->isSelected, _isSelected));
+    if (mode != lmSelectAny && _isSelected) SelectItem (selectedItem, false);   // unselect previously selected item
     item->isSelected = _isSelected;
     selectedItem = _isSelected ? idx : -1;
     ChangedItems (idx);
@@ -545,30 +573,83 @@ void CListbox::SelectAll (bool _isSelected) {
 
 
 SDL_Surface *CListbox::RenderItem (CListboxItem *item, int idx, SDL_Surface *surf) {
-  SDL_Surface *surfText;
-  SDL_Rect r, rLabel;
-  TColor colBackground;
+  SDL_Surface *surfText, *surfIcon;
+  SDL_Rect r, rText, rIcon, rLabel;
+  TColor colItemLabel, colItemBack;
 
+  //~ INFOF (("###   RenderItem (surf = 0x%lx)", (uint64_t) surf));
+
+  // Sanity ...
   ASSERT (itemHeight > 0);      // for variable-height list boxes, this method must (presently) be overloaded!
+
+  // Determine colors ...
+  colItemLabel = item->isSelected ? colLabelSelected : item->isSpecial ? colLabelSpecial : colLabel;
+  colItemBack = item->isSelected ? colBackSelected : item->isSpecial ? colBackSpecial : colBack;
+  if (item->isSelected && item->isSpecial) {
+    // Usually, the 'isSelected' flag dominates the 'isSpecial' flag. However, if both are set and the
+    // "selected" color does not differ from the normal color, the "special" color is used anyway.
+    // This is independent of the foreground and background color. This way, both the "selected" and the
+    // "special" property can be visualized independently, e.g. by indicating the "selected" status with
+    // the background and the "special" status with the foreground (label) color.
+    if (colLabelSelected == colLabel) colItemLabel = colLabelSpecial;
+    if (colBackSelected == colBack) colItemBack = colBackSpecial;
+  }
+
+  // Clear surface ...
   if (!surf) surf = CreateSurface (area.w, itemHeight);
-  colBackground = item->isSelected ? colSelected : item->isSpecial ? colSpecial : colBack;
-  SDL_FillRect (surf, NULL, ToUint32 (colBackground));
+  SDL_FillRect (surf, NULL, ToUint32 (colItemBack));
 
-  r = Rect (surf);
-  r.x = itemHeight / 4;     // insert some space to the left
-  r.w -= r.x;
+  // Determine text and icon surfaces (both are optional) ...
+  if (item->text) surfText = FontRenderText (font, item->text, colItemLabel, colItemBack);
+  else surfText = NULL;
+  if (item->iconSurf) surfIcon = item->iconSurf;
+  else if (item->iconName) surfIcon = IconGet (item->iconName, colItemLabel);
+  else surfIcon = NULL;
 
-  if (item->surfIcon) {
-    SurfaceBlit (item->surfIcon, NULL, surf, &r, -1, 0, SDL_BLENDMODE_BLEND);
-    rLabel = Rect (item->surfIcon);
-    r.x += rLabel.w + (itemHeight/4);
-    r.w -= rLabel.w + (itemHeight/4);
+  // Determine layout ...
+  //   Set 'rLabel',  'rText' and 'rIcon' relative to (0,0) in 'surf'.
+  if (surfIcon) rIcon = Rect (surfIcon);
+  else rIcon = Rect (0, 0, 0, 0);
+  if (surfText) {
+    rText = Rect (surfText);
+    if (surfIcon) {
+      // Have both icon and text ...
+      rLabel = Rect (0, 0, rIcon.w + rIcon.w / 4 + rText.w, MAX (rIcon.h, rText.h));
+      RectAlign (&rIcon, rLabel, -1, 0);    // left-justify icon
+      RectAlign (&rText, rLabel, 1, 0);     // right-justify text
+    }
+    else {
+      // Have text, but no icon ...
+      rLabel = rText;
+    }
   }
-  if (item->text) {
-    surfText = FontRenderText (font, item->text, colLabel, colBackground);
-    //~ INFOF(("### CListbox::RenderItem(): surfText = %08x, idx = %i, text = '%s'", surfText, idx, item->text));
-    SurfaceBlit (surfText, NULL, surf, &r, -1, 0, SDL_BLENDMODE_NONE);
+  else {
+    rText = Rect (0, 0, 0, 0);
+    if (surfIcon) {
+      // Have icon, but no text ...
+      rLabel = rText;
+    }
+    else {
+      // Have neither text nor an icon ...
+      rLabel = Rect (0, 0, 0, 0);
+    }
   }
+  r = Rect (surf);                        // align 'rLabel' in 'surf' ...
+  RectGrow (&r, -itemHeight / 4, 0);      //   insert some space to the left & right
+  RectAlign (&rLabel, r, hAlign, 0);
+  RectMove (&rText, rLabel.x, rLabel.y);  // make 'rText' relative to 'surf'
+  RectMove (&rIcon, rLabel.x, rLabel.y);  // make 'rIcon' relative to 'surf'
+
+  // Draw and free sub-surfaces ...
+  if (surfText) {
+    SurfaceBlit (surfText, NULL, surf, &rText);
+    SurfaceFree (surfText);
+  }
+  if (surfIcon)
+    SurfaceBlit (surfIcon, NULL, surf, &rIcon, 0, 0, SDL_BLENDMODE_BLEND);
+
+  // Done ...
+  //~ INFOF (("###   RenderItem () -> surf = 0x%lx", (uint64_t) surf));
   return surf;
 }
 
@@ -627,9 +708,9 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
       }
 
       // Handle long push...
-      if (mode == lmActivate && evIsDown && ev->button.clicks == 2 && downIdx >= 0 && !noLongPush) {
+      if (evIsDown && ev->button.clicks == 2 && downIdx >= 0 && !noLongPush) {
         OnPushed (downIdx, true);
-        SelectItem (downIdx, false);
+        if (mode == lmActivate) SelectItem (downIdx, false);
         downIdx = -1;
         ret = true;
       }
@@ -639,9 +720,9 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
     case SDL_MOUSEBUTTONUP:
 
       // Handle simple push...
-      if (mode == lmActivate && downIdx >= 0) {
+      if (downIdx >= 0) {
         OnPushed (downIdx, false);
-        SelectItem (downIdx, false);
+        if (mode == lmActivate) SelectItem (downIdx, false);
       }
       downIdx = -1;
 
@@ -687,7 +768,7 @@ void CListbox::ChangedItems (int idx, int num) {
 void CListbox::InvalidatePool () {
   int n;
 
-  if (poolSize <= 0) return;   // fast track on multiple invalidations
+  if (poolSize <= 0) return;   // fast track for multiple invalidations
   DelAllWidgets ();
   for (n = 0; n < poolSize; n++) if (pool[n]) delete pool[n];
   FREEA(pool);
@@ -748,17 +829,20 @@ void CListbox::UpdatePool () {
   for (n = idx0; n < idx1; n++) {
     wdg = n % poolSize;
     if (poolIdx[wdg] != n || itemArr[n].changed) {
-      //~ INFOF(("### (Re-)Assigning item %i to widget %i", n, wdg));
+      //~ INFOF(("### (Re-)Assigning item %i to widget %i ('surf' was 0x%lx)", n, wdg, (uint64_t) pool[wdg]->GetSurface ()));
       // assign widget...
       if (poolIdx[wdg] != n) {
         // widget has been used for other item before => delete surface
         surf = pool[wdg]->GetSurface ();
-        SurfaceFree (&surf);
-        pool[wdg]->SetSurface (NULL);
+        if (surf) {
+          SurfaceFree (&surf);
+          pool[wdg]->SetSurface (NULL);
+        }
         poolIdx[wdg] = n;
       }
       // update surface...
       surf = RenderItem (&itemArr[n], n, pool[wdg]->GetSurface ());
+      //~ INFOF (("###   rendered surface 0x%lx", surf));
       pool[wdg]->SetSurface (surf);
       // place widget...
       r = Rect(surf);
@@ -771,6 +855,7 @@ void CListbox::UpdatePool () {
       pool[wdg]->SetArea (r);
       // done...
       itemArr[n].changed = false;
+      //~ INFOF (("###   -> surface = 0x%lx", (uint64_t) pool[wdg]->GetSurface ()));
     }
     //~ INFOF(("### Adding widget %i (%i, %i, %i, %i)", wdg, pool[wdg]->GetArea ()->x, pool[wdg]->GetArea ()->y, pool[wdg]->GetArea ()->w, pool[wdg]->GetArea ()->h));
     pool[wdg]->SetTextureBlendMode (sdlBlendMode);
@@ -795,7 +880,7 @@ void CListbox::UpdatePool () {
 
 
 
-// *************************** CMenu *********************************
+// *************************** CMenu *******************************************
 
 
 #define MENU_FRAME_X 16
@@ -812,7 +897,7 @@ void CMenu::Setup (SDL_Rect _rContainer, int _hAlign, int _vAlign, TColor color,
   vAlign = _vAlign;
   if (!_font) _font = MENU_DEFAULT_FONT;
   SetMode (lmActivate, 7 * FontGetLineSkip (_font) / 4, 1);
-  SetFormat (_font, DARK_GREY, WHITE, BLACK, GREY, DARK_GREY);
+  SetFormat (_font, -1, DARK_GREY, WHITE, BLACK, GREY, DARK_GREY);
   rNoCancel = Rect (0, 0, -1, -1);    // indicates "undefined"
 
   // Create frame texture...
@@ -850,7 +935,6 @@ void CMenu::SetItems (const char *_itemStr) {
 
 
 void CMenu::Start (CScreen *_screen) {
-  CListboxItem *item;
   int n, width, maxWidth;
 
   if (IsRunning ()) return;
@@ -862,9 +946,7 @@ void CMenu::Start (CScreen *_screen) {
   //   ... find longest label ...
   maxWidth = 0;
   for (n = 0; n < GetItems (); n++) {
-    item = GetItem (n);
-    width = FontGetWidth (font, item->text);
-    if (item->surfIcon) width += item->surfIcon->w;
+    width = GetItemLabelWidth (n);
     if (width > maxWidth) maxWidth = width;
   }
   maxWidth += FontGetLineSkip (font);
@@ -928,18 +1010,18 @@ int RunMenu (const char *_itemStr, SDL_Rect _rContainer, int _hAlign, int _vAlig
 
 
 
-// *************************** CMessageBox ***************************
+// *************************** CMessageBox *************************************
 
 
 #define MSGBOX_SPACE_X 32
 #define MSGBOX_SPACE_Y 32
-#define MSGBOX_BUTTON_MINW 160
+#define MSGBOX_BUTTON_MINWIDTH 160
 
 
 BUTTON_TRAMPOLINE (CbMessageBoxButtonPushed, CMessageBox, OnButtonPushed);
 
 
-void CMessageBox::Setup (const char *title, int contentW, int contentH, int _buttons, CButton **_buttonArr, TColor color) {
+void CMessageBox::Setup (const char *title, int contentW, int contentH, int _buttons, CButton **_buttonArr, TColor color, int titleHAlign) {
   SDL_Surface *surfTitle;
   SDL_Rect r, rWindow, *layout;
   int n;
@@ -960,7 +1042,7 @@ void CMessageBox::Setup (const char *title, int contentW, int contentH, int _but
     rWindow.h += MSGBOX_SPACE_Y + surfTitle->h;
   }
   if (buttons) {
-    rWindow.w = MAX (rWindow.w, _buttons * (MSGBOX_BUTTON_MINW));
+    rWindow.w = MAX (rWindow.w, _buttons * (MSGBOX_BUTTON_MINWIDTH));
     rWindow.h += MSGBOX_SPACE_Y + UI_BUTTONS_HEIGHT;
   }
 
@@ -991,10 +1073,11 @@ void CMessageBox::Setup (const char *title, int contentW, int contentH, int _but
   // Render title...
   if (surfTitle) {
     r = Rect (surface);
-    RectGrow (&r, 0, -MSGBOX_SPACE_Y);
-    SurfaceBlit (surfTitle, NULL, surface, &r, 0, -1, SDL_BLENDMODE_BLEND);
+    RectGrow (&r, -MSGBOX_SPACE_X, -MSGBOX_SPACE_Y);
+    SurfaceBlit (surfTitle, NULL, surface, &r, titleHAlign, -1, SDL_BLENDMODE_BLEND);
     SurfaceFree (surfTitle);
   }
+  ChangedSurface ();
 
   // Place buttons...
   if (buttons) {
@@ -1173,7 +1256,7 @@ void StopMessageBox (CMessageBox *msgBox) {
 
 
 
-// *************************** CInputLine ****************************
+// *************************** CInputLine **************************************
 
 
 #define INPUT_SPACE_X 4     // space in the beginning and end of line
@@ -1222,7 +1305,7 @@ void CInputLine::ClearHistory () {
 }
 
 
-bool CInputLine::Modified () {
+bool CInputLine::InputModified () {
   if (!undoFirst) return false;
   return undoFirst->next != NULL;
 }
@@ -1635,7 +1718,107 @@ bool CInputLine::HandleEvent (SDL_Event *ev) {
 
 
 
-// *************************** CSlider *******************************
+// *************************** CInputScreen ************************************
+
+
+#define INPUT_HEIGHT 96
+
+
+BUTTON_TRAMPOLINE (CbInputScreenOnButtonPushed, CInputScreen, OnButtonPushed)
+
+
+void CInputScreen::Setup (const char *inputPreset, TColor color, int userBtns, CButton **userBtnList, const int *userBtnWidth) {
+  SDL_Rect *layout;
+  CButton *btn;
+  int *format;
+  int n;
+
+  // Input line...
+  SetKeyboard (true);   // enable on-screen keyboard
+  wdgInput.Setup ();
+  wdgInput.SetArea (Rect (0, 0, UI_RES_X, INPUT_HEIGHT));
+  if (inputPreset) wdgInput.SetInput (inputPreset);
+  AddWidget (&wdgInput);
+
+  // Buttons...
+  format = MALLOC(int, 7 + userBtns);
+  for (n = 0; n < 7 + userBtns; n++) format[n] = -1;
+  if (userBtnWidth)
+    for (n = 0; n < userBtns; n++) format[n+1] = userBtnWidth[n];
+  layout = LayoutRow (Rect (0, INPUT_HEIGHT + 32, UI_RES_X, UI_BUTTONS_HEIGHT), format, 7 + userBtns);
+  FREEP (format);
+
+  n = 0;
+  btnBack.Set (layout[n++], GREY, IconGet ("ic-back-48"));
+  btnBack.SetHotkey (SDLK_ESCAPE);
+  btnBack.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnBack);
+
+  while (n < userBtns + 1) {
+    btn = userBtnList[n - 1];
+    btn->SetArea (layout[n]);
+    btn->SetColor (color);
+    btn->SetCbPushed (CbInputScreenOnButtonPushed, this);
+    AddWidget (btn);
+    n++;
+  }
+
+  btnUndo.Set (layout[n++], GREY, IconGet ("ic-undo-48"));
+  btnUndo.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnUndo);
+
+  btnRedo.Set (layout[n++], GREY, IconGet ("ic-redo-48"));
+  btnRedo.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnRedo);
+
+  btnCut.Set (layout[n++], GREY, IconGet ("ic-cut-48"));
+  btnCut.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnCut);
+
+  btnCopy.Set (layout[n++], GREY, IconGet ("ic-copy-48"));
+  btnCopy.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnCopy);
+
+  btnPaste.Set (layout[n++], GREY, IconGet ("ic-paste-48"));
+  btnPaste.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnPaste);
+
+  btnOk.Set (layout[n++], GREY, "OK");
+  btnOk.SetHotkey (SDLK_RETURN);
+  btnOk.SetCbPushed (CbInputScreenOnButtonPushed, this);
+  AddWidget (&btnOk);
+
+  FREEP(layout);
+}
+
+
+void CInputScreen::OnButtonPushed (CButton *btn, bool longPush) {
+
+  // Button "Back"...
+  if (btn == &btnBack) {
+    if (!wdgInput.InputModified ()) Return ();
+    else if (RunSureBox (_("Discard changes?")) == 1) Return ();
+  }
+
+  // Buttons "Cut", "Copy" and "Paste"...
+  else if (btn == &btnUndo)   wdgInput.Undo ();
+  else if (btn == &btnRedo)   wdgInput.Redo ();
+  else if (btn == &btnCut)    wdgInput.ClipboardCut ();
+  else if (btn == &btnCopy)   wdgInput.ClipboardCopy ();
+  else if (btn == &btnPaste)  wdgInput.ClipboardPaste ();
+
+  // Button "OK" ...
+  else if (btn == &btnOk) Commit ();
+
+  // User button ...
+  else OnUserButtonPushed (btn, longPush);
+}
+
+
+
+
+
+// *************************** CSlider *****************************************
 
 
 CSlider::CSlider () {

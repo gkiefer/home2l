@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -206,7 +206,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>EnumIdx</b> () const</
 <tr class="separator:a041ba2e76f0b15f003144d90d11c99a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Get value (relaxed typing)...</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>Get the value with relaxed typing. A type mismatch inside the same type class is silently tolerated. The state is considered, and 'rcsUnknown' is returned if either the state is 'rcsUnknown', the type does not match or 'this == NULL'. No runtime errors will be thrown.</p>
-<p>Use these methods for remote resources. The relaxed typing will help to avoid run-time errors. </p>
+<p>Use these methods for remote resources. The relaxed typing will help to avoid run-time errors.</p>
+<p><b>Note:</b> These methods may invoke <a class="el" href="classCRcValueState.html#a801bb1c02f9f793497d79ac359d573a9">Convert()</a> for the target type and thus modify the object. </p>
 </div></td></tr>
 <tr class="memitem:acb6d680d748100509081f66e70fe6b94"><td class="memItemLeft" align="right" valign="top"><a id="acb6d680d748100509081f66e70fe6b94"></a>
 <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GetValue</b> (bool *retBool)</td></tr>
@@ -224,29 +225,30 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>EnumIdx</b> () const</
 <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GetValue</b> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> *retTime)</td></tr>
 <tr class="separator:a01ee78f1178d47657224689d34b6a7a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Get value (relaxed typing with auto-correction) ...</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><p>Get the value with relaxed typing and auto-correction. These methods always return a valid value of the respective type. If 'GetValue' would return 'rcsUnknown', the default value is returned. 'this == NULL' is tolerated. Returned strings are only accessible as long as 'this' remains live and unchanged! </p>
+<tr><td colspan="2"><div class="groupText"><p>Get the value with relaxed typing and auto-correction. These methods always return a valid value of the respective type. If 'GetValue' would return 'rcsUnknown', the default value is returned. 'this == NULL' is tolerated. Returned strings are only accessible as long as 'this' remains live and unchanged!</p>
+<p><b>Note:</b> These methods may invoke <a class="el" href="classCRcValueState.html#a801bb1c02f9f793497d79ac359d573a9">Convert()</a> for the target type and thus modify the object. </p>
 </div></td></tr>
-<tr class="memitem:ad560057d3cb1fabfcef03b7624c63ef5"><td class="memItemLeft" align="right" valign="top"><a id="ad560057d3cb1fabfcef03b7624c63ef5"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>ValidBool</b> (bool defaultVal=false) const</td></tr>
-<tr class="separator:ad560057d3cb1fabfcef03b7624c63ef5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac17c51e4b347bf6981f50556c2955940"><td class="memItemLeft" align="right" valign="top"><a id="ac17c51e4b347bf6981f50556c2955940"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>ValidInt</b> (int defaultVal=0) const</td></tr>
-<tr class="separator:ac17c51e4b347bf6981f50556c2955940"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d256fe7e9748f7c56febd7719f9212a"><td class="memItemLeft" align="right" valign="top"><a id="a4d256fe7e9748f7c56febd7719f9212a"></a>
-float&#160;</td><td class="memItemRight" valign="bottom"><b>ValidFloat</b> (float defaultVal=0.0) const</td></tr>
-<tr class="separator:a4d256fe7e9748f7c56febd7719f9212a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a185be1cca77eb4834aac12ce760b212a"><td class="memItemLeft" align="right" valign="top"><a id="a185be1cca77eb4834aac12ce760b212a"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>ValidString</b> (const char *defaultVal=<a class="el" href="classCString.html#aa4dc25ed4d9ea6cceb32d7274984320a">CString::emptyStr</a>) const</td></tr>
-<tr class="separator:a185be1cca77eb4834aac12ce760b212a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a42d18e42d71fe3620582cc77062851c3"><td class="memItemLeft" align="right" valign="top"><a id="a42d18e42d71fe3620582cc77062851c3"></a>
-<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ValidTime</b> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> defaultVal=0) const</td></tr>
-<tr class="separator:a42d18e42d71fe3620582cc77062851c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1bbe7ce47bd698279e04bfeca56ddf8"><td class="memItemLeft" align="right" valign="top"><a id="ab1bbe7ce47bd698279e04bfeca56ddf8"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>ValidTrigger</b> (int defaultVal=0) const</td></tr>
-<tr class="separator:ab1bbe7ce47bd698279e04bfeca56ddf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bfafe66c9e68ee5a586250719a80ecc"><td class="memItemLeft" align="right" valign="top"><a id="a5bfafe66c9e68ee5a586250719a80ecc"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>ValidMutex</b> (const char *defaultVal=<a class="el" href="classCString.html#aa4dc25ed4d9ea6cceb32d7274984320a">CString::emptyStr</a>) const</td></tr>
-<tr class="separator:a5bfafe66c9e68ee5a586250719a80ecc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7db7b7738985b7254362b98c27e3a6d6"><td class="memItemLeft" align="right" valign="top"><a id="a7db7b7738985b7254362b98c27e3a6d6"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>ValidBool</b> (bool defaultVal=false)</td></tr>
+<tr class="separator:a7db7b7738985b7254362b98c27e3a6d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b320a51dc484440e1bc8e0a279a6fe8"><td class="memItemLeft" align="right" valign="top"><a id="a2b320a51dc484440e1bc8e0a279a6fe8"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>ValidInt</b> (int defaultVal=0)</td></tr>
+<tr class="separator:a2b320a51dc484440e1bc8e0a279a6fe8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84f2f52a19128d4ffa105bf9e2b3ec13"><td class="memItemLeft" align="right" valign="top"><a id="a84f2f52a19128d4ffa105bf9e2b3ec13"></a>
+float&#160;</td><td class="memItemRight" valign="bottom"><b>ValidFloat</b> (float defaultVal=0.0)</td></tr>
+<tr class="separator:a84f2f52a19128d4ffa105bf9e2b3ec13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cad704bfee9f86f4e24e701d06225f9"><td class="memItemLeft" align="right" valign="top"><a id="a9cad704bfee9f86f4e24e701d06225f9"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>ValidString</b> (const char *defaultVal=<a class="el" href="classCString.html#aa4dc25ed4d9ea6cceb32d7274984320a">CString::emptyStr</a>)</td></tr>
+<tr class="separator:a9cad704bfee9f86f4e24e701d06225f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab26225408495c542d4a61c55f153885c"><td class="memItemLeft" align="right" valign="top"><a id="ab26225408495c542d4a61c55f153885c"></a>
+<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ValidTime</b> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> defaultVal=0)</td></tr>
+<tr class="separator:ab26225408495c542d4a61c55f153885c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b0cd7aa354bf07c06bfba87965dce1e"><td class="memItemLeft" align="right" valign="top"><a id="a1b0cd7aa354bf07c06bfba87965dce1e"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>ValidTrigger</b> (int defaultVal=0)</td></tr>
+<tr class="separator:a1b0cd7aa354bf07c06bfba87965dce1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a831a5e4b6020e7438cc04d6e0b5f29d8"><td class="memItemLeft" align="right" valign="top"><a id="a831a5e4b6020e7438cc04d6e0b5f29d8"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>ValidMutex</b> (const char *defaultVal=<a class="el" href="classCString.html#aa4dc25ed4d9ea6cceb32d7274984320a">CString::emptyStr</a>)</td></tr>
+<tr class="separator:a831a5e4b6020e7438cc04d6e0b5f29d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a31fc1c33b16c4f5325d5f6d7eff7adef"><td class="memItemLeft" align="right" valign="top"><a id="a31fc1c33b16c4f5325d5f6d7eff7adef"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>ValidUnitInt</b> (<a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, int defaultVal=0) const</td></tr>
 <tr class="separator:a31fc1c33b16c4f5325d5f6d7eff7adef"><td class="memSeparator" colspan="2">&#160;</td></tr>

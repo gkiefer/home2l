@@ -104,8 +104,6 @@ void UiToggleWindowResizable ();
 enum EUserEvent {
   evMainThreadCallback = 0,
   evSystemModeChanged,    // (int) data1 = new mode, (int) data2 = previous mode
-  evButtonPushed,         // (CButton *) data1 = generating button widget, data2 = user data
-  evButtonPushedLong,     // (CButton *) data1 = generating button widget, data2 = user data
   evEND
 };
 
@@ -249,6 +247,10 @@ static inline TColor ToColor (SDL_Color sdlCol) {
 }
 
 
+static inline bool operator == (const TColor &col1, const TColor &col2) { return ToUint32 (col1) == ToUint32 (col2); }
+static inline bool operator != (const TColor &col1, const TColor &col2) { return ToUint32 (col1) != ToUint32 (col2); }
+
+
 static inline SDL_Color ToSDL_Color (TColor color) {
   SDL_Color ret = { .r = color.r, .g = color.g, .b = color.b, .a = color.a };
   return ret;
@@ -324,6 +326,12 @@ TColor ColorBlend (TColor color0, TColor color1, int weight1);
 
 static inline SDL_Rect Rect (int x, int y, int w, int h) {
   SDL_Rect ret = { .x = x, .y = y, .w = w, .h = h };
+  return ret;
+}
+
+
+static inline SDL_Rect Rect (int w, int h) {
+  SDL_Rect ret = { .x = 0, .y = 0, .w = w, .h = h };
   return ret;
 }
 
@@ -434,6 +442,13 @@ void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel = 0xff);
 
 void SurfaceBlit (SDL_Surface *src, SDL_Rect *srcRect, SDL_Surface *dst, SDL_Rect *dstRect = NULL, int hAlign = 0, int vAlign = 0, SDL_BlendMode blendMode = SDL_BLENDMODE_NONE);
   ///< @brief Blit a surface; It is allowed to leave 'src == NULL', in which case nothing happens.
+  /// @param src is the source surface.
+  /// @param srcRect is the part of the source surface to be blit (default = complete surface).
+  /// @param dst is the destination surface.
+  /// @param dstRect is the part of the destination surface to be rendered into (default = complete surface).
+  /// @param hAlign is the horizontal alignment, if the destination rectangle has a different size (typically larger) than the source rectangle.
+  /// @param vAlign is the vertical alignment, if the destination rectangle has a different size (typically larger) than the source rectangle.
+  /// @param blendMode is the SDL blend mode.
 static inline void SurfaceFill (SDL_Surface *surf, TColor col) { SDL_FillRect (surf, NULL, ToUint32 (col)); }
 static inline void SurfaceFillRect (SDL_Surface *surf, SDL_Rect r, TColor col) { SDL_FillRect (surf, &r, ToUint32 (col)); }
 static inline void SurfaceFillRect (SDL_Surface *surf, SDL_Rect *r, TColor col) { SDL_FillRect (surf, r, ToUint32 (col)); }

@@ -471,10 +471,10 @@ void CRcValueState::SetGenericFloat (float _val, ERcType _type, ERcState _state)
 bool CRcValueState::SetGenericString (const char *_val, ERcType _type, ERcState _state) {
   URcValue uVal;
 
-  Clear (_type);
+  Clear (_type, _state);
   if (RcTypeIsStringBased (_type)) {
     uVal.vString = (char *) _val;
-    Set (_type, uVal);
+    Set (_type, uVal, _state);
     return true;
   }
 
@@ -497,66 +497,76 @@ void CRcValueState::SetTime (TTicks _val, ERcState _state) {
 
 
 ERcState CRcValueState::GetValue (bool *retBool) {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctBool) return rcsUnknown;
+  if (state == rcsUnknown) return rcsUnknown;
+  if (RcTypeGetBaseType (type) != rctBool) if (!Convert (rctBool)) return rcsUnknown;
   *retBool = val.vBool;
   return state;
 }
 
 
 ERcState CRcValueState::GetValue (int *retInt) {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctInt) return rcsUnknown;
+  if (state == rcsUnknown) return rcsUnknown;
+  if (RcTypeGetBaseType (type) != rctInt) if (!Convert (rctInt)) return rcsUnknown;
   *retInt = val.vInt;
   return state;
 }
 
 
 ERcState CRcValueState::GetValue (float *retFloat) {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctFloat) return rcsUnknown;
+  if (state == rcsUnknown) return rcsUnknown;
+  if (RcTypeGetBaseType (type) != rctFloat) if (!Convert (rctFloat)) return rcsUnknown;
   *retFloat = val.vFloat;
   return state;
 }
 
 
 ERcState CRcValueState::GetValue (CString *retString) {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctString) return rcsUnknown;
+  if (state == rcsUnknown) return rcsUnknown;
+  if (RcTypeGetBaseType (type) != rctString) if (!Convert (rctString)) return rcsUnknown;
   retString->Set (val.vString);
   return state;
 }
 
 
 ERcState CRcValueState::GetValue (TTicks *retTime) {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctTime) return rcsUnknown;
+  if (state == rcsUnknown) return rcsUnknown;
+  if (RcTypeGetBaseType (type) != rctTime) if (!Convert (rctTime)) return rcsUnknown;
   *retTime = val.vTime;
   return state;
 }
 
 
-bool CRcValueState::ValidBool (bool defaultVal) const {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctBool) return defaultVal;
+bool CRcValueState::ValidBool (bool defaultVal) {
+  if (state == rcsUnknown) return defaultVal;
+  if (RcTypeGetBaseType (type) != rctBool) if (!Convert (rctBool)) return defaultVal;
   return val.vBool;
 }
 
 
-int CRcValueState::ValidInt (int defaultVal) const {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctInt) return defaultVal;
+int CRcValueState::ValidInt (int defaultVal) {
+  if (state == rcsUnknown) return defaultVal;
+  if (RcTypeGetBaseType (type) != rctInt) if (!Convert (rctInt)) return defaultVal;
   return val.vInt;
 }
 
 
-float CRcValueState::ValidFloat (float defaultVal) const {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctFloat) return defaultVal;
+float CRcValueState::ValidFloat (float defaultVal) {
+  if (state == rcsUnknown) return defaultVal;
+  if (RcTypeGetBaseType (type) != rctFloat) if (!Convert (rctFloat)) return defaultVal;
   return val.vFloat;
 }
 
 
-const char *CRcValueState::ValidString (const char *defaultVal) const {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctString) return defaultVal;
+const char *CRcValueState::ValidString (const char *defaultVal) {
+  if (state == rcsUnknown) return defaultVal;
+  if (RcTypeGetBaseType (type) != rctString) if (!Convert (rctString)) return defaultVal;
   return val.vString ? val.vString : CString::emptyStr;
 }
 
 
-TTicks CRcValueState::ValidTime (TTicks defaultVal) const {
-  if (state == rcsUnknown || RcTypeGetBaseType (type) != rctTime) return defaultVal;
+TTicks CRcValueState::ValidTime (TTicks defaultVal) {
+  if (state == rcsUnknown) return defaultVal;
+  if (RcTypeGetBaseType (type) != rctTime) if (!Convert (rctTime)) return defaultVal;
   return val.vTime;
 }
 
@@ -618,30 +628,34 @@ bool CRcValueState::ValueEquals (CRcValueState *val2) const {
 
 bool CRcValueState::Convert (ERcType _type) {
   ERcType baseType, _baseType;
-  CString s;
-  CRcValueState vs;
+  bool valBool;
 
   // Sanity / No-Op...
   if (_type == type) return true;   // nothing to do
   baseType = RcTypeGetBaseType (type);
   _baseType = RcTypeGetBaseType (_type);
-  if (_baseType == baseType) {      // types are compatible?
+  if (_baseType == baseType || state == rcsUnknown) {      // types are compatible?
     type = _type;
     return true;
   }
 
   // Anything from string...
   if (baseType == rctString) {
-    vs.Clear (_type);
+    CString s;
+    CRcValueState vs;
+
+    vs.Clear (_type, state);
     if (!vs.SetFromStr (val.vString)) return false;
     if (vs.type != _type) return false;   // The string may have contained type information incompatible with what we want.
-    Set (_type, vs.val);
+    Set (_type, vs.val, state);
     return true;
   }
 
   // Anything to string...
   if (_baseType == rctString) {
-    SetGenericString (ToStr (&s), _type);
+    CString s;
+
+    SetGenericString (ToStr (&s), _type, state);
     return true;
   }
 
@@ -653,11 +667,12 @@ bool CRcValueState::Convert (ERcType _type) {
         case rctNone:
           return false;
         case rctBool:
-          val.vBool = (val.vInt == 0 ? false : true);
-          type = _type;
+          valBool = (val.vInt == 0 ? false : true);
+          Clear (_type, state);
+          val.vBool = valBool;
           break;
         default:
-          SetGenericInt (val.vInt, _type);
+          SetGenericInt (val.vInt, _type, state);
       }
       break;
     case rctFloat:
@@ -665,11 +680,12 @@ bool CRcValueState::Convert (ERcType _type) {
         case rctNone:
           return false;
         case rctBool:
-          val.vBool = (val.vFloat == 0.0 ? false : true);
-          type = _type;
+          valBool = (val.vFloat == 0.0 ? false : true);
+          Clear (_type, state);
+          val.vBool = valBool;
           break;
         default:
-          SetGenericFloat (val.vFloat, _type);
+          SetGenericFloat (val.vFloat, _type, state);
       }
       break;
     case rctTime:
@@ -735,6 +751,7 @@ bool CRcValueState::SetFromStr (const char *str) {
 
   // Clear the value...
   Clear ();
+  if (!str) return false;   // sanity
   ok = true;
   _valStr = NULL;
 
@@ -1562,6 +1579,73 @@ void CResource::DelRequest (const char *reqGid, TTicks t1) {
 }
 
 
+void CResource::GetRequest (CRcRequest *ret, const char *reqGid, bool allowNet) {
+  CRcRequest *req;
+
+  // Sanity...
+  ASSERT (ret != NULL && reqGid != NULL);
+
+  ret->Reset ();
+
+  // Local resource ...
+  if (rcDriver) {
+    Lock ();
+    for (req = requestList; req; req = req->next) if (req->gid.Compare (reqGid) == 0) {
+
+      // Success: Return ...
+      *ret = *req;
+      Unlock ();
+      ret->next = NULL;
+      return;
+    }
+
+    // Failure ...
+    Unlock ();
+  }
+
+  // Remote resource ...
+  else if (rcHost && allowNet) {
+    CSplitString info;
+    CString s;
+    const char *p;
+    int n;
+    bool ok;
+
+    GetInfo (&s, 1, true);
+    info.Set (s.Get (), INT_MAX, "\n");
+    for (n = 0; n < info.Entries (); n++) {
+      p = info.Get (n);
+      while (p[0] == ' ') p++;
+      if (p[0] == '!') {      // have a request line?
+        ok = true;
+        while (ok && p[0] != ')') {
+          if (!p[0]) ok = false;
+          p++;
+        }
+        if (ok) {
+          p++;
+          while (p[0] == ' ') p++;
+          ok = ret->SetFromStr (p);
+        }
+        if (!ok)
+          WARNINGF (("Syntax error in resource info string line: '%s'", s.Get ()));
+        else {
+          if (ret->gid.Compare (reqGid) == 0) {
+
+            // Success: Return ...
+            ret->Convert (this);    // Convert type
+            return;
+          }
+        }
+        ret->Reset ();
+      }
+    }
+  }
+}
+
+
+
+
 
 // **** For drivers *****
 
@@ -1773,7 +1857,7 @@ const char *CResource::GetInfo (CString *ret, int verbosity, bool allowNet) {
                valueState.ToStr (&s, false, true, false, 20), rcHost ? " (local)" : "");
     if (verbosity >= 1) {
       if (!requestList) ret->Append ("  (no requests)\n");
-      else for (req = requestList; req; req = req->next) ret->AppendF ("  ! %s\n", req->ToStr (&s, true));
+      else for (req = requestList; req; req = req->next) ret->AppendF ("  ! %s\n", req->ToStr (&s, false, true));
 
       if (!subscrList) ret->Append ("  (no subscriptions)\n");
       else for (sl = subscrList; sl; sl = sl->next) ret->AppendF ("  ? %s\n", sl->subscr->Gid ());
@@ -1803,7 +1887,7 @@ void CResource::PrintInfo (FILE *f, int verbosity, bool allowNet) {
 }
 
 
-int CResource::LockSubscribers () {
+int CResource::LockLocalSubscribers () {
   CRcSubscriberLink *sl;
   int n;
 
@@ -1813,14 +1897,14 @@ int CResource::LockSubscribers () {
 }
 
 
-CRcSubscriber *CResource::GetSubscriber (int n) {
+CRcSubscriber *CResource::GetLocalSubscriber (int n) {
   CRcSubscriberLink *sl = subscrList;
   while (n-- > 0) sl = sl->next;
   return sl->subscr;
 }
 
 
-int CResource::LockRequests () {
+int CResource::LockLocalRequests () {
   CRcRequest *req;
   int n;
 
@@ -1830,7 +1914,7 @@ int CResource::LockRequests () {
 }
 
 
-CRcRequest *CResource::GetRequest (int n) {
+CRcRequest *CResource::GetLocalRequest (int n) {
   CRcRequest *req = requestList;
   while (n-- > 0) req = req->next;
   return req;
@@ -2600,20 +2684,32 @@ void CRcSubscriber::GetPatternSet (CKeySet *retPatternSet) {
 
 void CRcRequest::Reset () {
 
-  // Clear value...
+  // Clear value and meta fields ...
   isCompatible = false;   // be defensive by default
+  next = NULL;
   value.Clear ();
 
-  // Set default attributes...
+  // Set default attributes ...
   gid.SetC (EnvInstanceName ());
   priority = rcPrioNormal;
   t0 = t1 = NEVER;
   repeat = 0;
   hysteresis = 0;
 
-
-  // Set origin stamp...
+  // Set origin stamp ...
   SetOrigin ();
+}
+
+
+void CRcRequest::Set (CRcRequest *req) {
+  value = *(req->Value ());
+  isCompatible = false;
+  gid.Set (req->gid);
+  priority = req->priority;
+  t0 = req->t0;
+  t1 = req->t1;
+  repeat = req->repeat;
+  hysteresis = req->hysteresis;
 }
 
 
@@ -2807,15 +2903,15 @@ bool CRcRequest::SetAttrsFromStr (const char *str) {
 }
 
 
-const char *CRcRequest::ToStr (CString *ret, bool beautiful, TTicks relativeTimeThreshold) {
+const char *CRcRequest::ToStr (CString *ret, bool precise, bool tabular, TTicks relativeTimeThreshold, const char *skipAttrs) {
   CString s;
   TTicks now = NEVER;
 
-  ret->SetF (beautiful ? "%-16s #%-12s *%i" : "%s #%s *%i",
-             value.ToStr (&s, beautiful, false, !beautiful, 16),
-             gid.Get (), priority);
+  ret->SetF (tabular ? "%-16s" : "%s", value.ToStr (&s, tabular, false, precise, 16));
+  if (!strchr (skipAttrs, '#')) ret->AppendF (tabular ? " #%-12s" : " #%s", gid.Get ());
+  if (!strchr (skipAttrs, '*')) ret->AppendF (" *%i", priority);
   if (relativeTimeThreshold && (t0 != NEVER || t1 != NEVER)) now = TicksNow ();
-  if (t0) {
+  if (t0) if (!strchr (skipAttrs, '+')) {
     ret->Append (" +");
     if (repeat) {
       if (repeat == TICKS_FROM_SECONDS(TIME_OF(24,0,0)))
@@ -2830,35 +2926,29 @@ const char *CRcRequest::ToStr (CString *ret, bool beautiful, TTicks relativeTime
     else
       ret->Append (TicksToString (&s, t0));
   }
-  if (t1) {
+  if (t1) if (!strchr (skipAttrs, '-')) {
     ret->Append (" -");
     if (relativeTimeThreshold && t1 > now && t1 - now <= relativeTimeThreshold)
       ret->AppendF ("%i", (int) (t1 - now));
     else
       ret->Append (TicksToString (&s, t1));
   }
-  if (hysteresis) ret->AppendF (" ~%i", hysteresis);
-  ret->AppendF (beautiful ? "   @%s" : " @%s", origin.Get ());
-  if (!isCompatible) ret->Append (" (incompatible)");
+  if (hysteresis) if (!strchr (skipAttrs, '~')) ret->AppendF (" ~%i", hysteresis);
+  if (!strchr (skipAttrs, '@')) ret->AppendF (tabular ? "   @%s" : " @%s", origin.Get ());
+  if (!isCompatible) if (!strchr (skipAttrs, 'i')) ret->Append (" (incompatible)");
   return ret->Get ();
 }
 
 
-const char *CRcRequest::ToStr (bool beautiful, TTicks relativeTimeThreshold) {
-  return ToStr (GetTTS (), beautiful);
+const char *CRcRequest::ToStr (bool precise, bool tabular, TTicks relativeTimeThreshold, const char *skipAttrs) {
+  return ToStr (GetTTS (), precise, tabular, relativeTimeThreshold, skipAttrs);
 }
 
 
-void CRcRequest::Convert (CResource *rc) {
-  CString s;
-  ERcType rcType;
-
-  rcType = rc->Type ();
-  if (rcType != rctNone) {
-    isCompatible = value.Convert (rc->Type ());
-    if (!isCompatible)
-      WARNINGF (("Request '%s' to resource '%s' has incompatible type and will have no effect.", ToStr (&s), rc->Uri ()));
-  }
+void CRcRequest::Convert (CResource *rc, bool warn) {
+  isCompatible = value.Convert (rc->Type ());
+  if (!isCompatible && warn)
+    WARNINGF (("Request '%s' to resource '%s' has incompatible type and will have no effect.", ToStr (), rc->Uri ()));
 }
 
 

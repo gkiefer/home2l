@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-0-g010f (2020-02-07)</span>
+   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -70,7 +70,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Listbox widget. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00395">395</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00422">422</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -91,10 +91,10 @@ Public Member Functions</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#aa0ba30de9840ac2442cb43dff74f2fd8">SetMode</a> (<a class="el" href="group__ui__widgets__listbox.html#gae18194fab8694a0a63686214ae7a0631">EListboxMode</a> _mode, int _itemHeight, int _itemGap=1)</td></tr>
 <tr class="memdesc:aa0ba30de9840ac2442cb43dff74f2fd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">'itemHeight' == 0 indicates variable-height items (Note: presently much worse performance than fixed-height); implicitly deletes all items. <br /></td></tr>
 <tr class="separator:aa0ba30de9840ac2442cb43dff74f2fd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77064b9ef8d50ea9eae75061fed7202b"><td class="memItemLeft" align="right" valign="top"><a id="a77064b9ef8d50ea9eae75061fed7202b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a77064b9ef8d50ea9eae75061fed7202b">SetFormat</a> (TTF_Font *_font, TColor colGrid=BLACK, TColor _colLabel=WHITE, TColor _colBack=DARK_DARK_GREY, TColor _colSelected=GREY, TColor _colSpecial=DARK_GREY)</td></tr>
-<tr class="memdesc:a77064b9ef8d50ea9eae75061fed7202b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters set here are only read in 'RenderItem' &amp; can be ommited (or re-interpreted) if a custom render function is defined. 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'. <br /></td></tr>
-<tr class="separator:a77064b9ef8d50ea9eae75061fed7202b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d747294e49bc9a16b9a68d96aa48bcd"><td class="memItemLeft" align="right" valign="top"><a id="a6d747294e49bc9a16b9a68d96aa48bcd"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a6d747294e49bc9a16b9a68d96aa48bcd">SetFormat</a> (TTF_Font *_font, int _hAlign=-1, TColor colGrid=BLACK, TColor _colLabel=WHITE, TColor _colBack=DARK_DARK_GREY, TColor _colLabelSelected=WHITE, TColor _colBackSelected=GREY, TColor _colLabelSpecial=WHITE, TColor _colBackSpecial=DARK_GREY)</td></tr>
+<tr class="memdesc:a6d747294e49bc9a16b9a68d96aa48bcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Except 'colGrid', all parameters set here are only read in 'RenderItem' &amp; can be ommited (or re-interpreted) if a custom render function is defined. 'colGrid' is the general background color which can also be set via 'CCanvas::SetColors'. <br /></td></tr>
+<tr class="separator:a6d747294e49bc9a16b9a68d96aa48bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ee9bcddf07ff70ecc486fc5cefc6d5d"><td class="memItemLeft" align="right" valign="top"><a id="a4ee9bcddf07ff70ecc486fc5cefc6d5d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetArea</b> (SDL_Rect _area)</td></tr>
 <tr class="separator:a4ee9bcddf07ff70ecc486fc5cefc6d5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -108,14 +108,25 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItems</b> (int _it
 <tr class="memitem:a8105108eb6ec88d372e8bba4c4ca3a12"><td class="memItemLeft" align="right" valign="top"><a id="a8105108eb6ec88d372e8bba4c4ca3a12"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>GetItems</b> ()</td></tr>
 <tr class="separator:a8105108eb6ec88d372e8bba4c4ca3a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad238a388c4d49d1763c222b46c959699"><td class="memItemLeft" align="right" valign="top"><a id="ad238a388c4d49d1763c222b46c959699"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItem</b> (int idx, const char *_text, SDL_Surface *_surfIcon=NULL, bool _isSpecial=false, void *data=NULL)</td></tr>
-<tr class="separator:ad238a388c4d49d1763c222b46c959699"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2767b87e84a5557f841c8d21a78ced2a"><td class="memItemLeft" align="right" valign="top"><a id="a2767b87e84a5557f841c8d21a78ced2a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItem</b> (int idx, const char *_text, const char *_iconName=NULL, bool _isSpecial=false, void *data=NULL)</td></tr>
+<tr class="separator:a2767b87e84a5557f841c8d21a78ced2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a330cbb63ea719daebad65bc04d02d929"><td class="memItemLeft" align="right" valign="top"><a id="a330cbb63ea719daebad65bc04d02d929"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetItem</b> (int idx, const char *_text, SDL_Surface *_iconSurf, bool _isSpecial=false, void *data=NULL)</td></tr>
+<tr class="separator:a330cbb63ea719daebad65bc04d02d929"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a522560b84f8d0e399ae8a1b044fb4352"><td class="memItemLeft" align="right" valign="top"><a id="a522560b84f8d0e399ae8a1b044fb4352"></a>
 <a class="el" href="classCListboxItem.html">CListboxItem</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetItem</b> (int idx)</td></tr>
 <tr class="separator:a522560b84f8d0e399ae8a1b044fb4352"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca211c4e9adee6b8b669a28d35b1fc91"><td class="memItemLeft" align="right" valign="top"><a id="aca211c4e9adee6b8b669a28d35b1fc91"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>GetItemHeight</b> ()</td></tr>
+<tr class="separator:aca211c4e9adee6b8b669a28d35b1fc91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaea38d55165bac4bbe473398c247029"><td class="memItemLeft" align="right" valign="top"><a id="adaea38d55165bac4bbe473398c247029"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#adaea38d55165bac4bbe473398c247029">GetItemLabelWidth</a> (int idx)</td></tr>
+<tr class="memdesc:adaea38d55165bac4bbe473398c247029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the label (net) width of an item (e.g. to optimize geometry). <br /></td></tr>
+<tr class="separator:adaea38d55165bac4bbe473398c247029"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a01ec45c4470936ebdf3c8b969d77539f"><td class="memItemLeft" align="right" valign="top"><a id="a01ec45c4470936ebdf3c8b969d77539f"></a>
-SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><b>GetItemRect</b> (int idx)</td></tr>
+SDL_Rect&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a01ec45c4470936ebdf3c8b969d77539f">GetItemRect</a> (int idx)</td></tr>
+<tr class="memdesc:a01ec45c4470936ebdf3c8b969d77539f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the area of an item. <br /></td></tr>
 <tr class="separator:a01ec45c4470936ebdf3c8b969d77539f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c4ddbc76dea66d4972363d938103d78"><td class="memItemLeft" align="right" valign="top"><a id="a6c4ddbc76dea66d4972363d938103d78"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>ScrollTo</b> (int idx, int vAlign=-1)</td></tr>
@@ -318,7 +329,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>Changed</b> ()</td></
 </div><div class="memdoc">
 
 <p>Render this widget. </p>
-<p>The default implementation uses the '<a class="el" href="classCWidget.html#a0013bd8c0c7ac4948d64a76557efc4a8" title="Return an up-to-date texture. ">GetTexture()</a>' method above. By overriding this method it is possible to define widgets with a custom SDL rendering procedure, which may be more efficient than preparing a single texture containing the complete widget. </p>
+<p>The default implementation uses the '<a class="el" href="classCWidget.html#a0013bd8c0c7ac4948d64a76557efc4a8" title="Return an up-to-date texture. ">GetTexture()</a>' method above. By overriding this method it is possible to define widgets with a custom SDL rendering procedure, which may be more efficient than preparing a single texture containing the complete widget.</p>
+<p>It is allowed to pass 'ren == NULL', in which case all textures and internal data structures are (re-)calculated, but nothing is actually rendered. </p>
 
 <p>Reimplemented from <a class="el" href="classCCanvas.html#a183698d551a658d6151b64de2a160f37">CCanvas</a>.</p>
 
@@ -367,7 +379,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>Changed</b> ()</td></
 </div><div class="memdoc">
 
 <p>Render a list box item to an SDL surface and return it. </p>
-<p>This method may be overriden to implement a custom look of the items. The default implementation renders left-justified label and text from 'CListboxItem::surfLabel' and 'CListbox::text' according the settings given by 'SetFormat' and interprets '<a class="el" href="classCListboxItem.html#ad487f0121bb1478655b839a4dfe72a18" title="Item is special, e.g. a head line. ">CListboxItem::isSpecial</a>'. The dimensions of the returned surface must match 'area.w' and 'itemHeight' (if &gt;= 0). If 'itemHeight' == 0, the height is arbitrary and the layout will be adapted accordingly. The caller becomes owner of the returned surface. 'surf' is the previous surface which can be reused. If it is not NULL, it must be free'd or reused. </p>
+<p>This method may be overriden to implement a custom look of the items. The default implementation renders an icon and text (or one of both) as defined by CListboxItem::SetLabe() according the settings given by <a class="el" href="classCListbox.html#a6d747294e49bc9a16b9a68d96aa48bcd" title="Except &#39;colGrid&#39;, all parameters set here are only read in &#39;RenderItem&#39; &amp; can be ommited (or re-interpret...">SetFormat()</a> and interprets <a class="el" href="classCListboxItem.html#ad487f0121bb1478655b839a4dfe72a18" title="Item is special, e.g. a head line. ">CListboxItem::isSpecial()</a>. The dimensions of the returned surface must match 'area.w' and 'itemHeight' (if &gt;= 0). If 'itemHeight' == 0, the height is arbitrary and the layout will be adapted accordingly. The caller becomes owner of the returned surface. 'surf' is the previous surface which can be reused. If it is not NULL, it must be free'd or reused. </p>
 
 </div>
 </div>

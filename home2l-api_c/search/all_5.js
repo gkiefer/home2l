@@ -3,6 +3,7 @@ var searchData=
   ['eappoperation',['EAppOperation',['../group__wallclock__apps.html#ga01bd6c3ad88e2325b6c4bbf8d52de154',1,'apps.H']]],
   ['ebrstatus',['EBrStatus',['../group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b',1,'interface.h']]],
   ['efontstyle',['EFontStyle',['../group__ui__base.html#ga4ceb6be9200d0bb016cbbb87dcf5ed88',1,'ui_base.H']]],
+  ['egadgettype',['EGadgetType',['../group__wallclock__floorplan.html#ga0b81322caa3378d0771ddce7e64c9c6f',1,'floorplan.H']]],
   ['elistboxmode',['EListboxMode',['../group__ui__widgets__listbox.html#gae18194fab8694a0a63686214ae7a0631',1,'ui_widgets.H']]],
   ['emessagebuttonid',['EMessageButtonId',['../group__ui__widgets__messagebox.html#gac3cc67a3fe1fabe783f38edcf34af00a',1,'ui_widgets.H']]],
   ['empty_5fmodule',['EMPTY_MODULE',['../group__brownies__firmware.html#ga741d237434e5288f5a68d1a4e950db94',1,'core.h']]],
