@@ -240,6 +240,10 @@ apk-clean:
 	rm -fr $(APK_BUILD)
 
 
+apk-stack: $(APK)
+	home2l adb $(MACHINE) logcat | ndk-stack -sym $(APK_BUILD)/obj/local/armeabi-v7a/
+
+
 
 
 

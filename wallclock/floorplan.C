@@ -630,7 +630,7 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
       for (n = 0; n < RCDLG_PERCENT_STEPS; n++) {
         idx = reverse ? (RCDLG_PERCENT_STEPS - 1 - n) : n;
         choiceVal[idx] = (n * 100.0) / (RCDLG_PERCENT_STEPS - 1);
-        choiceText[idx].SetF ("%.0f", choiceVal[idx]);
+        choiceText[idx].SetF ("%.0f%%", choiceVal[idx]);
       }
       switch (_subType) {
         case gtShades:
@@ -2766,12 +2766,12 @@ enum EBtnIdFloorplan {
 
 
 static TButtonDescriptor fpButtons[btnIdFpEND] = {
-  { -1, COL_FP_MAIN, "ic-back-48",      NULL, CbAppEscape, SDLK_ESCAPE }, // btnIdFpBack
-  { -1, COL_FP_MAIN, NULL,        N_("Auto"), CbScreenFloorplanOnButtonPushed, SDLK_a },        // btnIdFpUseAuto
-  { -1, COL_FP_MAIN, "ic-home-48",      NULL, CbScreenFloorplanOnButtonPushed, SDLK_d },        // btnIdFpUseDay
-  { -1, COL_FP_MAIN, "ic-hotel-48",     NULL, CbScreenFloorplanOnButtonPushed, SDLK_n },        // btnIdFpUseNight
-  { -1, COL_FP_MAIN, "ic-walk-48",      NULL, CbScreenFloorplanOnButtonPushed, SDLK_l },        // btnIdFpUseLeaving
-  { -1, COL_FP_MAIN, "ic-terrain-48",   NULL, CbScreenFloorplanOnButtonPushed, SDLK_v },        // btnIdFpUseVacation
+  { -1, COL_FP_MAIN, "ic-back-48",      NULL, CbAppEscape, SDLK_ESCAPE },                 // btnIdFpBack
+  { -1, COL_FP_MAIN, NULL,        N_("Auto"), CbScreenFloorplanOnButtonPushed, SDLK_a },  // btnIdFpUseAuto
+  { -1, COL_FP_MAIN, "ic-home-48",      NULL, CbScreenFloorplanOnButtonPushed, SDLK_d },  // btnIdFpUseDay
+  { -1, COL_FP_MAIN, "ic-hotel-48",     NULL, CbScreenFloorplanOnButtonPushed, SDLK_n },  // btnIdFpUseNight
+  { -1, COL_FP_MAIN, "ic-walk-48",      NULL, CbScreenFloorplanOnButtonPushed, SDLK_l },  // btnIdFpUseLeaving
+  { -1, COL_FP_MAIN, "ic-terrain-48",   NULL, CbScreenFloorplanOnButtonPushed, SDLK_v },  // btnIdFpUseVacation
 };
 
 
@@ -2845,7 +2845,7 @@ void CScreenFloorplan::Setup (CFloorplan *_floorplan, TTicksMonotonic _tInterval
 
   // Button bar ...
   SETA (buttonBar, CreateMainButtonBar (btnIdFpEND, fpButtons, this));
-  lastUseState = (ERctUseState) -1;
+  lastUseState = lastUseStateReq = (ERctUseState) -1;
   ASSERT (btnIdFpUseDay - 1 == btnIdFpUseAuto);
   buttonBar[btnIdFpUseDay + lastUseStateReq].SetColor (COL_FP_MAIN_DARKER);
   UpdateRequest ();
