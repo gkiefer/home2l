@@ -5235,15 +5235,17 @@ Initializing and integrating a new \textit{Brownie} is done in two stages.
 
 \subsection*{Stage 1: Initializing the Microcontroller}
 
-In the first stage, the maintenance firmware, the initial contents of the EEPROM and the fuse bits of the microntroller are set. This requires the initialization image \lst{init.<mcu>.elf}, where \lst{<mcu>} is the microcontroller model and may be \lst{t84}, \lst{t85} or \lst{t861} for an \textit{ATtiny84}, \textit{ATtiny85} or \textit{ATtiny861} device, respectively.
+In the first stage, the maintenance firmware, the initial contents of the EEPROM and the fuse bits of the microntroller are set. This requires the initialization image \lst{init.<mcu>.elf}, where \lst{<mcu>} is the microcontroller model and may be \lst{t84}, \lst{t85} or \lst{t861} for an \textit{ATtiny84}, \textit{ATtiny85} or \textit{ATtiny861} device, respectively. Firmwares can be found at \lstf{\$HOME2L\_ROOT/share/brownies} in a \textit{Home2L} installation.
 
 This step can be performed with any programming facility of your choice. For example, with \textit{avrdude(1)} and an \textit{AVRISP mkII} programmer, the command to initialize a \textit{t85} device is:
 \begin{lstlisting}[language=bash]
-  $ export MCU=t85; avrdude -c avrisp2 -p $MCU \
-  §   -U  hfuse:w:init.${MCU}.elf \
-  §   -U  efuse:w:init.${MCU}.elf \
-  §   -U eeprom:w:init.${MCU}.elf \
-  §   -U  flash:w:init.${MCU}.elf
+  $ export MCU=t85                             # enter your MCU type here
+  $ export INITFW=$(home2l -r)/share/brownies/init.${MCU}.elf
+  $ avrdude -c avrisp2 -p ${MCU} \
+  §    -U  hfuse:w:${INITFW} \
+  §    -U  efuse:w:${INITFW} \
+  §    -U eeprom:w:${INITFW} \
+  §    -U  flash:w:${INITFW}
 \end{lstlisting}
 
 This is usually the last time you need your programmer.

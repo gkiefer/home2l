@@ -50,7 +50,8 @@ The main place of documentation is the [*Home2L Book*](home2l-book.pdf).
 The APIs for developing rules and drivers or to extend the *Home2Ls* are documented with Doxygen:
 [C/C++ API](home2l-api_c/index.html), [Python API](home2l-api_python/index.html).
 
-The suite comes with a [Docker Demo Image](https://hub.docker.com/r/gkiefer/home2l) allowing to test the suite easily. The *Home2L Book* contains a **a step-by-step tutorial demonstrating the key features of the *Home2L* suite**.
+The suite comes with a [Docker Demo Image](https://hub.docker.com/r/gkiefer/home2l) allowing to test the suite easily.
+The [*Home2L Book*](home2l-book.pdf) contains a **a step-by-step tutorial demonstrating the key features of the *Home2L* suite**.
 
 **For the brave and the impatient:**
 

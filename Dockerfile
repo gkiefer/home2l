@@ -27,7 +27,7 @@
 
 
 # Building the image locally:
-#   $ docker build --build-arg BUILD_VERSION=testing -t gkiefer/home2l:testing .
+#   $ docker build --build-arg BUILD_VERSION=test -t gkiefer/home2l:test .
 #
 # "testing" can be replaced by an arbitrary build version.
 # '--build-arg BUILD_VERSION=...' can be ommitted when building a git repository,
@@ -85,8 +85,8 @@
 # Version of the Debian base image ...
 ARG DEBIAN_VERSION=buster
 
-# Build version as reported by the tools (leave empty when building from a git context) ...
-ARG BUILD_VERSION
+# Build version as reported by the tools ...
+ARG BUILD_VERSION=dev
 
 
 
