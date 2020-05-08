@@ -1083,11 +1083,12 @@ class CResource /* final */ {
       /// @param allowNet specifies wether network access (and eventual blocking/waiting) is allowed.
       ///
       /// If the resource cannot be queried (e.g. because it is unreachable or non-existing),
-      /// 'ret->Gid()' will return an empty string. Otherwise, 'ret->Gid()' will be non-empty and equal to
-      /// 'reqGid'.
+      /// 'ret->Gid()' will return an empty string. Also, 'ret->Value()' will have a state of @ref rcsUnknown.
+      /// Otherwise, 'ret->Gid()' will be non-empty and equal to 'reqGid'.
       ///
       /// If the resource can be queried successfully, but no such request exists, 'ret->Value()' will
-      /// have a state of @ref rcsUnknown and 'ret->IsCompatible()' will return 'true'.
+      /// have a state of @ref rcsUnknown.
+      ///
       /// If an incompatible request has been set, 'ret->IsCompatible()' will return 'false'.
 
     /// @}

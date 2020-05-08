@@ -432,6 +432,49 @@ static CRcRequest *NewUserRequest () {
 }
 
 
+static void HandleLongPush (CResource *rc) {
+  CRcRequest *req, reqDefault;
+  bool setNotReset = false, haveDefault;
+
+  // Determine new user request ...
+  req = NewUserRequest ();
+  switch (rc->Type ()) {
+    case rctBool:
+      setNotReset = (rc->ValidBool (false) == false);
+      req->SetValue (setNotReset ? true : false);
+      break;
+    case rctPercent:
+      setNotReset = (rc->ValidFloat (0.0f) == 0.0f);
+      req->SetValue (setNotReset ? 100.0f : 0.0f);
+      break;
+    default:
+      // Unsupported type: Ignore long push
+      FREEO (req);
+  }
+
+  // Check if we should do "auto" instead of "reset" ...
+  if (req && !setNotReset) {
+
+    // Check if a "_default" or "default" request has been set ...
+    rc->GetRequest (&reqDefault, "_default");
+    haveDefault = reqDefault.Value ()->IsValid ();
+    if (!haveDefault) {
+      rc->GetRequest (&reqDefault, "default");
+      haveDefault = reqDefault.Value ()->IsValid ();
+    }
+
+    // If we have a default, just remove the current user request ...
+    if (haveDefault) {
+      FREEO (req);
+      rc->DelRequest (RcGetUserRequestId ());
+    }
+  }
+
+  // Set request if adequate ...
+  if (req) rc->SetRequest (req);
+}
+
+
 
 
 
@@ -1504,16 +1547,17 @@ bool CGadgetShades::UpdateSurface () {
 
 
 void CGadgetShades::OnPushed (CButton *btn, bool longPush) {
-  CRcRequest *req;
+  //~ CRcRequest *req;
 
   if (longPush) {
-    if (rcShades->ValidFloat (NAN) == 0.0) {
-      req = NewUserRequest ();
-      req->SetValue (100.0f);
-      rcShades->SetRequest (req);
-    }
-    else
-      rcShades->DelRequest (RcGetUserRequestId ());
+    HandleLongPush (rcShades);
+    //~ if (rcShades->ValidFloat (NAN) == 0.0) {
+      //~ req = NewUserRequest ();
+      //~ req->SetValue (100.0f);
+      //~ rcShades->SetRequest (req);
+    //~ }
+    //~ else
+      //~ rcShades->DelRequest (RcGetUserRequestId ());
   }
 
   else RunResourceDialog (rcShades, gtShades);
@@ -2028,7 +2072,7 @@ bool CGadgetIcon::UpdateSurface () {
 
 void CGadgetIcon::OnPushed (CButton *btn, bool longPush) {
   char buf[64];
-  CRcRequest *req;
+  //~ CRcRequest *req;
   const char *p, *phoneUrl;
 
   switch (gdtType) {
@@ -2063,12 +2107,13 @@ void CGadgetIcon::OnPushed (CButton *btn, bool longPush) {
     case gtWlan:
     case gtService:
       if (longPush) {
-        if (rcState->ValidBool (true)) rcState->DelRequest (RcGetUserRequestId ());
-        else {
-          req = NewUserRequest ();
-          req->SetValue (true);
-          rcState->SetRequest (req);
-        }
+        HandleLongPush (rcState);
+        //~ if (rcState->ValidBool (true)) rcState->DelRequest (RcGetUserRequestId ());
+        //~ else {
+          //~ req = NewUserRequest ();
+          //~ req->SetValue (true);
+          //~ rcState->SetRequest (req);
+        //~ }
       }
       else
         RunResourceDialog (rcState, gdtType);

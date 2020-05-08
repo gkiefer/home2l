@@ -10,6 +10,7 @@ var searchData=
   ['match',['Match',['../classCRegex.html#a9387d562facf6cea5125143e679818e8',1,'CRegex']]],
   ['matrix_5fbufsize',['MATRIX_BUFSIZE',['../group__brownies__features.html#ga5bd0faf5db964017108a97a0251da0e8',1,'config.h']]],
   ['matrix_5fcols',['MATRIX_COLS',['../group__brownies__features.html#ga19d8c543f14d754cafd731d930bdc3a1',1,'config.h']]],
+  ['matrix_5fcols_5fgshift',['MATRIX_COLS_GSHIFT',['../group__brownies__features.html#gadd794e1d52674225c6ab60723e0dcb16',1,'config.h']]],
   ['matrix_5frows',['MATRIX_ROWS',['../group__brownies__features.html#ga237af2b6cf547aaf4d0de5bc5a538672',1,'config.h']]],
   ['matrix_5ft_5fperiod',['MATRIX_T_PERIOD',['../group__brownies__features.html#ga383dce84cc2cea041caf8314adc08376',1,'config.h']]],
   ['matrix_5ft_5fsample',['MATRIX_T_SAMPLE',['../group__brownies__features.html#ga4ff6c131c8006439b07d581f448da1d3',1,'config.h']]],

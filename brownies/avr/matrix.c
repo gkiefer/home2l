@@ -106,7 +106,11 @@ static inline uint8_t BufGetNextCylce () {
                                           // current matrix values, directly mapped to regfile
 static uint8_t matrixLast[MATRIX_ROWS];   // last read values for debouncing;
                                           // only if the currently read value is equal to the last read one, it is processed further
+#if MATRIX_ROWS > 1
 static uint8_t matrixRow;   // currently sampled row
+#else
+#define matrixRow 0         // some optimization
+#endif
 static uint8_t matrixCycle; // cycle counter (incremented whenever 'matrixRow' resets)
 
 static uint16_t tSample;    // Time when sampling has started (BR_TICKS_NEVER = not sampling)
@@ -124,7 +128,9 @@ static uint16_t tPeriod;    // Time to start next sampling
 
 void MatrixInit () {
   BufInit ();
+#if MATRIX_ROWS > 1
   INIT (matrixRow, 0);
+#endif
   INIT (tSample, 0);
   tPeriod = TimerNow ();
 }
@@ -171,15 +177,17 @@ void MatrixIterate () {
       }
 
       // Stop row stimulation ...
-      P_OUT_MULTI (GPIO_TO_PMASK (MATRIX_ROWS_GMASK | MATRIX_COLS_GMASK), 0);
+      P_OUT_MULTI (GPIO_TO_PMASK (MATRIX_ROWS_GMASK), 0);
       tSample = BR_TICKS_NEVER;
 
       // Select next row...
+#if MATRIX_ROWS > 1
       matrixRow++;
       if (matrixRow >= MATRIX_ROWS) {
         matrixRow = 0;
         matrixCycle++;
       }
+#endif
 
       // Set next period time ...
       do {
@@ -193,7 +201,7 @@ void MatrixIterate () {
     if (AFTER (tNow, tPeriod)) {
 
       // Start row stimulation ...
-      P_OUT_MULTI (GPIO_TO_PMASK (MATRIX_ROWS_GMASK | MATRIX_COLS_GMASK),
+      P_OUT_MULTI (GPIO_TO_PMASK (MATRIX_ROWS_GMASK),
                    GPIO_TO_PMASK ((1 << MATRIX_ROWS_GSHIFT) << matrixRow));
 
       // Set time for sampling ...

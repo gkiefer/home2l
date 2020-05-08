@@ -46,7 +46,7 @@ extern "C" {
 
 
 ENV_PARA_STRING("br.database", envBrDatabaseFile, "brownies.conf");
-  /* Name of the Brownie database file (relative to the etc domain)
+  /* Name of the Brownie database file (relative to the 'etc' domain)
    */
 
 ENV_PARA_STRING("br.link", envBrLinkDev, "/dev/i2c-1");
@@ -115,14 +115,6 @@ ENV_PARA_STRING("br.shades.requestAttrs", envBrShadesReqAttrs, NULL);
    * Note: An eventual off-time attribute is set only after the button is released.
    */
 
-
-ENV_PARA_INT("br.shades.defaultPos", envBrShadesDefaultPos, 0);
-  /* Default position for shades
-   *
-   * If set and >= 0, a default request for 'shades/pos' resources is set
-   * automatically. To disable the default request, enter a negative value here.
-   */
-
 ENV_PARA_SPECIAL ("br.matrix.win.<brownieID>.<winID>", const char *, NULL);
   /* Define a window state resource
    *
@@ -130,13 +122,13 @@ ENV_PARA_SPECIAL ("br.matrix.win.<brownieID>.<winID>", const char *, NULL);
    * based on a set of one or two sensor elements. The syntax of a defintion is
    *
    * \begin{description}
-   *   \item[\texttt{s:<sensor>}] ~ \\
+   *   \item[\texttt{[-|+]s:<sensor>}] ~ \\
    *            Single sensor (0 = window open, 1 = window closed).
-   *   \item[\texttt{v:<lower>:<upper>}] ~ \\
+   *   \item[\texttt{[-|+]v:<lower>:<upper>}] ~ \\
    *            Two sensors mounted at the side border of the window.
    *            Both sensors = 0 indicate that the window is open,
    *            only the upper = 0 is interpreted as a tilted window.
-   *   \item[\texttt{h:<near>:<far>:<tth>}] ~ \\
+   *   \item[\texttt{[-|+]h:<near>:<far>:<tth>}] ~ \\
    *            Two sensor mounted at the top border of the window,
    *            placed at the near and far end related to the hinge.
    *            Whether the window is open or tilted is determined
@@ -147,7 +139,11 @@ ENV_PARA_SPECIAL ("br.matrix.win.<brownieID>.<winID>", const char *, NULL);
    *            considered open.
    * \end{description}
    *
-   * The sensors are identified by 2-digit numbers as the raw matrix ids.
+   * The prefix (''-'' or ''+'') denotes whether the sensor value(s) have to be inverted.
+   * By default (or with a ''+''), a closed window/sensor is represented by a value of 0.
+   * With a prefix of ''-'', a closed window/sensor is represented by a value of 1.
+   *
+   * The sensors are identified by 2-digit numbers as the raw matrix IDs.
    *
    * Note for the horizontal ('h') variant: This is the dynamic case, where both the
    *   near and the far sensor typically open both the "tilted" and "open" case.
@@ -567,7 +563,8 @@ class CBrMatrixWindow {
     int col[2], row[2];
     TTicksMonotonic tth;  // for 'mwtHorizontal': threshold time
 
-    int vals;     // bit 0 = value at col[0]/row[0], bit 1 = value at col[1]/row[1]
+    int vals;             // bit 0 = value at col[0]/row[0], bit 1 = value at col[1]/row[1]
+    bool invert;          // 'true' = sensor values are inverted
     TTicksMonotonic tx0;  // for 'mwtHorizontal': the time + 'tth' at which the "0/x" state was reached or 'NEVER' if the state is not "0/x"
     ERctWindowState state;
     CResource *rc;
@@ -578,6 +575,15 @@ class CBrMatrixWindow {
     CBrMatrixWindow () { type = mwtInvalid; }
 
     void Set (const char *def, int matRows, int matCols, CRcDriver *rcDrv, const char *rcLid) {
+
+      // Read and consume optional prefix ...
+      invert = false;
+      if (def[0] == '-') {
+        invert = true;
+        def++;
+      }
+      else if (def[0] == '+')
+        def++;
 
       // Read type ...
       switch (def[0]) {
@@ -615,7 +621,7 @@ class CBrMatrixWindow {
       }
 
       // Init variables ...
-      vals = mwtSingle ? 1 : 3;     // assume a closed window ...
+      vals = mwtSingle ? 2 : 3;     // assume a closed window ...
       state = rcvWindowClosed;
       tx0 = NEVER;
 
@@ -630,6 +636,8 @@ class CBrMatrixWindow {
     };
 
     void Update (int _row, int _col, bool val) {
+      //~ INFOF (("### CBrMatrixWindow::Update (row = %i, col = %i, val = %i)", _row, _col, (int) val));
+      if (invert) val = !val;
       if (_row == row[0] && _col == col[0]) { if (val) vals |= 2; else vals &= ~2; }
       if (_row == row[1] && _col == col[1]) { if (val) vals |= 1; else vals &= ~1; }
       switch (type) {
@@ -821,16 +829,17 @@ class CBrFeatureMatrix: public CBrFeature {
 #define rcActDn (rcList[1])
 #define rcBtnUp (rcList[2])
 #define rcBtnDn (rcList[3])
-#define rcShades (rcList[4])
+#define rcPos (rcList[4])
 
 
 class CBrFeatureShades: public CBrFeature {
   protected:
-    CBrFeatureShades *primary;    // primary shades (or NULL, if 'this' is the primary)
+    CBrFeatureShades *primary;    // reference to primary shades or NULL, if 'this' is the primary
     CResource *rcList[5];
-    uint8_t state;    // contents of BR_REG_SHADES_STATUS; the lower 4 bits are ours
-    uint8_t rExt;     // contents of BR_REG_SHADES_REXT
-    bool moving;      // shades are moving (frequent updates desired)
+    uint8_t state;        // contents of BR_REG_SHADES_STATUS; the lower 4 bits are ours
+    uint8_t rExt;         // contents of BR_REG_SHADES_REXT
+    uint8_t rIntLocked;   // last RINT value if the button is still down (-> user request is locked with no end time)
+    bool polling;         // shades are moving (frequent updates desired)
 
     static CRcRequest *NewUserRequest (int pos) {
       CRcRequest *req = new CRcRequest ((float) pos, NULL, rcPrioUser);
@@ -852,11 +861,11 @@ class CBrFeatureShades: public CBrFeature {
       // Variables ...
       primary = _primary;
       state = 0;
-      moving = false;
-      rExt = 0xff;
+      polling = false;
+      rExt = rIntLocked = 0xff;
 
       // Register resources ...
-      rcShades = RcRegisterResource (drv, MakeRcLid ("shades%s/pos", idStr), rctPercent, true);
+      rcPos = RcRegisterResource (drv, MakeRcLid ("shades%s/pos", idStr), rctPercent, true);
         /* [RC:brownies:<brownieID>/shades<n>/pos] Brownie shades/actuator position
          *
          * Current position of an actuator. An 'rcBusy' status indicates that the actuator
@@ -868,9 +877,6 @@ class CBrFeatureShades: public CBrFeature {
          * The driver issues automatic user requests if one of the buttons are pushed.
          * The attributes of such requests are specified by \refenv{br.shades.requestAttrs},
          * \refenv{rc.userReqId}, and \refenv{rc.userReqAttrs}.
-         *
-         * Whether a default request is set and its potential value are defined
-         * by \refenv{br.shades.defaultPos}.
          */
       rcActUp = RcRegisterResource (drv, MakeRcLid ("shades%s/actUp", idStr), rctBool, false);
         /* [RC:brownies:<brownieID>/shades<n>/actUp] Brownie actuator is powered in the "up" direction
@@ -915,14 +921,14 @@ class CBrFeatureShades: public CBrFeature {
 
     virtual ~CBrFeatureShades () {}
 
-    virtual unsigned Sensitivity () { return moving ? (BR_POLL | BR_CHANGED_SHADES) : BR_CHANGED_SHADES; }
-      // enable polling when the shades are moving or an expiration occured
+    virtual unsigned Sensitivity () { return polling ? (BR_POLL | BR_CHANGED_SHADES) : BR_CHANGED_SHADES; }
+      // enable polling when the shades need polling
 
     virtual void Update (CBrownieLink *link, bool initial) {
       static const uint8_t actMask = BR_SHADES_0_ACT_UP | BR_SHADES_0_ACT_DN | BR_SHADES_1_ACT_UP | BR_SHADES_1_ACT_DN;
       CRcRequest *req;
       EBrStatus status;
-      uint8_t reg, regRInt, pos, rInt, _state;
+      uint8_t regPos, regRInt, regRExt, pos, rInt, _state;
       int n;
 
       //~ INFOF(("### CBrFeatureShades::Update (%03i, %s)", brownie->Adr (), !primary ? "primary" : "secondary"));
@@ -932,50 +938,73 @@ class CBrFeatureShades: public CBrFeature {
         status = link->RegRead (brownie->Adr (), BR_REG_SHADES_STATUS, &_state);
         _state ^= ((((_state & actMask) >> 1) & _state) | (((_state & actMask) << 1) & _state)) & actMask;
           // Change all actUp = actDn = 1 combinations (= reverse wait) to actUp = actDn = 0
+
+        regPos = BR_REG_SHADES_0_POS;
+        regRInt = BR_REG_SHADES_0_RINT;
+        regRExt = BR_REG_SHADES_0_REXT;
       }
       else {    // secondary ...
         _state = primary->state >> 4;
         status = brOk;
+
+        regPos = BR_REG_SHADES_1_POS;
+        regRInt = BR_REG_SHADES_1_RINT;
+        regRExt = BR_REG_SHADES_1_REXT;
       }
-      moving = (status == brOk) && ((_state & (BR_SHADES_0_ACT_UP | BR_SHADES_0_ACT_DN)) != 0);
-      //~ INFOF (("### _state = 0x%1x, moving = %i", _state, (int) moving));
-      reg = !primary ? BR_REG_SHADES_0_POS : BR_REG_SHADES_1_POS;
-      pos = link->RegReadNext (brownie->Adr (), reg, &status);
-      regRInt = !primary ? BR_REG_SHADES_0_RINT : BR_REG_SHADES_1_RINT;
+      //~ INFOF (("### _state = 0x%1x, polling = %i", _state, (int) polling));
+      pos = link->RegReadNext (brownie->Adr (), regPos, &status);
       rInt = link->RegReadNext (brownie->Adr (), regRInt, &status);
+      polling = (status != brOk)
+                || ((_state & (BR_SHADES_0_ACT_UP | BR_SHADES_0_ACT_DN)) != 0)
+                || (pos > 100);
 
       // Return on failure ...
       if (status != brOk) return;
 
+      // Refresh driven REXT after Brownie reboot ...
+      //   If a Brownie is rebooted, it forgets its position and RINT/REXT values.
+      //   We refresh REXT here. The suitation is detected via an invalidated postion.
+      if (pos > 100) link->RegWrite (brownie->Adr (), regRExt, rExt);
+
       // Report resource values ...
       if (initial || (_state != state))
         for (n = 0; n < 4; n++) rcList[n]->ReportValue ((_state & (1 << n)) != 0);
-      if (pos == 0xff) rcShades->ReportUnknown ();
-      else rcShades->ReportValue ((float) pos, moving ? rcsBusy : rcsValid);
+      if (pos == 0xff) rcPos->ReportUnknown ();
+      else rcPos->ReportValue ((float) pos, polling ? rcsBusy : rcsValid);
       RefreshExpiration ();
 
-      // Create initial requests, if a default is to be set ...
-      if (initial && envBrShadesDefaultPos >= 0 && envBrShadesDefaultPos <= 100) {
-        if (pos <= 100) {
-          req = NewUserRequest (pos);
-          rcShades->SetRequest (req);
-        }
-        rcShades->SetDefault ((float) envBrShadesDefaultPos); // set default request
-      }
+      // Create user request on device button pushes ...
+      //   This is done based on the RINT register, since the device does all debouncing and cannot
+      //   loose button events due to bus delays.
+      if (rInt <= 100 && pos <= 100) {         // RINT has been set due to a device button push ...
+        // We skip this step in the special case of an unknown position is unknown because otherwise there
+        // the shades would be startable, but not stoppable by the device buttons. If a device button is
+        // pushed while the engine is active, the device sets RINT to the current position, which is the
+        // unknown or passive value of 0xff if the position is unkown.
+        //~ INFOF (("### Caught RINT=%i ...", rInt));
 
-      // Create user request based on button pushes ...
-      if (rInt > 100 && pos > 100)     // this may happen in the "stop" case if the position is unknown
-        rcShades->DelRequest (RcGetUserRequestId ());
-      else if (rInt <= 100) {
+        // Clear RINT ...
+        if (rExt > 100) link->RegWrite (brownie->Adr (), regRExt, rInt);
+          // If 'rExt' is unset, set it temporarily to 'rInt' first to avoid a stop-start cycle of the engine.
+        link->RegWrite (brownie->Adr (), regRInt, 0xff);
+
+        // Set user request ...
         req = NewUserRequest (rInt);
-        if ((_state & (BR_SHADES_0_BTN_UP | BR_SHADES_0_BTN_DN)) != 0)
-          req->SetTimeOff (NEVER);                      // a (the) button is down now: Remove off-time ...
-        else
-          if (rExt <= 100 && pos <= 100) link->RegWrite (brownie->Adr (), regRInt, 0xff);  // no button is down: clear RINT
-            // ... this does not happen:
-            // a) in the case that 'rExt' is not set (particularly on startup) to avoid a stop-start cycle of the engines,
-            // b) if 'pos' is undefined to not immitate a "stop" condition (see above)
-        rcShades->SetRequest (req);
+        if ((_state & (BR_SHADES_0_BTN_UP | BR_SHADES_0_BTN_DN)) != 0) {
+              // a (the) button is still down now: Remove off-time
+          req->SetTimeOff (NEVER);
+          rIntLocked = rInt;          // remember to set off-time when button is released
+        }
+        //~ INFOF (("###    setting '%s' ...", req->ToStr ()));
+        rcPos->SetRequest (req);
+      }
+      if (rIntLocked <= 100) {        // have a locked request due to a locked device button?
+        if ((_state & (BR_SHADES_0_BTN_UP | BR_SHADES_0_BTN_DN)) == 0) {
+          // both buttons are up: can replace it by a normal request ...
+          //~ INFOF (("###    unlocking pos %i ...", (int) rIntLocked));
+          rcPos->SetRequest (NewUserRequest (rIntLocked));
+          rIntLocked = 0xff;
+        }
       }
 
       // Write back new state ...
@@ -987,7 +1016,7 @@ class CBrFeatureShades: public CBrFeature {
       uint8_t regRExt, regRInt;
 
       // Sanity ...
-      ASSERTF (rc == rcShades, ("### rc = %s, but it should be: rcShades = %s", rc ? rc->Uri () : "(null)", rcShades->Uri () ));
+      ASSERTF (rc == rcPos, ("### rc = %s, but it should be: rcPos = %s", rc ? rc->Uri () : "(null)", rcPos->Uri () ));
 
       //~ INFOF (("### CBrFeatureShades::DriveValue (%s)", vs->ToStr ()));
       if (!primary) { regRInt = BR_REG_SHADES_0_RINT; regRExt = BR_REG_SHADES_0_REXT; }
@@ -1002,7 +1031,7 @@ class CBrFeatureShades: public CBrFeature {
       }
       else {                  // All requests gone: Stop actuators ...
         link->RegWrite (brownie->Adr (), regRInt, 0xff);
-          // clear RINT to avoid unexpected actuator starting;
+          // Clear RINT to avoid unexpected actuator starting;
           // We are about to hand over to device-internal control by writing 0xff to REXT.
           // This is why we clear RINT here.
         link->RegWrite (brownie->Adr (), regRExt, 0xff);    // clear REXT
@@ -1397,50 +1426,64 @@ unsigned CBrownie::Iterate (CBrownieLink *link, bool fast) {
   CheckDeviceForResources (link);
   if (!HasDeviceFeatures () || !HasDeviceConfig ()) return 0;   // device not accessible
 
-  //~ INFOF (("###       CBrownie::Iterate (%03i, fast=%i)", Adr (), (int) fast));
+  //~ INFOF (("### CBrownie::Iterate (%03i, fast=%i)", Adr (), (int) fast));
 
   // Read "changed" register ...
   status = link->RegRead (Adr (), BR_REG_CHANGED, &changedRaw, true);
   if (status != brOk) {
     unknownChanges = true;
     if (status == brRequestCheckError || status == brReplyCheckError) changedRaw = 0xff;
-      // Transmission error: Assume everything changed, then continue.
-    else return 0;
-      // Some other error occured: The device is probably not accessible, do not try to access feature registers.
+      // Transmission error (resending was disabled): Assume everything changed, then continue.
+    else {
+      // Some other error occured, the device is probably not accessible: Do not try to access feature registers.
       // => Report "nothing changed", since the return value is used to decide wether to dig into a
       //    subnet, which may be a bad idea if the hub is defective.
+      CheckExpiration ();
+      return 0;
+    }
   }
   else {
     //~ if (changedRaw & ~BR_CHANGED_TEMP) INFOF (("###               CBrownie::Iterate (%03i): changed = %04x", (int) Adr (), (int) changedRaw));
     if (unknownChanges) {
       changedRaw = 0xff;
-        // We had a read earlier, but now it's ok again. Assume that everything changed during the failure time.
+        // We had a read failure earlier, but now it's ok again. Assume that everything changed during the failure time.
       unknownChanges = false;
     }
   }
   changed = (unsigned) changedRaw;
+  //~ INFOF (("###   changed = 0x%02x", changed));
 
   // Iterate over features ...
   now = TicksMonotonicNow ();
-  for (n = 0; n < features; n++) {      // Note: Positive order is important for the shades!
+  for (n = 0; n < features; n++) {      // Note: Positive order is required for the shades!
     feature = featureList[n];
     sensitivity = feature->Sensitivity ();
     update = ((sensitivity & changed) != 0);   // condition for fast mode
     if (sensitivity & BR_POLL || feature->expTime == NEVER) {
+      // Feature needs polling or has expired:
+      //   Update if the expiration time gets close, but not in "fast" mode ...
       if (!fast && (feature->expTime == NEVER || (feature->expTime - now < envBrFeatureTimeout))) update = true;
-        // Update if the expiration time gets close, but not in "fast" mode
     }
     else {
+      // "changed" register was read successfully, neither the "changed" bit(s) nor any "poll" bit are set:
+      //   Refresh expiration time, no update necessary ...
       if (!update) feature->expTime = now + envBrFeatureTimeout;
-        // "changed" register was successfully read, neither the "changed" bit(s) nor any "poll" bit are set:
-        // refresh expiration time, no update necessary
     }
+    //~ if ((sensitivity & BR_CHANGED_SHADES) && (changed & BR_CHANGED_SHADES))
+      //~ INFOF (("###   changed shades: fast = %i, update = %i", (int) fast, (int) update));
     if (update) feature->Update (link, false);
     feature->CheckExpiration ();
   }
 
   // Done ...
   return changed;
+}
+
+
+void CBrownie::CheckExpiration () {
+  int n;
+
+  for (n = 0; n < features; n++) featureList[n]->CheckExpiration ();
 }
 
 
@@ -1654,8 +1697,7 @@ void CBrownieSet::ResourcesIterate (bool noLink, bool noSleep) {
 
     // Link unavailable: Just check resource expirations ...
     for (adr = 0; adr < 128; adr++) if ( (brownie = brList[adr]) )
-      for (n = 0; n < brownie->features; n++)
-        brownie->featureList[n]->CheckExpiration ();
+      brownie->CheckExpiration ();
     tLastIterate = NEVER;
     return;
   }

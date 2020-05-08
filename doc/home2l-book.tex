@@ -3289,6 +3289,9 @@ tag ''SECURITY'' to facilitate intrusion detection.
 \label{sec:env-common}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+Parameters declared ''read-only'' cannot be set in \reftool{home2l.conf}.
+
+
 \input{ref_env_common}
 
 \input{ref_env_daemon}
@@ -4552,7 +4555,8 @@ People may ask for an evaluation board. There is none. It is not needed. A bread
 
 Compared to asynchronous serial protocols like RS485, using an \textit{i2c}-based protocol has some advantages:
 \begin{itemize}
-  \item It is asynchronous, no precise clock (external crystal) is needed.
+  \item It is clocked explicitely by the SCL signal, so that the microcontrollers do not need a precise
+        local clock source and can use their internal clock generator. No external crystal is needed.
   \item No dedicated transceiver device is needed leading to simple circuitry.
   \item A host notification extension can be implemented without the necessity to support
         multi-mastering.
@@ -5084,6 +5088,8 @@ This section gives background information on the more complex device features (\
 \begin{itemize}
   \item in the \refapicgroup{brownies__features}{code documentation (Brownies / Features)}
         for compile-time options and technical aspects,
+  \item in the \refapicgroup{brownies__interface__registers}{code documentation (Brownies / Interface / Registers)}
+        for the register interface between the \textit{Brownie} firmware and the Linux host,
   \item in Section~\ref{sec:drvlib-brownies-env} for run-time options,
   \item in Section~\ref{sec:drvlib-brownies-rc} for the exported resources.
 \end{itemize}
@@ -5120,9 +5126,11 @@ In addition, the \textit{matrix} module can combine the information of two windo
 
 The \textit{shades} module implements the functionality of one or two shades or window opening actuators together with a pair of push buttons (up/down) each.
 
-The state of an actuator is represented by the resource \refrc{brownies/<brownieID>/shades<n>/pos}, which is a percentage value between 0\% (= ''shades up'' or ''window closed'') and 100\% (= ''shades down'' or ''window open''). Movement can be triggered by setting a request with the target position to this resource. If the user pushes one of the two buttons, an automatic request with the desired position is generated.
+The shades can be controlled either with the device buttons directly or remotely by the Linux host via the \reftool{home2l-drv-brownies} driver. The firmware ensures that even in case of a bus failure, the actuators can be be controlled by the device buttons directly. Optionally, they can be configured to automatically move into a fail-safe position (e.g. "window closed") in case of a bus failure. This behavior is compiled into the firmware by the \refapic{SHADES\_0\_RINT\_FAILSAFE} / \refapic{SHADES\_1\_RINT\_FAILSAFE} feature settings and cannot be accidentally disabled or changed by configuration.
 
-The current position is traced with the help of a timer. To make it work, the module must be calibrated by setting the \textit{''sha\_*''} configuration options (see Section~\ref{sec:brownies-firmware-config}). These are four time constants to be supplied:
+The actuators are controlled in a way that they are never driven into both directions simultaneously and that quick direction changes are avoided (see the \refapic{SHADES\_REVERSE\_DELAY} feature setting).
+
+The current actuator position is traced with the help of a timer. To make this work, the module must be calibrated by setting the \textit{''sha\_*''} configuration options (see Section~\ref{sec:brownies-firmware-config}). These are four time constants to be supplied:
 \begin{itemize}
   \item the delay after the actuator is powered on until the shades start moving up/down 
         (two values, typically between 0.2 and 1.0 seconds),
@@ -5131,9 +5139,7 @@ The current position is traced with the help of a timer. To make it work, the mo
 
 The actuators must have internal limit switches to avoid damage.
 
-In case of a bus failure, the actuators remain controllable by the buttons directly. In addition, they can be configured to automatically move into a fail-safe position (e.g. "window closed") in case of a bus failure. This behavior is compiled into the firmware by the \refapic{SHADES\_0\_RINT\_FAILSAFE} / \refapic{SHADES\_1\_RINT\_FAILSAFE} feature settings and cannot be (accidentally!) disabled or changed by configuration.
-
-The actuators are controlled in a way that they are never driven into both directions simultaneously and that quick direction changes are avoided (see the \refapic{SHADES\_REVERSE\_DELAY} feature setting).
+Within the \reftool{home2l-drv-brownies} driver, the state of an actuator is represented by the resource \refrc{brownies/<brownieID>/shades<n>/pos}, which is a percentage value between 0\% (= ''shades up'' or ''window closed'') and 100\% (= ''shades down'' or ''window open''). Movement can be triggered by setting a request with the target position to this resource. If the user pushes one of the two buttons, an automatic request with the desired position is generated.
 
 
 
@@ -5210,9 +5216,9 @@ The directory \refsrc{brownies/circuits} contains some sample circuits as inspir
     sensor.
 
   \item[Window (\code{window})] ~ \\
-    is a small board to be placed near a window. It has two inputs for up/down buttons and two
-    outputs suitable for driving up/down actuator relays. In addition, the board can host a
-    temperature sensor.
+    is a small board to be placed near a window with electrical shades. 
+    It has two inputs for an ''up'' and a ''down'' button as well as outputs suitable for driving up/down actuator relays. 
+    In addition, the board can host a temperature sensor.
 
   \item[Dual Window (\code{window_dual})] ~ \\
     is the same as above, but with two pairs of button inputs and relay outputs each.

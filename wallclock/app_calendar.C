@@ -488,11 +488,11 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
 
       // Check for error message...
       else if (sscanf (line.Get (), "-stdin-(%i):", &n) == 1) {
-        //~ WARNINGF(("Remind error: '%s'", line.Get ()));
+        WARNINGF (("Remind error: '%s'", line.Get ()));
         if (!HaveError ()) {
           errorFile = fileNo;
           errorLine = n - 1;
-          errorMsg.Set (line, line.LFind (':') + 2);
+          errorMsg.Set (line.Get () + line.LFind (':') + 2);
         }
       }
       else WARNINGF(("Unparsable line in remind output while processing '%s': %s",

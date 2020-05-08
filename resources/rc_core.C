@@ -74,7 +74,7 @@
 // ***** Environment settings *****
 
 ENV_PARA_STRING ("rc.config", envRcConfigFile, "resources.conf");
-  /* Name of the Resources configuration file
+  /* Name of the Resources configuration file (relative to the 'etc' domain)
    */
 
 ENV_PARA_BOOL ("rc.enableServer", envServerEnabled, false);
@@ -2285,79 +2285,86 @@ void RcReadConfig (CString *retSignals) {
   bool error;
 
   // Default config file...
-  fileName = EnvGetHome2lEtcPath (&str, envRcConfigFile);
-  ASSERT (fileName != NULL);
-  f = fopen (fileName, "rt");
-  if (!f) ERRORF (("Unable to open file '%s'", fileName));
+  if (!envRcConfigFile) f = NULL;
+  else if (!envRcConfigFile[0]) f = NULL;
+  else {
+    fileName = EnvGetHome2lEtcPath (&str, envRcConfigFile);
+    ASSERT (fileName != NULL);
+    f = fopen (fileName, "rt");
+    if (!f) WARNINGF (("Failed to read file '%s': %s", fileName, strerror (errno)));
+  }
+  if (f) {
 
-  // Main parsing loop...
-  defaultPort = -1;
-  error = false;
-  errStr = NULL;
-  while (!feof (f) && !error) {
-    fgets (buf, sizeof (buf), f);
-    //~ INFOF (("### Parsing '%s'", buf));
-    p = strchr (buf, '#');    // remove comments...
-    if (p) p[0] = '\0';
-    StringSplit (buf, &argc, &argv);
-    if (argc > 0) {
-      switch (toupper (argv[0][0])) {
+    // Main parsing loop...
+    defaultPort = -1;
+    error = false;
+    errStr = NULL;
+    buf[0] = '\0';
+    while (!feof (f) && !error) {
+      fgets (buf, sizeof (buf), f);
+      //~ INFOF (("### Parsing '%s'", buf));
+      p = strchr (buf, '#');    // remove comments...
+      if (p) p[0] = '\0';
+      StringSplit (buf, &argc, &argv);
+      if (argc > 0) {
+        switch (toupper (argv[0][0])) {
 
-        case 'P':   // Default port ...
-          if (argc != 2) error  = true;
-          else {
-            defaultPort = strtol (argv[1], &p, 0);
-            if (*p != '\0') error  = true;
-          }
-          break;
-
-        case 'H':   // Host ...
-          // Syntax: H <host id>
-          if (argc < 2 || argc > 3) error = true;
-          else errStr = AddHost (argv[1], argc == 3 ? argv[2] : NULL, defaultPort);
-          if (errStr) error = true;
-          break;
-
-        case 'A':   // Alias ...
-          // Syntax: A <name> <target>
-          if (argc != 3) error = true;
-          else {
-            GetAbsPath (&str, argv[2], "/host");
-            aliasMap.Set (argv[1], &str);
-            if (strncmp (str.Get (), "/host/", 6) == 0) {
-              // Auto-add host...
-              p = q = (char *) str.Get () + 6;
-              while (q[0] && q[0] != '/') q++;
-              q[0] = '\0';
-              errStr = AddHost (p, NULL, defaultPort);
-              if (errStr) error = true;
+          case 'P':   // Default port ...
+            if (argc != 2) error  = true;
+            else {
+              defaultPort = strtol (argv[1], &p, 0);
+              if (*p != '\0') error  = true;
             }
-          }
-          break;
+            break;
 
-        case 'S':   // Signal...
-          // Syntax: S <host id> <name> <type> [<default value>]
-          if (argc < 4 || argc > 5) { error = true; break; }
-          // Store signal...
-          retSignals->AppendF ("%s %s %s %s\n", argv[1], argv[2], argv[3], argc > 4 ? argv[4] : "?");
-          // Auto-add host...
-          errStr = AddHost (argv[1], NULL, defaultPort);  // auto-add other host
-          if (errStr) error = true;
-          break;
+          case 'H':   // Host ...
+            // Syntax: H <host id>
+            if (argc < 2 || argc > 3) error = true;
+            else errStr = AddHost (argv[1], argc == 3 ? argv[2] : NULL, defaultPort);
+            if (errStr) error = true;
+            break;
 
-        default:
-          error = true;
+          case 'A':   // Alias ...
+            // Syntax: A <name> <target>
+            if (argc != 3) error = true;
+            else {
+              GetAbsPath (&str, argv[2], "/host");
+              aliasMap.Set (argv[1], &str);
+              if (strncmp (str.Get (), "/host/", 6) == 0) {
+                // Auto-add host...
+                p = q = (char *) str.Get () + 6;
+                while (q[0] && q[0] != '/') q++;
+                q[0] = '\0';
+                errStr = AddHost (p, NULL, defaultPort);
+                if (errStr) error = true;
+              }
+            }
+            break;
+
+          case 'S':   // Signal...
+            // Syntax: S <host id> <name> <type> [<default value>]
+            if (argc < 4 || argc > 5) { error = true; break; }
+            // Store signal...
+            retSignals->AppendF ("%s %s %s %s\n", argv[1], argv[2], argv[3], argc > 4 ? argv[4] : "?");
+            // Auto-add host...
+            errStr = AddHost (argv[1], NULL, defaultPort);  // auto-add other host
+            if (errStr) error = true;
+            break;
+
+          default:
+            error = true;
+        }
+      }
+
+      // Cleanup...
+      if (error) ERRORF (("%s in file '%s': %s", errStr ? errStr : "Invalid line", fileName, buf));
+      if (argv) {
+        FREEP (argv[0]);
+        free (argv);
       }
     }
-
-    // Cleanup...
-    if (error) ERRORF (("%s in file '%s': %s", errStr ? errStr : "Invalid line", fileName, buf));
-    if (argv) {
-      FREEP (argv[0]);
-      free (argv);
-    }
+    fclose (f);
   }
-  fclose (f);
 
   // Check if we found ourselves in the host map and report whether and how we start a server ...
   //~ INFOF (("### serverEnabled = %i,  localPort = %i", (int) serverEnabled, localPort));

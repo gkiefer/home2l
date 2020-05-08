@@ -28,9 +28,9 @@
    inkscape:window-height="1026"
    id="namedview88"
    showgrid="true"
-   inkscape:zoom="1.1669519"
-   inkscape:cx="327.44501"
-   inkscape:cy="314.50159"
+   inkscape:zoom="1.0853655"
+   inkscape:cx="436.05662"
+   inkscape:cy="320.89299"
    inkscape:window-x="64"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
@@ -58,7 +58,7 @@
      spacingy="7.5590556" /></sodipodi:namedview><metadata
    id="metadata8"><rdf:RDF><cc:Work
        rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
-         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title /></cc:Work></rdf:RDF></metadata><defs
    id="defs6"><inkscape:path-effect
      effect="skeletal"
      id="path-effect4961"
@@ -2689,7 +2689,7 @@
    d="m 497.11577,122.94296 2.83,-2.83 3.59,3.59 -2.83,2.83 z m 14.9,-7.83001 h 4 v 5.90001 h -4 z m -14,23.90001 h -6 v -4 h 6 z m 22,8.38 v 9.62 h -12 v -9.62 c -3.58,-2.08 -6,-5.94 -6,-10.38 0,-6.63 5.37,-12 12,-12 6.63,0 12,5.37 12,12 0,4.44 -2.42,8.31 -6,10.38 z m 10,-8.38 v -4 h 6 v 4 z m -5.51,-15.31 3.59,-3.59 2.83,2.83 -3.59,3.59 z"
    inkscape:connector-curvature="0" /><g
    id="g7045"
-   transform="matrix(0.80804155,0,0,0.87909419,550.82033,124.10266)"><path
+   transform="matrix(-0.80804155,0,0,0.87909419,589.60632,124.10266)"><path
      id="path7031"
      d="M 0,0 H 48 V 48 H 0 Z"
      inkscape:connector-curvature="0"
@@ -2825,6 +2825,7 @@
      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#000000;stroke:none;font-size:15.99999993px;">Host</tspan></text>
 
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:15.99999993px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.37795275;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate;"
@@ -2841,6 +2842,7 @@
      id="tspan7273">Hubs</tspan></text>
 
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:15.99999993px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.37795275;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate;"
@@ -2855,6 +2857,7 @@
      x="279.68506"
      y="187.63251"
      id="tspan7273-7">Hubs</tspan></text>
+
 
 
 <g
@@ -3056,6 +3059,7 @@
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586"> adr: 008</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#a05a2c;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -3067,6 +3071,7 @@
      y="203.94342"
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-2"> adr: 009</tspan></text>
+
 
 <text
    xml:space="preserve"
@@ -3080,6 +3085,7 @@
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-2-1"> adr: 016</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#a05a2c;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -3092,6 +3098,7 @@
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-2-7"> adr: 066</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#a05a2c;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -3103,6 +3110,7 @@
      y="203.94342"
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-2-9"> adr: 080</tspan></text>
+
 
 <text
    xml:space="preserve"
@@ -3121,6 +3129,7 @@
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-0"> adr: 032</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#a05a2c;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -3137,6 +3146,7 @@
      y="324.88831"
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-6"> adr: 064</tspan></text>
+
 
 <text
    xml:space="preserve"
@@ -3155,6 +3165,7 @@
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-7"> adr: 012</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333302px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#a05a2c;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -3171,6 +3182,7 @@
      y="211.50249"
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-7-0"> adr: 065</tspan></text>
+
 
 <text
    xml:space="preserve"
@@ -3189,6 +3201,7 @@
      style="font-size:10.66666698px;text-align:start;text-anchor:start;fill:#a05a2c;stroke:none;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none"
      id="tspan5586-7-7"> adr: 017</tspan></text>
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15.99999993px;line-height:100%;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.37795275;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate;"
@@ -3200,6 +3213,7 @@
      y="386.79099"
      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#ff0000;stroke:none;font-size:15.99999993px;"
      id="tspan5782">i2c Bus</tspan></text>
+
 
 <text
    xml:space="preserve"
@@ -3219,5 +3233,6 @@
      y="289.40515"
      style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#008000;stroke:none"
      id="tspan5804">Bus</tspan></text>
+
 
 </svg>

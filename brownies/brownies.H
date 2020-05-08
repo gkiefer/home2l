@@ -275,6 +275,8 @@ class CBrownie {
       // Returns the contents of register BR_REG_CHANGED (presently only
       // relevant for hubs and their BR_CHANGED_CHILD bit, other may return 0).
       //
+    void CheckExpiration ();
+      // Invalidate all expireable resources on expiration
     void DriveValue (class CBrownieLink *link, class CResource *rc, class CRcValueState *vs);
       // Unlike CBrownieSet::DriveValue(), this method is always called from the
       // Brownie thread, so no care of concurrency is necessary.

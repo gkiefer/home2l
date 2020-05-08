@@ -1654,6 +1654,13 @@ static bool CmdResources (int argc, const char **argv) {
   CString s1, s2;
   bool haveSocketClient, linkFailure;
 
+  // Sanity...
+  ASSERT (envBrDatabaseFile != NULL);
+  if (!envBrDatabaseFile[0]) {
+    puts ("No database file!");
+    return false;
+  }
+
   puts ("Initializing Resources ...");
   RcInit (true);
 
@@ -2116,13 +2123,15 @@ int main (int argc, char **argv) {
     printf ("\nNo Brownie link available.\n");      // Detailed information was logged by 'shellLink.Open ()').
   }
 
-  // Load brownie database...
-  if (shellDatabase.ReadDatabase ())
-    printf ("Read database file '%s'.\n\n", envBrDatabaseFile);
-  else {
-    printf ("No or no completely valid database file '%s' found.\n\n", envBrDatabaseFile);
+  // Load Brownie database...
+  if (envBrDatabaseFile) if (envBrDatabaseFile[0]) {    // skip, if explicitly disabled
+    if (shellDatabase.ReadDatabase ())
+      printf ("Read database file '%s'.\n\n", envBrDatabaseFile);
+    else {
+      printf ("No or no completely valid database file '%s' found.\n\n", envBrDatabaseFile);
+    }
+    //~ shellDatabase.WriteDatabase ();
   }
-  //~ shellDatabase.WriteDatabase ();
 
   // Prepare interactive mode...
   if (interactive) {

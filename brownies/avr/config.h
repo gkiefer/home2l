@@ -19,6 +19,30 @@
  */
 
 
+/* This file is arranged in the following sections:
+ *
+ * 1. Features: User Parameters
+ *    - any user parameters settable in 'Family.mk' are predefined and documented here.
+ *
+ * 2. Features: Auto-Completion
+ *    - auto-completion of feature-related parameters ('WITH_*' macros)
+ *    - auto-enable "timer" and "notify" features
+ *
+ * 3. MCU: Pin Assignments
+ *    - pin assignments of supported MCU types
+ *    -> Edit this section to add a new MCU!
+ *
+ * 4. Ports: Auto-Completion
+ *    - auto-generate pin-related macros (P_*, RESET_DDR_IN_*, RESET_DDR_OUT_*, RESET_DDR_STATE_*)
+ *
+ * 5. Ports: Checks
+ *    - sanity checks
+ *
+ * 6. MCU: Reset Pin Configuration
+ *    - define INIT_PINS() macro
+ */
+
+
 #ifndef _BROWNIE_CONFIG_
 #define _BROWNIE_CONFIG_
 
@@ -141,8 +165,15 @@
 ///
 /// The diode switch matrix uses the pins avaliable as GPIO for the MCU, which
 /// may then not be used as GPIOs.
-/// The last MATRIX_ROWS ports are the stimulation ports, the MATRIX_COLS ports
-/// before those are the sensing ports.
+///
+/// If MATRIX_ROWS > 1, the last MATRIX_ROWS ports are the stimulation ports.
+/// The MATRIX_COLS ports before those (or the last ports at all, if no stimulating
+/// ports exist) are the sensing ports.
+///
+/// In the special case of MATRIX_ROWS == 1, no stimulation ports are assigned,
+/// and no active stimulation is performed by the software module. In the circuitry,
+/// the row lines of the switches should be connected to VCC (i.e. constantly be
+/// pulled high via some resistor) instead of a stimulation port.
 ///
 /// @{
 
@@ -152,6 +183,26 @@
 
 #ifndef MATRIX_COLS
 #define MATRIX_COLS       0       ///< Number of sensing lines (columns) (max. 8).
+#endif
+
+#ifndef MATRIX_ROWS_GSHIFT
+#if MATRIX_ROWS >= 2
+#define MATRIX_ROWS_GSHIFT (GPIO_PINS_MAX - MATRIX_ROWS)
+  ///< @brief Index of the first GPIO pin to be assigned to row lines.
+  ///
+  /// By default, the last MATRIX_ROWS GPIO pins are the stimulation (row) lines.
+  /// If MATRIX_ROWS == 1, no row lines are used. But this setting may have an effect
+  /// on the default MATRIX_COLS_GSHIFT setting.
+#else
+#define MATRIX_ROWS_GSHIFT GPIO_PINS_MAX    // no stimulating lines at all ...
+#endif
+#endif
+
+#ifndef MATRIX_COLS_GSHIFT
+#define MATRIX_COLS_GSHIFT (MATRIX_ROWS_GSHIFT - MATRIX_COLS)
+  ///< @brief Index of the first GPIO pin to be assigned to column lines.
+  ///
+  /// By default, the last MATRIX_COLS pins just before the row lines are the sensing (column) lines.
 #endif
 
 #ifndef MATRIX_T_SAMPLE
@@ -222,6 +273,7 @@
   /// After the timeout,
   /// - all external requests (REXT) are reset to 0xff,
   /// - all internal requests (RINT) are set to BR_SHADES_<n>_RINT_FAILSAFE.
+  ///
   /// A value of 0 means "no timeout".
 #endif
 
@@ -238,9 +290,15 @@
   ///< @brief Failsafe internal request value(s) (RINT) for the case the brownie has lost
   /// its connection to the master (-1 = RINT is not changed on time-out).
   ///
-  /// Useful values are:
+  /// Typically used values are:
   /// -  -1: For normal shades: Shades eventually stop and become controllable by local buttons.
-  /// -   0: For windows: The window is closed and afterwards becomes controllable by local buttons.
+  /// -   0: For window openers: The window is closed and afterwards becomes controllable by local buttons.
+  ///
+  /// The failsafe request is activated (and REXT set to -1) in the following situations:
+  /// - after reset,
+  /// - after the first successful read or write access to any of the shades registers or the
+  ///   @ref BR_REG_CHANGED register: if no further such access happens within the time period specified
+  ///   by @ref SHADES_TIMEOUT.
 #endif
 
 #ifndef SHADES_PERSISTENCE
@@ -265,7 +323,7 @@
 
 
 
-// *************************** Features: Auto-Complete *************************
+// *************************** Features: Auto-Completion ***********************
 
 
 #if !DOXYGEN
@@ -276,11 +334,11 @@
 
 
 // TWI Master...
-#define WITH_TWI_MASTER (TWI_MA_PORTS > 0)
+#define WITH_TWI_MASTER ((TWI_MA_PORTS) > 0)
 
 
 // Matrix...
-#define WITH_MATRIX (MATRIX_ROWS * MATRIX_COLS != 0)
+#define WITH_MATRIX ((MATRIX_ROWS) * (MATRIX_COLS) != 0)
 
 
 // Analog ...
@@ -301,7 +359,8 @@
 
 // Notifications ...
 #if !WITH_GPIO && !WITH_TWIHUB && !WITH_MATRIX && !WITH_SHADES
-  // Without any of these features, notifications make no sense
+  // Without any of these features, notifications make no sense:
+  // We disable notification at all.
 #undef TWI_SL_NOTIFY
 #define TWI_SL_NOTIFY 0
 #endif
@@ -313,7 +372,7 @@
 
 
 
-// ********************** MCU Port Assignments *********************************
+// ********************** MCU: Pin Assignments *********************************
 
 
 #if DOXYGEN
@@ -519,7 +578,7 @@
 
 
 
-// *************************** Auto-Completion *********************************
+// *************************** Ports: Auto-Completion **************************
 
 
 #if !DOXYGEN
@@ -579,15 +638,16 @@
 
 
 // Matrix...
-#define MATRIX_ROWS_GSHIFT (GPIO_PINS_MAX - MATRIX_ROWS)
-#define MATRIX_COLS_GSHIFT (MATRIX_ROWS_GSHIFT - MATRIX_COLS)
-
+#if MATRIX_ROWS > 1
 #define MATRIX_ROWS_GMASK (((1 << MATRIX_ROWS) - 1) << MATRIX_ROWS_GSHIFT) // GPIO mask of the stimulating lines
+#else
+#define MATRIX_ROWS_GMASK  0    // no stimulating lines at all ...
+#endif
 #define MATRIX_COLS_GMASK (((1 << MATRIX_COLS) - 1) << MATRIX_COLS_GSHIFT) // GPIO mask of the sensing lines
 
 #define RESET_DDR_IN_MATRIX   GPIO_TO_PMASK (MATRIX_COLS_GMASK)
 #define RESET_DDR_OUT_MATRIX  GPIO_TO_PMASK (MATRIX_ROWS_GMASK)
-#define RESET_STATE_MATRIX    0
+#define RESET_STATE_MATRIX    0     // drive '0' on row lines, keep column lines at high-impedance state
 
 
 // Temperature ...
@@ -653,7 +713,7 @@
 
 
 
-// *************************** Checks ******************************************
+// *************************** Ports: Checks ***********************************
 
 
 #if !DOXYGEN    // The doxygen preprocessor may have some problems with the following macros.
@@ -699,7 +759,7 @@
 #if (GPIO_IN_PRESENCE & GPIO_OUT_PRESENCE) \
     || (GPIO_IN_PRESENCE) >= (1 << GPIO_PINS_MAX) \
     || (GPIO_OUT_PRESENCE) >= (1 << GPIO_PINS_MAX)
-#error "GPIOs misconfigured: Too many ot concliction GPIOs defined!"
+#error "GPIOs misconfigured: Too many or concliction GPIOs defined!"
 #endif
 
 
@@ -731,16 +791,21 @@
 #if !WITH_MATRIX && (MATRIX_ROWS || MATRIX_COLS)
 #warning "Matrix appears to be partly configured - disabled."
 #endif
-#if (MATRIX_ROWS + MATRIX_COLS) > GPIO_PINS_MAX
-#error "Matrix configured to use more pins than available!"
-#endif
 #if MATRIX_ROWS > 8
-#error "Matrix: too many rows"
+#error "Matrix: too many rows!"
 #endif
 #if MATRIX_COLS > 8
-#error "Matrix: too many columns"
+#error "Matrix: too many columns!"
 #endif
-
+#if (MATRIX_ROWS > 1) && ((MATRIX_ROWS_GSHIFT < 0) || ((MATRIX_ROWS_GSHIFT + MATRIX_ROWS) > GPIO_PINS_MAX))
+#error "Matrix: some row lines assigned to non-existing GPIO pins!"
+#endif
+#if (MATRIX_COLS_GSHIFT < 0) || ((MATRIX_COLS_GSHIFT + MATRIX_COLS) > GPIO_PINS_MAX)
+#error "Matrix: some column lines assigned to non-existing GPIO pins!"
+#endif
+#if (MATRIX_ROWS_GMASK & MATRIX_COLS_GMASK) != 0
+#error "Matrix: row and column pins overlap!"
+#endif
 
 // Temperature ...
 

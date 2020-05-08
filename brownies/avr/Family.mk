@@ -34,9 +34,10 @@
 
 BROWNIE_FAMILY = init.t85 init.t84 init.t861 \
                  ahub.t85 bhub.t85 \
-                 win.t84 win2.t84 \
-                 mat4x8.t861 \
-                 gpio4.t84 gpio12i.t861
+                 win.t84 win2.t84 wins.t84 \
+                 mat4x8.t861 mat1x7.t861 mat2x6.t861 \
+                 mat4x8t.t861 mat1x7t.t861 mat2x6t.t861 \
+                 gpio4.t84
 
 
 
@@ -60,12 +61,14 @@ endif
 
 
 # ahub: Primary hub, not notifying, for immediate connection to a Linux host ...
+#   - used in circuit: 'hubcard'
 ifeq ($(BROWNIE_VARIANT),ahub)
 	BROWNIE_CFG = WITH_TWIHUB=1 TWI_SL_NOTIFY=0 GPIO_OUT_PRESENCE=0x1 GPIO_OUT_PRESET=0x0
 endif
 
 
 # bhub: Intermediate hub, notifying, for connection to a Brownie TWI master ...
+#   - used in circuit: 'matrix4x8'
 ifeq ($(BROWNIE_VARIANT),bhub)
 	BROWNIE_CFG = WITH_TWIHUB=1 TWI_SL_NOTIFY=1 GPIO_OUT_PRESENCE=0x1 GPIO_OUT_PRESET=0x0
 endif
@@ -89,9 +92,51 @@ endif
 #################### Matrix ####################################################
 
 
-# matrix4x8: Matrix Brownie for up to 32 (window) sensors ...
+# mat1x7: Matrix brownie for up to 7 (window) sensors ...
+#   - used in circuit: 'matrix1x7'
+#   - columns map to GPIO0..GPIO6 (PA0..PA6 on t861)
+ifeq ($(BROWNIE_VARIANT),mat1x7)
+	BROWNIE_CFG ?= MATRIX_ROWS=1 MATRIX_COLS=7 MATRIX_COLS_GSHIFT=0
+endif
+
+
+# mat1x7t: Matrix brownie for up to 7 (window) sensors with temperature sensor ...
+#   - used in circuit: 'matrix1x7'
+#   - columns map to GPIO0..GPIO6 (PA0..PA6 on t861)
+ifeq ($(BROWNIE_VARIANT),mat1x7t)
+	BROWNIE_CFG ?= MATRIX_ROWS=1 MATRIX_COLS=7 MATRIX_COLS_GSHIFT=0 WITH_TEMP_ZACWIRE=1
+endif
+
+
+# mat2x6: Matrix brownie for up to 12 (window) sensors ...
+#   - used in circuit: 'matrix2x6' without temperature sensor
+#   - rows map to GPIO6..GPIO7 (PA6..PA7 on t861)
+#   - columns map to GPIO0..GPIO5 (PA0..PA5 on t861)
+ifeq ($(BROWNIE_VARIANT),mat2x6)
+	BROWNIE_CFG ?= MATRIX_ROWS=2 MATRIX_COLS=6 MATRIX_COLS_GSHIFT=0 MATRIX_ROWS_GSHIFT=6
+endif
+
+
+# mat2x6t: Matrix brownie for up to 12 (window) sensors with temperature sensor ...
+#   - used in circuit: 'matrix2x6' equipped with temperature sensor
+ifeq ($(BROWNIE_VARIANT),mat2x6t)
+	BROWNIE_CFG ?= MATRIX_ROWS=2 MATRIX_COLS=6 MATRIX_COLS_GSHIFT=0 MATRIX_ROWS_GSHIFT=6 WITH_TEMP_ZACWIRE=1
+endif
+
+
+# mat4x8: Matrix brownie for up to 32 (window) sensors ...
+#   - used in circuit: 'matrix4x8' without temperature sensor
+#   - rows map to GPIO8..GPIO11 (PB3..PB6 on t861)
+#   - columns map to GPIO0..GPIO7 (PA0..PA7 on t861)
 ifeq ($(BROWNIE_VARIANT),mat4x8)
-	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 MATRIX_ROWS=4 MATRIX_COLS=8
+	BROWNIE_CFG ?= MATRIX_ROWS=4 MATRIX_COLS=8
+endif
+
+
+# mat4x8t: Matrix brownie for up to 32 (window) sensors with temperature sensor ...
+#   - used in circuit: 'matrix4x8' equipped with temperature sensor
+ifeq ($(BROWNIE_VARIANT),mat4x8t)
+	BROWNIE_CFG ?= MATRIX_ROWS=4 MATRIX_COLS=8 WITH_TEMP_ZACWIRE=1
 endif
 
 
@@ -102,6 +147,7 @@ endif
 
 
 # win: Window brownie; supports temperature sensor and single shades ...
+#   - circuit: 'window'
 ifeq ($(BROWNIE_VARIANT),win)
 	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=1
 	  # SHADES_TIMEOUT=0 TWI_SL_NOTIFY=0
@@ -109,8 +155,18 @@ endif
 
 
 # win2: Dual window brownie; supports temperature sensor and two shades ...
+#   - circuit: 'window_dual'
 ifeq ($(BROWNIE_VARIANT),win2)
 	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2
+	  # SHADES_TIMEOUT=0
+endif
+
+
+# wins: Safe window brownie; for single window with shades (#0) and opener (#1);
+#       opener auto-closes on network failure; supports temperature sensor ...
+#   - circuit: 'window_dual'
+ifeq ($(BROWNIE_VARIANT),wins)
+	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2 SHADES_1_RINT_FAILSAFE=0
 	  # SHADES_TIMEOUT=0
 endif
 

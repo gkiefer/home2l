@@ -56,6 +56,12 @@ BROWNIE_BASE ?= 0xa00
 include Family.mk
 
 
+# Sanity...
+ifndef BROWNIE_CFG
+$(error Missing brownie configuration: variant '$(BROWNIE_VARIANT)' undefined?)
+endif
+
+
 
 
 
@@ -69,12 +75,12 @@ BUILD_DIR ?= .
 # Map short MCUs to GCC names...
 ifeq ($(BROWNIE_MCU),t84)
   GCC_MCU = attiny84
-endif
-ifeq ($(BROWNIE_MCU),t85)
+else ifeq ($(BROWNIE_MCU),t85)
   GCC_MCU = attiny85
-endif
-ifeq ($(BROWNIE_MCU),t861)
+else ifeq ($(BROWNIE_MCU),t861)
   GCC_MCU = attiny861
+else
+  $(error Undefined MCU type: $(BROWNIE_CPU))
 endif
 
 

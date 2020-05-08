@@ -95,8 +95,8 @@
  *    At least one parameter, 'WITH_FOOBAR' must be defined. Other parameters must be prefixed
  *    with 'FOOBAR_'.
  *
- *    In the same file, please also extend the sections "Features: Auto-Complete",
- *    "Auto-Completion", "Checks", and "MCU: Reset Pin Configuration".
+ *    In the same file, please also extend the sections "Features: Auto-Completion",
+ *    "Ports: Auto-Completion", "Ports: Checks", and "MCU: Reset Pin Configuration".
  *
  * 5. If the module *foobar* requires new MCU pins: Add them in section "MCU Port Assignments"
  *    in file @ref config.h.

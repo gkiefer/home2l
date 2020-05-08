@@ -78,6 +78,11 @@ HOME2L_DRIVER(brownies) (ERcDriverOperation op, CRcDriver *drv, CResource *, CRc
   drv->Unregister ();
 
   // Init database ...
+  ASSERT (envBrDatabaseFile != NULL);
+  if (!envBrDatabaseFile[0]) {
+    WARNING ("No database file - disabling Brownie driver.");
+    return;
+  }
   if (brDatabase.ReadDatabase ())
     INFOF (("Read database file '%s'.", envBrDatabaseFile));
   else {

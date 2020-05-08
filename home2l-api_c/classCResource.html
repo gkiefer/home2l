@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
+   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -762,8 +762,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </table>
   </dd>
 </dl>
-<p>If the resource cannot be queried (e.g. because it is unreachable or non-existing), 'ret-&gt;<a class="el" href="classCResource.html#af7beb1b98668f15297dce952d127a94c" title="Get the global ID. ">Gid()</a>' will return an empty string. Otherwise, 'ret-&gt;<a class="el" href="classCResource.html#af7beb1b98668f15297dce952d127a94c" title="Get the global ID. ">Gid()</a>' will be non-empty and equal to 'reqGid'.</p>
-<p>If the resource can be queried successfully, but no such request exists, 'ret-&gt;Value()' will have a state of <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a> and 'ret-&gt;IsCompatible()' will return 'true'. If an incompatible request has been set, 'ret-&gt;IsCompatible()' will return 'false'. </p>
+<p>If the resource cannot be queried (e.g. because it is unreachable or non-existing), 'ret-&gt;<a class="el" href="classCResource.html#af7beb1b98668f15297dce952d127a94c" title="Get the global ID. ">Gid()</a>' will return an empty string. Also, 'ret-&gt;Value()' will have a state of <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a>. Otherwise, 'ret-&gt;<a class="el" href="classCResource.html#af7beb1b98668f15297dce952d127a94c" title="Get the global ID. ">Gid()</a>' will be non-empty and equal to 'reqGid'.</p>
+<p>If the resource can be queried successfully, but no such request exists, 'ret-&gt;Value()' will have a state of <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a>.</p>
+<p>If an incompatible request has been set, 'ret-&gt;IsCompatible()' will return 'false'. </p>
 
 </div>
 </div>
@@ -817,7 +818,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </ul>
 <p>Details on the documentation system can be found in the Home2L Book. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01122">1122</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01123">1123</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>

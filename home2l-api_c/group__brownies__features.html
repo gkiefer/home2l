@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
+   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -137,7 +137,9 @@ TWI Master / Hub ...</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Matrix ...</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp79be603e3388104281e3ec156fe8a367"></a>The diode switch matrix uses the pins avaliable as GPIO for the MCU, which may then not be used as GPIOs. The last MATRIX_ROWS ports are the stimulation ports, the MATRIX_COLS ports before those are the sensing ports. </p>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp79be603e3388104281e3ec156fe8a367"></a>The diode switch matrix uses the pins avaliable as GPIO for the MCU, which may then not be used as GPIOs.</p>
+<p>If MATRIX_ROWS &gt; 1, the last MATRIX_ROWS ports are the stimulation ports. The MATRIX_COLS ports before those (or the last ports at all, if no stimulating ports exist) are the sensing ports.</p>
+<p>In the special case of MATRIX_ROWS == 1, no stimulation ports are assigned, and no active stimulation is performed by the software module. In the circuitry, the row lines of the switches should be connected to VCC (i.e. constantly be pulled high via some resistor) instead of a stimulation port. </p>
 </td></tr>
 <tr class="memitem:ga237af2b6cf547aaf4d0de5bc5a538672"><td class="memItemLeft" align="right" valign="top"><a id="ga237af2b6cf547aaf4d0de5bc5a538672"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga237af2b6cf547aaf4d0de5bc5a538672">MATRIX_ROWS</a>&#160;&#160;&#160;0</td></tr>
@@ -147,6 +149,12 @@ Matrix ...</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga19d8c543f14d754cafd731d930bdc3a1">MATRIX_COLS</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:ga19d8c543f14d754cafd731d930bdc3a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of sensing lines (columns) (max. 8). <br /></td></tr>
 <tr class="separator:ga19d8c543f14d754cafd731d930bdc3a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf4ded5e00e0136d364a997e445426d8f"><td class="memItemLeft" align="right" valign="top"><a id="gaf4ded5e00e0136d364a997e445426d8f"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>MATRIX_ROWS_GSHIFT</b>&#160;&#160;&#160;<a class="el" href="group__brownies__pins.html#ga361b21769741f5a759afe64071ad0d56">GPIO_PINS_MAX</a></td></tr>
+<tr class="separator:gaf4ded5e00e0136d364a997e445426d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadd794e1d52674225c6ab60723e0dcb16"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gadd794e1d52674225c6ab60723e0dcb16">MATRIX_COLS_GSHIFT</a>&#160;&#160;&#160;(MATRIX_ROWS_GSHIFT - <a class="el" href="group__brownies__features.html#ga19d8c543f14d754cafd731d930bdc3a1">MATRIX_COLS</a>)</td></tr>
+<tr class="memdesc:gadd794e1d52674225c6ab60723e0dcb16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Index of the first GPIO pin to be assigned to column lines.  <a href="#gadd794e1d52674225c6ab60723e0dcb16">More...</a><br /></td></tr>
+<tr class="separator:gadd794e1d52674225c6ab60723e0dcb16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4ff6c131c8006439b07d581f448da1d3"><td class="memItemLeft" align="right" valign="top"><a id="ga4ff6c131c8006439b07d581f448da1d3"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga4ff6c131c8006439b07d581f448da1d3">MATRIX_T_SAMPLE</a>&#160;&#160;&#160;4</td></tr>
 <tr class="memdesc:ga4ff6c131c8006439b07d581f448da1d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time (ticks) a row is driven to 1 to sample. <br /></td></tr>
@@ -229,7 +237,7 @@ Shades ...</h2></td></tr>
 <p>Device may perform notifications via its slave interface? </p>
 <p>If the device must comply to the i2c standard, this option must be switched off (e.g. if the master is the Linux host). </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00060">60</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00084">84</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
 
 </div>
 </div>
@@ -248,7 +256,26 @@ Shades ...</h2></td></tr>
 <p>Duration of a notification in microseconds. </p>
 <p>This time must be at least the transmission time of approx. 2 bytes, so that in case of a collision the observed address becomes all-0. 10 ms is sufficient for an effective bit rate of 2 kbit/s including processing times and clock stretching (20 bits in 10 ms). </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00068">68</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00092">92</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+
+</div>
+</div>
+<a id="gadd794e1d52674225c6ab60723e0dcb16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gadd794e1d52674225c6ab60723e0dcb16">&#9670;&nbsp;</a></span>MATRIX_COLS_GSHIFT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define MATRIX_COLS_GSHIFT&#160;&#160;&#160;(MATRIX_ROWS_GSHIFT - <a class="el" href="group__brownies__features.html#ga19d8c543f14d754cafd731d930bdc3a1">MATRIX_COLS</a>)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Index of the first GPIO pin to be assigned to column lines. </p>
+<p>By default, the last MATRIX_COLS pins just before the row lines are the sensing (column) lines. </p>
+
+<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00202">202</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
 
 </div>
 </div>
@@ -267,10 +294,11 @@ Shades ...</h2></td></tr>
 <p>Number of milliseconds without connection before the brownie assumes that the master is offline. </p>
 <p>After the timeout,</p><ul>
 <li>all external requests (REXT) are reset to 0xff,</li>
-<li>all internal requests (RINT) are set to BR_SHADES_&lt;n&gt;_RINT_FAILSAFE. A value of 0 means "no timeout". </li>
+<li>all internal requests (RINT) are set to BR_SHADES_&lt;n&gt;_RINT_FAILSAFE.</li>
 </ul>
+<p>A value of 0 means "no timeout". </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00219">219</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00270">270</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
 
 </div>
 </div>
@@ -287,12 +315,16 @@ Shades ...</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Failsafe internal request value(s) (RINT) for the case the brownie has lost its connection to the master (-1 = RINT is not changed on time-out). </p>
-<p>Useful values are:</p><ul>
+<p>Typically used values are:</p><ul>
 <li>-1: For normal shades: Shades eventually stop and become controllable by local buttons.</li>
-<li>0: For windows: The window is closed and afterwards becomes controllable by local buttons. </li>
+<li>0: For window openers: The window is closed and afterwards becomes controllable by local buttons.</li>
+</ul>
+<p>The failsafe request is activated (and REXT set to -1) in the following situations:</p><ul>
+<li>after reset,</li>
+<li>after the first successful read or write access to any of the shades registers or the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register: if no further such access happens within the time period specified by <a class="el" href="group__brownies__features.html#ga4b97db4b3505a0d76f982067b16c87f0">SHADES_TIMEOUT</a>. </li>
 </ul>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00237">237</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00289">289</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
 
 </div>
 </div>

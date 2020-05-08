@@ -44,7 +44,7 @@ ifeq ($(CFG),minimal)
   MODS ?= tools resources
 else ifeq ($(CFG),basic)
   # Basic set ...
-  MODS ?= tools resources
+  MODS ?= tools resources brownies
 else ifeq ($(CFG),demo)
   # Modules for the demo image ...
   MODS ?= tools resources brownies wallclock doorman locales
@@ -60,7 +60,7 @@ ifeq ($(CFG),minimal)
   DRVS ?=
 else ifeq ($(CFG),basic)
   # Basic set ...
-  DRVS ?= gpio
+  DRVS ?= gpio brownies
 else ifeq ($(CFG),demo)
   # Fair set to run the demos ...
   DRVS ?= gpio demo brownies weather

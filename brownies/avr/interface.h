@@ -582,10 +582,13 @@ typedef struct SBrConfigRecord {
   /// - The status bits are read-only and provide direct access to the actuator and buttons
   ///
   /// - The *internal* request (RINT) is set ...
-  ///   ... to 0 (up) or 100 (down) if the respective button is pushed and the actuator is off
-  ///   ... to 0xff if any button is pushed and the actuator is on in any direction
-  ///       (usually to stop moving unless superseeded by REXT)
-  ///   ... from outside to 0xff (but no other value)
+  ///
+  ///     - ... to 0 (up) or 100 (down) if the respective button is pushed and the actuator is off
+  ///
+  ///     - ... to some value between 0 and 100 if any button is pushed and the actuator is on in any direction
+  ///           (usually to stop moving);
+  ///
+  ///     - ... from outside to 0xff (but no other value)
   ///
   /// - The *external* request (REXT) is set from outside only.
   ///

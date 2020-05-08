@@ -54,7 +54,7 @@ ENV_PARA_BOOL("debug.enableCoreDump", envEnableCoreDump, false);
 
 
 ENV_PARA_VAR ("home2l.config", static const char *, envConfig, "etc/home2l.conf");
-  /* Main configuration file (read-only)
+  /* Main configuration file (relative to HOME2L\_ROOT) (read-only)
    */
 ENV_PARA_NOVAR ("home2l.version", const char *, buildVersion, NULL);
   /* Version of the Home2L suite (read-only)
@@ -648,25 +648,30 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
   }
 
   // Read main config file...
-  //   Determine relevant sections...
-  sectionSet.Clear ();
-  sectionSet.Set (buildOS);               // OS environment
-  sectionSet.Set (envMachineName);        // Host/machine name
-  sectionSet.Set (envInstanceName);       // Instance name
-  if (paraAdditionalSections) {           // Additional section passed as arguments...
-    str = strdup (paraAdditionalSections);
-    token = strtok (str, ",");
-    while (token) {
-      sectionSet.Set (token);
-      token = strtok (NULL, ",");
+  if (envConfig) if (envConfig[0]) {      // skip, if explicitly disabled
+    INFOF (("### envConfig == '%s'", envConfig));
+
+    // Determine relevant sections...
+    sectionSet.Clear ();
+    sectionSet.Set (buildOS);               // OS environment
+    sectionSet.Set (envMachineName);        // Host/machine name
+    sectionSet.Set (envInstanceName);       // Instance name
+    if (paraAdditionalSections) {           // Additional section passed as arguments...
+      str = strdup (paraAdditionalSections);
+      token = strtok (str, ",");
+      while (token) {
+        sectionSet.Set (token);
+        token = strtok (NULL, ",");
+      }
+      free (str);
     }
-    free (str);
+    //~ sectionSet.DumpKeys ();
+
+    // Read the file...
+    str = (char *) EnvGetPath (envConfigKey);     // convert config file path to absolute path
+    //~ INFOF (("### envConfig = %s, HOME2L_ROOT = %s", envConfig, envRootDir));
+    EnvReadIniFile (str, &envMap);
   }
-  //~ sectionSet.DumpKeys ();
-  //   Read the file...
-  str = (char *) EnvGetPath (envConfigKey);     // convert config file path to absolute path
-  //~ INFOF (("### envConfig = %s, HOME2L_ROOT = %s", envConfig, envRootDir));
-  EnvReadIniFile (str, &envMap);
 
   // Parse extra assignments from 'HOME2L_EXTRA' and the command line...
   ReadConfAssignmentsFromEnv ();
@@ -697,7 +702,7 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
 
   // Done...
   if (envDebug >= 1) {
-    DEBUGF (1, ("Main configuration file is '%s'.", str));
+    DEBUGF (1, ("Main configuration file is '%s'.", envConfig));
     for (n = 0; n < envMap.Entries (); n++) {
       key = envMap.GetKey (n);
       val = envMap.Get (n)->Get ();

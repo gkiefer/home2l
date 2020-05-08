@@ -872,6 +872,8 @@ const char *GetAbsPath (CString *ret, const char *relOrAbsPath, const char *defa
   //~ INFOF (("EnvGetHome2lRootPath ('%s')", relOrAbsPath));
   if (!relOrAbsPath)
     ret->Set (defaultPath);
+  else if (relOrAbsPath[0] == '\0')
+    ret->Clear ();
   else if (relOrAbsPath[0] == '/' || !defaultPath)
     ret->Set (relOrAbsPath);
   else {

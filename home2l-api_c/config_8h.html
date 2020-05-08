@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.1-11-g39e6* (2020-02-23)</span>
+   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
    </div>
    <div id="projectbrief">Clever Tools for a Private Smart Home</div>
   </td>
@@ -233,7 +233,9 @@ Macros</h2></td></tr>
 <tr class="memdesc:ga7aa6730ae738e03739baeadedca7ec65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate internal pullups for the master SCL/SDA lines (DEPRECATED). <br /></td></tr>
 <tr class="separator:ga7aa6730ae738e03739baeadedca7ec65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Matrix ...</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><p>The diode switch matrix uses the pins avaliable as GPIO for the MCU, which may then not be used as GPIOs. The last MATRIX_ROWS ports are the stimulation ports, the MATRIX_COLS ports before those are the sensing ports. </p>
+<tr><td colspan="2"><div class="groupText"><p>The diode switch matrix uses the pins avaliable as GPIO for the MCU, which may then not be used as GPIOs.</p>
+<p>If MATRIX_ROWS &gt; 1, the last MATRIX_ROWS ports are the stimulation ports. The MATRIX_COLS ports before those (or the last ports at all, if no stimulating ports exist) are the sensing ports.</p>
+<p>In the special case of MATRIX_ROWS == 1, no stimulation ports are assigned, and no active stimulation is performed by the software module. In the circuitry, the row lines of the switches should be connected to VCC (i.e. constantly be pulled high via some resistor) instead of a stimulation port. </p>
 </div></td></tr>
 <tr class="memitem:ga237af2b6cf547aaf4d0de5bc5a538672"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga237af2b6cf547aaf4d0de5bc5a538672">MATRIX_ROWS</a>&#160;&#160;&#160;0</td></tr>
@@ -243,6 +245,12 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga19d8c543f14d754cafd731d930bdc3a1">MATRIX_COLS</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:ga19d8c543f14d754cafd731d930bdc3a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of sensing lines (columns) (max. 8). <br /></td></tr>
 <tr class="separator:ga19d8c543f14d754cafd731d930bdc3a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf4ded5e00e0136d364a997e445426d8f"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>MATRIX_ROWS_GSHIFT</b>&#160;&#160;&#160;<a class="el" href="group__brownies__pins.html#ga361b21769741f5a759afe64071ad0d56">GPIO_PINS_MAX</a></td></tr>
+<tr class="separator:gaf4ded5e00e0136d364a997e445426d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadd794e1d52674225c6ab60723e0dcb16"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gadd794e1d52674225c6ab60723e0dcb16">MATRIX_COLS_GSHIFT</a>&#160;&#160;&#160;(MATRIX_ROWS_GSHIFT - <a class="el" href="group__brownies__features.html#ga19d8c543f14d754cafd731d930bdc3a1">MATRIX_COLS</a>)</td></tr>
+<tr class="memdesc:gadd794e1d52674225c6ab60723e0dcb16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Index of the first GPIO pin to be assigned to column lines.  <a href="group__brownies__features.html#gadd794e1d52674225c6ab60723e0dcb16">More...</a><br /></td></tr>
+<tr class="separator:gadd794e1d52674225c6ab60723e0dcb16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4ff6c131c8006439b07d581f448da1d3"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga4ff6c131c8006439b07d581f448da1d3">MATRIX_T_SAMPLE</a>&#160;&#160;&#160;4</td></tr>
 <tr class="memdesc:ga4ff6c131c8006439b07d581f448da1d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time (ticks) a row is driven to 1 to sample. <br /></td></tr>

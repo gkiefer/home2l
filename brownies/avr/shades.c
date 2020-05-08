@@ -191,9 +191,9 @@ static void OnRequestChanged (uint8_t shIdx) {
     reqExt = RegGet (BR_REG_SHADES_1_REXT);
   }
 
-  // Determine user request value (-> 'reqInt') ...
-  if (reqExt <= 100) reqInt = reqExt;  // Propagate 'reqExt' to 'reqInt'
-  if (reqInt > 100) reqInt = 0xff;     // map all invalid values to "none"
+  // Determine effective request value and fold it into 'reqInt' ...
+  if (reqExt <= 100) reqInt = reqExt;  // propagate 'reqExt' to 'reqInt'
+  if (reqInt > 100) reqInt = 0xff;     // map any invalid value to "none"
 
   // Start / stop calibration cycle (-> 'rawPos'; if calibrating -> 'rawReq') ...
   if (!sh->calibrating) {   // Normal case ...
@@ -214,8 +214,8 @@ static void OnRequestChanged (uint8_t shIdx) {
   else {
 
     // We are currently in a calibration run...
-    if (reqInt > 100) {   // Request to stop => stop calibration ...
-      sh->rawPos = SHADES_POS_NONE;    // no calibration result => will have to start over next time
+    if (reqInt > 100) {               // no request or request removed => stop calibration ...
+      sh->rawPos = SHADES_POS_NONE;   // no calibration result => will have to start again next time
       sh->calibrating = false;
     }
   }
