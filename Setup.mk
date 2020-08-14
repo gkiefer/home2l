@@ -134,10 +134,11 @@ WITH_DEBUG ?= 1
   # Enable debug output
   #   1: Debug output can be enabled at runtime with option 'debug = 1'
   #   0: Debug output disabled (reduces code size)
-WITH_CLEANHEAP ?= 0
-  # Enable extra code to tidily cleanup the heap on application exit (TBD: not implemented yet).
-  # This does not improve the performance or memory consumption of any application in any way,
-  # but may even increase the code size and slow down the shutdown process.
+WITH_CLEANMEM ?= 0
+  # Enable extra code to tidily cleanup the heap on application exit and to perform other things
+  # to avoid potentially false warnings by memory checking tools.
+  # This does not improve the performance or memory consumption of any application in any way
+  # and may even increase the code size and reduce performance.
   # Use this option for debugging your code for memory leaks with 'valgrind' and friends.
 
 
@@ -254,7 +255,7 @@ $(DIR_OBJ)/%-pic.o: %.C
 
 # C/C++ Setting: General...
 CFG_H_CONTENT := "\n\#define WITH_DEBUG" $(WITH_DEBUG)
-CFG_H_CONTENT += "\n\#define WITH_CLEANHEAP" $(WITH_CLEANHEAP)
+CFG_H_CONTENT += "\n\#define WITH_CLEANMEM" $(WITH_CLEANMEM)
 
 # C/C++ Setting: Resources...
 CFG_H_CONTENT += "\n"

@@ -236,7 +236,7 @@ int main (int argc, char **argv) {
   // Startup...
   for (n = 1; n < argc; n++) if (argv[n][0] == '-')
     if (argv[n][1] == 'd') foregroundMode = true;
-  if (!foregroundMode) LogToSyslog ();
+  if (!foregroundMode) LogToSyslog ("daemon");
   EnvInit (argc, argv,
            "  -d : stay in the foreground (prepend 'debug=1' to enable debugging messages)\n");
 

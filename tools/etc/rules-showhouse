@@ -50,14 +50,9 @@ rcWeatherWarning = RcGet ("/alias/weatherWarning")
 
 ################################################################################
 #                                                                              #
-#                             Rules                                            #
+#                             Front Light                                      #
 #                                                                              #
 ################################################################################
-
-
-
-
-######################### Front Light ##########################################
 
 # At night, the front light is switched on automatically for 5 seconds when the
 # motion sensor is triggered. At day time, the light is off permanently.
@@ -65,8 +60,9 @@ rcWeatherWarning = RcGet ("/alias/weatherWarning")
 # off in the WallClock UI. Try it!
 
 
-rcMotion = RcGet ("/host/showhouse/world/motion")
+rcMotion = RcGet ("/alias/motion")
 rcLight  = RcGet ("/alias/frontLight")
+rcLight.SetDefault (False)
 
 
 @onUpdate (rcMotion)
@@ -89,9 +85,14 @@ def LightOffDuringDay ():
 
 
 
-######################### Windows and Shades ###################################
+################################################################################
+#                                                                              #
+#                           Windows and Shades                                 #
+#                                                                              #
+################################################################################
 
 # This section contains two example rules to control windows and shades.
+
 
 
 # Internal resource to represent the maximum outside temperature over the day.
@@ -102,26 +103,34 @@ rcRoofWindow = RcGet ("/alias/floorplan/living-roofwin/actuator")
 rcRoofShades = RcGet ("/alias/floorplan/living-roofwin/shades")
 
 
+
+########### Closing Shades at Night ##########
+
+# The following rule automatically closes window shades over night.
+# The set of shades actually controlled by this rule is defined by the below "for" loop.
+
 @onUpdate (rcDaylight)
 def ShadesAtNight ():
-  # Automatically close window shades over night. The set of shades actually
-  # controlled by this rule is defined by the below "for" loop.
+  # Determine whether shades should be up (0) or down (100) ...
   if rcDaylight.ValidValue (True):
     value = 0     # day time or daylight status unknown: leave shades open
   else:
     value = 100   # night time: close the shades
-  for room in ( "dining", "kitchen", "bedroom", "bath" ):    # iterate over the windows
+  # Set requests for all relevant windows ...
+  #   The resources URIs can be looked up in the floorplan / resources.conf.
+  for room in ( "dining", "kitchen", "bedroom", "bath" ):
     RcGet ("/alias/floorplan/" + room + "-shades/shades").SetRequest (value);
-      # The resources URIs can be looked up in the floorplan / resources.conf.
 
 
-@onUpdate (rcTempDayMaxOutside, rcDaylight, rcWeatherWarning)
+
+########## Roof window cooling ##########
+
+# On hot days, the house can be cooled by opening the roof window over night
+# to let fresh, cool air get in. At day time, the window is closed as well as
+# the shades to keep warm air and sun rays outside.
+
+@onUpdate (rcTempDayMaxOutside, rcDaylight)
 def RoofWindowCooling ():
-  # On hot days, the house can be cooled by opening the roof window over night
-  # to let fresh, cool air get in. At day time, the window is closed as well as
-  # the shades to keep warm air and sun rays outside.
-  # Of course, in case of rain or other sorts of bad weather, the roof window
-  # must be closed in any case...
   if rcTempDayMaxOutside.ValidValue (0.0) < 25.0:   # outside temperature < 25 degrees?
     valWindow = 0       # default (not a hot day): do not open the window, ...
     valShades = 0       # ... and do not close the shades
@@ -131,17 +140,87 @@ def RoofWindowCooling ():
       valShades = 100   # ... and close shades as a heat protection
     else:
       valWindow = 100   # night time: open window ...
-      valShades = 0     # ... and shades get let the warm air leave the building
-  if rcWeatherWarning.ValidValue (True):
-    valWindow = 0       # Safety: if 'rcWeatherWarning' is true or unknown: Close the roof window!
+      valShades = 0     # ... and open shades to let warm air leave the building
   rcRoofWindow.SetRequest (valWindow)
   rcRoofShades.SetRequest (valShades)
 
 
 
+########## Safety Closing of Roof Window ##########
+
+# During rainy weather, it is important to keep the roof window closed to
+# prevent the water from getting into the house.
+#
+# This rule is an example on how to write rules with increased reliability
+# exploiting the distributed design of the Home2L suite.
+#
+# The rules maintain a "watchdog" request "#safety_wd", which is timed to become
+# active in a few seconds or minutes in the future. In normal operation, this
+# request will be updated and the start time be moved on regularly.
+# However, if the rules script crashes, the watchdog request remains and
+# will make the window close at the given time. Since requests are always
+# stored by their respective resource drivers, only the Home2L instance running
+# the driver is required for performing the safety closing, no other instance
+# is needed. Hence, by assigning the driver to a dedicated Home2L instance,
+# the likelyhood of a failure can be reduced.
+#
+# DISCLAIMER: This technique typically reduces the likelihood of a failure,
+#   but it certainly cannot guarantee that no failures happen.
+#
+# If the (boolean) weather warning resource indicates rain ('True'), the window
+# is actively closed or opened again using a separat request ID ("#safety") to
+# not interfere with the watchdog mechanism. If the weather warning resource
+# is known (e.g. due to a failure of that sensor), the watchdog request is not
+# updated, so that the window closes after some time.
+#
+# The priority of safety requests is 8, which is above that of any rules or
+# user interaction, but still can be superceeded by manual requests with
+# priority 9.
+#
+# The time values set here are shorter than they would be in realistic cases
+# for demonstration purposes.
 
 
-######################### WallClock Display ####################################
+# Helper to refresh the watchdog request ...
+def RefreshWatchdogRequest ():
+  rcRoofWindow.SetRequest ("0 #safety_wd *8 +5s")
+
+
+# Timed rule to refresh the watchdog request, but only if the weather warning
+# resource is a known Boolean value ...
+@at ( 0, TicksOf ("1s") )
+def RoofWindowSafetyOnTime ():
+  if rcWeatherWarning.Value () != None: RefreshWatchdogRequest ()
+
+
+# Rule to explicitely close the window on a weather warning ...
+@onUpdate ( rcWeatherWarning )
+def RoofWindowSafetyUpdate ():
+  # If the resource value is unknown (warn == None), nothing happens here. In this
+  # case, we rely on the watchdog request which will become active after some time.
+  warn = rcWeatherWarning.Value ()
+  if warn == True:
+    # Bad weather (known): Close window immediately ...
+    rcRoofWindow.SetRequest ("0 #safety *8")
+  elif warn == False:
+    # Nice weather (known): Remove an existing safety request ...
+    rcRoofWindow.DelRequest ("#safety", TicksAbsOf ("3s"))
+      # To avoid mechanical stress due to frequent opening/closing, the request
+      # deletion is tagged with a delay (3 seconds in this example, typically in
+      # the order of minutes or an hour in a real installation).
+      # If no "#safety" request exists so far, the previous line has no effect.
+    # Refresh the watchdog (the resource may have just become valid again) ...
+    RefreshWatchdogRequest ()
+
+
+
+
+
+################################################################################
+#                                                                              #
+#                           WallClock Display                                  #
+#                                                                              #
+################################################################################
 
 # The display state (on/off, active/standby) can be controlled by means of
 # resources. This is demonstrated by the following rule.
@@ -164,7 +243,11 @@ def WallClockDisplay ():
 
 
 
-######################### Use State ############################################
+################################################################################
+#                                                                              #
+#                                Use State                                     #
+#                                                                              #
+################################################################################
 
 # This rule sets the default use state according to the day/night time.
 
@@ -179,7 +262,7 @@ def SetDefaultUseState ():
 
 ################################################################################
 #                                                                              #
-#                         Run Main Event Loop                                  #
+#                      Finally: Run Main Event Loop                            #
 #                                                                              #
 ################################################################################
 

@@ -149,14 +149,14 @@ showcase-vbox: ../home2l-showcase-vbox.tar.gz
 # Module 'common'...
 ref_env_common.tex: ../common/base.C ../common/env.C ../common/phone.C
 	@echo EXCODE $@
-	@./excode.py e debug:home2l:sys:net:phone $^ > $@ || (rm $@; exit 7)
+	@./excode.py e debug:home2l:sys:net:location:phone $^ > $@ || (rm $@; exit 7)
 
 
 # Module 'resources'...
 ref_env_resources.tex: ../resources/rc_core.C ../resources/resources.C ../resources/rc_drivers.C \
 	       ../resources/home2l-server.C ../resources/home2l-shell.C
 	@echo EXCODE $@
-	@./excode.py e rc:drv:shell:location $^ > $@ || (rm $@; exit 7)
+	@./excode.py e rc:drv:shell $^ > $@ || (rm $@; exit 7)
 
 ref_rc_resources.tex: ../resources/rc_drivers.C
 	@echo EXCODE $@
@@ -210,6 +210,10 @@ ref_env_drv_gpio.tex: ../drivers/gpio/home2l-drv-gpio.C
 	@echo EXCODE $@
 	@./excode.py e : $^ > $@ || (rm $@; exit 7)
 
+ref_env_drv_mqtt.tex: ../drivers/mqtt/home2l-drv-mqtt.C
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
 ref_env_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 	@echo EXCODE $@
 	@./excode.py e : $^ > $@ || (rm $@; exit 7)
@@ -227,7 +231,7 @@ ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 REFS_ENV := ref_env_common.tex ref_env_resources.tex ref_env_daemon.tex \
 						ref_env_brownies.tex \
 	          ref_env_wallclock.tex ref_env_doorman.tex \
-	          ref_env_drv_gpio.tex ref_env_drv_weather.tex
+	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_weather.tex
 
 REFS_RC  := ref_rc_resources.tex  \
 						ref_rc_brownies.tex \

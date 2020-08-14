@@ -42,6 +42,7 @@ var searchData=
   ['rcunlockdriverresources',['RcUnlockDriverResources',['../group__resources__directory.html#ga92440cda67e4869eb68b60cc249f894a',1,'home2l']]],
   ['rcunlockhostresources',['RcUnlockHostResources',['../group__resources__directory.html#ga32895bf4057bb14c4fc1014214aeb968',1,'home2l']]],
   ['rcunsubscribefromall',['RcUnsubscribeFromAll',['../group__resources__general.html#ga5d3d0dc3ad4db678e944623e1c376b1d',1,'home2l']]],
+  ['redrivevalue',['RedriveValue',['../classhome2l_1_1CResource.html#a1319592ee56dea0b136c14bfdd8172dd',1,'home2l::CResource']]],
   ['register',['Register',['../classhome2l_1_1CRcSubscriber.html#a8c7dd550abf0c59fd8f9e5cc67de757f',1,'home2l::CRcSubscriber']]],
   ['repeat',['Repeat',['../classhome2l_1_1CRcRequest.html#a624bb4a32ebd897f17f48eaedbfb9f5e',1,'home2l::CRcRequest']]],
   ['reportstate',['ReportState',['../classhome2l_1_1CResource.html#a3610a025e24decbbfa0569c426f6d167',1,'home2l::CResource']]],

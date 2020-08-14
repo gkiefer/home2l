@@ -182,7 +182,7 @@ typedef void FLogCbToast (const char *msg, bool showLonger);
 
 
 #if !ANDROID
-void LogToSyslog ();      ///< Redirect logging to syslog from now (under non-Android)
+void LogToSyslog (const char *instanceName = NULL);      ///< Redirect logging to syslog from now; instance name must be passed if this is called before EnvInit()
 void LogClose ();
 bool LoggingToSyslog ();
 void LogStack ();         ///< Log a stack trace (requires linker flag '-rdynamic' to print function names)
@@ -470,13 +470,17 @@ float ValidFloatFromString (const char *str, float defaultVal);
 
 void StringStrip (char *str, const char *sepChars = WHITESPACE);
   ///< @brief Remove seperator (whitespace) characters at the beginning and end of the string
-void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE, char **retRef = NULL);
+void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = NULL, char **retRef = NULL);
   ///< @brief Split a string into (whitespace-)separated arguments.
   ///
   /// The number of extracted words is written to `*retArgc`, an array of that size is
   /// returned via `***retArgv`.
   /// If `maxArgc-1` strings have been split, the complete remaining string is
   /// returned as argument #`(maxArgc-1)`.
+  ///
+  /// If `sepChars == NULL`, whitespace characters are used as separators, and multiple of
+  /// them count as a single separation. In all other cases, each individual separation
+  /// character splits up a new argument, so that empty arguments are possible.
   ///
   /// The resulting (sub-)strings will be placed into a single chunk of heap-allocated
   /// memory. The caller must later (only) free `**retArgv[0]` and `*retArgv`.
@@ -544,6 +548,7 @@ class CString {
     /// @name Initialization...
     ///@{
     void Clear () { SetC (emptyStr); }
+    void Set (char c) { Clear (); Insert (0, c); }
     void Set (const CString *str) { Set (str->Get ()); }
     void Set (const CString *str, int n0, int dn = INT_MAX) { Set (str->Get () + n0, dn); }
     void Set (const char *str, int maxLen = INT_MAX);
@@ -719,14 +724,14 @@ class CString {
 class CSplitString {
   public:
     CSplitString () { argc = 0; argv = NULL; ref = NULL; }
-    CSplitString (const char *str, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { StringSplit (str, &argc, &argv, maxArgc, sepChars, &ref); }
+    CSplitString (const char *str, int maxArgc = INT_MAX, const char *sepChars = NULL) { StringSplit (str, &argc, &argv, maxArgc, sepChars, &ref); }
       ///< @brief Initialize, set and split `str` (see `Set ()`).
     ~CSplitString () { Clear (); }
 
     void Clear ();
       ///< @brief Clear the object (only necessary if another string is to be split)
 
-    void Set (const char *str, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { Clear (); StringSplit (str, &argc, &argv, maxArgc, sepChars, &ref); }
+    void Set (const char *str, int maxArgc = INT_MAX, const char *sepChars = NULL) { Clear (); StringSplit (str, &argc, &argv, maxArgc, sepChars, &ref); }
       ///< @brief Set and split a string.
       /// @param str The string to split
       /// @param maxArgc Maximum number of strings to return. If more substrings are
@@ -831,7 +836,7 @@ class CRegex {
 class CDictRaw {
   public:
     CDictRaw (int _valueSize) { data = NULL; recSize = DICT_KEYSIZE + DICT_ALIGN(_valueSize); entries = allocEntries = 0; }
-    ~CDictRaw () { Clear (); }
+    virtual ~CDictRaw () { Clear (); }
 
     void Clear () { SetEntries (0); }
 
@@ -890,14 +895,17 @@ class CDictRaw {
  * 1. The default constructor must not allocate any dynamic data
  *    (A sample object will be copied using 'memcpy' to construct other objects.)
  * 2. It must be location-invariant, since it may be moved in memory (e.g. no pointers
- *    must exist).
- * 3. It must implement a method 'const char *ToStr ()' for the 'Dump' method.
+ *    to dictionary elements must exist).
+ * 3. The '=' operator must be defined appropriately.
+ * 4. The '=' operator free any dynamic data if the sample object is assigned.
+ * 5. It must implement a method 'const char *ToStr ()' for the 'Dump' method.
  *    (the returned string will not be used after a further call to this method for any
  *    object, so that it can e.g. be stored in a static variable)
  */
 template <typename T> class CDictFast: public CDictRaw {
   public:
-    CDictFast (): CDictRaw (sizeof (T)) { ValueClear (&emptyObj); }
+    CDictFast (): CDictRaw (sizeof (T)) {}
+    virtual ~CDictFast () { Clear (); }
 
     /// @name Read access ...
     /// @{
@@ -1092,7 +1100,7 @@ bool TicksFromString (const char *str, TTicks *ret, bool absolute);
   /// The following formats are accepted:
   ///  - `YYYY-MM-DD[-hhmm[ss[.<millis>]]]` : readable time, interpreted as local time
   ///  - `t<unsigned integer>`              : absolute time in milliseconds since the Epoch
-  ///  - `<integer>[<unit>]`                : relative time milliseconds (or some other unit with `<unit>`);
+  ///  - `<integer>[<unit>]`                : relative time in milliseconds (or some other unit with `<unit>`);
   ///                                         Possible units are: seconds ('s'), minutes ('m'), hours ('h'), days ('d'), and weeks ('w').
   ///  - `hh:mm[:ss[.<millis>]]`            : time relative to 0:00 today (if 'absolute == true'); `hh` may be > 23 to specify a time in the coming days (*Beware of potential race conditions when using this close to midnight!*)
   /// If 'absolute' is set, an absolute time is returned in any case.
@@ -1274,6 +1282,7 @@ class CTimer {
     friend bool TimerIterate ();
     friend TTicksMonotonic TimerGetDelay ();
     friend void TimerRun ();
+    friend void *TimerThreadRoutine (void *);
 
     static bool ClassIterateAL ();
     static TTicksMonotonic GetDelayTimeAL ();
@@ -1299,13 +1308,19 @@ class CTimer {
 bool TimerIterate ();
   ///< @brief Returns false if nothing was done.
 TTicksMonotonic TimerGetDelay ();
-  ///< @brief Returns number of milliseconds until next call to `TimerIterate()` is necessary, or -1 if no timer is pending.
+  ///< @brief Returns number of milliseconds until next call to @ref TimerIterate() is necessary, or -1 if no timer is pending.
 
-void TimerRun ();   ///< @brief Perform an endless loop calling timers until `TimerStop()` is called.
-void TimerStart (); ///< @brief Start `TimerRun()` in a background thread, which is to be stopped using `TimerStop()`.
-                    ///  All timer functions are then run from the same, namely this background thread.
-void TimerStop ();  ///< @brief Request `TimerRun()` to return at next occasion (can be called from any thread).
-                    ///  If a dedicatd timer thread was started, this is joined, too.
+void TimerStart ();
+  ///< @brief Start @ref TimerRun() in a background thread, which is to be stopped using @ref TimerStop().
+  ///  All timer functions are then run from the same, namely that background thread.
+int TimerRun (bool catchSignals = true);
+  ///< @brief Perform an endless loop calling timers until @ref TimerStop() is called.
+  ///  @param catchSignals controls whether the signals SIGTERM ("exit nicely", default of the kill(1) command)
+  ///    and SIGINT (Ctrl-C) are caught temporarly and lead to an immediate return of this function.
+  ///  @return the signal number if the function has been stopped by a caught signal, else 0.
+void TimerStop ();
+  ///< @brief Request @ref TimerRun() to return at next occasion (can be called from any thread).
+  ///  If a dedicated timer thread was started, this is joined, too.
 /// @}
 
 

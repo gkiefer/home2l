@@ -148,6 +148,7 @@ void CbActivateScreen (CButton *, bool, void *screen) {
 void CButton::Init () {
   surfLabel = NULL;
   surfLabelIsOwned = false;
+  colNorm = colDown = TRANSPARENT;
   hAlign = vAlign = 0;
   cbPushed = NULL;
   cbPushedData = NULL;
@@ -551,6 +552,7 @@ SDL_Rect CListbox::GetItemRect (int idx) {
 void CListbox::SelectItem (int idx, bool _isSelected) {
   CListboxItem *item = &itemArr[idx];
 
+  //~ INFOF (("### CListbox::SelectItem (%i): %i -> %i", idx, item->isSelected, _isSelected));
   if (idx < 0 || idx >= items) return;
   if (item->isSelected != _isSelected) {
     //~ INFOF (("### CListbox::SelectItem (%i): %i -> %i", idx, item->isSelected, _isSelected));
@@ -676,6 +678,7 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
   if (mode != lmReadOnly) switch (ev->type) {
 
     case SDL_MOUSEBUTTONDOWN:
+      downSelectedItem = selectedItem;        // for 'lmSelectSingle': remember the original selection
       evIsDown = true;
     case SDL_MOUSEMOTION:
       if (!evIsDown && downIdx < 0) break;    // no preceeding "down" event => ignore motion event
@@ -684,11 +687,24 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
       GetMouseEventPos (ev, &x, &y);
 
       // In listbox area? ...
-      if (!RectContains (&area, x, y)) {
-        if (!evIsDown) {
-          if (mode != lmSelectAny) SelectNone ();
-          downIdx = -1;
+      if (!RectContains (&area, x, y) && !evIsDown) {
+        // Have dragged out of the area => cancel and restore selection ...
+        switch (mode) {
+          case lmReadOnly:
+            break;
+          case lmActivate:
+            SelectNone ();
+            break;
+          case lmSelectSingle:
+            if (downSelectedItem >= 0) SelectItem (downSelectedItem, true);
+            else SelectNone ();
+            break;
+          case lmSelectAny:
+            if (downIdx >= 0) SelectItem (downIdx, !itemArr[downIdx].isSelected);
+            break;
         }
+        downIdx = -1;
+        ret = true;
         break;   // case SDL_MOUSEMOTION:
       }
 
@@ -698,6 +714,9 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
         idx = poolIdx[wdg];
         if (idx >= 0) if (RectContains (pool[wdg]->GetArea (), x, y)) {
           if (idx != downIdx) {
+            // Dragging ...
+            if (mode == lmSelectAny && downIdx >= 0)
+              SelectItem (downIdx, !itemArr[downIdx].isSelected);
             SelectItem (idx, !itemArr[idx].isSelected);
             if (downIdx >= 0) noLongPush = true;
             downIdx = idx;
@@ -706,6 +725,8 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
           break;   // for (wdg ...)
         }
       }
+
+      //~ INFOF (("###   evIsDown = %i, downIdx = %i, noLongPush = %i", (int) evIsDown, downIdx, (int) noLongPush));
 
       // Handle long push...
       if (evIsDown && ev->button.clicks == 2 && downIdx >= 0 && !noLongPush) {

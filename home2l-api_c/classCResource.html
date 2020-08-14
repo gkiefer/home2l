@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -77,7 +77,7 @@ $(function() {
 <li>(Meta) = Methods to access meta data; for shells or similar services. </li>
 </ul>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00872">872</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00868">868</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -344,14 +344,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetDriverData</b> (vo
 <tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp611400cd1e502bd937e7efdb6ce60e41"></a>To be called by a driver to report a change in the real device.</p>
 <p><em>Note:</em> The methods 'Report...' and 'DriveValue' serve as serialization points on the data paths Driver -&gt; Subscribers and Subscribers -&gt; Driver, respectively. The internal methods filter out duplicates reported one immediately after the other. Neither a driver nor a subscriber have to worry about duplicates. </p>
 </td></tr>
-<tr class="memitem:ac092eceb4aa75fb8fb2cb49c02d174d0"><td class="memItemLeft" align="right" valign="top"><a id="ac092eceb4aa75fb8fb2cb49c02d174d0"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#ac092eceb4aa75fb8fb2cb49c02d174d0">ReportValueState</a> (<a class="el" href="classCRcValueState.html">CRcValueState</a> *_valueState)</td></tr>
-<tr class="memdesc:ac092eceb4aa75fb8fb2cb49c02d174d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report value and state; if different from previous value/state, notify all subscribers. If '_valueState-&gt;Type () == rctNone', the new state is reported with the old value. <br /></td></tr>
-<tr class="separator:ac092eceb4aa75fb8fb2cb49c02d174d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01a26e3e20b7487e5f720e12d147f1a5"><td class="memItemLeft" align="right" valign="top"><a id="a01a26e3e20b7487e5f720e12d147f1a5"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#a01a26e3e20b7487e5f720e12d147f1a5">ReportValue</a> (<a class="el" href="unionURcValue.html">URcValue</a> _value, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
-<tr class="memdesc:a01a26e3e20b7487e5f720e12d147f1a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report value and optionaly state (see 'ReportValueState') <br /></td></tr>
-<tr class="separator:a01a26e3e20b7487e5f720e12d147f1a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaee4b22fb2c4c8853b7970a7e22e91ec"><td class="memItemLeft" align="right" valign="top"><a id="aaee4b22fb2c4c8853b7970a7e22e91ec"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#aaee4b22fb2c4c8853b7970a7e22e91ec">ReportValueState</a> (const <a class="el" href="classCRcValueState.html">CRcValueState</a> *_valueState)</td></tr>
+<tr class="memdesc:aaee4b22fb2c4c8853b7970a7e22e91ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report value and state; if different from previous value/state, notify all subscribers. If '_valueState-&gt;Type () == rctNone', the new state is reported with the old value. <br /></td></tr>
+<tr class="separator:aaee4b22fb2c4c8853b7970a7e22e91ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3880db11b289d63b0258e56f86426f09"><td class="memItemLeft" align="right" valign="top"><a id="a3880db11b289d63b0258e56f86426f09"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>ReportValue</b> (bool _value, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
 <tr class="separator:a3880db11b289d63b0258e56f86426f09"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -378,10 +374,16 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#a074c0eb0c11586ab28ac112cfbe75664">ReportState</a> (<a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state)</td></tr>
 <tr class="memdesc:a074c0eb0c11586ab28ac112cfbe75664"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report state change only, value remains unmodified. <br /></td></tr>
 <tr class="separator:a074c0eb0c11586ab28ac112cfbe75664"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad5166dda98121c1350077374fa029b14"><td class="memItemLeft" align="right" valign="top"><a id="ad5166dda98121c1350077374fa029b14"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#ad5166dda98121c1350077374fa029b14">ReportValue</a> (<a class="el" href="classCRcValueState.html">CRcValueState</a> *vs, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
-<tr class="memdesc:ad5166dda98121c1350077374fa029b14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report value of the 'vs' object, but with the state given here. <b>Note:</b> Do not confuse with <a class="el" href="classCResource.html#ac092eceb4aa75fb8fb2cb49c02d174d0" title="Report value and state; if different from previous value/state, notify all subscribers. If &#39;_valueState-&gt;Type () == rctNone&#39;, the new state is reported with the old value. ">ReportValueState()</a>! <br /></td></tr>
-<tr class="separator:ad5166dda98121c1350077374fa029b14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32a3117a7fe68b3fb0f770e6979bdb13"><td class="memItemLeft" align="right" valign="top"><a id="a32a3117a7fe68b3fb0f770e6979bdb13"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#a32a3117a7fe68b3fb0f770e6979bdb13">ReportValue</a> (const <a class="el" href="classCRcValueState.html">CRcValueState</a> *vs, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
+<tr class="memdesc:a32a3117a7fe68b3fb0f770e6979bdb13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report value of the 'vs' object, but with the state given here. <b>Note:</b> Do not confuse with <a class="el" href="classCResource.html#aaee4b22fb2c4c8853b7970a7e22e91ec" title="Report value and state; if different from previous value/state, notify all subscribers. If &#39;_valueState-&gt;Type () == rctNone&#39;, the new state is reported with the old value. ">ReportValueState()</a>! <br /></td></tr>
+<tr class="separator:a32a3117a7fe68b3fb0f770e6979bdb13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
+(Drv) Misc. Helpers ...</h2></td></tr>
+<tr class="memitem:af21494ccfa547c1090b932ca9fee7320"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCResource.html#af21494ccfa547c1090b932ca9fee7320">RedriveValue</a> (bool force=true)</td></tr>
+<tr class="memdesc:af21494ccfa547c1090b932ca9fee7320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drive the currently requested value again.  <a href="#af21494ccfa547c1090b932ca9fee7320">More...</a><br /></td></tr>
+<tr class="separator:af21494ccfa547c1090b932ca9fee7320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 (Meta) For info &amp; directory services ...</h2></td></tr>
@@ -572,7 +574,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Subscribe to this resource. The caller remains owner of 'subscr'. </p>
 <p>If the present value of 'this' is known, an initial notification with the current value is sent to the subscriber. 'this' is returned to allow short constructs like "rc = RcGetResource (...)-&gt;Subscribe (subscr)". </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01012">1012</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01008">1008</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -608,7 +610,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01036">1036</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01032">1032</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -818,7 +820,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </ul>
 <p>Details on the documentation system can be found in the Home2L Book. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01123">1123</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01118">1118</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -839,6 +841,39 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 
 <p>Unregister a resource. </p>
 <p>Unused '<a class="el" href="classCResource.html" title="Home2L Resource. ">CResource</a>' objects are never deleted from heap, but only marked as unregistered and its state set to 'rcsUnknown', if they are no longer used. </p>
+
+</div>
+</div>
+<a id="af21494ccfa547c1090b932ca9fee7320"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af21494ccfa547c1090b932ca9fee7320">&#9670;&nbsp;</a></span>RedriveValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CResource::RedriveValue </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>force</em> = <code>true</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Drive the currently requested value again. </p>
+<p>This re-evaluates the currently pending requests and calls <a class="el" href="classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2" title="Drive a new value; Will be called from CResource::DriveValue(). ">CRcDriver::DriveValue()</a> again. This is useful if the driver was unable to properly handle the last call to DriveValue() or for some other reason needs to catch up with the currently driven value.</p>
+<p>If 'force == false', the driver's DriveValue() is only called if the value to drive is actually different from the current value.</p>
+<p>This method must not be called from inside <a class="el" href="classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2" title="Drive a new value; Will be called from CResource::DriveValue(). ">CRcDriver::DriveValue()</a>. </p>
+
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01187">1187</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>

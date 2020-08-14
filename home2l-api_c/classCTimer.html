@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -73,7 +73,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Timer class. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01260">1260</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01268">1268</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="base_8H_source.html">base.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -134,12 +134,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:a9e53a0bf1ac4ba4ac146e3b1ef2f95ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5dfe8e17766ad61574db9e0643be6ae"><td class="memItemLeft" align="right" valign="top"><a id="af5dfe8e17766ad61574db9e0643be6ae"></a>
 <a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCTimer.html#af5dfe8e17766ad61574db9e0643be6ae">TimerGetDelay</a> ()</td></tr>
-<tr class="memdesc:af5dfe8e17766ad61574db9e0643be6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns number of milliseconds until next call to <code><a class="el" href="classCTimer.html#a9e53a0bf1ac4ba4ac146e3b1ef2f95ff" title="Returns false if nothing was done. ">TimerIterate()</a></code> is necessary, or -1 if no timer is pending. <br /></td></tr>
+<tr class="memdesc:af5dfe8e17766ad61574db9e0643be6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns number of milliseconds until next call to <a class="el" href="classCTimer.html#a9e53a0bf1ac4ba4ac146e3b1ef2f95ff">TimerIterate()</a> is necessary, or -1 if no timer is pending. <br /></td></tr>
 <tr class="separator:af5dfe8e17766ad61574db9e0643be6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeec8353aae05aa37f6d0d94383a7394f"><td class="memItemLeft" align="right" valign="top"><a id="aeec8353aae05aa37f6d0d94383a7394f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCTimer.html#aeec8353aae05aa37f6d0d94383a7394f">TimerRun</a> ()</td></tr>
-<tr class="memdesc:aeec8353aae05aa37f6d0d94383a7394f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform an endless loop calling timers until <code><a class="el" href="group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0" title="Request TimerRun() to return at next occasion (can be called from any thread). If a dedicatd timer th...">TimerStop()</a></code> is called. <br /></td></tr>
-<tr class="separator:aeec8353aae05aa37f6d0d94383a7394f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a70f86ce698d51043ceb84a4153335873"></a>
@@ -226,7 +222,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Indicate whether the timer is pending and may be executed in the future. </p>
 <p><b>Note:</b> Be careful with potential race conditions. A value of 'false' can be safely be used to draw conclusions, given that only the calling thread may call 'Set' &amp; friends. A value of 'true' may change to 'false' at any time. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01289">1289</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01297">1297</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 
 </div>
 </div>

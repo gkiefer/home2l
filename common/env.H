@@ -71,11 +71,11 @@
 
 
 
-// ********************** Misc Helpers *****************************************
+// ***************** Basic Environment Information and Helpers *****************
 
 
 /// @defgroup env_helpers Helpers
-/// @brief Direct access to basic environment properties and pathname helpers.
+/// @brief Direct access to basic environment properties and helpers.
 /// @{
 
 
@@ -207,6 +207,21 @@ bool EnvNetResolve (const char *hostAndPort, CString *retHost, int *retPort = NU
   /// @return success status.
 
 /// @}  // @name
+
+
+/// @name Location ...
+/// @{
+
+float EnvLocationLatitudeN ();
+  ///< @brief Get the WGS84 latitude north coordinate of the home (the 'location.latitudeN' setting).
+float EnvLocationLongitudeE ();
+  ///< @brief Get the WGS84 longitude east coordinate of the home (the 'location.longitudeE' setting).
+
+
+
+/// @}  // @name
+
+
 
 
 /// @}  // @defgroup
@@ -433,14 +448,14 @@ class CEnvPara {
 /// @}
 
 /// @name Keys without a variable ...
-/// The macro just defines a key name constant variable.
+/// The macro just defines a key name as a constant variable.
 /// @{
 #define ENV_PARA_NOVAR(key,varType,varName,varDefault) const char *varName##Key = key;
   ///< @brief Argument 'varType' is used for automatic documentation.
 /// @}
 
 /// @name Groups of variables ...
-/// such as patterned variables like `doorman.\<phone\>.register`. (TBD: Correct Doxygen (at)brief here)
+/// such as patterned variables like `doorman.<PHONE>.register`.
 /// @{
 #define ENV_PARA_SPECIAL(keyPattern, varType, varDefault)
   ///< @brief Arguments 'varType' and 'varDefault' are used for automatic documentation.

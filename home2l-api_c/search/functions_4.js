@@ -30,6 +30,8 @@ var searchData=
   ['envhome2lvar',['EnvHome2lVar',['../group__env__helpers.html#ga542d875b4cffc816c8a8cb8d3ed7dfac',1,'env.H']]],
   ['envinitpersistence',['EnvInitPersistence',['../group__env__general.html#gaa5128864933fd561b278dace4a84476a',1,'env.H']]],
   ['envinstancename',['EnvInstanceName',['../group__env__helpers.html#ga61d4e121f498d44aa02c0504c5a77168',1,'env.H']]],
+  ['envlocationlatituden',['EnvLocationLatitudeN',['../group__env__helpers.html#gaa1b126eb283817a3b48b8baeef76a122',1,'env.H']]],
+  ['envlocationlongitudee',['EnvLocationLongitudeE',['../group__env__helpers.html#gaca85a0be2ab10fffa791382f4d86cedc',1,'env.H']]],
   ['envmachinename',['EnvMachineName',['../group__env__helpers.html#ga8dff47e39fab3dc8ceb7eabd1fb9e9db',1,'env.H']]],
   ['envmktmpdir',['EnvMkTmpDir',['../group__env__helpers.html#gac2233ff8958c0f801bdcb7f3d8fca1b2',1,'env.H']]],
   ['envmkvardir',['EnvMkVarDir',['../group__env__helpers.html#ga698a6a09a654f47c7155b52107a5b34d',1,'env.H']]],
@@ -37,6 +39,6 @@ var searchData=
   ['envpid',['EnvPid',['../group__env__helpers.html#gad1e3be517dba28e3c2eb65a81f65d399',1,'env.H']]],
   ['envput',['EnvPut',['../group__env__dictionary.html#gaf9e8ebb6a594d07fbfe568d9ff4de58b',1,'EnvPut(const char *key, const char *value):&#160;env.H'],['../group__env__dictionary.html#gafa76fe824068efbf1691d96276221fdb',1,'EnvPut(const char *key, int value):&#160;env.H']]],
   ['envreadinifile',['EnvReadIniFile',['../group__env__helpers.html#gae341ac18b1d41229704ef8c75eb3342f',1,'env.H']]],
-  ['equals',['Equals',['../classCRcValueState.html#a58a81537a77c43d00d6d5d7b6a3b8524',1,'CRcValueState']]],
+  ['equals',['Equals',['../classCRcValueState.html#a286f377681808ea51ad872585588e368',1,'CRcValueState']]],
   ['exitcode',['ExitCode',['../classCShell.html#a5da05f5d44ff6b81d42bb9e5a2913cb6',1,'CShell']]]
 ];

@@ -174,7 +174,7 @@ CDict<CRcHost> hostMap;
 
 CMutex serverListMutex;         // 'serverList' is written only by [T:net], but also read by others
                                 //  -> Lock must be acquired for writing OR by non-net-threads.
-CRcServer *serverList = NULL;   // [T:net,w] servers are managed in a chained list and removed after disconnect and clearance
+CRcServer *serverList = NULL;   // [T:w=net,r=any] servers are managed in a chained list and removed after disconnect and clearance
 
 CDict<CRcDriver> driverMap;
 
@@ -651,7 +651,15 @@ void CNetThread::Stop () {
 
 
 void CNetThread::AddTask (ENetOpcode opcode, CNetRunnable *runnable, void *data) {
-  TNetTask nt = { opcode, runnable, data };
+  TNetTask nt;
+
+#if WITH_CLEANMEM
+  bzero (&nt, sizeof (TNetTask));
+#endif
+  nt.opcode = opcode;
+  nt.runnable = runnable;
+  nt.data = data;
+
   //~ INFOF (("### CNetThread::AddTask (%i), sleeper = %08x", opcode, &sleeper));
   sleeper.PutCmd (&nt);
 }
@@ -773,8 +781,8 @@ void *CNetThread::Run () {
     while (*pSrv) {
       server = *pSrv;
       // Check complex condition a)...
-      if (server->state == scsDisconnected /* && !server->HasSubscribers () && !server->aliveTimer.Pending () && !server->execShell && !server->execTimer.Pending () */) {
-        server->state = scsInDeletion;          // mark as "in deletion"
+      if (ATOMIC_READ (server->state) == scsDisconnected /* && !server->HasSubscribers () && !server->aliveTimer.Pending () && !server->execShell && !server->execTimer.Pending () */) {
+        ATOMIC_WRITE (server->state, scsInDeletion);          // mark as "in deletion"
         *pSrv = server->next;                   // unlink from 'serverList'
         netThread.AddTask ((ENetOpcode) snoDelete, server);   // schedule deletion from heap
       }
@@ -783,6 +791,18 @@ void *CNetThread::Run () {
     serverListMutex.Unlock ();
   }
 
+  // Disconnect and remove all servers ...
+  serverListMutex.Lock ();
+  while (serverList) {
+    server = serverList;
+    server->Disconnect ();
+    ATOMIC_WRITE (server->state, scsInDeletion);
+    serverList = server->next;
+    delete server;
+  }
+  serverListMutex.Unlock ();
+
+  // Done ...
   return NULL;
 }
 
@@ -799,9 +819,9 @@ void RcNetStart () {
 
 
 void RcNetStop () {
-  int n;
   TTicksMonotonic timeLeft;
   bool haveOpenRequests;
+  int n;
 
   // Wait until no more requests are open to be transmitted to remote hosts (or timeout)...
   timeLeft = envNetTimeout;
@@ -836,9 +856,6 @@ void RcNetStop () {
   //   However, they will be closed by their destructors very soon anyway
   //   and no faulty behaviour should result from that. So we leave it this way.
   netThread.Stop ();
-  // We do not cleanup 'serverList' now. valgrind and friends will (correctly)
-  // report leaked memory because of this. However, other threads and objects
-  // may still access the 'CRcServer' objects leading to unexpected behaviour.
 }
 
 
@@ -858,7 +875,7 @@ CRcServer::CRcServer (int _fd, uint32_t _peerIp4Adr, uint16_t _peerPort, const c
   peerPort = _peerPort;
   peerAdrStr.Set (_peerAdrStr);
 
-  state = scsNew;
+  ATOMIC_WRITE (state, scsNew);
 
   execShell = NULL;
 }
@@ -867,7 +884,7 @@ CRcServer::CRcServer (int _fd, uint32_t _peerIp4Adr, uint16_t _peerPort, const c
 CRcServer::~CRcServer () {
   DEBUGF (1, ("Closing client connection from '%s'", peerAdrStr.Get ()));
   // see comment on thread-safety in 'CRcHost::~CRcHost'
-  ASSERT (state == scsInDeletion);
+  ASSERT (ATOMIC_READ (state) == scsInDeletion);
   //~ Disconnect ();
 }
 
@@ -875,7 +892,9 @@ CRcServer::~CRcServer () {
 void CRcServer::Disconnect () {
 
   // Delete subscribers...
+  Lock ();
   subscrDict.Clear();
+  Unlock ();
 
   // Shell...
   execTimer.Clear ();
@@ -893,7 +912,7 @@ void CRcServer::Disconnect () {
   }
 
   // Update state...
-  state = scsDisconnected;
+  ATOMIC_WRITE (state, scsDisconnected);
 }
 
 
@@ -951,8 +970,10 @@ void CRcServer::OnFdReadable () {
       case 'h':   // h <client host id> <version>     # connect ("hello") message
         line.Split (&argc, &argv);
         if (argc != 3) { error = true; break; }
+        Lock ();
         hostId.Set (argv[1]);
-        state = scsConnected;
+        Unlock ();
+        ATOMIC_WRITE (state, scsConnected);
 
         // Send "hello" back...
         sendBuf.AppendF ("h %s %s\n", EnvInstanceName (), buildVersion);
@@ -992,7 +1013,9 @@ void CRcServer::OnFdReadable () {
           subscr = new CRcSubscriber ();
           subscr->RegisterAsAgent (def.Get ());
           subscr->SetCbOnEvent (CRcServerCbOnSubscriberEvent, this);
+          Lock ();
           subscrDict.Set (subscr->Lid (), subscr);
+          Unlock ();
         }
         uri = GetLocalUri (argv[2]);
         switch (line[1]) {
@@ -1114,7 +1137,7 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
   CRcEvent ev;
   bool canPostponeAliveTimer;
 
-  DEBUGF (3, ("[resources] CRcServer::NetRun (%s, %i), state = %i", HostId (), opcode, state));
+  DEBUGF (3, ("[resources] CRcServer::NetRun (%s, %i), state = %i", HostId (), opcode, ATOMIC_READ (state)));
 
   canPostponeAliveTimer = false;
   switch ((EServerNetOpcode) opcode) {
@@ -1124,7 +1147,7 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
       return;         // make sure this method is quit immediately ('this' is now gone and invalid...)
 
     case snoSubscriberEvent:
-      if (state != scsConnected) break;
+      if (ATOMIC_READ (state) != scsConnected) break;
       //~ INFOF (("### snoSubscriberEvent (%s)", HostId ()));
 
       while (((CRcSubscriber *) data)->PollEvent (&ev)) {
@@ -1138,12 +1161,12 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
       break;
 
     case snoAliveTimer:
-      if (state != scsConnected) break;
+      if (ATOMIC_READ (state) != scsConnected) break;
       sendBuf.AppendF ("h %s %s\n", EnvInstanceName (), buildVersion);
       break;
 
     case snoExecTimer:
-      if (state != scsConnected) break;
+      if (ATOMIC_READ (state) != scsConnected) break;
       while (execShell->ReadLine (&line))
         sendBuf.AppendF ("e %s\n", line.Get ());
       if (!execShell->IsRunning ()) {
@@ -1167,7 +1190,7 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
 void CRcServer::SendFlush () {
   int bytesToWrite, bytesWritten;
 
-  if (state == scsConnected) {
+  if (ATOMIC_READ (state) == scsConnected) {
 
     // Write 'sendBuf' to socket...
     bytesToWrite = sendBuf.Len ();
@@ -1207,7 +1230,7 @@ void CRcServer::GetInfo (CString *ret, int verbosity) {
   int n;
 
   Lock ();
-  ret->SetF ("Client %-16s(%18s): %s\n", hostId.Get (), peerAdrStr.Get (), stateNames[state]);
+  ret->SetF ("Client %-16s(%18s): %s\n", hostId.Get (), peerAdrStr.Get (), stateNames[ATOMIC_READ (state)]);
   if (verbosity >= 1) {
     if (!subscrDict.Entries ()) ret->Append ("  (no subscribers)\n");
     else for (n = 0; n < subscrDict.Entries (); n++) {
@@ -1415,6 +1438,13 @@ CRcHost::~CRcHost () {
   timer.Clear ();
   conThread->Cancel ();
   // We should delete 'conThread' here, but do not do so to avoid waiting times when joining the thread.
+#if WITH_CLEANMEM
+  if (conThread->IsRunning ()) conThread->Join ();
+  delete conThread;
+
+  int n;
+  while ( (n = resourceMap.Entries ()) > 0) resourceMap.Get (n - 1)->Unregister ();
+#endif
 }
 
 

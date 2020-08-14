@@ -4,20 +4,19 @@
 What are the *Home2Ls*?
 =======================
 
-The *Home2L `[houmtu:l]`* suite is a framework, library and set of tools for automation in private smart homes.
-Its main features are:
+The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for automation in private homes. Its main features are:
 
 * **_Home2L Resources_**: Novel concept to integrate and manage **sensors, actors or services of any kind efficiently and precisely**.
 
-* **Automation rules written in Python** - but not limited to that,
+* **Automation rules written in Python** - but not limited to that.
 
-* **Easy integration of services and new devices** - in C/C++, Python or by a shell script.
+* **Easy integration of services and new devices** - via MQTT, in C/C++, Python or by a shell script.
 
 * **_Home2L Brownies_**: Simple and efficient **automation bus to interconnect cheap 8-bit microcontrollers**
   for do-it-yourself sensor or actor hardware.
 
-* **_Home2L WallClock_**: **Lightweight, unobtrusive, concise, and responsive UI**, suitable to be installed
-  on cheap tablets or minicomputers and mounted in all rooms - just like a wall clock.
+* **_Home2L WallClock_**: **Lightweight, concise, and responsive information display**,
+  suitable to be installed on cheap tablets or minicomputers and mounted in all rooms - just like a wall clock.
 
 * **Interactive floor plan** for all kinds of gadgets (windows, shades, lights, phones, computers, services, ...).
 
@@ -34,12 +33,14 @@ Its main features are:
 What is New?
 ============
 
+* **MQTT gateway driver** to import devices and export *Home2L* resources to external MQTT clients.
+
 * **_Home2L Brownies_**: Simple and efficient **automation bus to interconnect cheap 8-bit microcontrollers**
   for do-it-yourself sensor or actor hardware.
 
-* **Interactive floor plan** for all kinds of gadgets (windows, shades, lights, phones, computers, services, ...).
+* **Improved interactive floor plan** for all kinds of gadgets (windows, shades, lights, phones, computers, services, ...).
 
-* **Docker image** and improved tutorial for getting started quickly
+* **Docker image** and improved tutorial for getting started quickly.
 
 
 
@@ -64,8 +65,8 @@ The [*Home2L Book*](home2l-book.pdf) contains a **a step-by-step tutorial demons
 
 
 
-What is Noteworthy About the *Home2Ls*?
-=======================================
+What is Special About the *Home2Ls*?
+====================================
 
 
 ## Efficient and Lightweight Design
@@ -89,13 +90,15 @@ Other ways to interact with *Home2L* resources is via the C/C++ API from any app
 
 ## Easy Driver Development in C/C++, Python or Any Other Language
 
-An API for *resource* drivers allows to easily add support for new hardware. A driver can be implemented
+An API for *resource* drivers allows to easily add support for new hardware or services. A driver can be implemented
 
 - in native C/C++ code,
 - as a shell script,
 - in Python.
 
 For all three cases, documented examples are available in the source tree.
+
+MQTT-enabled devices can be imported directly using the MQTT gateway driver.
 
 
 ## Easy Integration of Do-It-Yourself Hardware
@@ -146,13 +149,7 @@ Great contributions would be:
 
 - **Packaging**: Create packages for major Linux distributions.
 
-- **Bridges to other home automation frameworks:**
-  Help to implement drivers and interfaces with other open home automation frameworks.
-
 - **Documentation**: Write good documentation, particularly for end users.
-
-- **More drivers:** Implement drivers for any hardware you have or like.
-  Help with an *MQTT* bridge would be appreciated, too.
 
 For any questions on how to participate, do not hesitate to contact the author via the project page.
 

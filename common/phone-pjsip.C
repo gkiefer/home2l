@@ -1711,7 +1711,7 @@ void CPhone::ReportInfo (const char *fmt, ...) {
 
 static void AsyncOnLogging (int level, const char *data, int len) {
   if (level <= 3)
-    INFOF (("[PJSIP-%i] %.*s", level, len - 1, data));
+    DEBUGF (1, ("[PJSIP-%i] %.*s", level, len - 1, data));
   else
     DEBUGF (3, ("[PJSIP-%i] %.*s", level, len - 1, data));
 }

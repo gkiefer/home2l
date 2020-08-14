@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -98,9 +98,6 @@ This graph shows which files directly or indirectly include this file:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">union &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="unionURcValue.html">URcValue</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Union for an untyped value.  <a href="unionURcValue.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html">CRcValueState</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typed value tagged with a state and a time stamp.  <a href="classCRcValueState.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -139,7 +136,7 @@ Macros</h2></td></tr>
 <tr class="memdesc:ga498604fdad8b490859189457f1c1a0a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the entry point of a binary driver.  <a href="group__resources__drivers.html#ga498604fdad8b490859189457f1c1a0a6">More...</a><br /></td></tr>
 <tr class="separator:ga498604fdad8b490859189457f1c1a0a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Request Priorities</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><p>Request priorities are in the range from 0..15, and the following constants define some recommended values.</p>
+<tr><td colspan="2"><div class="groupText"><p>Request priorities are in the range from 0..9, and the following constants define some recommended values.</p>
 <p>For writable resources, their drivers should set a permanent request at prio 0 for the default value. If no default is set, this lib will keep the last value if the last request is removed. </p>
 </div></td></tr>
 <tr class="memitem:gaafdfffca3695ae82a8fcb979354210bd"><td class="memItemLeft" align="right" valign="top">
@@ -148,32 +145,44 @@ Macros</h2></td></tr>
 <tr class="separator:gaafdfffca3695ae82a8fcb979354210bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gae7cb63c674f17bf1ed77eb9cad5bb3aa">rcPrioNormal</a>&#160;&#160;&#160;3</td></tr>
-<tr class="memdesc:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default value (automation rules level) <br /></td></tr>
+<tr class="memdesc:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">General default for new requests and default for automation rules. <br /></td></tr>
 <tr class="separator:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa59f8432fb0f392f7d6c8fc576bb71e2"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa59f8432fb0f392f7d6c8fc576bb71e2">rcPrioMax</a>&#160;&#160;&#160;9</td></tr>
 <tr class="memdesc:gaa59f8432fb0f392f7d6c8fc576bb71e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum (highest) priority. <br /></td></tr>
 <tr class="separator:gaa59f8432fb0f392f7d6c8fc576bb71e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa235196dd1fc20eae9473051b6972285"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa235196dd1fc20eae9473051b6972285">rcPrioDefault</a>&#160;&#160;&#160;<a class="el" href="group__resources__requests.html#gaafdfffca3695ae82a8fcb979354210bd">rcPrioMin</a></td></tr>
-<tr class="memdesc:gaa235196dd1fc20eae9473051b6972285"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Preset defaults (typically by the driver) <br /></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa235196dd1fc20eae9473051b6972285">rcPrioDefault</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gaa235196dd1fc20eae9473051b6972285"><td class="mdescLeft">&#160;</td><td class="mdescRight">Preset defaults (typically by the driver) <br /></td></tr>
 <tr class="separator:gaa235196dd1fc20eae9473051b6972285"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7e5deba92ba55d32d2524f2dfc28206b"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga7e5deba92ba55d32d2524f2dfc28206b">rcPrioRuleMin</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga7e5deba92ba55d32d2524f2dfc28206b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum for automation rules. <br /></td></tr>
+<tr class="separator:ga7e5deba92ba55d32d2524f2dfc28206b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga425849739733f95b42bba4cad092b1b9"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga425849739733f95b42bba4cad092b1b9">rcPrioRule</a>&#160;&#160;&#160;3</td></tr>
-<tr class="memdesc:ga425849739733f95b42bba4cad092b1b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Automation rules (e.g. close window shades at certain times) <br /></td></tr>
+<tr class="memdesc:ga425849739733f95b42bba4cad092b1b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default for automation rules. <br /></td></tr>
 <tr class="separator:ga425849739733f95b42bba4cad092b1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae006f1f159bd45757bca850e0a02fdfd"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gae006f1f159bd45757bca850e0a02fdfd">rcPrioRuleMax</a>&#160;&#160;&#160;5</td></tr>
+<tr class="memdesc:gae006f1f159bd45757bca850e0a02fdfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum for automation rules (unless safety-relevant, see <a class="el" href="group__resources__requests.html#gaa11c057c98c4c3ed3144a9599f55cc89">rcPrioSafety</a>) <br /></td></tr>
+<tr class="separator:gae006f1f159bd45757bca850e0a02fdfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga8cf36062e827ab7ff06e3a3aee91330c">rcPrioUser</a>&#160;&#160;&#160;7</td></tr>
-<tr class="memdesc:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Direct user interaction (e.g. user pushes button to open window shades) <br /></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga8cf36062e827ab7ff06e3a3aee91330c">rcPrioUser</a>&#160;&#160;&#160;6</td></tr>
+<tr class="memdesc:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct user interaction (e.g. user pushes button to open window shades) <br /></td></tr>
 <tr class="separator:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga9d6359fa02c067c762afda7ecb0981c6"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga9d6359fa02c067c762afda7ecb0981c6">rcPrioAdmin</a>&#160;&#160;&#160;8</td></tr>
-<tr class="memdesc:ga9d6359fa02c067c762afda7ecb0981c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Administrative interaction (default priority in the Home2l shell) <br /></td></tr>
-<tr class="separator:ga9d6359fa02c067c762afda7ecb0981c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga22673be7fbc59820601a2b74cc20b799"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga22673be7fbc59820601a2b74cc20b799">rcPrioShell</a>&#160;&#160;&#160;7</td></tr>
+<tr class="memdesc:ga22673be7fbc59820601a2b74cc20b799"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shell or administrative interaction (default priority in the Home2l shell) <br /></td></tr>
+<tr class="separator:ga22673be7fbc59820601a2b74cc20b799"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa11c057c98c4c3ed3144a9599f55cc89">rcPrioSafety</a>&#160;&#160;&#160;<a class="el" href="group__resources__requests.html#gaa59f8432fb0f392f7d6c8fc576bb71e2">rcPrioMax</a></td></tr>
-<tr class="memdesc:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Necessary actions to avoid damage (e.g. close roof window on bad weather) <br /></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa11c057c98c4c3ed3144a9599f55cc89">rcPrioSafety</a>&#160;&#160;&#160;8</td></tr>
+<tr class="memdesc:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Automatic actions necessary to avoid damage (e.g. close roof window on bad weather) <br /></td></tr>
 <tr class="separator:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaed778516d8e0fdacb23fbda22379e0f"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaaed778516d8e0fdacb23fbda22379e0f">rcPrioIKnowWhatImDoing</a>&#160;&#160;&#160;9</td></tr>
+<tr class="memdesc:gaaed778516d8e0fdacb23fbda22379e0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum priority is reserved for explicit manual intervention (should not be used by any automation rule) <br /></td></tr>
+<tr class="separator:gaaed778516d8e0fdacb23fbda22379e0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -293,30 +302,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 <tr class="memitem:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga9eb603b175cfe65fb89154d0bb96c75f">RcGetUserRequestAttrs</a> ()</td></tr>
 <tr class="memdesc:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the default request attributes for user interactions (see 'rc.userReqAttrs').  <a href="group__resources__requests.html#ga9eb603b175cfe65fb89154d0bb96c75f">More...</a><br /></td></tr>
 <tr class="separator:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader">Value ('URcValue') construction and evaluation ...</div></td></tr>
-<tr class="memitem:ga51b71c6888270b59f745fd86238126ab"><td class="memItemLeft" align="right" valign="top">
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga51b71c6888270b59f745fd86238126ab">URcValueCleared</a> ()</td></tr>
-<tr class="memdesc:ga51b71c6888270b59f745fd86238126ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get cleared value (0 / 0.0 / false) <br /></td></tr>
-<tr class="separator:ga51b71c6888270b59f745fd86238126ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7292938c79c8ca1ee87faa85a2592071"><td class="memItemLeft" align="right" valign="top">
-static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga7292938c79c8ca1ee87faa85a2592071">URcValueClear</a> (<a class="el" href="unionURcValue.html">URcValue</a> *val)</td></tr>
-<tr class="memdesc:ga7292938c79c8ca1ee87faa85a2592071"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear value (0 / 0.0 / false) <br /></td></tr>
-<tr class="separator:ga7292938c79c8ca1ee87faa85a2592071"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7d345a3078881422954a950aac823527"><td class="memItemLeft" align="right" valign="top">
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (bool v)</td></tr>
-<tr class="separator:ga7d345a3078881422954a950aac823527"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga24ab59580df4aa43733a32c1d7f93796"><td class="memItemLeft" align="right" valign="top">
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (int v)</td></tr>
-<tr class="separator:ga24ab59580df4aa43733a32c1d7f93796"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gafec555734f17d38dcbee9b2cb6790cf9"><td class="memItemLeft" align="right" valign="top">
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (float v)</td></tr>
-<tr class="separator:gafec555734f17d38dcbee9b2cb6790cf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7aee4c41289a4797a3b821ac900ee902"><td class="memItemLeft" align="right" valign="top">
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (const char *v)</td></tr>
-<tr class="separator:ga7aee4c41289a4797a3b821ac900ee902"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadad1e7d1d5f4881928f88bf32beafb2c"><td class="memItemLeft" align="right" valign="top">
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> v)</td></tr>
-<tr class="separator:gadad1e7d1d5f4881928f88bf32beafb2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Drivers (local) ...</div></td></tr>
 <tr class="memitem:ga8fd88f81391c03ec6911b0caecfb50bb"><td class="memItemLeft" align="right" valign="top">
 int&#160;</td><td class="memItemRight" valign="bottom"><b>RcGetDrivers</b> ()</td></tr>
@@ -378,13 +363,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b">RcIterate</a> ()</td></tr>
 <tr class="memdesc:ga286d46a532fcf7bf7c98f30fedde5c4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform pending actions, call <a class="el" href="group__common__timers.html#ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff" title="Returns false if nothing was done. ">TimerIterate()</a> and return. <br /></td></tr>
 <tr class="separator:ga286d46a532fcf7bf7c98f30fedde5c4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa06900275273e94e5bb129d95e44f6b5"><td class="memItemLeft" align="right" valign="top">
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gaa06900275273e94e5bb129d95e44f6b5">RcRun</a> ()</td></tr>
-<tr class="memdesc:gaa06900275273e94e5bb129d95e44f6b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run 'RcStart', then <a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b" title="Perform pending actions, call TimerIterate() and return. ">RcIterate()</a> in a main event loop until <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is called. <br /></td></tr>
-<tr class="separator:gaa06900275273e94e5bb129d95e44f6b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga53638ae87b97ad18e97dea08b6976672"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga53638ae87b97ad18e97dea08b6976672">RcRun</a> (bool catchSignals=true)</td></tr>
+<tr class="memdesc:ga53638ae87b97ad18e97dea08b6976672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run 'RcStart', then <a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b" title="Perform pending actions, call TimerIterate() and return. ">RcIterate()</a> in a main event loop until <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is called.  <a href="group__resources__general.html#ga53638ae87b97ad18e97dea08b6976672">More...</a><br /></td></tr>
+<tr class="separator:ga53638ae87b97ad18e97dea08b6976672"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04">RcStop</a> ()</td></tr>
-<tr class="memdesc:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop a loop started by <a class="el" href="group__resources__general.html#gaa06900275273e94e5bb129d95e44f6b5" title="Run &#39;RcStart&#39;, then RcIterate() in a main event loop until RcStop() is called. ">RcRun()</a>. <br /></td></tr>
+<tr class="memdesc:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop a loop started by <a class="el" href="group__resources__general.html#ga53638ae87b97ad18e97dea08b6976672" title="Run &#39;RcStart&#39;, then RcIterate() in a main event loop until RcStop() is called. ">RcRun()</a>. <br /></td></tr>
 <tr class="separator:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Accessing resources ...</div></td></tr>
 <tr class="memitem:ga95affb67a076dd9ab08c1f0299b9c5a5"><td class="memItemLeft" align="right" valign="top">

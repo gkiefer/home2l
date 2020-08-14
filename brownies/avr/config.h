@@ -267,7 +267,7 @@
 #endif
 
 #ifndef SHADES_TIMEOUT
-#define SHADES_TIMEOUT  10000
+#define SHADES_TIMEOUT  30000
   ///< @brief Number of milliseconds without connection before the brownie assumes that the master is offline.
   ///
   /// After the timeout,

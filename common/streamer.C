@@ -216,6 +216,7 @@ void StreamerInit () {
 void StreamerDone () {
   DEBUGF (1, ("StreamerDone ()"));
   StreamerStop ();
+  gst_deinit ();
 }
 
 

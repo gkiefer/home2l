@@ -28,13 +28,13 @@
    inkscape:window-height="1020"
    id="namedview88"
    showgrid="true"
-   inkscape:zoom="0.49039738"
-   inkscape:cx="158.11648"
-   inkscape:cy="240.57009"
+   inkscape:zoom="0.93358455"
+   inkscape:cx="515.01264"
+   inkscape:cy="726.5622"
    inkscape:window-x="64"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
-   inkscape:current-layer="g4133"
+   inkscape:current-layer="svg2"
    units="cm"
    showguides="true"
    inkscape:snap-object-midpoints="false"
@@ -298,6 +298,7 @@
 
 
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:96px;line-height:100%;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;baseline-shift:baseline;text-anchor:middle;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -308,7 +309,8 @@
      id="tspan4536"
      x="460.72842"
      y="497.71481"
-     style="font-size:32px">Clever Tools for a Private Smart Home</tspan></text>
+     style="font-size:32px">Smart Tools for a Private Home</tspan></text>
+
 
 
 
@@ -323,6 +325,7 @@
      x="457.69717"
      y="575.37512"
      style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans Oblique'">by Gundolf Kiefer</tspan></text>
+
 
 
 
@@ -372,6 +375,7 @@
      x="63.705151"
      sodipodi:role="line" /></text>
 
+
 <g
    transform="translate(116.30822,75.590543)"
    id="g5220"
@@ -383,15 +387,15 @@
      x="317.48035"
      y="317.48032"
      ry="22.677177" /><image
-     sodipodi:absref="/data/prog/home2l/src/doc/figs/wallclock-home-3.png"
+     sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-home-3.png"
      xlink:href="wallclock-home-3.png"
-     width="453.54333"
-     height="265.74802"
-     preserveAspectRatio="none"
-     style="image-rendering:optimizeQuality"
-     id="image5088"
+     y="340.1575"
      x="340.1575"
-     y="340.1575" /></g><g
+     id="image5088"
+     style="image-rendering:optimizeQuality"
+     preserveAspectRatio="none"
+     height="265.74802"
+     width="453.54333" /></g><g
    transform="matrix(1.1162373,0,0,1.1162373,67.773326,31.664004)"
    id="g5232"
    style=""><rect
@@ -402,15 +406,15 @@
      x="90.708664"
      y="-22.677176"
      ry="22.677168" /><image
-     sodipodi:absref="/data/prog/home2l/src/doc/figs/wallclock-floorplan-3.png"
+     sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-floorplan-3.png"
      xlink:href="wallclock-floorplan-3.png"
-     width="451.52759"
-     height="264.56696"
-     preserveAspectRatio="none"
-     style="image-rendering:optimizeQuality"
-     id="image5099"
+     y="-5.2865103e-06"
      x="115.40158"
-     y="-5.2865103e-06" /></g><g
+     id="image5099"
+     style="image-rendering:optimizeQuality"
+     preserveAspectRatio="none"
+     height="264.56696"
+     width="451.52759" /></g><g
    transform="matrix(1.1021026,0,0,1.1021026,66.650301,19.402125)"
    id="g5216"
    style=""><rect
@@ -421,15 +425,15 @@
      x="816.37799"
      y="325.03937"
      ry="15.118128" /><image
-     sodipodi:absref="/data/prog/home2l/src/doc/figs/wallclock-doorman-2.png"
+     sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-doorman-2.png"
      xlink:href="wallclock-doorman-2.png"
-     width="302.36221"
-     height="181.41736"
-     preserveAspectRatio="none"
-     style="image-rendering:optimizeQuality"
-     id="image5121"
+     y="340.15747"
      x="831.49609"
-     y="340.15747" /></g><g
+     id="image5121"
+     style="image-rendering:optimizeQuality"
+     preserveAspectRatio="none"
+     height="181.41736"
+     width="302.36221" /></g><g
    transform="matrix(1.2853162,0,0,1.2853162,-61.793608,-75.693327)"
    id="g5224"
    style=""><rect
@@ -440,15 +444,15 @@
      x="665.1969"
      y="627.40161"
      ry="15.118127" /><image
-     sodipodi:absref="/data/prog/home2l/src/doc/figs/wallclock-music.png"
+     sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-music.png"
      xlink:href="wallclock-music.png"
-     width="302.36221"
-     height="181.41734"
-     preserveAspectRatio="none"
-     style="image-rendering:optimizeQuality"
-     id="image5132"
+     y="642.51971"
      x="680.315"
-     y="642.51971" /></g><g
+     id="image5132"
+     style="image-rendering:optimizeQuality"
+     preserveAspectRatio="none"
+     height="181.41734"
+     width="302.36221" /></g><g
    transform="matrix(1.1494914,0,0,1.1494914,53.606356,30.505288)"
    id="g5236"
    style=""><rect
@@ -459,15 +463,15 @@
      x="-30.236286"
      y="355.2756"
      ry="15.118128" /><image
-     sodipodi:absref="/data/prog/home2l/src/doc/figs/wallclock-calendar.png"
+     sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-calendar.png"
      xlink:href="wallclock-calendar.png"
-     width="302.36221"
-     height="181.41734"
-     preserveAspectRatio="none"
-     style="stroke:#000000;image-rendering:optimizeQuality"
-     id="image5143"
+     y="370.39371"
      x="-15.118112"
-     y="370.39371" /></g><g
+     id="image5143"
+     style="stroke:#000000;image-rendering:optimizeQuality"
+     preserveAspectRatio="none"
+     height="181.41734"
+     width="302.36221" /></g><g
    transform="matrix(1.1943843,0,0,1.1943843,-12.554791,-10.073295)"
    id="g5228"
    style=""><rect
@@ -478,15 +482,15 @@
      x="725.66931"
      y="90.708649"
      ry="15.118129" /><image
-     sodipodi:absref="/data/prog/home2l/src/doc/figs/wallclock-doorman-1.png"
+     sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-doorman-1.png"
      xlink:href="wallclock-doorman-1.png"
-     width="302.36221"
-     height="181.41734"
-     preserveAspectRatio="none"
-     style="image-rendering:optimizeQuality"
-     id="image5110"
+     y="105.82677"
      x="740.78748"
-     y="105.82677" /></g><text
+     id="image5110"
+     style="image-rendering:optimizeQuality"
+     preserveAspectRatio="none"
+     height="181.41734"
+     width="302.36221" /></g><text
    xml:space="preserve"
    style="font-style:normal;font-weight:normal;font-size:19.48264593px;line-height:1.25;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.46119845px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
    x="1293.8235"
@@ -497,4 +501,5 @@
      x="1293.8235"
      y="638.9538"
      style="stroke-width:1.46119845px;font-size:19.48264593px;">[1]</tspan></text>
+
 </g></svg>

@@ -1,7 +1,7 @@
 var searchData=
 [
   ['select',['Select',['../classhome2l_1_1CRcEventProcessor.html#ae81aa235ee811837592ee4027633590a',1,'home2l::CRcEventProcessor']]],
-  ['set',['Set',['../classhome2l_1_1CRcValueState.html#aa176255733674b62104b4f9d512bcdca',1,'home2l.CRcValueState.Set()'],['../classhome2l_1_1CRcEvent.html#a51dc71aae889a54acae4befcad532176',1,'home2l.CRcEvent.Set()'],['../classhome2l_1_1CRcEventTimer.html#aa176255733674b62104b4f9d512bcdca',1,'home2l.CRcEventTimer.Set()'],['../classhome2l_1_1CRcRequest.html#aa176255733674b62104b4f9d512bcdca',1,'home2l.CRcRequest.Set(self, args)'],['../classhome2l_1_1CRcRequest.html#a3edb23d15a706556570b12cd227e2038',1,'home2l.CRcRequest.Set(self, reqDef=None, attrs=None, value=None, id=None, priority=None, t0=None, t1=None, repeat=None, hysteresis=None)']]],
+  ['set',['Set',['../classhome2l_1_1CRcValueState.html#a923de38e8114880fbc0a37c92c788a98',1,'home2l.CRcValueState.Set()'],['../classhome2l_1_1CRcEvent.html#a51dc71aae889a54acae4befcad532176',1,'home2l.CRcEvent.Set()'],['../classhome2l_1_1CRcEventTimer.html#aa176255733674b62104b4f9d512bcdca',1,'home2l.CRcEventTimer.Set()'],['../classhome2l_1_1CRcRequest.html#aa176255733674b62104b4f9d512bcdca',1,'home2l.CRcRequest.Set(self, args)'],['../classhome2l_1_1CRcRequest.html#a3edb23d15a706556570b12cd227e2038',1,'home2l.CRcRequest.Set(self, reqDef=None, attrs=None, value=None, id=None, priority=None, t0=None, t1=None, repeat=None, hysteresis=None)']]],
   ['setattrsfromstr',['SetAttrsFromStr',['../classhome2l_1_1CRcRequest.html#a50fe2e768b7d059b5d3a54359e3a5865',1,'home2l::CRcRequest']]],
   ['setbool',['SetBool',['../classhome2l_1_1CRcValueState.html#ad4355d46f15eb670fb33ff2345adea65',1,'home2l::CRcValueState']]],
   ['setdata',['SetData',['../classhome2l_1_1CRcEvent.html#ab4b9c5afe9a60704505887b568a8b86c',1,'home2l::CRcEvent']]],
@@ -30,6 +30,7 @@ var searchData=
   ['settimeoff',['SetTimeOff',['../classhome2l_1_1CRcRequest.html#a3b2eeb3e6dbd6b730cc3ed6b15a53161',1,'home2l::CRcRequest']]],
   ['settimeon',['SetTimeOn',['../classhome2l_1_1CRcRequest.html#a8496a124b81832e468c7cd8c5d579890',1,'home2l::CRcRequest']]],
   ['settimestamp',['SetTimeStamp',['../classhome2l_1_1CRcValueState.html#af2f9ef6fa70406d87dc2e524e5e0c231',1,'home2l::CRcValueState']]],
+  ['settoreportbusy',['SetToReportBusy',['../classhome2l_1_1CRcValueState.html#a9c5fd8829c407d34b029faa433786f1f',1,'home2l::CRcValueState']]],
   ['settoreportbusynewval',['SetToReportBusyNewVal',['../classhome2l_1_1CRcValueState.html#af4e065a2b1c422dfbb49a09980183c97',1,'home2l::CRcValueState']]],
   ['settoreportbusyoldval',['SetToReportBusyOldVal',['../classhome2l_1_1CRcValueState.html#ad0dafb742e941772c4752f65892d70a9',1,'home2l::CRcValueState']]],
   ['settoreportnothing',['SetToReportNothing',['../classhome2l_1_1CRcValueState.html#a349cbdd2769d16c69d3c18418e4206b1',1,'home2l::CRcValueState']]],

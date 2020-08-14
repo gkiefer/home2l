@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -129,14 +129,14 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>ENV_PARA_VAR</b>(key,  varType,  varName,  varDefault)&#160;&#160;&#160;varType varName = varDefault; const char *varName##Key = key;</td></tr>
 <tr class="separator:gaf968e28b4ec08bf5631d28afa6e83abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Keys without a variable ...</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><p>The macro just defines a key name constant variable. </p>
+<tr><td colspan="2"><div class="groupText"><p>The macro just defines a key name as a constant variable. </p>
 </div></td></tr>
 <tr class="memitem:gaf4e9b1a6e60608ba331d64cbaf5ad3a1"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__declaration.html#gaf4e9b1a6e60608ba331d64cbaf5ad3a1">ENV_PARA_NOVAR</a>(key,  varType,  varName,  varDefault)&#160;&#160;&#160;const char *varName##Key = key;</td></tr>
 <tr class="memdesc:gaf4e9b1a6e60608ba331d64cbaf5ad3a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Argument 'varType' is used for automatic documentation. <br /></td></tr>
 <tr class="separator:gaf4e9b1a6e60608ba331d64cbaf5ad3a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Groups of variables ...</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><p>such as patterned variables like <code>doorman.\&lt;phone\&gt;.register</code>. (TBD: Correct Doxygen (at)brief here) </p>
+<tr><td colspan="2"><div class="groupText"><p>such as patterned variables like <code>doorman.&lt;PHONE&gt;.register</code>. </p>
 </div></td></tr>
 <tr class="memitem:gad2825f880b9c569ef6c61005b223dd39"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__declaration.html#gad2825f880b9c569ef6c61005b223dd39">ENV_PARA_SPECIAL</a>(keyPattern,  varType,  varDefault)</td></tr>
@@ -228,6 +228,15 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="memitem:gab3569e806dc11b896d3d7dfedd7237cb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__helpers.html#gab3569e806dc11b896d3d7dfedd7237cb">EnvNetResolve</a> (const char *hostAndPort, <a class="el" href="classCString.html">CString</a> *retHost, int *retPort=NULL, int defaultPort=0, bool warn=true)</td></tr>
 <tr class="memdesc:gab3569e806dc11b896d3d7dfedd7237cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a resolved host + port combination.  <a href="group__env__helpers.html#gab3569e806dc11b896d3d7dfedd7237cb">More...</a><br /></td></tr>
 <tr class="separator:gab3569e806dc11b896d3d7dfedd7237cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Location ...</div></td></tr>
+<tr class="memitem:gaa1b126eb283817a3b48b8baeef76a122"><td class="memItemLeft" align="right" valign="top">
+float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__helpers.html#gaa1b126eb283817a3b48b8baeef76a122">EnvLocationLatitudeN</a> ()</td></tr>
+<tr class="memdesc:gaa1b126eb283817a3b48b8baeef76a122"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the WGS84 latitude north coordinate of the home (the 'location.latitudeN' setting). <br /></td></tr>
+<tr class="separator:gaa1b126eb283817a3b48b8baeef76a122"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaca85a0be2ab10fffa791382f4d86cedc"><td class="memItemLeft" align="right" valign="top">
+float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__helpers.html#gaca85a0be2ab10fffa791382f4d86cedc">EnvLocationLongitudeE</a> ()</td></tr>
+<tr class="memdesc:gaca85a0be2ab10fffa791382f4d86cedc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the WGS84 longitude east coordinate of the home (the 'location.longitudeE' setting). <br /></td></tr>
+<tr class="separator:gaca85a0be2ab10fffa791382f4d86cedc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Init/Done ...</div></td></tr>
 <tr class="memitem:ga272854309dc5580b722a2b75b1e458b9"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>EnvInit</b> (int argc, char **argv, const char *specOptionsUsage=NULL, const char *instanceName=NULL)</td></tr>

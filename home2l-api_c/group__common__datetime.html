@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -353,7 +353,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <p>The following formats are accepted:</p><ul>
 <li><code>YYYY-MM-DD[-hhmm[ss[.&lt;millis&gt;]]]</code> : readable time, interpreted as local time</li>
 <li><code>t&lt;unsigned integer&gt;</code> : absolute time in milliseconds since the Epoch</li>
-<li><code>&lt;integer&gt;[&lt;unit&gt;]</code> : relative time milliseconds (or some other unit with <code>&lt;unit&gt;</code>); Possible units are: seconds ('s'), minutes ('m'), hours ('h'), days ('d'), and weeks ('w').</li>
+<li><code>&lt;integer&gt;[&lt;unit&gt;]</code> : relative time in milliseconds (or some other unit with <code>&lt;unit&gt;</code>); Possible units are: seconds ('s'), minutes ('m'), hours ('h'), days ('d'), and weeks ('w').</li>
 <li><code>hh:mm[:ss[.&lt;millis&gt;]]</code> : time relative to 0:00 today (if 'absolute == true'); <code>hh</code> may be &gt; 23 to specify a time in the coming days (<em>Beware of potential race conditions when using this close to midnight!</em>) If 'absolute' is set, an absolute time is returned in any case. Otherwise, in the two latter formats, the relative number of ticks is returned. </li>
 </ul>
 

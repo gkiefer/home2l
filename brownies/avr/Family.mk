@@ -44,7 +44,7 @@ BROWNIE_FAMILY = init.t85 init.t84 init.t861 \
 
 
 
-#################### Initialization  ###########################################
+#################### Device Initialization  ####################################
 
 
 # init: Maintenances system, for initializing new devices ...

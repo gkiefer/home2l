@@ -23,7 +23,7 @@
 # The links will also be read by the GPIO resources driver, which must accept the same
 # naming convention:
 #
-#    $HOME2L_ROOT/etc/gpio.<host name>/<port name>.<options>
+#    $HOME2L_ETC/gpio.<host name>/<port name>.<options>
 #
 # <options> is a sequence of characters and may include:
 #
@@ -33,8 +33,8 @@
 #    n - The port is active-low (negated).
 #
 
-
-ETC_DIR=$HOME2L_ROOT/etc/gpio.$HOSTNAME
+[[ "$HOME2L_ETC" == "" ]] && HOME2L_ETC=$HOME2L_ROOT/etc
+ETC_DIR=$HOME2L_ETC/gpio.$HOSTNAME
 
 shopt -s nullglob
 

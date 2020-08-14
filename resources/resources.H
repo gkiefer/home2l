@@ -188,7 +188,7 @@ class CResourceLink;
 
 /** @name Request Priorities
  *
- * Request priorities are in the range from 0..15, and the following constants define
+ * Request priorities are in the range from 0..9, and the following constants define
  * some recommended values.
  *
  * For writable resources, their drivers should set a permanent request at prio 0 for the default value.
@@ -198,14 +198,17 @@ class CResourceLink;
  */
 
 #define rcPrioMin     0           ///< Minimum (lowest) priority
-#define rcPrioNormal  3           ///< Default value (automation rules level)
+#define rcPrioNormal  3           ///< General default for new requests and default for automation rules
 #define rcPrioMax     9           ///< Maximum (highest) priority
 
-#define rcPrioDefault rcPrioMin   ///< Typical use: Preset defaults (typically by the driver)
-#define rcPrioRule    3           ///< Typical use: Automation rules (e.g. close window shades at certain times)
-#define rcPrioUser    7           ///< Typical use: Direct user interaction (e.g. user pushes button to open window shades)
-#define rcPrioAdmin   8           ///< Typical use: Administrative interaction (default priority in the Home2l shell)
-#define rcPrioSafety  rcPrioMax   ///< Typical use: Necessary actions to avoid damage (e.g. close roof window on bad weather)
+#define rcPrioDefault 0           ///< Preset defaults (typically by the driver)
+#define rcPrioRuleMin 1           ///< Minimum for automation rules
+#define rcPrioRule    3           ///< Default for automation rules
+#define rcPrioRuleMax 5           ///< Maximum for automation rules (unless safety-relevant, see @ref rcPrioSafety)
+#define rcPrioUser    6           ///< Direct user interaction (e.g. user pushes button to open window shades)
+#define rcPrioShell   7           ///< Shell or administrative interaction (default priority in the Home2l shell)
+#define rcPrioSafety  8           ///< Automatic actions necessary to avoid damage (e.g. close roof window on bad weather)
+#define rcPrioIKnowWhatImDoing 9  ///< Maximum priority is reserved for explicit manual intervention (should not be used by any automation rule)
 
 /// @}  // @name
 
@@ -263,12 +266,14 @@ enum ERcType {
   rctInt,         ///< Integer
   rctFloat,       ///< Float
   rctString,      ///< String
+  //~ rctBlob,        ///< Binary data (not implemented yet, TBD)
   rctTime,        ///< Time
+  //~ rctColor,       ///< Color value (not implemented yet, TBD)
   /// @}
 
   /// @name Special resource types...
   /// @{
-  rctTrigger,   ///< [rctInt] Resource does not carry a value, but can transport events ("triggers"); 'vTriggerCount' counts the number of trigger events.
+  rctTrigger,   ///< @brief [rctInt] Resource does not carry a value, but can transport events ("triggers"); 'vTriggerCount' counts the number of trigger events.
   rctMutex,     ///< @brief [rctString] resource represents a mutex (not implemented yet)
                 ///
                 ///   **Note:** Mutex operations are not implemented yet. Once implemented, they will work as follows.
@@ -390,9 +395,10 @@ enum ERctPhoneState {
 // ***** Values *****
 
 
-/// Union for an untyped value
+// Union for an untyped value (for internal use only) @private
 #ifdef SWIG
 %immutable vString;
+//~ %immutable vBlob;
 #endif
 union URcValue {
   uint64_t vAny;          // Pseudo-field to clear/compare independent of type
@@ -401,26 +407,15 @@ union URcValue {
   int vInt;               // Width/value range can be machine dependent, but must be at least 32 bits (-2^31 .. +2^31-1).
   float vFloat;           // Encoding must be 32-bit floating point according to IEEE 754
   const char *vString;    // Pointer to a dynamically allocated string; NULL <=> string is empty ("")
+  //~ uint8_t *vBlob;         // Binary data of any size (not implemented yet, TBD)
   TTicks vTime;
+  //~ uint32_t vColor;        // Color value (ARGB) (not implemented yet, TBD)
 };
 
 
 #ifndef SWIG
 STATIC_ASSERT(sizeof (URcValue) == sizeof (URcValue::vAny));
 #endif
-
-
-/// @name Value ('URcValue') construction and evaluation ...
-/// @{
-static inline URcValue URcValueCleared () { URcValue ret; ret.vAny = 0; return ret; }   ///< Get cleared value (0 / 0.0 / false)
-static inline void URcValueClear (URcValue *val) { val->vAny = 0; }                     ///< Clear value (0 / 0.0 / false)
-
-static inline URcValue URcValueOf (bool v) { URcValue ret; ret.vAny = 0; ret.vBool = v; return ret; }
-static inline URcValue URcValueOf (int v) { URcValue ret; ret.vAny = 0; ret.vInt = v; return ret; }
-static inline URcValue URcValueOf (float v) { URcValue ret; ret.vAny = 0; ret.vFloat = v; return ret; }
-static inline URcValue URcValueOf (const char *v) { URcValue ret; ret.vAny = 0; ret.vString = v; return ret; }
-static inline URcValue URcValueOf (TTicks v) { URcValue ret; ret.vAny = 0; ret.vTime = v; return ret; }
-/// @}
 
 
 
@@ -464,9 +459,8 @@ enum ERcState {
 class CRcValueState {
   public:
     CRcValueState () { type = rctNone; Clear (); }
-    CRcValueState (const CRcValueState &vs) { type = rctNone; Set (vs.type, vs.val, vs.state); timeStamp = vs.timeStamp; }
+    CRcValueState (const CRcValueState *vs) { type = rctNone; Set (vs); timeStamp = vs->timeStamp; }
     CRcValueState (ERcType _type) { type = rctNone; Clear (_type); }   ///< for initializing type, but no value & state
-    CRcValueState (ERcType _type, URcValue _val, ERcState _state = rcsValid) { type = rctNone; Set (_type, _val, _state); }
 
     CRcValueState (ERcType _type, bool _val, ERcState _state = rcsValid) { type = rctNone; SetBool (_val, _state); }
     CRcValueState (ERcType _type, int _val, ERcState _state = rcsValid) { type = rctNone; SetGenericInt (_val, _type, _state); }
@@ -477,7 +471,7 @@ class CRcValueState {
     ~CRcValueState () { Clear (rctNone); }
 
 #ifndef SWIG
-    CRcValueState& operator = (CRcValueState &_vs) { Set (_vs.type, _vs.val, _vs.state); timeStamp = _vs.timeStamp; return *this; }
+    CRcValueState& operator = (const CRcValueState &_vs) { Set (&_vs); timeStamp = _vs.timeStamp; return *this; }
 #endif
 
     /// @name Set value and attributes (general methods) ...
@@ -493,8 +487,7 @@ class CRcValueState {
       ///   - rctInt / rctTrigger: 0
       ///   - rctFloat: 0.0
       ///   - rctString / rctMutex: "" (NULL)
-    void Set (ERcType _type, URcValue _val, ERcState _state = rcsValid);
-    void Set (URcValue _val, ERcState _state = rcsValid) { Set (type, _val, _state); }
+    void Set (const CRcValueState *vs2);
     /// @}
 
     /// @name Setting special values for @ref CRcDriver::DriveValue() methods ...
@@ -503,12 +496,16 @@ class CRcValueState {
     /// **Note:** Some of these values (particularly the combination of no type
     /// and a state != rcsUnknown) are only allowed in this context and usually
     /// forbidden.
+    void SetToReportBusy () { SetToReportBusyOldVal (); }
+      ///< @brief Modify object to auto-report a busy state.
     void SetToReportBusyOldVal () { Clear (rctNone, rcsBusy); }
       ///< @brief Modify object to auto-report a busy state with no value change.
       /// **Note:** Only for use in @ref CRcDriver::DriveValue()! Normally,
       /// the combination of no type and a state != rcsUnknown are forbidden.
     void SetToReportBusyNewVal () { state = rcsBusy; }
-      ///< @brief Modify object to auto-report a busy state with the new (prospective) value.
+      ///< @brief Modify object to auto-report a busy state together with a value.
+      /// This is to be used in @ref CRcDriver::DriveValue(). If the value is not
+      /// set explicitly, the current value to drive will be reported back.
     void SetToReportNothing () { Clear (rctNone, rcsValid); }
       ///< @brief Modify object to not auto-report anything.
       /// **Note:** Only for use in @ref CRcDriver::DriveValue()! Normally,
@@ -527,7 +524,7 @@ class CRcValueState {
     void SetGenericFloat (float _val, ERcType _type, ERcState _state = rcsValid);
       ///< @brief Set from float.
     bool SetGenericString (const char *_val, ERcType _type, ERcState _state = rcsValid);
-      ///< @brief Set from string. On syntax error, a warning is emitted, the default value (see 'Clear') is set,
+      ///< @brief Set from string. On syntax error, a warning is emitted, the state is set to @ref rcsUnknown,
       /// and 'false' is returned.
     /// @}
 
@@ -558,9 +555,9 @@ class CRcValueState {
     ///
     /// Int() and Float() tolerate compatible types (trigger, unit, enum).
     /// @{
-    URcValue      UValue () const   { return val; }
-    int           GenericInt () const   { ASSERT (RcTypeGetBaseType (type) == rctInt);    return val.vInt;   }
-    float         GenericFloat () const { ASSERT (RcTypeGetBaseType (type) == rctFloat);  return val.vFloat; }
+    int           GenericInt () const     { ASSERT (RcTypeGetBaseType (type) == rctInt);    return val.vInt;   }
+    float         GenericFloat () const   { ASSERT (RcTypeGetBaseType (type) == rctFloat);  return val.vFloat; }
+    const char *  GenericString () const  { ASSERT (RcTypeGetBaseType (type) == rctString); return val.vString; }
 
     bool          Bool () const     { ASSERT (type == rctBool);     return val.vBool;   }
     int           Int () const      { ASSERT (type == rctInt);      return val.vInt; }
@@ -638,10 +635,9 @@ class CRcValueState {
     bool IsKnown () const { return state != rcsUnknown; }
       ///< @brief State is either `rcsValid` or `rcsBusy`; In other words: the value can be retrieved.
 
-    bool Equals (CRcValueState *val2) const;
+    bool Equals (const CRcValueState *vs2) const;
       ///< @brief Strict comparison: state, type and value must match exactly; time stamps are not compared.
-    bool ValueEquals (URcValue val2) const;
-    bool ValueEquals (CRcValueState *val2) const;
+    bool ValueEquals (const CRcValueState *vs2) const;
       ///< @brief Relaxed comparison: type and value must match exactly; state and time stamps are not compared.
     /// @}
 
@@ -737,11 +733,11 @@ class CRcValueState {
       if not self: return None
       if self.State () == rcsUnknown: return None
       t = RcTypeGetBaseType (self.Type ())
-      if   t == rctBool:   return self.UValue().vBool
-      elif t == rctInt:    return self.UValue().vInt
-      elif t == rctFloat:  return self.UValue().vFloat
-      elif t == rctString: return self.UValue().vString
-      elif t == rctTime:   return self.UValue().vTime
+      if   t == rctBool:   return self.Bool()
+      elif t == rctInt:    return self.GenericInt()
+      elif t == rctFloat:  return self.GenericFloat()
+      elif t == rctString: return self.GenericString()
+      elif t == rctTime:   return self.Time()
       else: return None
 
     ## Return the most appropriate valid value as a Python object.
@@ -1112,7 +1108,6 @@ class CResource /* final */ {
     /// @}
 
 
-
     // ***** For drivers *****
 
     /// @name (Drv) Registration and life cycle management of local resources ...
@@ -1168,12 +1163,9 @@ class CResource /* final */ {
     /// reported one immediately after the other. Neither a driver nor a subscriber have to worry about duplicates.
     ///
     /// @{
-
-    void ReportValueState (CRcValueState *_valueState);
+    void ReportValueState (const CRcValueState *_valueState);
       ///< @brief Report value and state; if different from previous value/state, notify all subscribers.
       /// If '_valueState->Type () == rctNone', the new state is reported with the old value.
-    void ReportValue (URcValue _value, ERcState _state = rcsValid);
-      ///< @brief Report value and optionaly state (see 'ReportValueState')
     void ReportValue (bool _value, ERcState _state = rcsValid);
     void ReportValue (int _value, ERcState _state = rcsValid);
     void ReportValue (float _value, ERcState _state = rcsValid);
@@ -1184,9 +1176,25 @@ class CResource /* final */ {
       ///< @brief For triggers, this method must be called.
     void ReportState (ERcState _state) { CRcValueState vs; vs.SetState (_state); ReportValueState (&vs); }
       ///< @brief Report state change only, value remains unmodified
-    void ReportValue (CRcValueState *vs, ERcState _state = rcsValid) { ReportValue (vs->UValue (), _state); }
+    void ReportValue (const CRcValueState *vs, ERcState _state = rcsValid) { CRcValueState _vs(vs); _vs.state = _state; ReportValueState (&_vs); }
       ///< @brief Report value of the 'vs' object, but with the state given here.
       /// **Note:** Do not confuse with ReportValueState()!
+    /// @}
+
+    /// @name (Drv) Misc. Helpers ...
+    ///
+    /// @{
+    void RedriveValue (bool force = true) { EvaluateRequests (force); }
+      ///< @brief Drive the currently requested value again.
+      ///
+      /// This re-evaluates the currently pending requests and calls CRcDriver::DriveValue() again.
+      /// This is useful if the driver was unable to properly handle the last call to DriveValue()
+      /// or for some other reason needs to catch up with the currently driven value.
+      ///
+      /// If 'force == false', the driver's DriveValue() is only called if the value to drive is
+      /// actually different from the current value.
+      ///
+      /// This method must not be called from inside CRcDriver::DriveValue().
     /// @}
 
 
@@ -1304,7 +1312,7 @@ class CResource /* final */ {
     static bool DoDelRequest (CRcRequest **pList, const char *reqGid, TTicks t1);
 
     CRcRequest *GetWinningRequest (TTicks t);
-    void EvaluateRequests ();     // checks and processes all pending requests
+    void EvaluateRequests (bool force = false);    // check and process all pending requests
 
     // Drivers ...
     //   The '...AL' method variants assume that the resource has already been locked by the caller.
@@ -1314,14 +1322,14 @@ class CResource /* final */ {
       // Report that the network connection to the server was lost (like 'ReportUnknown' but
       // with different time stamp behaviour; see above).
 
-    void ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStamp = 0);
-    void ReportValueAL (URcValue _value, ERcState _state = rcsValid);
+    void ReportValueStateAL (const CRcValueState *_valueState, TTicks _timeStamp = 0);
     void ReportUnknownAL () { CRcValueState vs (Type ()); ReportValueStateAL (&vs); }
     void ReportTriggerAL () { ReportValueStateAL (NULL); }
 
     // Driving values to the real device...
-    void DriveValue (CRcValueState *vs);
+    void DriveValue (CRcValueState *vs, bool force);
       // Propagate a new requested value to the driver (to make that happen in the real device).
+      // 'force == true': Call the driver function in any case, not only on a true VS change
 
     // Helpers...
     void Lock () { mutex.Lock (); }
@@ -1599,14 +1607,15 @@ class CRcEventProcessor {
       /// synchronisation measures by calling these from his main thread.
       ///
     void Interrupt ();    ///< @brief Request a running WaitEvent() to stop now.
-    void FlushEvents ();  ///< @brief Remove all presently queued events.
+    void FlushEvents ();  ///< @brief Remove all presently queued events;
+                          ///< also waits until a concurrently running OnEvent() invocation returns.
     /// @}
 
     /// @name Event callbacks (asynchronous) ...
     /// Event callbacks are called asynchronously immediately on each invocation 'PutEvent'.
     ///
     /// Unlike the PollEvent() / WaitEvent() mechanism, the callback may be called from any thread, and the user is responsible
-    /// for any necessary synchronisation with other threads. If and only if the callback returns 'true', the event will be
+    /// for any necessary synchronisation with other threads. If the callback returns 'false', the event will be
     /// enqueued for later 'PollEvent'/'WaitEvent' calls. This way, it is possible to do either all or just part
     /// of the work in the callback (e.g. wake up the polling thread). The default implementation just returns 'false',
     /// so that all events are queued up.
@@ -1615,6 +1624,10 @@ class CRcEventProcessor {
     ///
     /// @{
     virtual bool OnEvent (CRcEvent *ev);
+      ///< @brief Handle an event asynchronously (may have been called from any thread)
+      ///
+      /// @param ev is the event
+      /// @return true if the event has been processed completely.
     void SetCbOnEvent (FRcEventFunc *_cbEvent, void *_cbEventData = NULL);
     void ClearCbOnEvent () { SetCbOnEvent (NULL, NULL); }
     /// @}
@@ -2114,7 +2127,8 @@ class CRcRequest {
       ///     (Example: A door opener request is timed for 1 second. If the server's local clock deviates from
       ///     the local one by more than one second, this request may be completely ignored.)
       /// @param skipAttrs allows to selectively skip some attributs from the output. The parameter is a string
-      ///     with the initial characters of the attributes to be skipped.
+      ///     with the initial characters of the attributes to be skipped. The character 'i' suppresses an
+      ///     eventual "(incompatible)" notice.
       ///
     const char *ToStr (bool precise = false, bool tabular = false, TTicks relativeTimeThreshold = 0, const char *skipAttrs = CString::emptyStr);
       ///< @brief (TTS) Return a string in the format accepted by SetFromStr().
@@ -2380,17 +2394,19 @@ class CRcDriver {
       /// Most drivers will do nothing then (e.g. the "signal" driver does so) and keep the previous value active.
       /// Some drivers (e.g. brownies/shades) may switch off their actors now.
       ///
-      /// In all other cases, state of '*vs' is preset with 'rcsValid'.
+      /// In all other cases, the state of '*vs' is preset with @ref rcsValid.
       ///
       /// It is legal to modify '*vs' to reflect a new state or even a value different from the driven one.
       /// The method shall change it to an appropriate state ('rcsUnknown' or 'rcsBusy') as adequate.
-      /// If the new value is not known yet, the state should be set to 'rcsBusy'
-      /// now and a 'CRcResource::Report...()' method called later with a valid value.
+      /// If the new value is not known yet, the state should be set to 'rcsBusy' by calling
+      /// @ref CRcValueState::SetToReportBusyOldVal() now and a 'CRcResource::Report...()' method
+      /// should be called later with a valid value and state @ref rcsValid.
       ///
-      /// If the state is set to 'rcsBusy', the busy state will be reported with the new value by default (as stored in '*vs').
-      /// To report 'rcsBusy' with the old value instead, call @ref CRcValueState::SetToReportBusyOldVal() on '*vs'.
+      /// To report another (e.g. the new) value with the @ref rcsBusy state now,  the state may be set to @ref rcsBusy'
+      /// the value be set as appropriate or left as it is, in which case the driven value is reported.
+      /// To report @ref rcsBusy with the old value instead (the normal case), call @ref CRcValueState::SetToReportBusyOldVal() on '*vs'.
       ///
-      /// To report report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs'.
+      /// To report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs'.
       ///
       /// It is not allowed to call any method of the '*rc' object (e.g. 'Report' methods) from here, since the
       /// resource may be locked.
@@ -2697,9 +2713,15 @@ void RcDone ();
 /// main program does not maintain the timers otherwise (see section @ref common_timers in file @ref common/base.H).
 /// In other words: These functions may be used if there is no main event loop yet.
 /// @{
-void RcIterate ();  ///< @brief Perform pending actions, call TimerIterate() and return.
-void RcRun ();      ///< @brief Run 'RcStart', then RcIterate() in a main event loop until RcStop() is called.
-void RcStop ();     ///< @brief Stop a loop started by RcRun().
+void RcIterate ();
+  ///< @brief Perform pending actions, call TimerIterate() and return.
+int RcRun (bool catchSignals = true);
+  ///< @brief Run 'RcStart', then RcIterate() in a main event loop until RcStop() is called.
+  ///  @param catchSignals controls whether the signals SIGTERM ("exit nicely", default of the kill(1) command)
+  ///    and SIGINT (Ctrl-C) are caught temporarly and lead to an immediate return of this function.
+  ///  @return the signal number if the function has been stopped by a caught signal, else 0.
+void RcStop ();
+  ///< @brief Stop a loop started by RcRun().
 /// @}
 
 

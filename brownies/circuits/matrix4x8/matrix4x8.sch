@@ -5,7 +5,7 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
-Title "Matrix Card South"
+Title "Matrix Card 4x8"
 Date "2019-07-14"
 Rev ""
 Comp "Gundolf Kiefer"

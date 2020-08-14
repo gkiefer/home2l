@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -83,9 +83,6 @@ Collaboration diagram for Values, Types and States:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">union &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="unionURcValue.html">URcValue</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Union for an untyped value.  <a href="unionURcValue.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html">CRcValueState</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typed value tagged with a state and a time stamp.  <a href="classCRcValueState.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -174,32 +171,6 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga301a93c6255e3502d078910c220b26de">RcTypeGetEnumIdx</a> (<a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> t, const char *value, bool warn=true)</td></tr>
 <tr class="memdesc:ga301a93c6255e3502d078910c220b26de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the index of some value for an enumeration type. If the 'value' is out of range, -1 is returned and, if 'warn == true', a warning is logged. <br /></td></tr>
 <tr class="separator:ga301a93c6255e3502d078910c220b26de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
-Value ('URcValue') construction and evaluation ...</h2></td></tr>
-<tr class="memitem:ga51b71c6888270b59f745fd86238126ab"><td class="memItemLeft" align="right" valign="top"><a id="ga51b71c6888270b59f745fd86238126ab"></a>
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga51b71c6888270b59f745fd86238126ab">URcValueCleared</a> ()</td></tr>
-<tr class="memdesc:ga51b71c6888270b59f745fd86238126ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get cleared value (0 / 0.0 / false) <br /></td></tr>
-<tr class="separator:ga51b71c6888270b59f745fd86238126ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7292938c79c8ca1ee87faa85a2592071"><td class="memItemLeft" align="right" valign="top"><a id="ga7292938c79c8ca1ee87faa85a2592071"></a>
-static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga7292938c79c8ca1ee87faa85a2592071">URcValueClear</a> (<a class="el" href="unionURcValue.html">URcValue</a> *val)</td></tr>
-<tr class="memdesc:ga7292938c79c8ca1ee87faa85a2592071"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear value (0 / 0.0 / false) <br /></td></tr>
-<tr class="separator:ga7292938c79c8ca1ee87faa85a2592071"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7d345a3078881422954a950aac823527"><td class="memItemLeft" align="right" valign="top"><a id="ga7d345a3078881422954a950aac823527"></a>
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (bool v)</td></tr>
-<tr class="separator:ga7d345a3078881422954a950aac823527"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga24ab59580df4aa43733a32c1d7f93796"><td class="memItemLeft" align="right" valign="top"><a id="ga24ab59580df4aa43733a32c1d7f93796"></a>
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (int v)</td></tr>
-<tr class="separator:ga24ab59580df4aa43733a32c1d7f93796"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gafec555734f17d38dcbee9b2cb6790cf9"><td class="memItemLeft" align="right" valign="top"><a id="gafec555734f17d38dcbee9b2cb6790cf9"></a>
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (float v)</td></tr>
-<tr class="separator:gafec555734f17d38dcbee9b2cb6790cf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7aee4c41289a4797a3b821ac900ee902"><td class="memItemLeft" align="right" valign="top"><a id="ga7aee4c41289a4797a3b821ac900ee902"></a>
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (const char *v)</td></tr>
-<tr class="separator:ga7aee4c41289a4797a3b821ac900ee902"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadad1e7d1d5f4881928f88bf32beafb2c"><td class="memItemLeft" align="right" valign="top"><a id="gadad1e7d1d5f4881928f88bf32beafb2c"></a>
-static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>URcValueOf</b> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> v)</td></tr>
-<tr class="separator:gadad1e7d1d5f4881928f88bf32beafb2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="gab4a0b86af465f13ff92a1c70107ecdda"></a>
@@ -254,7 +225,7 @@ static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class=
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00257">257</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00260">260</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -281,7 +252,7 @@ static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class=
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00362">362</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00367">367</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -308,7 +279,7 @@ static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class=
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00371">371</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00376">376</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -333,7 +304,7 @@ static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class=
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00380">380</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00385">385</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -361,7 +332,7 @@ static <a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class=
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00433">433</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00428">428</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>

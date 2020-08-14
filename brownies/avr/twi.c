@@ -55,9 +55,9 @@
   // Code to be executed by master while waiting if SCL is kept down by the slave.
   // * The fastest solution is to keep it empty. However, the main loop may hang
   //   for an indefinite time.
-  // * 'TwiIterate()' is required if this same device is connected to the same bus
+  // * 'TwiSlIterate()' is required if this same device is connected to the same bus
   //   as both a master and slave (e.g. for loopback tests).
-  // * The most proper (but perhaps not performant) solution is to have the main
+  // * The most proper (but perhaps not performant) solution would be to have the main
   //   pogramm provide an "IterateAll()" function, which is then called here.
 
 #define P_TWI_MA_TIME_BASE 2.0

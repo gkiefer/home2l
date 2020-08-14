@@ -380,7 +380,7 @@ static void CmdSetRequest (int argc, const char **argv) {
     rc->WaitForRegistration ();
     //~ INFOF (("### reqDef = '%s'", reqDef.Get ()));
     req = new CRcRequest ();
-    req->SetPriority (rcPrioAdmin);
+    req->SetPriority (rcPrioShell);
     req->SetFromStr (reqDef);
     rc->SetRequest (req);
     rc->PrintInfo ();
@@ -535,7 +535,7 @@ TCmd commandArr[] = {
             "  <value> : Requested value\n"
             "  <ropts> : Additional request arguments as supported by 'CRcRequest::SetFromStr ()':\n"
             "             #<id>   : Request ID [default: 'shell']\n"
-            "             *<prio> : Priority (0..9) [Default: 8 (rcPrioAdmin)]\n"
+            "             *<prio> : Priority (0..9) [Default: 7 (rcPrioShell)]\n"
             "             +<time> : Start time\n"
             "             -<time> : End time\n"
             "             ~<hyst> : Hysteresis in milliseconds\n"
