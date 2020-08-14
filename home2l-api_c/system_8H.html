@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -209,18 +209,18 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#gadbd1da69628c0a7b1242af6d0d8db268">SystemWakeup</a> ()</td></tr>
 <tr class="memdesc:gadbd1da69628c0a7b1242af6d0d8db268"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unspecific wakeup (redirects to <a class="el" href="group__wallclock__system.html#ga36d346bbb0df65111b8c36613d27a945" title="Wakeup into active mode (e.g. due to user interaction); Reset the standby &amp; off timers. ">SystemWakeupActive()</a> ). <br /></td></tr>
 <tr class="separator:gadbd1da69628c0a7b1242af6d0d8db268"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4edb9929218943a017a3e1cd0362bf5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#ga4edb9929218943a017a3e1cd0362bf5d">SystemActiveLock</a> (const char *reqName)</td></tr>
-<tr class="memdesc:ga4edb9929218943a017a3e1cd0362bf5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lock the device in active mode, e.g. during a phone call.  <a href="group__wallclock__system.html#ga4edb9929218943a017a3e1cd0362bf5d">More...</a><br /></td></tr>
-<tr class="separator:ga4edb9929218943a017a3e1cd0362bf5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga6e2697efd54e43597880eeb4b4825e60"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#ga6e2697efd54e43597880eeb4b4825e60">SystemActiveUnlock</a> (const char *reqName)</td></tr>
-<tr class="memdesc:ga6e2697efd54e43597880eeb4b4825e60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified active lock.  <a href="group__wallclock__system.html#ga6e2697efd54e43597880eeb4b4825e60">More...</a><br /></td></tr>
-<tr class="separator:ga6e2697efd54e43597880eeb4b4825e60"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gab67ee95868ee9f6e6b6c2cf158e525c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#gab67ee95868ee9f6e6b6c2cf158e525c5">SystemStandbyLock</a> (const char *reqName)</td></tr>
-<tr class="memdesc:gab67ee95868ee9f6e6b6c2cf158e525c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lock the device in standby mode to prevent the screen to be switched off completely, e.g. during alarm clock wakeup.  <a href="group__wallclock__system.html#gab67ee95868ee9f6e6b6c2cf158e525c5">More...</a><br /></td></tr>
-<tr class="separator:gab67ee95868ee9f6e6b6c2cf158e525c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga220423e734ecb826309ba709539ce9b7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#ga220423e734ecb826309ba709539ce9b7">SystemStandbyUnlock</a> (const char *reqName)</td></tr>
-<tr class="memdesc:ga220423e734ecb826309ba709539ce9b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified standby lock.  <a href="group__wallclock__system.html#ga220423e734ecb826309ba709539ce9b7">More...</a><br /></td></tr>
-<tr class="separator:ga220423e734ecb826309ba709539ce9b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga945dface862c7cdd8460f5cc7fcfb319"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#ga945dface862c7cdd8460f5cc7fcfb319">SystemActiveLock</a> (const char *reqName, bool withWakeup=true)</td></tr>
+<tr class="memdesc:ga945dface862c7cdd8460f5cc7fcfb319"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lock the device in active mode, e.g. during a phone call.  <a href="group__wallclock__system.html#ga945dface862c7cdd8460f5cc7fcfb319">More...</a><br /></td></tr>
+<tr class="separator:ga945dface862c7cdd8460f5cc7fcfb319"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac427cdef8263b473b4b206b026a10b61"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#gac427cdef8263b473b4b206b026a10b61">SystemActiveUnlock</a> (const char *reqName, bool withWakeup=true)</td></tr>
+<tr class="memdesc:gac427cdef8263b473b4b206b026a10b61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified active lock.  <a href="group__wallclock__system.html#gac427cdef8263b473b4b206b026a10b61">More...</a><br /></td></tr>
+<tr class="separator:gac427cdef8263b473b4b206b026a10b61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga95750ff403ceb594a963223365c483dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#ga95750ff403ceb594a963223365c483dd">SystemStandbyLock</a> (const char *reqName, bool withWakeup=true)</td></tr>
+<tr class="memdesc:ga95750ff403ceb594a963223365c483dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lock the device in standby mode to prevent the screen to be switched off completely, e.g. during alarm clock wakeup.  <a href="group__wallclock__system.html#ga95750ff403ceb594a963223365c483dd">More...</a><br /></td></tr>
+<tr class="separator:ga95750ff403ceb594a963223365c483dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8f18e07c29435d6d20216a2c3c94b516"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__system.html#ga8f18e07c29435d6d20216a2c3c94b516">SystemStandbyUnlock</a> (const char *reqName, bool withWakeup=true)</td></tr>
+<tr class="memdesc:ga8f18e07c29435d6d20216a2c3c94b516"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified standby lock.  <a href="group__wallclock__system.html#ga8f18e07c29435d6d20216a2c3c94b516">More...</a><br /></td></tr>
+<tr class="separator:ga8f18e07c29435d6d20216a2c3c94b516"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->

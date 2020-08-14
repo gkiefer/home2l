@@ -56,15 +56,15 @@ enum EGadgetType {
   gtNone = 0,
 
   /// @name Windows, shades and gates...
-  /// {
+  /// @{
   gtWindow,       ///< window with a state of @ref ERctWindowState.
   gtShades,       ///< shades (type @ref rctPercent)
   gtRoofWindow,   ///< roof window, optionally including shades
   gtGarage,       ///< garage door (open/close)
-  /// }
+  /// @}
 
   /// @name Icon-like ...
-  /// {
+  /// @{
   gtLock,         ///< door lock
   gtMotion,       ///< motion status
   gtLight,        ///< light
@@ -74,18 +74,18 @@ enum EGadgetType {
   gtWlan,         ///< Wifi access point
   gtBluetooth,    ///< Bluetooth
   gtService,      ///< some generic service
-  /// }
+  /// @}
 
   /// @name Text...
-  /// {
-  gtTemp,
-  /// }
+  /// @{
+  gtTemp,         ///< temperature value
+  /// @}
 
   /// @name Meta ...
-  /// {
+  /// @{
   gtZoom,
   gtEND
-  /// }
+  /// @}
 };
 
 
@@ -143,7 +143,7 @@ class CWidgetFloorplan: public CFlatButton, public CTimer {
 
     // Variables ...
     class CFloorplan *floorplan;
-    TTicksMonotonic tInterval, tAlert;
+    TTicksMonotonic tInterval;
 
     SDL_Surface *mapSurf;
 };
@@ -161,6 +161,12 @@ void FloorplanDone ();
 void FloorplanActivate ();
   ///< @brief Activate the floorplan screen.
 
+void FloorplanCheckAlert (CScreen *returnScreen = NULL);
+  ///< @brief Check for an alert and if so activate the floorplan screen.
+  /// @param returnScreen specifies the screen to return to as soon as the alert
+  ///   is over. If NULL, the floorplan screen will remain activated when the
+  ///   alert is over.
+
 class CFloorplan *FloorplanGetMain ();
   ///< @brief Get a reference to the main floorplan (for CWidgetFloorplan::Setup() ).
 
@@ -169,7 +175,7 @@ void FloorplanUnsubscribeAll ();
   ///
   /// On activation of the floorplan screen (FloorplanActivate () ) or some floorplan
   /// widget (CWidgetFloorplan), the resource subscriptions are updated to
-  /// fit the screen or widget. On deactivation, nothing is changed.
+  /// fit the screen or widget. On deactivation of those, nothing is changed.
   /// This function explicitly unsubscribes all resources to save power and CPU time.
 
 

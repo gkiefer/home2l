@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -72,11 +72,11 @@ $(function() {
 <p>This class allows to queue and process events in three different ways:</p>
 <ol type="1">
 <li>Synchronously by calling <a class="el" href="classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7" title="Check for an event (non-blocking) and return it at &#39;*ev&#39;. ">PollEvent()</a> or <a class="el" href="classCRcEventProcessor.html#a42008924cc1b0add1ba0fb7deb91189d" title="Wait for an event and return it at &#39;*ev&#39;. ">WaitEvent()</a>.</li>
-<li>Asynchronously by overloading the OnEvent() method.</li>
+<li>Asynchronously by overloading the <a class="el" href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2" title="Handle an event asynchronously (may have been called from any thread) ">OnEvent()</a> method.</li>
 <li>Asynchronously by providing a callback function. </li>
 </ol>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01565">1565</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01573">1573</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -111,17 +111,17 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:af8f0dc10d3d8548324baba4240552dec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a948f9ee0f2f3984d9a13a06f3ce18924"><td class="memItemLeft" align="right" valign="top"><a id="a948f9ee0f2f3984d9a13a06f3ce18924"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcEventProcessor.html#a948f9ee0f2f3984d9a13a06f3ce18924">FlushEvents</a> ()</td></tr>
-<tr class="memdesc:a948f9ee0f2f3984d9a13a06f3ce18924"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all presently queued events. <br /></td></tr>
+<tr class="memdesc:a948f9ee0f2f3984d9a13a06f3ce18924"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all presently queued events; also waits until a concurrently running <a class="el" href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2" title="Handle an event asynchronously (may have been called from any thread) ">OnEvent()</a> invocation returns. <br /></td></tr>
 <tr class="separator:a948f9ee0f2f3984d9a13a06f3ce18924"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Event callbacks (asynchronous) ...</h2></td></tr>
 <tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrpb1c71abb5c3cbe7349118121c71d6677"></a>Event callbacks are called asynchronously immediately on each invocation 'PutEvent'.</p>
-<p>Unlike the <a class="el" href="classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7" title="Check for an event (non-blocking) and return it at &#39;*ev&#39;. ">PollEvent()</a> / <a class="el" href="classCRcEventProcessor.html#a42008924cc1b0add1ba0fb7deb91189d" title="Wait for an event and return it at &#39;*ev&#39;. ">WaitEvent()</a> mechanism, the callback may be called from any thread, and the user is responsible for any necessary synchronisation with other threads. If and only if the callback returns 'true', the event will be enqueued for later 'PollEvent'/'WaitEvent' calls. This way, it is possible to do either all or just part of the work in the callback (e.g. wake up the polling thread). The default implementation just returns 'false', so that all events are queued up.</p>
+<p>Unlike the <a class="el" href="classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7" title="Check for an event (non-blocking) and return it at &#39;*ev&#39;. ">PollEvent()</a> / <a class="el" href="classCRcEventProcessor.html#a42008924cc1b0add1ba0fb7deb91189d" title="Wait for an event and return it at &#39;*ev&#39;. ">WaitEvent()</a> mechanism, the callback may be called from any thread, and the user is responsible for any necessary synchronisation with other threads. If the callback returns 'false', the event will be enqueued for later 'PollEvent'/'WaitEvent' calls. This way, it is possible to do either all or just part of the work in the callback (e.g. wake up the polling thread). The default implementation just returns 'false', so that all events are queued up.</p>
 <p>It is not allowed to call any <a class="el" href="classCRcEventProcessor.html" title="Event processor. ">CRcEventProcessor()</a> methods from the callback! </p>
 </td></tr>
-<tr class="memitem:ac425fb5b6a5ea3d7c33788ea66e585d2"><td class="memItemLeft" align="right" valign="top"><a id="ac425fb5b6a5ea3d7c33788ea66e585d2"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>OnEvent</b> (<a class="el" href="classCRcEvent.html">CRcEvent</a> *ev)</td></tr>
+<tr class="memitem:ac425fb5b6a5ea3d7c33788ea66e585d2"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2">OnEvent</a> (<a class="el" href="classCRcEvent.html">CRcEvent</a> *ev)</td></tr>
+<tr class="memdesc:ac425fb5b6a5ea3d7c33788ea66e585d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle an event asynchronously (may have been called from any thread)  <a href="#ac425fb5b6a5ea3d7c33788ea66e585d2">More...</a><br /></td></tr>
 <tr class="separator:ac425fb5b6a5ea3d7c33788ea66e585d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76d7368bfd94f8ea43eaf20d29018b75"><td class="memItemLeft" align="right" valign="top"><a id="a76d7368bfd94f8ea43eaf20d29018b75"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetCbOnEvent</b> (<a class="el" href="group__resources__subscribe.html#gaa505e7c9b11754d46294afabc64d5bf4">FRcEventFunc</a> *_cbEvent, void *_cbEventData=NULL)</td></tr>
@@ -214,6 +214,41 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <p>A return value of 'true' indicates that an event was waiting and (if 'ev != NULL') is now removed from the internal queue. If 'ev != NULL', this event is returned. Otherwise, the queue is left unchanged.</p>
 <p>If 'maxTime != NULL', wait for at most '*maxTime' milliseconds and decrement '*maxTime' by the time actually waited. This way, the method can be called multiple times while approximately limiting the total waiting time (Note: The total time can still be longer due to preemption and additional execution times).</p>
 <p>Can be called from any thread: the user does not need to take synchronisation measures by calling these from his main thread. </p>
+
+</div>
+</div>
+<a id="ac425fb5b6a5ea3d7c33788ea66e585d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac425fb5b6a5ea3d7c33788ea66e585d2">&#9670;&nbsp;</a></span>OnEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool CRcEventProcessor::OnEvent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classCRcEvent.html">CRcEvent</a> *&#160;</td>
+          <td class="paramname"><em>ev</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Handle an event asynchronously (may have been called from any thread) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ev</td><td>is the event </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the event has been processed completely. </dd></dl>
 
 </div>
 </div>

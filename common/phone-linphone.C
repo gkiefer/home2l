@@ -720,15 +720,21 @@ void CPhone::ReportInfo (const char *fmt, ...) {
 
 static void CbOrtpLogHandler (const char *domain, OrtpLogLevel lev, const char *fmt, va_list args) {
   char buf[200];
+  int level;
 
-  vsnprintf (buf, 199, fmt, args);
-  LogPara ("DEBUG", "[linphone]", lev);
-  //~ LogPara ((lev & ORTP_DEBUG) ? "DEBUG" :
-            //~ (lev & ORTP_MESSAGE) ? "INFO" :
-            //~ (lev & ORTP_WARNING) ? "WARNING" :
-            //~ "ERROR",
-            //~ "[linphone]", lev);
-  LogPrintf (buf);
+  level = (lev & ORTP_DEBUG) ? 3 :
+          (lev & ORTP_MESSAGE) ? 2 :
+          1;  // 'ORTP_WARNING' and worse
+  if (envDebug >= level) {
+    vsnprintf (buf, 199, fmt, args);
+    LogPara ("DEBUG", "[linphone]", lev);
+    //~ LogPara ((lev & ORTP_DEBUG) ? "DEBUG" :
+              //~ (lev & ORTP_MESSAGE) ? "INFO" :
+              //~ (lev & ORTP_WARNING) ? "WARNING" :
+              //~ "ERROR",
+              //~ "[linphone]", lev);
+    LogPrintf (buf);
+  }
 }
 
 

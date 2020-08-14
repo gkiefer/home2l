@@ -10,7 +10,7 @@ var searchData=
   ['timergetdelay',['TimerGetDelay',['../group__common__timers.html#gaf5dfe8e17766ad61574db9e0643be6ae',1,'base.H']]],
   ['timeriterate',['TimerIterate',['../group__common__timers.html#ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff',1,'base.H']]],
   ['timernow',['TimerNow',['../group__brownies__firmware.html#ga4f5acc67ca7e44b717bb69c295056ac9',1,'core.h']]],
-  ['timerrun',['TimerRun',['../group__common__timers.html#gaeec8353aae05aa37f6d0d94383a7394f',1,'base.H']]],
+  ['timerrun',['TimerRun',['../group__common__timers.html#ga36892df2fc0f1587dce0eda3c1478f81',1,'base.H']]],
   ['timerstart',['TimerStart',['../group__common__timers.html#ga8aa5740e41ec2bf235a1d237bc2be895',1,'base.H']]],
   ['timerstop',['TimerStop',['../group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0',1,'base.H']]],
   ['toiso8859',['ToIso8859',['../group__common__strings.html#ga3a674fa6212e4b0e461aaca4e045bf18',1,'base.H']]],

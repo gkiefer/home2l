@@ -123,7 +123,7 @@ class CWidget {
     /// @{
     void SetSurface (SDL_Surface *_surface) { surface = _surface; ChangedSurface (); }
       ///< @brief Set the static surface to display.
-      /// The caller stays owner of surface, must not delete it afterwards.
+      /// The caller stays owner of surface, must not delete it as long as it is set here.
       /// The surface dimensions must match 'area'.
     virtual SDL_Surface *GetSurface () { return surface; }
       ///< @brief Get an up-to-date surface or 'NULL' if none is available.

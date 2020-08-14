@@ -20,8 +20,5 @@ var searchData=
   ['unregister',['Unregister',['../classCResource.html#a67db01924d81f4f0c91720e16fc13b2c',1,'CResource::Unregister()'],['../classCRcSubscriber.html#a398920617c0faa140f03e69c1f571105',1,'CRcSubscriber::Unregister()'],['../classCRcDriver.html#a1872bf6af29a539334e0b8bf765d8663',1,'CRcDriver::Unregister()']]],
   ['unsubscribe',['Unsubscribe',['../classCResource.html#a20806af055ab6c2f0abefca4b001f470',1,'CResource']]],
   ['updatefromdevice',['UpdateFromDevice',['../classCBrownie.html#a4b65532a5d1f0748c56accca3afb8011',1,'CBrownie']]],
-  ['urcvalue',['URcValue',['../unionURcValue.html',1,'']]],
-  ['urcvalueclear',['URcValueClear',['../group__resources__values.html#ga7292938c79c8ca1ee87faa85a2592071',1,'resources.H']]],
-  ['urcvaluecleared',['URcValueCleared',['../group__resources__values.html#ga51b71c6888270b59f745fd86238126ab',1,'resources.H']]],
   ['uri',['Uri',['../classCResource.html#a8adf3d20776877e1fec56cde058dd9a6',1,'CResource']]]
 ];

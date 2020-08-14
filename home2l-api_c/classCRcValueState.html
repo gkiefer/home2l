@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -73,7 +73,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Typed value tagged with a state and a time stamp. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00464">464</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00459">459</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -93,29 +93,30 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a6c43ec43c7fb2869666d0fac7296a349"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a6c43ec43c7fb2869666d0fac7296a349">Clear</a> (<a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a>)</td></tr>
 <tr class="memdesc:a6c43ec43c7fb2869666d0fac7296a349"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear to default value:  <a href="#a6c43ec43c7fb2869666d0fac7296a349">More...</a><br /></td></tr>
 <tr class="separator:a6c43ec43c7fb2869666d0fac7296a349"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1169a6dbbd5a1933779922df4784a2ae"><td class="memItemLeft" align="right" valign="top"><a id="a1169a6dbbd5a1933779922df4784a2ae"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (<a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, <a class="el" href="unionURcValue.html">URcValue</a> _val, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
-<tr class="separator:a1169a6dbbd5a1933779922df4784a2ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9a8593fb3b015de8d6ffc429216e273"><td class="memItemLeft" align="right" valign="top"><a id="aa9a8593fb3b015de8d6ffc429216e273"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (<a class="el" href="unionURcValue.html">URcValue</a> _val, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
-<tr class="separator:aa9a8593fb3b015de8d6ffc429216e273"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80fcb6b500f2baf221b5319ca93be16e"><td class="memItemLeft" align="right" valign="top"><a id="a80fcb6b500f2baf221b5319ca93be16e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Set</b> (const <a class="el" href="classCRcValueState.html">CRcValueState</a> *vs2)</td></tr>
+<tr class="separator:a80fcb6b500f2baf221b5319ca93be16e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Setting special values for @ref CRcDriver::DriveValue() methods ...</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>These methods may be used by drivers to steer the implicit reporting done after a driver's DriveValue() method has been called. <b>Note:</b> Some of these values (particularly the combination of no type and a state != rcsUnknown) are only allowed in this context and usually forbidden. </p>
 </div></td></tr>
+<tr class="memitem:a912f23a1d1b22c1b59eb413d00c05373"><td class="memItemLeft" align="right" valign="top"><a id="a912f23a1d1b22c1b59eb413d00c05373"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a912f23a1d1b22c1b59eb413d00c05373">SetToReportBusy</a> ()</td></tr>
+<tr class="memdesc:a912f23a1d1b22c1b59eb413d00c05373"><td class="mdescLeft">&#160;</td><td class="mdescRight">Modify object to auto-report a busy state. <br /></td></tr>
+<tr class="separator:a912f23a1d1b22c1b59eb413d00c05373"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa5d0ed8d663bd55e1a63ba89ddc277aa"><td class="memItemLeft" align="right" valign="top"><a id="aa5d0ed8d663bd55e1a63ba89ddc277aa"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#aa5d0ed8d663bd55e1a63ba89ddc277aa">SetToReportBusyOldVal</a> ()</td></tr>
 <tr class="memdesc:aa5d0ed8d663bd55e1a63ba89ddc277aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Modify object to auto-report a busy state with no value change. <b>Note:</b> Only for use in <a class="el" href="classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2">CRcDriver::DriveValue()</a>! Normally, the combination of no type and a state != rcsUnknown are forbidden. <br /></td></tr>
 <tr class="separator:aa5d0ed8d663bd55e1a63ba89ddc277aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58919497e2dca90f5f6fd83367108871"><td class="memItemLeft" align="right" valign="top"><a id="a58919497e2dca90f5f6fd83367108871"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a58919497e2dca90f5f6fd83367108871">SetToReportBusyNewVal</a> ()</td></tr>
-<tr class="memdesc:a58919497e2dca90f5f6fd83367108871"><td class="mdescLeft">&#160;</td><td class="mdescRight">Modify object to auto-report a busy state with the new (prospective) value. <br /></td></tr>
+<tr class="memdesc:a58919497e2dca90f5f6fd83367108871"><td class="mdescLeft">&#160;</td><td class="mdescRight">Modify object to auto-report a busy state together with a value. This is to be used in <a class="el" href="classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2">CRcDriver::DriveValue()</a>. If the value is not set explicitly, the current value to drive will be reported back. <br /></td></tr>
 <tr class="separator:a58919497e2dca90f5f6fd83367108871"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1643547d6e810bca096473fe8dbe4056"><td class="memItemLeft" align="right" valign="top"><a id="a1643547d6e810bca096473fe8dbe4056"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a1643547d6e810bca096473fe8dbe4056">SetToReportNothing</a> ()</td></tr>
 <tr class="memdesc:a1643547d6e810bca096473fe8dbe4056"><td class="mdescLeft">&#160;</td><td class="mdescRight">Modify object to not auto-report anything. <b>Note:</b> Only for use in <a class="el" href="classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2">CRcDriver::DriveValue()</a>! Normally, the combination of no type and a state != rcsUnknown are forbidden. <br /></td></tr>
 <tr class="separator:a1643547d6e810bca096473fe8dbe4056"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Set value and state (multi-type capable setters) ...</div></td></tr>
-<tr><td colspan="2"><div class="groupText"><p>Multi-type capable setters for setting values. The name indicates the input type. As the target type ('_type'), any type is allowed, and conversion is done as good as possible. For example, floating point values may be rounded to integers, or numbers are converted to 'true' if and only if they are != 0. With the exception of <a class="el" href="classCRcValueState.html#ab994e09c538dfc1ef2c285042b43be3d" title="Set from string. On syntax error, a warning is emitted, the default value (see &#39;Clear&#39;) is set...">SetGenericString()</a>, this never fails. </p>
+<tr><td colspan="2"><div class="groupText"><p>Multi-type capable setters for setting values. The name indicates the input type. As the target type ('_type'), any type is allowed, and conversion is done as good as possible. For example, floating point values may be rounded to integers, or numbers are converted to 'true' if and only if they are != 0. With the exception of <a class="el" href="classCRcValueState.html#ab994e09c538dfc1ef2c285042b43be3d" title="Set from string. On syntax error, a warning is emitted, the state is set to rcsUnknown, and &#39;false&#39; is returned. ">SetGenericString()</a>, this never fails. </p>
 </div></td></tr>
 <tr class="memitem:a6005d1f37787f1881e528948629eb3ca"><td class="memItemLeft" align="right" valign="top"><a id="a6005d1f37787f1881e528948629eb3ca"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a6005d1f37787f1881e528948629eb3ca">SetGenericInt</a> (int _val, <a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
@@ -127,7 +128,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:a8b539e1f14e6e0103c11141e93c5dec5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab994e09c538dfc1ef2c285042b43be3d"><td class="memItemLeft" align="right" valign="top"><a id="ab994e09c538dfc1ef2c285042b43be3d"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#ab994e09c538dfc1ef2c285042b43be3d">SetGenericString</a> (const char *_val, <a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, <a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> _state=<a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>)</td></tr>
-<tr class="memdesc:ab994e09c538dfc1ef2c285042b43be3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set from string. On syntax error, a warning is emitted, the default value (see 'Clear') is set, and 'false' is returned. <br /></td></tr>
+<tr class="memdesc:ab994e09c538dfc1ef2c285042b43be3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set from string. On syntax error, a warning is emitted, the state is set to <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a>, and 'false' is returned. <br /></td></tr>
 <tr class="separator:ab994e09c538dfc1ef2c285042b43be3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Set value and and state (single-type setters) ...</div></td></tr>
 <tr class="memitem:a468998bd48ecce93d0ae39741867df86"><td class="memItemLeft" align="right" valign="top"><a id="a468998bd48ecce93d0ae39741867df86"></a>
@@ -165,15 +166,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetEnum</b> (<a class
 <p>Use these methods for local/self-defined resources. The strict type checking will help you to discover bugs.</p>
 <p>Int() and Float() tolerate compatible types (trigger, unit, enum). </p>
 </div></td></tr>
-<tr class="memitem:ab48bea0fe7cc6c26f78a63f7cae27e2a"><td class="memItemLeft" align="right" valign="top"><a id="ab48bea0fe7cc6c26f78a63f7cae27e2a"></a>
-<a class="el" href="unionURcValue.html">URcValue</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UValue</b> () const</td></tr>
-<tr class="separator:ab48bea0fe7cc6c26f78a63f7cae27e2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a41ba5e4ef1eb3c22af012de4ad05507b"><td class="memItemLeft" align="right" valign="top"><a id="a41ba5e4ef1eb3c22af012de4ad05507b"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>GenericInt</b> () const</td></tr>
 <tr class="separator:a41ba5e4ef1eb3c22af012de4ad05507b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf0eedb1aa768a057a11a63838f7c003"><td class="memItemLeft" align="right" valign="top"><a id="acf0eedb1aa768a057a11a63838f7c003"></a>
 float&#160;</td><td class="memItemRight" valign="bottom"><b>GenericFloat</b> () const</td></tr>
 <tr class="separator:acf0eedb1aa768a057a11a63838f7c003"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56b453fc6d42b5f65310d11fee8d2bb0"><td class="memItemLeft" align="right" valign="top"><a id="a56b453fc6d42b5f65310d11fee8d2bb0"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>GenericString</b> () const</td></tr>
+<tr class="separator:a56b453fc6d42b5f65310d11fee8d2bb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8de8eec5931f8f88317670f9fbfc5529"><td class="memItemLeft" align="right" valign="top"><a id="a8de8eec5931f8f88317670f9fbfc5529"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>Bool</b> () const</td></tr>
 <tr class="separator:a8de8eec5931f8f88317670f9fbfc5529"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -290,17 +291,14 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a418d4c6ac995aebe00988b139a3fd6fe">IsKnown</a> () const</td></tr>
 <tr class="memdesc:a418d4c6ac995aebe00988b139a3fd6fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">State is either <code>rcsValid</code> or <code>rcsBusy</code>; In other words: the value can be retrieved. <br /></td></tr>
 <tr class="separator:a418d4c6ac995aebe00988b139a3fd6fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a58a81537a77c43d00d6d5d7b6a3b8524"><td class="memItemLeft" align="right" valign="top"><a id="a58a81537a77c43d00d6d5d7b6a3b8524"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a58a81537a77c43d00d6d5d7b6a3b8524">Equals</a> (<a class="el" href="classCRcValueState.html">CRcValueState</a> *val2) const</td></tr>
-<tr class="memdesc:a58a81537a77c43d00d6d5d7b6a3b8524"><td class="mdescLeft">&#160;</td><td class="mdescRight">Strict comparison: state, type and value must match exactly; time stamps are not compared. <br /></td></tr>
-<tr class="separator:a58a81537a77c43d00d6d5d7b6a3b8524"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bc8addcee29bec1e633318b8031daeb"><td class="memItemLeft" align="right" valign="top"><a id="a9bc8addcee29bec1e633318b8031daeb"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>ValueEquals</b> (<a class="el" href="unionURcValue.html">URcValue</a> val2) const</td></tr>
-<tr class="separator:a9bc8addcee29bec1e633318b8031daeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54636351f81e0b6c43c592d187440f62"><td class="memItemLeft" align="right" valign="top"><a id="a54636351f81e0b6c43c592d187440f62"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a54636351f81e0b6c43c592d187440f62">ValueEquals</a> (<a class="el" href="classCRcValueState.html">CRcValueState</a> *val2) const</td></tr>
-<tr class="memdesc:a54636351f81e0b6c43c592d187440f62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Relaxed comparison: type and value must match exactly; state and time stamps are not compared. <br /></td></tr>
-<tr class="separator:a54636351f81e0b6c43c592d187440f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a286f377681808ea51ad872585588e368"><td class="memItemLeft" align="right" valign="top"><a id="a286f377681808ea51ad872585588e368"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a286f377681808ea51ad872585588e368">Equals</a> (const <a class="el" href="classCRcValueState.html">CRcValueState</a> *vs2) const</td></tr>
+<tr class="memdesc:a286f377681808ea51ad872585588e368"><td class="mdescLeft">&#160;</td><td class="mdescRight">Strict comparison: state, type and value must match exactly; time stamps are not compared. <br /></td></tr>
+<tr class="separator:a286f377681808ea51ad872585588e368"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a13e419bd5fd6abce2b44b303ec08ee"><td class="memItemLeft" align="right" valign="top"><a id="a1a13e419bd5fd6abce2b44b303ec08ee"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee">ValueEquals</a> (const <a class="el" href="classCRcValueState.html">CRcValueState</a> *vs2) const</td></tr>
+<tr class="memdesc:a1a13e419bd5fd6abce2b44b303ec08ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Relaxed comparison: type and value must match exactly; state and time stamps are not compared. <br /></td></tr>
+<tr class="separator:a1a13e419bd5fd6abce2b44b303ec08ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Type conversion ...</div></td></tr>
 <tr class="memitem:a801bb1c02f9f793497d79ac359d573a9"><td class="memItemLeft" align="right" valign="top"><a id="a801bb1c02f9f793497d79ac359d573a9"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcValueState.html#a801bb1c02f9f793497d79ac359d573a9">Convert</a> (<a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type)</td></tr>

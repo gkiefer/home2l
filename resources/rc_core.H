@@ -275,9 +275,6 @@ class CRcServer: public CNetRunnable {
     const char *HostId () { return hostId.Get (); }
 
     // Callbacks...
-    void OnAliveTimer ();                   // [T:timer]
-    void OnSubscriberEvent ();
-
     int Fd () { return fd; }                // [T:net]
     int WritePending () { return !sendBuf.IsEmpty (); } // [T:net]
     void OnFdReadable ();                   // [T:net]
@@ -286,15 +283,17 @@ class CRcServer: public CNetRunnable {
     virtual void NetRun (ENetOpcode opcode, void *data);  // [T:net]
 
     // Misc...
-    bool HasSubscribers () { return subscrDict.Entries () > 0; }
+    bool HasSubscribers () { return subscrDict.Entries () > 0; }    // [T:any]
 
     // Info...
-    void GetInfo (CString *ret, int verbosity = 2);
-      // Info on 'this'; verbosity == 0: only server (one line), >= 1: list subscriptions, >= 2: list resources for subscriptions
     static void PrintInfoAll (FILE *f = stdout, int verbosity = 2);    // Info on all servers
+      // verbosity == 0: only server (one line), >= 1: list subscriptions, >= 2: list resources for subscriptions
 
   protected:
     friend class CNetThread;
+
+    void GetInfo (CString *ret, int verbosity = 2);   // [T:any]
+      // Info on 'this'; method is protected because objects may be created or deleted any time by the net thread
 
     // Helpers...
     void Lock () { mutex.Lock (); }
@@ -311,25 +310,25 @@ class CRcServer: public CNetRunnable {
     uint16_t peerPort;
 
     // Dynanamic data (protected by object mutex)...
-    CMutex mutex;
-    CCond cond;                     // general condition variable, signalled on: info received, exec output received
+    CMutex mutex;                   // protects all fields labelled "[T:X]" with X != "net";
+                                    // presently, only for 'GetInfo()' can access these fields, and it will only read
+                                    // => Readers in net thread do not lock.
     CRcServer *next;                // [T:net] for managing all objects in a chained list
 
-    EServerConnectionState state;   // [T:net]
-    CString hostId;                 // [T:net] Host ID as sent in the "hello" message by the peer
-    CString receiveBuf;             // [T:net] received data is processed completely in 'OnFdReadable'
-    CString sendBuf;                // [T:net]
-
-    CDict<CRcSubscriber> subscrDict;// [T:net] Set of agent subscribers managed by this server; Key is the LID == GID.
+    EServerConnectionState state;   // [atomic]
+    CString hostId;                 // [T:w=net,r=any] Host ID as sent in the "hello" message by the peer
+    CDict<CRcSubscriber> subscrDict;// [T:w=net,r=any] Set of agent subscribers managed by this server; Key is the LID == GID.
                                     //         For each subscriber on the client side, one agent subscriber on the server
                                     //         created, which represents the client subscriber and transmits all events to
                                     //         the client.
 
-    CTimer aliveTimer;              // for sending regular "alive" messages
+    CString receiveBuf;             // [T:net] received data is processed completely in 'OnFdReadable'
+    CString sendBuf;                // [T:net]
+
+    CTimer aliveTimer;              // [T:net] for sending regular "alive" messages
 
     // Shell-related data (TBD: untested, potentialy incomplete)...
     CShell *execShell;              // [T:net]
-    CString execBuf;
     CTimer execTimer;               // [T:net] for checking a running shell (each 100ms); TBD: eliminate, make fully event-driven
 };
 

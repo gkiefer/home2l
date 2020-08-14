@@ -444,8 +444,8 @@ def NewDriver (drvName, func, successState = rcsBusy, data = None):
                     the driver necessary, but no errors are allowed to happen.\n\
   \n\
     - 'rcsUnknown' or 'rcsNoReport':\n\
-                    nothing is reported back now; the application should report\n\
-                    something soon and must report a valid and new value later.\n\
+                    nothing is reported back now; the application must report\n\
+                    something soon and should report a valid and new value later.\n\
   \n\
   'data' is an optional reference to user data that will be passed\n\
   unchanged to any 'func' invocations.\n\
@@ -589,7 +589,7 @@ def TicksStr (ticks):
 
 
 def TicksOf (something):
-  """Magic wand to convert anything to an absolute or relative TTicks value as intuitivley\n\
+  """Magic wand to convert anything to an absolute or relative TTicks value as intuitively\n\
   as possible. Whether the returned value is absolute or relative depends on the argument\n\
   passed.\n\
   \n\
@@ -629,7 +629,7 @@ def TicksOf (something):
 
 
 def TicksAbsOf (something):
-  """Magic wand to convert anything to an absolute TTicks value as intuitivley as possible.\n\
+  """Magic wand to convert anything to an absolute TTicks value as intuitively as possible.\n\
   The function is similar to TicksOf(), but it guarantees to return an absolute time.\n\
   \n\
   - Values of type string are interpreted as time specifications for TicksFromString()\n\
@@ -649,7 +649,7 @@ def TicksAbsOf (something):
   - For values of type 'datetime.timedelta', the time relative to now is returned.\n\
   """
   if isinstance (something, str):
-    t = _TicksFromString (something, true)
+    t = _TicksFromString (something, True)
     if t >= 0: return t
     else: return None
 
@@ -711,7 +711,7 @@ def TicksToUTC (t):
 
 
 // Register Home2lDone() as an 'atexit' function in Home2lInit(), so that this does
-// not have to be done the rules script.
+// not have to be called explicitly in rules scripts.
 %pythoncode %{
   import atexit
 %}

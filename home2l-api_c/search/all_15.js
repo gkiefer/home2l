@@ -15,7 +15,7 @@ var searchData=
   ['validunitfloat',['ValidUnitFloat',['../classCResource.html#a63d35307f0976c25db150c2d206bed73',1,'CResource']]],
   ['validunitint',['ValidUnitInt',['../classCResource.html#a79554af5eb73c589359b33b42264684d',1,'CResource']]],
   ['valign',['vAlign',['../classCTextFormat.html#a6dd0419627a68767367f66a274a07283',1,'CTextFormat']]],
-  ['valueequals',['ValueEquals',['../classCRcValueState.html#a54636351f81e0b6c43c592d187440f62',1,'CRcValueState']]],
+  ['valueequals',['ValueEquals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState']]],
   ['versionmajor',['versionMajor',['../structSBrFeatureRecord.html#a6028a7fae8b8d19c88c0882b7898c4df',1,'SBrFeatureRecord']]],
   ['videolockframe',['VideoLockFrame',['../classCPhone.html#a627e407e9522e793392fe53fa4b91878',1,'CPhone']]],
   ['videounlock',['VideoUnlock',['../classCPhone.html#a2eb6d9fb405200625ba72503a1f819a7',1,'CPhone']]]

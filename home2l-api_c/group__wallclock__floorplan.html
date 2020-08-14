@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -126,9 +126,9 @@ Enumerations</h2></td></tr>
 <a class="el" href="group__wallclock__floorplan.html#gga0b81322caa3378d0771ddce7e64c9c6fa59320b065f1a96bf278917eeea04cb1d">gtBluetooth</a>, 
 <br />
 &#160;&#160;<a class="el" href="group__wallclock__floorplan.html#gga0b81322caa3378d0771ddce7e64c9c6fac0460a3af4736de4e5e82b8ba9218576">gtService</a>, 
-<b>gtTemp</b>, 
+<a class="el" href="group__wallclock__floorplan.html#gga0b81322caa3378d0771ddce7e64c9c6fa6434c8051c10b15977f6e6cfb922a98a">gtTemp</a>, 
 <b>gtZoom</b>, 
-<a class="el" href="group__wallclock__floorplan.html#gga0b81322caa3378d0771ddce7e64c9c6fac8fef2db632aa17f19867e9e26b63cba">gtEND</a>
+<b>gtEND</b>
 <br />
  }</td></tr>
 <tr class="separator:ga0b81322caa3378d0771ddce7e64c9c6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -142,6 +142,9 @@ Functions</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__floorplan.html#gaa9d91b7b0426016c37023cb558870401">FloorplanActivate</a> ()</td></tr>
 <tr class="memdesc:gaa9d91b7b0426016c37023cb558870401"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate the floorplan screen. <br /></td></tr>
 <tr class="separator:gaa9d91b7b0426016c37023cb558870401"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga529fbe3443b5062bef32b7b0e20423f1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__floorplan.html#ga529fbe3443b5062bef32b7b0e20423f1">FloorplanCheckAlert</a> (<a class="el" href="classCScreen.html">CScreen</a> *returnScreen=NULL)</td></tr>
+<tr class="memdesc:ga529fbe3443b5062bef32b7b0e20423f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check for an alert and if so activate the floorplan screen.  <a href="#ga529fbe3443b5062bef32b7b0e20423f1">More...</a><br /></td></tr>
+<tr class="separator:ga529fbe3443b5062bef32b7b0e20423f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf43b8e24438e60246461e749b0fe7023"><td class="memItemLeft" align="right" valign="top"><a id="gaf43b8e24438e60246461e749b0fe7023"></a>
 class CFloorplan *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__wallclock__floorplan.html#gaf43b8e24438e60246461e749b0fe7023">FloorplanGetMain</a> ()</td></tr>
 <tr class="memdesc:gaf43b8e24438e60246461e749b0fe7023"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a reference to the main floorplan (for <a class="el" href="classCWidgetFloorplan.html#a34c29c8ae22bc725cabbbea558cf073b" title="Setup the widget. ">CWidgetFloorplan::Setup()</a> ). <br /></td></tr>
@@ -191,7 +194,7 @@ class CFloorplan *&#160;</td><td class="memItemRight" valign="bottom"><a class="
 </td></tr>
 <tr><td class="fieldname"><a id="gga0b81322caa3378d0771ddce7e64c9c6fac0460a3af4736de4e5e82b8ba9218576"></a>gtService&#160;</td><td class="fielddoc"><p>some generic service </p>
 </td></tr>
-<tr><td class="fieldname"><a id="gga0b81322caa3378d0771ddce7e64c9c6fac8fef2db632aa17f19867e9e26b63cba"></a>gtEND&#160;</td><td class="fielddoc"><p>} </p>
+<tr><td class="fieldname"><a id="gga0b81322caa3378d0771ddce7e64c9c6fa6434c8051c10b15977f6e6cfb922a98a"></a>gtTemp&#160;</td><td class="fielddoc"><p>temperature value </p>
 </td></tr>
 </table>
 
@@ -244,6 +247,32 @@ class CFloorplan *&#160;</td><td class="memItemRight" valign="bottom"><a class="
 
 </div>
 </div>
+<a id="ga529fbe3443b5062bef32b7b0e20423f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga529fbe3443b5062bef32b7b0e20423f1">&#9670;&nbsp;</a></span>FloorplanCheckAlert()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void FloorplanCheckAlert </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classCScreen.html">CScreen</a> *&#160;</td>
+          <td class="paramname"><em>returnScreen</em> = <code>NULL</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check for an alert and if so activate the floorplan screen. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">returnScreen</td><td>specifies the screen to return to as soon as the alert is over. If NULL, the floorplan screen will remain activated when the alert is over. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="gaddec7b2ffcb2b15e38c4562d0055f206"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#gaddec7b2ffcb2b15e38c4562d0055f206">&#9670;&nbsp;</a></span>FloorplanUnsubscribeAll()</h2>
 
@@ -260,7 +289,7 @@ class CFloorplan *&#160;</td><td class="memItemRight" valign="bottom"><a class="
 </div><div class="memdoc">
 
 <p>Unsubscribe all resources of the floorplan. </p>
-<p>On activation of the floorplan screen (FloorplanActivate () ) or some floorplan widget (<a class="el" href="classCWidgetFloorplan.html" title="Floorplan widget. ">CWidgetFloorplan</a>), the resource subscriptions are updated to fit the screen or widget. On deactivation, nothing is changed. This function explicitly unsubscribes all resources to save power and CPU time. </p>
+<p>On activation of the floorplan screen (FloorplanActivate () ) or some floorplan widget (<a class="el" href="classCWidgetFloorplan.html" title="Floorplan widget. ">CWidgetFloorplan</a>), the resource subscriptions are updated to fit the screen or widget. On deactivation of those, nothing is changed. This function explicitly unsubscribes all resources to save power and CPU time. </p>
 
 </div>
 </div>

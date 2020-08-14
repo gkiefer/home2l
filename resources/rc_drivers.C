@@ -61,20 +61,6 @@ ENV_PARA_BOOL ("rc.timer", envRcTimer, true);
 // ***** Twilight calculations *****
 
 
-ENV_PARA_FLOAT ("location.latitudeN", envLatitudeN, 48.371667);
-  /* WGS84 coordinate (latitude north) of the building
-   *
-   * This value is (amoung others) used by the 'timer' driver for twilight
-   * calculations.
-   */
-ENV_PARA_FLOAT ("location.longitudeE", envLongitudeE, 10.898333);
-  /* WGS84 coordinate (longitude east) of the building
-   *
-   * This value is (amoung others) used by the 'timer' driver for twilight
-   * calculations.
-   */
-
-
 static CResource *rcTwiDay00, *rcTwiDay06, *rcTwiDay12, *rcTwiDay18;
   // Boolean flags indicating day time according to official sunrise/sunset (00) as well as to
   // civil (06), nautical (12), and astronomical (18) twilight.
@@ -156,7 +142,7 @@ static void TwiCalculate (TDate d) {
   //~ INFOF (("### Deklination: %f°", radDeclination * 180.0 / M_PI));
 
   // Time delta: time between sunrise and sunset (or the respective dawn and dusk times)...
-  latitude = envLatitudeN * M_PI / 180.0;
+  latitude = EnvLocationLatitudeN () * M_PI / 180.0;
   for (n = 0; n < 4; n++) {       // steps of 6 degree
     h = (n == 0 ? -50.0/60.0 : -6.0 * n) / 180.0 * M_PI;
     cosDelta = (sin (h) - sin(latitude) * sin (radDeclination)) / (cos (latitude) * cos (radDeclination));
@@ -171,7 +157,7 @@ static void TwiCalculate (TDate d) {
   TicksToDateTimeUTC (ticksTrueNoon, NULL, &t);   // t is UTC time of local noon
   ticksTrueNoon += TICKS_FROM_SECONDS (TIME_OF (12, 0, 0) - t);  // -> UTC noon time
   //~ INFOF (("### clock noon (local time at UTC noon) = %s", TicksToString (ticksTrueNoon, 0)));
-  ticksTrueNoon -= TICKS_FROM_SECONDS (3600.0 * (envLongitudeE / 15.0 + hTimeDiff) + 0.5);  // correct by location and time difference
+  ticksTrueNoon -= TICKS_FROM_SECONDS (3600.0 * (EnvLocationLongitudeE () / 15.0 + hTimeDiff) + 0.5);  // correct by location and time difference
   //~ INFOF (("### true noon = %s", TicksToString (ticksTrueNoon, 0)));
 
   // Report results...
@@ -525,7 +511,13 @@ void CExtDriver::ClassStop () {
 
 
 void CExtDriver::PutCmd (EExtDriverCmd cmd, TTicksMonotonic t, TTicksMonotonic interval) {
-  TExtDriverCmdRec cr = { cmd, this };
+  TExtDriverCmdRec cr;
+
+#if WITH_CLEANMEM
+  bzero (&cr, sizeof (cr));
+#endif
+  cr.cmd = cmd;
+  cr.drv = this;
   //~ INFOF(("### PutCmd (%i)", cmd));
   sleeper.PutCmd (&cr, t, interval);
 }
@@ -825,7 +817,7 @@ void RcDriversInit () {
       // Split the command and perform a path search...
       args.Set (cmdStr, 2);
       found = false;
-      for (k = 0; k < (int) (sizeof (drvSearchPath) / sizeof (drvSearchPath[0])) && !found; k++) {
+      if (args.Entries () > 0) for (k = 0; k < (int) (sizeof (drvSearchPath) / sizeof (drvSearchPath[0])) && !found; k++) {
         s.SetF (drvSearchPath[k], EnvHome2lRoot (), EnvBuildArch (), args[0]);
         //~ INFOF (("### Trying '%s'", s.Get ()));
         if (access (s.Get (), R_OK) == 0) found = true;
@@ -912,7 +904,12 @@ void RcDriversStop () {
 
 
 void RcDriversDone () {
+#if WITH_CLEANMEM
+  int n;
+  while ( (n = driverMap.Entries ()) > 0) driverMap.Get (n-1)->Unregister ();
+#else
   driverMap.Clear ();
+#endif
 }
 
 

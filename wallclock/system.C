@@ -1094,7 +1094,7 @@ static void SystemSetMode (ESystemMode _mode) {
 
   // Physically switch mode...
   if (newMode != lastMode) {
-    INFOF(("Switching system mode: %i -> %i", (int) lastMode, (int) newMode));
+    DEBUGF(1, ("Switching system mode: %i -> %i", (int) lastMode, (int) newMode));
 #if ANDROID
     AndroidSetMode (newMode, lastMode);
 #else
@@ -1149,28 +1149,29 @@ void SystemWakeupStandby () {
 }
 
 
-void SystemActiveLock (const char *reqName) {
+void SystemActiveLock (const char *reqName, bool withWakeup) {
   //~ INFOF (("### SystemActiveLock ('%s')", reqName));
   rcModeActive->SetRequest (true, reqName, rcPrioNormal);
-  SystemWakeupActive ();
+  if (withWakeup) SystemWakeupActive ();
 }
 
 
-void SystemActiveUnlock (const char *reqName) {
-  if (systemMode == smActive) SystemWakeupActive ();
-    // Simulate a new wakeup event to avoid a switch to standby mode too quickly (example: auto-stop situation after a playlist of the music player)
-  else SystemWakeupStandby ();               // make sure to get to standby mode for some time after removing the lock
+void SystemActiveUnlock (const char *reqName, bool withWakeup) {
+  if (withWakeup) {
+    if (systemMode == smActive) SystemWakeupActive ();
+    else SystemWakeupStandby ();               // make sure to get to standby mode for some time after removing the lock
+  }
   rcModeActive->DelRequest (reqName);
 }
 
 
-void SystemStandbyLock (const char *reqName) {
+void SystemStandbyLock (const char *reqName, bool withWakeup) {
   rcModeStandby->SetRequest (true, reqName, rcPrioNormal);
 }
 
 
-void SystemStandbyUnlock (const char *reqName) {
-  SystemWakeupStandby ();               // make sure to stay in standby mode for some time after removing the lock
+void SystemStandbyUnlock (const char *reqName, bool withWakeup) {
+  if (withWakeup) SystemWakeupStandby ();
   rcModeActive->DelRequest (reqName);
 }
 

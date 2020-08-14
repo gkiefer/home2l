@@ -108,6 +108,7 @@ RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
       python3 swig python3-dev libreadline-dev \
       libsdl2-dev libsdl2-ttf-dev \
       gettext imagemagick inkscape \
+      libmosquitto-dev \
       liblinphone-dev \
       libmpdclient-dev \
       gcc-avr avr-libc
@@ -136,6 +137,7 @@ RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
       nano less procps psmisc \
       python3 curl bsdmainutils \
       libsdl2-2.0-0 libsdl2-ttf-2.0-0 \
+      mosquitto mosquitto-clients \
       liblinphone9 \
       libmpdclient2 \
       net-tools remind patch mpd mpc \
@@ -169,4 +171,4 @@ VOLUME /var/opt/home2l
 
 
 # Run command ...
-CMD home2l demo run
+CMD home2l demo rundock

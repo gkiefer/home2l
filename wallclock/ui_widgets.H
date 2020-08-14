@@ -220,7 +220,6 @@ class CButton: public CWidget {
     void Set (SDL_Rect _area, TColor _color, SDL_Surface *_icon);
     void Set (SDL_Rect _area, TColor _color, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
     void Set (SDL_Rect _area, TColor _color, SDL_Surface *_icon, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
-    //~ void Set (SDL_Rect _area, TColor _color, SDL_Surface *_icon, TColor textColor, const char *text) { Set (_area, _color, _icon, NULL, textColor, text); }
     /// @}
 
     /// @name Set parameters...
@@ -482,7 +481,7 @@ class CListbox: public CCanvas {
     int items;
     CWidget **pool;
     int poolSize, *poolIdx;
-    int selectedItem, downIdx;
+    int selectedItem, downIdx, downSelectedItem;
     bool noLongPush;
     bool changed;
 

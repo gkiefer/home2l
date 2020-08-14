@@ -12,5 +12,5 @@ var searchData=
   ['locklocalrequests',['LockLocalRequests',['../classCResource.html#ae768caa21c2d7528e08c9a9ef0ed477b',1,'CResource']]],
   ['locklocalsubscribers',['LockLocalSubscribers',['../classCResource.html#a3b906e340c10fea4a2d46c12dd978e6f',1,'CResource']]],
   ['logstack',['LogStack',['../group__common__logging.html#gab0f1ea671d51c7c52f8b79af9988cdaa',1,'base.H']]],
-  ['logtosyslog',['LogToSyslog',['../group__common__logging.html#ga59354e7b87fccf99042e996cbbaa29f2',1,'base.H']]]
+  ['logtosyslog',['LogToSyslog',['../group__common__logging.html#ga70c4601b20beabd915106681f46900fd',1,'base.H']]]
 ];

@@ -41,7 +41,8 @@
 
 usage () {
   echo "Usage: ${0##*/} run|start|stop|restart"
-  echo "  run:      Run the demo (entry point for the Docker demo image)"
+  echo "  run:      Run the demo"
+  echo "  rundock:  Run the demo and exit to a shell (entry point for the Docker image)"
   echo "  start:    (Re-)start the Home2L daemon"
   echo "  stop:     Stop the Home2L daemon"
   echo "  restart:  Restart the Home2L daemon"
@@ -113,52 +114,69 @@ cmd_status () {
 cmd_run () {
 
   # Start the WallClock and check if the UI starts up correctly...
-  LOG=/tmp/home2l-wallclock.log
-  home2l wallclock 2> $LOG & PID=$!
-  while ! grep -q 'INFO: Using SDL renderer' $LOG; do   #
-    if [ ! -d /proc/$PID ]; then
-      echo
-      echo "Failed to start the WallClock UI"
-      echo "--------------------------------"
-      echo
-      echo "Oops - apparently, the WallClock UI did not start up as expected."
-      echo "This is due to some X11 issue. If you are running this from inside"
-      echo "a Docker container, please check the following:"
-      echo
-      echo "  1. You need a host running an X server (Xorg), and probably Linux."
-      echo
-      echo "  2. On the host, you must allow the container to access the display:"
-      echo "     $ xhost +local:"
-      echo
-      echo "  3. The container must be run on the same phyiscal machine as the"
-      echo "     Xorg server (other cases have not been tested yet)."
-      echo
-      echo "  4. A proper command line to run the demo is given in the tutorial"
-      echo "     chapter of the Home2L Book."
-      echo
-      echo "If the problem persists, you may do an internet search for"
-      echo "'GUI applications inside Docker' to find alternative ways to run the"
-      echo "X11 application inside the container."
-      echo
-      echo "A detailed error message can be found in $LOG ."
-      echo
-      exit 3
-    fi
-  done
+  if pidof -q home2l-wallclock; then
+    echo "WallClock seems to be already running: not starting."
+  else
+    LOG=/tmp/home2l-wallclock.log
+    home2l wallclock 2> $LOG & PID=$!
+    while ! grep -q 'INFO: Using SDL renderer' $LOG; do   #
+      if [ ! -d /proc/$PID ]; then
+        echo
+        echo "Failed to start the WallClock UI"
+        echo "--------------------------------"
+        echo
+        echo "Oops - apparently, the WallClock UI did not start up as expected."
+        echo "This is due to some X11 issue. If you are running this from inside"
+        echo "a Docker container, please check the following:"
+        echo
+        echo "  1. You need a host running an X server (Xorg), and probably Linux."
+        echo
+        echo "  2. On the host, you must allow the container to access the display:"
+        echo "     $ xhost +local:"
+        echo
+        echo "  3. The container must be run on the same phyiscal machine as the"
+        echo "     Xorg server (other cases have not been tested yet)."
+        echo
+        echo "  4. A proper command line to run the demo is given in the tutorial"
+        echo "     chapter of the Home2L Book."
+        echo
+        echo "If the problem persists, you may do an internet search for"
+        echo "'GUI applications inside Docker' to find alternative ways to run the"
+        echo "X11 application inside the container."
+        echo
+        echo "A detailed error message can be found in $LOG ."
+        echo
+        exit 3
+      fi
+    done
+  fi
 
   # Run the daemon ...
   cmd_restart
 
+  # Preset manually operated MQTT mailbox sensor ...
+  timeout 3 bash -c 'while ! netstat -t4ln | grep -q :1883; do sleep .2; done' || echo "No MQTT broker running."
+  mosquitto_pub -r -t mailbox/state  -m 0
+  mosquitto_pub -r -t mailbox/online -m 1
+
   # Run the ShowHouse ...
   home2l showhouse
+}
 
-  # Run the interactive shell ...
-  #   ... and leave some useful commands in the history first ...
+
+cmd_rundock () {
+
+  # Run demo as usual ...
+  cmd_run
+
+  # Init the bash history with some useful commands ...
   cat > ~/.bash_history << EOF
 home2l wallclock 2> $LOG &
 home2l demo restart
 home2l showhouse
 EOF
+
+  # Run the interactive shell ...
   echo
   exec /bin/bash
 }
@@ -173,6 +191,9 @@ EOF
 case $1 in
   run)
     cmd_run
+    ;;
+  rundock)
+    cmd_rundock
     ;;
   start)
     cmd_start

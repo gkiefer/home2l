@@ -84,8 +84,8 @@ rcSimDaylight = NewResource ("world", "simDaylight", rctBool, False)
 # Bad weather simulation (sensing)...
 rcSimBadWeather = NewResource ("world", "simBadWeather", rctBool, False)
   # Resource to simulate bad weather based on a user input.
-  # Real weather warning information will be provided by the "weather" driver
-  # in the future.
+  # Real weather information can be obtained from the "weather" driver
+  # ('weather/radarWarning').
 
 
 # Motion simulation (sensing)...
@@ -160,7 +160,7 @@ def ActuatorsUpdate ():
     if pos == toValue: del _actPosToValue[lid]
     # Report value and state ...
     rcActuators[lid].ReportValue (pos, (rcsBusy, rcsValid) [pos == toValue])
-      # reported state is 'rcsValid' if to-position is reached, else 'rcsBusy
+      # reported state is 'rcsValid' if to-position is reached, else 'rcsBusy'
 
   # Set timer if necessary ...
   if len(_actPosToValue) > 0:

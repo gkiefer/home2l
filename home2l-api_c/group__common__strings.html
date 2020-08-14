@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -148,9 +148,9 @@ float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="gro
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gacc3fe693f3186625d44b0c10906e1928">StringStrip</a> (char *str, const char *sepChars=<a class="el" href="group__common__strings.html#gabfa0d183e035eb9705b5faec98294d0f">WHITESPACE</a>)</td></tr>
 <tr class="memdesc:gacc3fe693f3186625d44b0c10906e1928"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove seperator (whitespace) characters at the beginning and end of the string. <br /></td></tr>
 <tr class="separator:gacc3fe693f3186625d44b0c10906e1928"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaea6a585be8ea4df1e94dd16e6bfaaad1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaea6a585be8ea4df1e94dd16e6bfaaad1">StringSplit</a> (const char *str, int *retArgc, char ***retArgv, int maxArgc=INT_MAX, const char *sepChars=<a class="el" href="group__common__strings.html#gabfa0d183e035eb9705b5faec98294d0f">WHITESPACE</a>, char **retRef=NULL)</td></tr>
-<tr class="memdesc:gaea6a585be8ea4df1e94dd16e6bfaaad1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split a string into (whitespace-)separated arguments.  <a href="#gaea6a585be8ea4df1e94dd16e6bfaaad1">More...</a><br /></td></tr>
-<tr class="separator:gaea6a585be8ea4df1e94dd16e6bfaaad1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga53187daef823121298c2f01c5bdf040d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d">StringSplit</a> (const char *str, int *retArgc, char ***retArgv, int maxArgc=INT_MAX, const char *sepChars=NULL, char **retRef=NULL)</td></tr>
+<tr class="memdesc:ga53187daef823121298c2f01c5bdf040d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split a string into (whitespace-)separated arguments.  <a href="#ga53187daef823121298c2f01c5bdf040d">More...</a><br /></td></tr>
+<tr class="separator:ga53187daef823121298c2f01c5bdf040d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac7fd872b1a286c4b50db018851e1d48f"><td class="memItemLeft" align="right" valign="top"><a id="gac7fd872b1a286c4b50db018851e1d48f"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gac7fd872b1a286c4b50db018851e1d48f">CharIsWhiteSpace</a> (char c)</td></tr>
 <tr class="memdesc:gac7fd872b1a286c4b50db018851e1d48f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicate whether the given character is white space (see WHITSPACE). <br /></td></tr>
@@ -190,8 +190,8 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="separator:ga3a674fa6212e4b0e461aaca4e045bf18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="gaea6a585be8ea4df1e94dd16e6bfaaad1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaea6a585be8ea4df1e94dd16e6bfaaad1">&#9670;&nbsp;</a></span>StringSplit()</h2>
+<a id="ga53187daef823121298c2f01c5bdf040d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga53187daef823121298c2f01c5bdf040d">&#9670;&nbsp;</a></span>StringSplit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -224,7 +224,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>sepChars</em> = <code><a class="el" href="group__common__strings.html#gabfa0d183e035eb9705b5faec98294d0f">WHITESPACE</a></code>, </td>
+          <td class="paramname"><em>sepChars</em> = <code>NULL</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -242,6 +242,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 <p>Split a string into (whitespace-)separated arguments. </p>
 <p>The number of extracted words is written to <code>*retArgc</code>, an array of that size is returned via <code>***retArgv</code>. If <code>maxArgc-1</code> strings have been split, the complete remaining string is returned as argument #<code>(maxArgc-1)</code>.</p>
+<p>If <code>sepChars == NULL</code>, whitespace characters are used as separators, and multiple of them count as a single separation. In all other cases, each individual separation character splits up a new argument, so that empty arguments are possible.</p>
 <p>The resulting (sub-)strings will be placed into a single chunk of heap-allocated memory. The caller must later (only) free <code>**retArgv[0]</code> and <code>*retArgv</code>. <code>str</code> remains unchanged and owned by the caller. If 'retRef' is not NULL, a reference pointer is returned by which the caller can determine the original location of some argument or character. <em>To avoid confusion about memory handling, it is recommended to use the class <code><a class="el" href="classCSplitString.html" title="Factory class to split a string into substrings. ">CSplitString</a></code> instead of this function.</em> </p>
 
 </div>

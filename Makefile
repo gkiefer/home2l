@@ -60,10 +60,10 @@ ifeq ($(CFG),minimal)
   DRVS ?=
 else ifeq ($(CFG),basic)
   # Basic set ...
-  DRVS ?= gpio brownies
+  DRVS ?= gpio mqtt brownies weather
 else ifeq ($(CFG),demo)
   # Fair set to run the demos ...
-  DRVS ?= gpio demo brownies weather
+  DRVS ?= demo gpio mqtt brownies weather
 else
   # Default: All modules...
   DRVS ?= $(shell ls drivers)

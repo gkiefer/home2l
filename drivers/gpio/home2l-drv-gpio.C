@@ -26,7 +26,7 @@
 
 
 static TTicks optInterval = 16;    // number of milliseconds between polls
-static TTicks optInertia = 64;     // minimum nunber of milliseconds for which a value must remain constant before being reported
+static TTicks optInertia = 64;     // minimum number of milliseconds for which a value must remain constant before being reported
 
 
 class CGpioPin {

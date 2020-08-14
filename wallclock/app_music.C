@@ -544,10 +544,12 @@ CMusicPlayer::CMusicPlayer () {
   dirEntries = 0;
   dirPlayingIdx = -1;
 
+  streamerState = strOff;
+
+  errorRecovery = errorPermanent = false;
+
   serverIdx = -2;
   SetServer (-1);
-
-  streamerState = strOff;
 }
 
 
@@ -1260,7 +1262,7 @@ void CMusicPlayer::DirClear () {
   dirPath.SetC ("~0");
   if (dirList) {
     for (n = dirEntries - 1; n >= 0; n--) delete dirList [n];
-    delete dirList;
+    delete [] dirList;
     dirList = NULL;
   }
   dirEntries = 0;
@@ -1965,7 +1967,10 @@ CScreenMusicMain::CScreenMusicMain () {
 
 CScreenMusicMain::~CScreenMusicMain () {
   player.SetView (NULL);
+  DelAllWidgets ();   // unlink all buttons of 'buttonBar'
   FREEA (buttonBar);
+  SurfaceFree (wdgDisplay.GetSurface ());
+  SurfaceFree (wdgBackground.GetSurface ());
   SurfaceFree (&surfDirTitleLabel);
 }
 

@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -99,13 +99,12 @@ Running the library tasks in foreground ...</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b">RcIterate</a> ()</td></tr>
 <tr class="memdesc:ga286d46a532fcf7bf7c98f30fedde5c4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform pending actions, call <a class="el" href="group__common__timers.html#ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff" title="Returns false if nothing was done. ">TimerIterate()</a> and return. <br /></td></tr>
 <tr class="separator:ga286d46a532fcf7bf7c98f30fedde5c4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa06900275273e94e5bb129d95e44f6b5"><td class="memItemLeft" align="right" valign="top"><a id="gaa06900275273e94e5bb129d95e44f6b5"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gaa06900275273e94e5bb129d95e44f6b5">RcRun</a> ()</td></tr>
-<tr class="memdesc:gaa06900275273e94e5bb129d95e44f6b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run 'RcStart', then <a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b" title="Perform pending actions, call TimerIterate() and return. ">RcIterate()</a> in a main event loop until <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is called. <br /></td></tr>
-<tr class="separator:gaa06900275273e94e5bb129d95e44f6b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga53638ae87b97ad18e97dea08b6976672"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga53638ae87b97ad18e97dea08b6976672">RcRun</a> (bool catchSignals=true)</td></tr>
+<tr class="memdesc:ga53638ae87b97ad18e97dea08b6976672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run 'RcStart', then <a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b" title="Perform pending actions, call TimerIterate() and return. ">RcIterate()</a> in a main event loop until <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is called.  <a href="#ga53638ae87b97ad18e97dea08b6976672">More...</a><br /></td></tr>
+<tr class="separator:ga53638ae87b97ad18e97dea08b6976672"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="memItemLeft" align="right" valign="top"><a id="ga4503f3092fbd1bd493cb9a94d12bde04"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04">RcStop</a> ()</td></tr>
-<tr class="memdesc:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop a loop started by <a class="el" href="group__resources__general.html#gaa06900275273e94e5bb129d95e44f6b5" title="Run &#39;RcStart&#39;, then RcIterate() in a main event loop until RcStop() is called. ">RcRun()</a>. <br /></td></tr>
+<tr class="memdesc:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop a loop started by <a class="el" href="group__resources__general.html#ga53638ae87b97ad18e97dea08b6976672" title="Run &#39;RcStart&#39;, then RcIterate() in a main event loop until RcStop() is called. ">RcRun()</a>. <br /></td></tr>
 <tr class="separator:ga4503f3092fbd1bd493cb9a94d12bde04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
@@ -289,10 +288,37 @@ static <a class="el" href="classCResource.html">CResource</a> *&#160;</td><td cl
 <li>true =&gt; enable server if and as set in the configuration environment. </li>
 </ul>
 </td></tr>
-    <tr><td class="paramname">inBackground</td><td>switches on the timer thread using 'TimerStart' and friends. If disabled, the caller is responsible for iterating the timer. This can be the case if the caller itself has a an own background timer thread (e.g. 'home2l-wallclock') or if <a class="el" href="group__resources__general.html#gaa06900275273e94e5bb129d95e44f6b5" title="Run &#39;RcStart&#39;, then RcIterate() in a main event loop until RcStop() is called. ">RcRun()</a> / <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is to be used for the main program. </td></tr>
+    <tr><td class="paramname">inBackground</td><td>switches on the timer thread using 'TimerStart' and friends. If disabled, the caller is responsible for iterating the timer. This can be the case if the caller itself has a an own background timer thread (e.g. 'home2l-wallclock') or if <a class="el" href="group__resources__general.html#ga53638ae87b97ad18e97dea08b6976672" title="Run &#39;RcStart&#39;, then RcIterate() in a main event loop until RcStop() is called. ">RcRun()</a> / <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is to be used for the main program. </td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="ga53638ae87b97ad18e97dea08b6976672"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga53638ae87b97ad18e97dea08b6976672">&#9670;&nbsp;</a></span>RcRun()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int RcRun </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>catchSignals</em> = <code>true</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Run 'RcStart', then <a class="el" href="group__resources__general.html#ga286d46a532fcf7bf7c98f30fedde5c4b" title="Perform pending actions, call TimerIterate() and return. ">RcIterate()</a> in a main event loop until <a class="el" href="group__resources__general.html#ga4503f3092fbd1bd493cb9a94d12bde04" title="Stop a loop started by RcRun(). ">RcStop()</a> is called. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">catchSignals</td><td>controls whether the signals SIGTERM ("exit nicely", default of the kill(1) command) and SIGINT (Ctrl-C) are caught temporarly and lead to an immediate return of this function. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the signal number if the function has been stopped by a caught signal, else 0. </dd></dl>
 
 </div>
 </div>
@@ -341,7 +367,7 @@ static <a class="el" href="classCResource.html">CResource</a> *&#160;</td><td cl
 <p>If the URI is not absolute, it is relative to "/alias".</p>
 <p>The returned pointer is always valid (!= NULL) unless the URI is syntactically incorrect and will neither now nor in the future refer to a valid resource. Hence, the pointer can be used for identity comparisons. It will be uniquely associated with the URI until the program terminates or <a class="el" href="group__resources__general.html#ga4267adffcd6ea94175a57d54feacf1fc" title="(For experts only) Remove all presently unregistered resources from memory. ">RcGarbageCollection()</a> is called. It is allowed to pass 'uri == NULL', in which case NULL will be returned without any warning. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02732">2732</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02754">2754</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -371,7 +397,7 @@ static <a class="el" href="classCResource.html">CResource</a> *&#160;</td><td cl
 <p>(For experts only) Remove all presently unregistered resources from memory. </p>
 <p>This may free some memory, but at the same time invalidates any existing reference to <a class="el" href="classCResource.html">CResource</a> objects. May only be called if no '<a class="el" href="classCResource.html" title="Home2L Resource. ">CResource</a> *' reference is presently used! </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02747">2747</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02769">2769</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>

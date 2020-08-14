@@ -84,6 +84,26 @@ urlLocalData = "http://opendata.dwd.de/weather/weather_reports/poi/" + str (optS
 urlRadar = "http://opendata.dwd.de/weather/radar/composit/pg/raa00-pc_10015-latest-dwd---bin"
 
 
+# d) Some parameters to tune the rain warning...
+#
+#    The warning flag is raise if
+#    a) any value in the inner circle is 'warnInnerThreshold' or above, or
+#    b) a fraction of at least 'warnOuterFraction' * 100% of all values of the outer circle
+#       are 'warnInnerThreshold' or above.
+#
+warnInnerRadius = 5       # radius of inner circle in units of 2km
+warnInnerFraction = 0.03  # fraction of inner circle
+warnInnerThreshold = 2    # threshold value for inner circle
+
+warnOuterRadius = 20      # radius of outer circle in units of 2km
+warnOuterFraction = 0.2   # fraction of outer circle
+warnOuterThreshold = 2    # threshold value for outer circle
+
+
+  # ... any value != 0 inside the inner circle will set the warning
+                      # minimum number of values >= 2 in outer circle to set the warning
+
+
 
 
 
@@ -218,7 +238,7 @@ class LocalData:
 class Radar:
   lastTimeStamp = None  # HTTP time stamp to check if the remote file has changed
   fullMap = None
-  rcRainWarning = "?"
+  rcRainWarning = '?'
 
   # For the automatic documentation system:
   #
@@ -237,7 +257,8 @@ class Radar:
   #   RcRegisterResource (drv, "radarWarning", rctBool, false);
   #     /* [RC:weather] Radar Warning (NOT IMPLEMENTED YET)
   #      *
-  #      * Flag indicating that it may be raining and any roof windows should be closed.
+  #      * Flag indicating whether it is raining or may be raining soon.
+  #      * This can be used, for example, to indicate that roof windows should be closed.
   #      */
 
   def declare ():
@@ -307,7 +328,7 @@ class Radar:
 
     # Preparations...
     windDirRad = ((270 - windDir) / 180.0 * math.pi)
-    windX =  math.cos (windDirRad) * windSpeed * 1   # Vector where the wind blows towards
+    windX =  math.cos (windDirRad) * windSpeed * 1   # vector where the wind blows to
     windY = -math.sin (windDirRad) * windSpeed * 1
       # There is a hard-coded factor of '1' to map wind km/h to pixels. A pixel has a size of 2 km,
       # so the factor of 1 means, that the rain in the center of the picture will travel 2 hours
@@ -405,11 +426,46 @@ class Radar:
     #~ print (latN, lonE, x, y, ix, iy)
     return (ix, iy)
 
+  def makeRainWarning (fullMap, locX, locY):
+    """Heuristically determine whether a rain warnig should be issued.
+
+    'fullMap' is the (raw) radar map, 'locX'/'locY' specify the location.
+    Returns '1' if rain is nearby, '0' if no rain is close, and '?' in case of an error.
+    """
+    ri2 = warnInnerRadius * warnInnerRadius
+    ro2 = warnOuterRadius * warnOuterRadius
+
+    # Check inner and outer circle ...
+    sumi = 0                            # count values greater than 'warnInnerThreshold' for inner circle
+    sumo = [ 0, 0, 0, 0, 0, 0, 0, 0 ]   # count per value-or-greater for outer circle
+    for y in range (locY - warnOuterRadius, locY + warnOuterRadius):
+      ry2 = (y - locY) * (y - locY)
+      for x in range (locX - warnOuterRadius, locX + warnOuterRadius):
+        r2 = ry2 + (x - locX) * (x - locX)
+        if r2 <= ro2:                   # in outer circle ...
+          try:
+            val = fullMap [y] [x]
+            if val < 0: raise IndexError
+            sumo [val] += 1
+            if r2 <= ri2:               # in inner circle ...
+              if val >= warnInnerThreshold: sumi += 1
+          except (IndexError, TypeError):
+            return '?'
+    for i in range (7): sumo[6-i] += sumo[7-i]
+    if debug:
+      print ("# (debug) Rain warning: sumi = " + str(sumi) + ", sumo = " + str (sumo))
+
+    # Draw conclusions ...
+    if sumi >= warnInnerFraction * (ri2 * 3.14159) or sumo[warnOuterThreshold] >= warnOuterFraction * (ro2 * 3.14159):
+      return '1'
+    else:
+      return '0'
+
   def update ():
     """Check if new radar data is available and eventually update the data from server.
     """
     # Check time stamp on web server...
-    with os.popen("curl -sI " + urlRadar + "| grep ^last-modified") as f:
+    with os.popen("curl -sI " + urlRadar + "| grep -i ^last-modified") as f:
       timeStamp = f.read ().strip ()
     #~ print ("\n### Radar.update (): timeStamp = '" + timeStamp + "'", file = sys.stderr, flush=True)
     if Radar.lastTimeStamp and timeStamp == Radar.lastTimeStamp:
@@ -424,6 +480,7 @@ class Radar:
     # Render radar eye...
     if not Radar.fullMap:
       Radar.pixmap = None   # clear pixmap on error
+      Radar.rcRainWarning = '?'
     else:
       locX, locY = Radar.fullMapCoordsFromWGS84 (optLatN, optLonE)
       windDir = LocalData.getWindDir ()
@@ -431,8 +488,14 @@ class Radar:
       if not windDir or not windSpeed:
         windDir = windSpeed = 0
       Radar.pixmap = Radar.makePixmap (Radar.fullMap, int (locX), int (locY), 128, 128, windDir, windSpeed)
+      Radar.rcRainWarning = Radar.makeRainWarning (Radar.fullMap, int (locX), int (locY))
 
-      if debug: Radar.writePixmap (Radar.pixmap, open ("radarEye.pgm", 'w'))
+      if debug:
+        with os.popen ("date +%Y%m%d-%H%M%S") as f:
+          timeStamp = f.read ().strip ()
+        fileName = "radarEye-" + timeStamp + ".pgm"
+        Radar.writePixmap (Radar.pixmap, open (fileName, 'w'))
+        print ("# (debug) Radar eye written to '" + fileName + "'")
 
     # Done...
     return True
@@ -440,7 +503,7 @@ class Radar:
   def output ():
     print ("v radarEye     ", end = "")
     if debug:
-      print ("[Output written to 'radarEye.pgm']")
+      print ("[written to file]")
     else:
       Radar.writePixmapEscaped (Radar.pixmap)
     print ("v radarWarning " + Radar.rcRainWarning, flush = True)

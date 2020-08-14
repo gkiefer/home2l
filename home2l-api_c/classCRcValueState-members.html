@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -72,7 +72,7 @@ $(function() {
   <tr><td class="entry"><a class="el" href="classCRcValueState.html#a6c43ec43c7fb2869666d0fac7296a349">Clear</a>(ERcType _type, ERcState _state=rcsUnknown)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a801bb1c02f9f793497d79ac359d573a9">Convert</a>(ERcType _type)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classCRcValueState.html#a865cabc5a044ed186eb338d82e90877f">CRcValueState</a>(ERcType _type)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a58a81537a77c43d00d6d5d7b6a3b8524">Equals</a>(CRcValueState *val2) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a286f377681808ea51ad872585588e368">Equals</a>(const CRcValueState *vs2) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classCRcValueState.html#ad3c4a96e9ed56c573aa32dc3a1952c1f">IsBusy</a>() const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a418d4c6ac995aebe00988b139a3fd6fe">IsKnown</a>() const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr><td class="entry"><a class="el" href="classCRcValueState.html#af596c8a99db69b6e63fbb035fabacdb4">IsValid</a>() const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
@@ -81,14 +81,15 @@ $(function() {
   <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a8b539e1f14e6e0103c11141e93c5dec5">SetGenericFloat</a>(float _val, ERcType _type, ERcState _state=rcsValid)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="classCRcValueState.html#a6005d1f37787f1881e528948629eb3ca">SetGenericInt</a>(int _val, ERcType _type, ERcState _state=rcsValid)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#ab994e09c538dfc1ef2c285042b43be3d">SetGenericString</a>(const char *_val, ERcType _type, ERcState _state=rcsValid)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a58919497e2dca90f5f6fd83367108871">SetToReportBusyNewVal</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#aa5d0ed8d663bd55e1a63ba89ddc277aa">SetToReportBusyOldVal</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a1643547d6e810bca096473fe8dbe4056">SetToReportNothing</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a1e041bf522538b2e117401d2f349cff3">SetType</a>(ERcType _type)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a7d5b8a2aa5f53b11a3626a8a0edae875">timeStamp</a></td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a96cf662ad506dc4a79c457cd53b65de4">ToStr</a>(bool withType=false, bool withTimeStamp=false, bool precise=false, int stringChars=20) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a322ffb0e3ddc9ff11751b6f8289a3f80">ToStr</a>(CString *ret, bool withType=false, bool withTimeStamp=false, bool precise=false, int stringChars=20) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a54636351f81e0b6c43c592d187440f62">ValueEquals</a>(CRcValueState *val2) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a912f23a1d1b22c1b59eb413d00c05373">SetToReportBusy</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a58919497e2dca90f5f6fd83367108871">SetToReportBusyNewVal</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcValueState.html#aa5d0ed8d663bd55e1a63ba89ddc277aa">SetToReportBusyOldVal</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a1643547d6e810bca096473fe8dbe4056">SetToReportNothing</a>()</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a1e041bf522538b2e117401d2f349cff3">SetType</a>(ERcType _type)</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a7d5b8a2aa5f53b11a3626a8a0edae875">timeStamp</a></td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a96cf662ad506dc4a79c457cd53b65de4">ToStr</a>(bool withType=false, bool withTimeStamp=false, bool precise=false, int stringChars=20) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcValueState.html#a322ffb0e3ddc9ff11751b6f8289a3f80">ToStr</a>(CString *ret, bool withType=false, bool withTimeStamp=false, bool precise=false, int stringChars=20) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee">ValueEquals</a>(const CRcValueState *vs2) const</td><td class="entry"><a class="el" href="classCRcValueState.html">CRcValueState</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

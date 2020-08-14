@@ -1,0 +1,49 @@
+# Suppress warnings related to the DRI library
+# Run valgrind as:
+#
+# $ valgrind --suppressions=valgrind.supp home2l-wallclock
+#
+{
+  i965_dri
+  Memcheck:Addr8
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr4
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr2
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr1
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr8
+  fun:*
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr4
+  fun:*
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr2
+  fun:*
+  obj:*/dri/*dri.so
+}
+{
+  i965_dri
+  Memcheck:Addr1
+  fun:*
+  obj:*/dri/*dri.so
+}

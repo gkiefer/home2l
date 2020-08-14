@@ -73,7 +73,7 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
-export HOME2L_EXTRA="daemon.pidFile=$PIDFILE sys.syslog=1 debug=0"
+export HOME2L_CONF="daemon.pidFile=$PIDFILE sys.syslog=1 debug=0"
 
 
 

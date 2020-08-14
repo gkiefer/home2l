@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -73,7 +73,7 @@ $(function() {
 <div class="textblock"><p>Request description object. </p>
 <p>Request objects define the request for a certain value together with some additional attributes. The concept of requests is introduced to deal with potentially concurrent write accesses to resources. Besides the requested value, a request may have some optional attributes set, which are explaind in detail in the <a href="../home2l-book.pdf"><em>Home2L Book</em></a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01954">1954</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01967">1967</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -418,7 +418,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
     <tr><td class="paramname">precise</td><td>decides whether the value is written in a bit-precise (and potentially not human-readabl) way. It is passed to <a class="el" href="classCRcValueState.html#a96cf662ad506dc4a79c457cd53b65de4" title="(TTS) Output the object contents as a string. ">CRcValueState::ToStr()</a>. </td></tr>
     <tr><td class="paramname">tabular</td><td>inserts spaces and aligns fields to make a table if multiple such strings are printed after each other. </td></tr>
     <tr><td class="paramname">relativeTimeThreshold</td><td>allows to pass relative times in some cases. If 't0' or 't1' are defined, in the future, and in less than 'relativeTimeThreshold' milliseconds from now, the time settings are output relative to the current time. This is useful if the request string is to be transmitted to another computer with a slightly different local time. (Example: A door opener request is timed for 1 second. If the server's local clock deviates from the local one by more than one second, this request may be completely ignored.) </td></tr>
-    <tr><td class="paramname">skipAttrs</td><td>allows to selectively skip some attributs from the output. The parameter is a string with the initial characters of the attributes to be skipped. </td></tr>
+    <tr><td class="paramname">skipAttrs</td><td>allows to selectively skip some attributs from the output. The parameter is a string with the initial characters of the attributes to be skipped. The character 'i' suppresses an eventual "(incompatible)" notice. </td></tr>
   </table>
   </dd>
 </dl>

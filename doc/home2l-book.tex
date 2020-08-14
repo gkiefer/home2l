@@ -21,6 +21,8 @@
 
 
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% General Header %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -85,6 +87,7 @@
 \usepackage[headsepline,footsepline,plainfootsepline]{scrlayer-scrpage}
 \pagestyle{scrheadings}
 
+
 % Font settings...
 \renewcommand{\familydefault}{\sfdefault}
 \setkomafont{pageheadfoot}{\textsf}
@@ -102,6 +105,11 @@
 
 %\addtokomafont{section}{\clearpage}
 %\addtokomafont{subsection}{\clearpage}
+
+\renewenvironment{description}[1][8ex]
+  {\list{}{\labelwidth=5ex \leftmargin=#1 \let\makelabel\descriptionlabel}}
+  {\endlist}
+
 
 
 
@@ -150,7 +158,6 @@
   moredelim=[il][\color{black}]{§}
 }
 
-
 \lstset{
   basicstyle=\ttfamily\footnotesize,
 %  keywordstyle=\bfseries,
@@ -170,7 +177,8 @@
   columns=fullflexible,  % to make copy-and-paste from the document work
   keepspaces=true,
   showstringspaces=false,
-  language={}
+  language={},
+  upquote=true
 }
 
 
@@ -249,6 +257,7 @@
 % Defining labels inside this document ...
 \newcommand{\labeltool}[1]{\index{#1@\texttt{#1} (tool)} \label{tool:#1}}
 
+
 % (Internal) Similar labellings for RCs and ENVs are implicitly generated in 'excode.py'...
 \newcommand{\labelenv}[1]{\index{#1@\texttt{#1} (configuration)} \label{env:#1}}
 \newcommand{\labelrc}[2]{\index{#1@\texttt{#1} (resource driver)!#2@\texttt{#2} (resource)} \label{rc:#2}}
@@ -274,7 +283,7 @@
 \newcommand{\refapicgroup}[2]{\href{home2l-api_c/group__#1.html}{#2}}
   % refer to some Doxygen group in the C/C++ API as declarved by '@newgroup'.
   % Note: Underscores must be doubled in the first argument!
-\newcommand{\refapipythongroup}[2]{\href{home2l-api_python/group__#1.html}{#2}}      % TBD: Test
+\newcommand{\refapipythongroup}[2]{\href{home2l-api_python/group__#1.html}{#2}}
   % refer to some Doxygen group in the Python API as declared by '@newgroup'.
   % Note: Underscores must be doubled in the first argument!
 
@@ -308,7 +317,7 @@
 
   \scalebox{2.0} {\Huge \textsf{\textbf{The \textit{Home2L} Book}} } \\
   \vskip 2em
-  \huge \textsf{\textbf{Clever Tools for a Private Smart Home}}
+  \huge \textsf{\textbf{Smart Tools for a Private Home}}
   \vfill
 
   \textsf{Gundolf~Kiefer}
@@ -333,7 +342,7 @@
       \includesvg[width=3cm]{figs/cc-by-sa}
     }
     \hfill
-    \parbox{12cm}{\footnotesize This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/4.0/} or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.}
+    \parbox{12cm}{\footnotesize This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/4.0} or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.}
   }
 \end{titlepage}
 
@@ -373,68 +382,46 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The \textit{Home2L} \texttt{[houmtu:l]} suite is a framework, library and set of tools
-for automation in private smart homes. Its main features and design goals are:
+The \textit{Home2L} \texttt{[houmtu:l]} suite is a collection of tools and libraries for automation in private homes. Its main features and design goals are:
 
 
 \subsection*{Efficient and Lightweight Design}
 
-All core components are written in C/C++, with a very minimum set of external
-dependencies beyond \textit{libc} - ideally suited for small embedded devices and
-microcontrollers. There is no need for a Java runtime environment or a heavy web
-framework. Starting up a server and a command shell and shutting both down again
-takes less than a second altogether - on an ARM-based minicomputer running
-at 144 MHz!
+All core components are written in C/C++, with a very minimum set of external dependencies beyond \textit{libc} - ideally suited for small embedded devices and microcontrollers. There is no need for a Java runtime environment or a heavy web framework. Starting up a server and a command shell and shutting both down again takes less than a second altogether - on an ARM-based minicomputer running at 144 MHz!
 
 
 \subsection*{Ambient Intelligence, No Need for a Central Server}
 
-Central servers are single points of failure. \textit{Home2L} follows a completely
-distributed concept. Any (mini-)computer can act as part of the network. If
-resources, such as sensors or actors, are connected to them, they can be
-exported to any other host in the \textit{Home2L} network. A failure of a host only
-causes its own resources to be unavailable -- everything else keeps on working.
+Central servers are single points of failure. \textit{Home2L} follows a completely distributed concept. Any (mini-)computer can act as part of the network. If resources, such as sensors or actors, are connected to them, they can be exported to any other host in the \textit{Home2L} network. A failure of a host only causes its own resources to be unavailable -- everything else keeps on working.
 
 
 \subsection*{Automation Rules Written in Python -- But Not Limited to That}
 
-There is no new language or tool to learn to formulate automation rules.
-\textit{Home2L} rules are typically formulated in Python, they profit from the
-simplicity and power of the Python language.
-There can be multiple rules scripts, they may run on any machine, and they may
-be combined with other software routines or be part of a larger application.
+There is no new language or tool to learn to formulate automation rules. \textit{Home2L} rules are typically formulated in Python, they profit from the simplicity and power of the Python language. There can be multiple rules scripts, they may run on any machine, and they may be combined with other software routines or be part of a larger application.
 
-Other ways to interact with \textit{Home2L} resources is via the C/C++ API from any
-application or by shell scripts using the \textit{Home2L Shell} in non-interactive mode.
+Other ways to interact with \textit{Home2L} resources is via the C/C++ API from any application or by shell scripts using the \textit{Home2L Shell} (see Sections~\ref{sec:resources-shell} and \ref{sec:tutorial-shell}).
 
 
 \subsection*{Easy Driver Development in C/C++, Python or Any Other Language}
 
-An API for \textit{resource} drivers allows to easily add support for new hardware.
-A driver can be implemented in C/C++, in Python, or as a shell script.
-For all these cases, documented examples can be found in the source tree
-(see Section~\ref{sec:resources-drvdev}).
+An API for \textit{resource} drivers allows to easily add support for new hardware or software services. A driver can be implemented in C/C++, in Python, or as a shell script. For all these cases, documented examples can be found in the source tree (see Section~\ref{sec:resources-drvdev}).
+
+MQTT-enabled devices can be imported directly using the MQTT gateway driver (see Sections~\ref{sec:drvlib-mqtt} and \ref{sec:tutorial-mqtt}).
 
 
 \subsection*{Easy Integration of ''Do-it-Yourself'' Hardware}
 
-\textit{Home2L Brownies} are programmed low-cost microcontrollers (\textit{AVR ATtiny 84/85/861}) connected to a Linux host over 4-wire cables (e.g. KNX/EIB cables). The bus protocol is based on \textit{i2c}, robust and allows to build very simple, self-made hardware nodes. Just an \textit{ATtiny} device and two resistors are enough to build a sensor node!
+\textit{Home2L Brownies} are programmed low-cost microcontrollers (\textit{AVR ATtiny 84/85/861}) connected to a Linux host over 4-wire cables (e.g. KNX/EIB cables). The bus protocol is based on \textit{i2c}, robust and allows to build very simple, self-made hardware nodes. Just an \textit{ATtiny} device and two resistors are enough to build a sensor node! Details can be found in Chapter~\ref{ch:brownies} and Section~\ref{sec:tutorial-brownies}.
 
 
 \subsection*{Privacy}
 
-The \textit{Home2Ls} do not need an Internet connection and do not try to communicate
-with hosts other than they are configured to. By design, the \textit{Home2Ls}
-communicate with each other over a (trusted) LAN, which can easily be set up
-and secured using standard Linux/UNIX techniques. The open source licensing ensures
-transparency for what the software does inside the user's private home.
+The \textit{Home2Ls} do not need an Internet connection and do not try to communicate with hosts other than they are configured to. By design, the \textit{Home2Ls} communicate with each other over a (trusted) LAN, which can easily be set up and secured using standard Linux/UNIX techniques. The open source licensing ensures transparency for what the software does inside the user's private home.
 
 
 \subsection*{Modularity}
 
-The core part, the \textit{Resources} library, is kept small and portable with APIs
-for application programs and drivers in C/C++ and Python. All other components
-are optional and can be used or replaced by alternatives as desired by the user.
+The core part, the \textit{Resources} library, is kept small and portable with APIs for application programs and drivers in C/C++ and Python. All other components are optional and can be used or replaced by alternatives as desired by the user.
 
 Figure~\ref{fig:home2l-components} shows an overview on the \textit{Home2L} suite. It contains a collection of mutually independent applications (blue). The central component is the \textit{Home2L Resources} library, which is used by all applications. Resource drivers (brown) are also optional and provide interfaces to sensors, actors or services like \textit{MQTT} brokers.
 
@@ -528,12 +515,6 @@ Great contributions would be:
 
   \item \textbf{Packaging}: Create packages for major Linux distributions.
 
-  \item \textbf{Bridges to other home automation frameworks:} Implement drivers to interface
-    with other open home automation frameworks.
-
-  \item \textbf{More drivers:} Implement drivers for any hardware you have or like.
-    Help with an \textit{MQTT} bridge would be appreciated, too.
-
   \item \textbf{Documentation}: Write good documentation, particularly for end users.
 
 \end{enumerate}
@@ -573,14 +554,15 @@ This tutorial will introduce you to:
 \begin{itemize}
   \item the main \textit{Home2L} concepts and capabilities.
 
-  \item \textit{Home2L Resources}:
-    values and states, subscriptions, requests, the directory.
+  \item \textit{Home2L Resources}: values and states, subscriptions, requests, the directory.
 
   \item the \textit{Home2L Shell} for inspection, maintenance, and logging.
 
+  \item the MQTT gateway.
+
   \item \textit{Home2L Brownies} and the integration of do-it-yourself hardware.
 
-  \item the \textit{WallClock} UI, including the music player and family calendar.
+  \item the \textit{WallClock} information display and UI.
 
   \item writing automation rules using the \theapipython{}.
 
@@ -591,7 +573,7 @@ This tutorial will introduce you to:
 
 \end{itemize}
 
-The tutorial can be performed using a prepared Docker container image with a complete showcase demo setup. No manual installation is necessary. 
+The tutorial can be performed using a prepared Docker container image with a complete showcase demo setup. No manual installation is necessary.
 
 Sections~\ref{sec:tutorial-start} -- \ref{sec:tutorial-shell} introduce the showcase system and basic concepts of the \textit{Home2L} suite. The remaining subsections cover dedicated topics and can be exercised independently from each other, depending on your interests and preferences.
 
@@ -688,7 +670,7 @@ You should now have two windows open as shown in Figure~\ref{fig:tutorial-start}
 
 \infobox{
   The Docker container is running several foreground and background processes (to be explored later).
-  In future steps, you may want or need to start additional programs inside the running container. 
+  In future steps, you may want or need to start additional programs inside the running container.
   This can be done by running (in some other terminal window):
   \lstbox{
     \$ docker exec -ti home2l-showcase <command>
@@ -715,41 +697,48 @@ You should now have two windows open as shown in Figure~\ref{fig:tutorial-start}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
-\section{Exploring the \textit{ShowHouse}}
+\section{Exploring the Show House}
 \label{sec:tutorial-firststeps}
 \labeltool{home2l-showhouse}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-Now that the \textit{Home2L} showcase environment is up and running, it is time to enter the virtual \textit{ShowHouse} and look around a little bit.
+Now that the \textit{Home2L} showcase environment is up and running, it is time to enter the virtual show house and look around a little bit.
 
 Purpose of this section is to
 \begin{itemize}
   \item give an overview on the showcase system,
   \item introduce basic \textit{Home2L} features from a user perspective,
   \item demonstrate the distributed design paradigm and failure tolerance of the \textit{Home2Ls},
-  \item give a first impression of the power and capabilities of the \textit{Resources} library.
+  \item give a first impression of the capabilities of the \textit{Resources} library.
 \end{itemize}
 
 
 \subsection{Overview}
 \label{sec:tutorial-firststeps-overview}
 
-The \textit{Home2L} suite follows a highly distributed design paradigm. At this point, there are 4 tools (\textit{Home2L instances}) running on your machine -- two are visible, two others running in the background:
+The \textit{Home2L} suite follows a highly distributed design paradigm. At this point, there are 4 \textit{Home2L instances} running on your machine -- two are visible, two others are running in the background:
 
 \begin{enumerate}
 
   \item
-    The \textit{ShowHouse} (\reftool{home2l-showhouse}, left in Figure~\ref{fig:tutorial-start}) is a simulator for the physical world of the demo system. This little console application contains a \textit{Resource} driver providing a simulated motion sensor, a door lock sensor, window shades, a door light and some other gadgets. The user (you) can simulate physical actions by key presses, and some gadgets are visualized in the ASCII art picture.
+    The \textit{ShowHouse} (\reftool{home2l-showhouse}, left in Figure~\ref{fig:tutorial-start}) is a simulator for the
+    physical world of the demo system. This little console application contains a \textit{Resource} driver providing a
+    simulated motion sensor, a door lock sensor, window shades, a door light and some other gadgets. The user (you) can
+    simulate physical actions by key presses, and some gadgets are visualized in the ASCII art picture.
 
   \item
-    The \textit{WallClock} (\reftool{home2l-wallclock}, right in Figure~\ref{fig:tutorial-start}) is a universal information display to be mounted on room walls or installed on mobile devices. This instance is (virtually) mounted in the living room of the (virtual) house.
+    The \textit{WallClock} (\reftool{home2l-wallclock}, right in Figure~\ref{fig:tutorial-start}) is a universal
+    information display to be mounted on room walls or installed on mobile devices. This instance is (virtually)
+    mounted in the living room of the (virtual) house.
 
   \item
-    A \reftool{home2l-server} instance is running in the background, which in this tutorial hosts the weather driver (\reftool{home2l-drv-weather}).
+    A \reftool{home2l-server} instance is running in the background, which in this tutorial hosts the weather driver
+    (\reftool{home2l-drv-weather}) and the MQTT gateway (\reftool{home2l-drv-mqtt}).
 
   \item
-    A background script (\reftool{rules-showhouse}) executes various automation rules, for example to close the shades at night or to automate the outdoor light. This script will be explored later in Section \ref{sec:tutorial-rules}.
+    A background script (\reftool{rules-showhouse}) executes various automation rules, for example to close the shades
+    at night or to automate the outdoor light. This script will be explored later in Section \ref{sec:tutorial-rules}.
 
 \end{enumerate}
 
@@ -760,19 +749,19 @@ The following subsections explore this setup step by step, beginning with the mo
 
   No. Even if there is an instance \reftool{home2l-server} whose name suggests so,
   a \textit{Home2L} installation does not need a central server.
-  In this example, the weather driver could as well be loaded and executed by \textit{any}
+  In this example, the weather and the MQTT drivers could as well be loaded and executed by \textit{any}
   of the other three \textit{Home2L} instances.
 
-  On the other hand, in a larger installation, it may be useful to run multiple
+  In a larger installation, it may be useful to run multiple
   \textit{Home2L} server instances in order to improve failure resilience,
   to attach sensors/actors to different machines, or for maintenance reasons.
 
-  The assignment of the \textit{weather} driver to the \textit{server} instance is
+  The assignment of the drivers to the \textit{server} instance is
   configured in the \reftool{home2l.conf} configuration file and may be changed there.
 }
 
 
-\subsection{The \textit{WallClock} Home Screen}
+\subsection{The \textit{WallClock} Main Screen}
 \label{sec:tutorial-firststeps-wallclock}
 
 The \textit{WallClock} display shows the current time and date in its upper area. The bottom row contains launcher buttons to access the integrated calendar and music applets (to be explored later).
@@ -793,7 +782,7 @@ In the lower part of the display between the date and the launcher buttons, the 
 
 \begin{enumerate}
   \item the local outside temperature,
-  \item the \textit{radar eye} -- a visualization of weather radar around the building
+  \item the \textit{radar eye} -- a visualization of weather radar data around the building
     (the location is pre-configured for Augsburg, Germany),
   \item the mini floor plan,
   \item the room temperature.
@@ -807,8 +796,8 @@ Each of these fields visualizes some or multiple \textit{Home2L Resources} provi
   ... don't worry!
 
   The weather driver depends on an available internet connection and on the \textit{OpenData} server of
-  the German Weather Service (DWD). If the server is not reachable this time, the weather-related items 
-  are missing in the \textit{WallClock} display. 
+  the German Weather Service (DWD). If the server is not reachable this time, the weather-related items
+  are missing in the \textit{WallClock} display.
   If so: Do not worry, the other parts of the tutorial are not affected.
 
   You can diagnose the availabilty of weather data by running the weather driver directly
@@ -819,6 +808,7 @@ Each of these fields visualizes some or multiple \textit{Home2L Resources} provi
     \$ /opt/home2l/lib/home2l-drv-weather weather.debug=1
   }
 }
+
 
 
 \subsection{The \textit{WallClock} Floor Plan}
@@ -835,6 +825,10 @@ By pushing (or clicking on) the mini floor plan, you can open the full floor pla
   \item User is away for longer (e.g. on vacation).
 \end{enumerate}
 
+Depending on the use state, certain elements of the floor plan are highlighted. For example, the user is reminded to close the windows when leaving home or to lock the door over night.
+
+The currently active use state is indicated with a yellow label.
+
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.7\linewidth]{figs/wallclock-floorplan-3.png}
@@ -844,11 +838,10 @@ By pushing (or clicking on) the mini floor plan, you can open the full floor pla
 
 
 
-
-\subsection{The \textit{ShowHouse}}
+\subsection{The \textit{ShowHouse} Console Tool}
 \label{sec:tutorial-firststeps-showhouse}
 
-Now it is time to explore the \textit{ShowHouse} console tool by simulating some physical user actions and weather events.
+The \textit{ShowHouse} console tool allows to simulate certain physical user actions and weather events.
 
 \begin{itemize}[$\blacktriangleright$]
 
@@ -865,7 +858,7 @@ Now it is time to explore the \textit{ShowHouse} console tool by simulating some
     Did you notice that ...
     \begin{itemize}
       \item the shades close automatically at night?
-      \item the door light is activated for a few seconds if motion is detected (press 'M'),
+      \item the door light is activated for a few seconds if motion is detected (press ''M''),
         but only at night time?
       \item at night time, open windows or an unlocked main door are highlighted to draw the
         users' attention to it?
@@ -885,33 +878,48 @@ Now it is time to explore the \textit{ShowHouse} console tool by simulating some
 \end{itemize}
 
 
-\subsection{Interacting with the \textit{WallClock} UI}
-\label{sec:tutorial-firststeps-wallclock_ui}
+\subsection{Controlling the Home with the \textit{WallClock}}
+\label{sec:tutorial-firststeps-dialogs}
 
-Now let us explore how we can control various gadgets with the \textit{WallClock} UI.
+The \textit{WallClock} floor plan view allows to view, but also to interactively control various
+gadgets in the house. Since the gadgets are represented by \textit{Home2L} resources
+(see Chapter~\ref{ch:resources}), some more sophisticated controls are possible compared to other
+home automation user interfaces. For example, the user can override an automation rule for a given time
+and let the rule dominate again afterwards. Request attributes (see Section~\ref{sec:tutorial-shell-manipulate}
+and Section~\ref{sec:resources-requests}) can be set in order to, for example, not just turn on a light now,
+but to autmatically turn it off again in an hour.
+
+
+\subsubsection{Simple Usage}
+
+Simple switching lights or closing shades is almost as easy as pushing a light button.
+Especially for household members with little technical affinity, it is important that standard use cases are easy.
 
 \begin{itemize}[$\blacktriangleright$]
 
   \item
-    In the \textit{WallClock} window (floor plan screen), click on the roof window, close
-    the shades and open them again. You may also close them partially. You can do the same
-    with all the shades of the other windows.
+    In the \textit{WallClock} window, switch to the floor plan screen. In the \textit{ShowHouse} window,
+    make sure that it is day time and the weather is good (no rain).
 
   \item
-    The shades dialog has an ''Auto'' button, which lets you decide whether the shades should
-    be controlled manually or not. Verify this with the shades of the bedroom window.
-    Open and close it manually and check if it is still opened/closed automatically at
-    day or night time (press 'D' in the \textit{ShowHouse} window).
+    Long-push on the light icon near the main door and see that the light turns on.
+    Long-push again and see that the light turns off again.
 
   \item
-    Push the door light icon to switch the light on and off manually. Similar to the shades,
-    the dialog has an ''Auto'' button and lets you decide whether the light should be forced in an 
-    on/off state or whether automatic rule shall control it. By pushing long on the icon, 
-    you can toggle between the ''on'' and the ''auto'' state.
+    Long-push on the kitchen window shades (highlighted in Figure~\ref{fig:tutorial-floorplan-shades}) and
+    see that the shades move down and -- after another long push -- up again.
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=0.65\linewidth]{figs/wallclock-floorplan-shades.png}
+      \caption[l]{Floor plan with the kitchen shades partially closed (yellow)}
+      \label{fig:tutorial-floorplan-shades}
+    \end{figure}
 
   \item
     Click on one of the WiFi icons to switch on the (virtual) WiFi access points.
-    Then open some windows and unlock the main door.
+    Then open some windows and unlock the main door by pushing the respective buttons in the
+    \textit{ShowHouse} window.
 
     Now assume, you have to leave the house for a short (or a longer) period of time.
     Click on the ''temporarily away'' (or ''away for longer'') button in the bottom right
@@ -920,10 +928,162 @@ Now let us explore how we can control various gadgets with the \textit{WallClock
 
     Finally, click on the ''Auto'' button to indicate that you are back home.
 
+\end{itemize}
+
+
+
+\subsubsection{The Resource Dialog}
+
+Sometimes, just toggling between ''on'' and ''off'' or ''fully up'' and ''fully down'' is not sufficient,
+and a more fine-grained control is desired.
+Also, it is not always obvious how the above interactions interfere with the automation rules (remember that
+both the door light and the shades are also subject to automation).
+
+\begin{itemize}[$\blacktriangleright$]
+
   \item
-    Feel free to look around and try other features!
+    Tap on the light icon near the main door. The \textit{resource dialog} shown in
+    Figure~\ref{fig:tutorial-floorplan-light} appears.
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=0.65\linewidth]{figs/wallclock-floorplan-light.png}
+      \caption[l]{Resource dialog (door light)}
+      \label{fig:tutorial-floorplan-light}
+    \end{figure}
+
+    \infobox{
+      The dialog basically offers three options / buttons: ''Off'', ''On'', and ''Auto''.
+      The first two issue a request to turn the light off or on, respectively. The ''Auto'' button
+      removes the current user requests. Usually, automation rules take over control then.
+    }
+
+  \item
+    Select ''Off'', ''On'', and ''Auto''. See how the light behaves in each case.
+    Also push ''D'' and ''M'' in the \textit{ShowHouse} window and see that the automation
+    rule for turning on the light at night on motion is only effective if ''Auto'' has
+    been selected in the resource dialog.
+    \infobox{
+      Usually, the dialog disappears after pushing one of the value or ''Auto'' buttons.
+      By pushing long on these buttons, the dialog stays open.
+    }
+    \infobox{
+      Two values are relevant for a resource, which are often -- but not always -- the same:
+      \begin{enumerate}[a)]
+        \item the real value,
+        \item the desired value as requested by the user.
+      \end{enumerate}
+      By convention, the real value is shown in yellow color, and the currently requested value
+      is indicated by a colored (blue, in this example) button.
+    }
+    Finally, select ''Auto'' again and close the dialog.
+
+  \item
+    Tap on the kitchen window shades. A \textit{resource dialog} similar to the one shown in
+    Figure~\ref{fig:tutorial-floorplan-shades-auto} appears.
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=0.65\linewidth]{figs/wallclock-floorplan-shades-auto.png}
+      \caption[l]{Resource dialog for shades (no user request)}
+      \label{fig:tutorial-floorplan-shades-auto}
+    \end{figure}
+
+  \item
+    Close the shades by pushing the ''100\%'' button and open them again by selecting
+    ''0\%''. You may also close them partially by pushing any other numbered button
+    (see Figure~\ref{fig:tutorial-floorplan-shades-user}).
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=0.65\linewidth]{figs/wallclock-floorplan-shades-user.png}
+      \caption[l]{Resource dialog for shades (60\% position)}
+      \label{fig:tutorial-floorplan-shades-user}
+    \end{figure}
+
+  \item Press ''D'' in  the \textit{ShowHouse} window to toggle between day and night and
+    see that the kitchen shades no longer close at night. This is because the user (you) has set a
+    manual request in the previous step, and this user request has higher priority than the
+    automation rule.
+
+  \item
+    Select ''Auto'' in the resource dialog. Then press ''D'' in the \textit{ShowHouse} window to
+    toggle between day and night and see that the kitchen shades automatically close at night
+    and open at day time again.
+
+  \item
+    Tap on other gadgets in the floor plan and see how you can manipulate them.
+    \infobox{
+      The roof window has two controllable actuators: one for electrical shades, one for a window opener.
+      A short tap opens the resource dialog for the shades. A long push opens the dialog for the
+      window opener (with red buttons for disambiguation).
+    }
 
 \end{itemize}
+
+
+\subsubsection{Advanced Usage}
+
+The effects demonstrated above are implemented by the \textit{Resource} library and its models.
+Sometimes, the standard dialog cannot show the whole truth in all detail. For example, automation rules
+for safety-critical actions may place requests with a higher priority than normal user requests, and
+the user may wonder why his interaction appears to have no effect.
+
+This section shows how to look ''under the hood'' and to inspect all details of a resource.
+
+\begin{itemize}[$\blacktriangleright$]
+
+  \item
+    Open the resource dialog (Figure~\ref{fig:tutorial-floorplan-shades-auto}) for the kitchen window,
+    and push the button on the upper right (showing ''0.0\%'' in the figure). The dialog expands as
+    shown in Figure~\ref{fig:tutorial-floorplan-shades-details}.
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=0.7\linewidth]{figs/wallclock-floorplan-shades-details.png}
+      \caption[l]{Resource dialog with details}
+      \label{fig:tutorial-floorplan-shades-details}
+    \end{figure}
+
+    The text display is the raw representation of the underlying resource (details will follow in
+    Section~\ref{sec:tutorial-shell-inspect}).
+    \begin{itemize}
+      \item The first line shows the resource ID and type information.
+      \item The second line shows the current value.
+      \item Lines starting with ''!'' represent pending requests. The request labeled \lst{#user}
+        represents the current user request, the request \lst{#rules} has been set by the
+        automation script. In the example, the user request has a priority of 6 (\lst{*6}), the
+        rules request has a lower priority of 3 (\lst{*3}).
+    \end{itemize}
+
+  \item
+    Push various value buttons (0\%, ..., 100\%) or the ''Auto'' button and see how
+    the \lst{#user} request changes or disappears and how the actual value changes.
+    \infobox{
+      The edit button (bottom right) of the resource dialog allows to edit the request attributes
+      of the user request. For example, a start and/or end time or an alternative priority can be defined.
+      Also, values for which no button exists (e.g. odd percentage numbers) can be set here.
+
+      The syntax for request attributes is described in Section~\ref{sec:resources-syntax}.
+      The request ID (\lst{#user}) cannot be changed.
+    }
+
+  \item
+    Finally, push ''Auto'' and close the kitchen shades dialog again.
+
+  \item
+    Long-push on the roof window, expand the window dialog and open the roof window (100\%).
+    Then press ''R'' in the \textit{ShowHouse} window to simulate bad weather.
+    See how the window is closed during rain to avoid damage in the house, the request \lst{#safety}
+    has a higher priority than the user request.
+    \infobox{
+      The request \lst{#safety_wd} is a watchdog request to additionally increase the reliability
+      and enforce a fail-safe behavior if the automation rule or some network connection fails.
+      Details are explained in the \reftool{rules-showhouse} file.
+    }
+
+\end{itemize}
+
 
 
 \subsection{Is All This Stable and Robust? -- Failure Resilience}
@@ -1002,12 +1162,12 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
 \item
   To simplify the following steps, it is recommended to define an alias for running
   commands in the currently running Docker container.
-  
+
   Open a new terminal window and enter:
   \begin{lstlisting}[language=bash]
     $ alias DOCKER="docker exec -ti home2l-showcase"
   \end{lstlisting}
-  Make sure that all three windows -- the \textit{WallClock}, the \textit{ShowHouse} window and 
+  Make sure that all three windows -- the \textit{WallClock}, the \textit{ShowHouse} window and
   the new \textit{Shell} window are visible for you. See Figure~\ref{fig:tutorial-layout} for
   a recommended screen layout.
 
@@ -1063,6 +1223,7 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
 
 
 \begin{itemize}[$\blacktriangleright$]
+
 \item
   Use the commands 'c' and 'l' to explore the available resources and the namespace.
   Tab-completion is available.
@@ -1122,7 +1283,7 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
   }
 
 \item
-  The ''l'' command without arguments lists the current directory or object. 
+  The ''l'' command without arguments lists the current directory or object.
   Running it now displays the status of the outdoor light resource.
   \begin{lstlisting}[language=home2l]
     home2l> l
@@ -1157,7 +1318,7 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
   }
 
   Lines starting with ''?'' show a subscriber. In this example, the resource is subscribed by
-  the floor plan view of the \textit{WallClock} and the \textit{''UiDraw()''} function of 
+  the floor plan view of the \textit{WallClock} and the \textit{''UiDraw()''} function of
   the \textit{ShowHouse} script, which is responsible for redrawing the ASCII art on value changes.
 
 \item
@@ -1193,7 +1354,7 @@ We now manipulate the light by placing requests manually.
     /host/showhouse/world/light
     home2l> 1
     /host/showhouse/world/light[bool,wr] = 1 @2020-01-11-141039.993
-      ! (bool) 1         #shell        *8   @home2l-showcase<shell:431>/2020-01-11-141039
+      ! (bool) 1         #shell        *7   @home2l-showcase<shell:431>/2020-01-11-141039
       ! (bool) 0         #daytime      *4   @home2l-showcase<rules:359>/2020-01-11-135727
       ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
       ? wallclock/floorplan
@@ -1208,7 +1369,7 @@ We now manipulate the light by placing requests manually.
   \begin{lstlisting}[language=home2l]
     home2l> 0
     /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-141118.960
-      ! (bool) 0         #shell        *8   @home2l-showcase<shell:431>/2020-01-11-141118
+      ! (bool) 0         #shell        *7   @home2l-showcase<shell:431>/2020-01-11-141118
       ! (bool) 1         #motion       *3 -2020-01-11-141121.476   @home2l-showcase<rules:359>/2020-01-11-141116
       ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
       ? wallclock/floorplan
@@ -1216,7 +1377,7 @@ We now manipulate the light by placing requests manually.
   \end{lstlisting}
   This forces the light to stay off. Motion events have no effect on the
   light even at night, since their requests have a lower priority
-  (''*3'') than the default priority of shell requests (''*8'').
+  (''*3'') than the default priority of shell requests (''*7'').
 
 \item
   Finally, remove the manual shell request by typing
@@ -1244,7 +1405,7 @@ We now manipulate the light by placing requests manually.
   \begin{lstlisting}[language=home2l]
     home2l> 1 +2000 -5000
     /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-141118.960
-      ! (bool) 1         #shell        *8 +2020-01-11-141300.240 -2020-01-11-141303.240   @home2l-showcase<shell:431>/2020-01-11-141258
+      ! (bool) 1         #shell        *7 +2020-01-11-141300.240 -2020-01-11-141303.240   @home2l-showcase<shell:431>/2020-01-11-141258
       ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
       ? wallclock/floorplan
       ? showhouse/UiDraw
@@ -1276,6 +1437,7 @@ We now manipulate the light by placing requests manually.
 The shell allows to subscribe to any resources using the ''s+'' and ''s-'' commands, respectively.
 
 \begin{itemize}[$\blacktriangleright$]
+
 \item
   Subscribe to all resources provided by the \textit{ShowHouse} ''world'' driver:
   \begin{lstlisting}[language=home2l]
@@ -1419,6 +1581,284 @@ The \textit{Home2L Shell} can be run non-interactively, so that certain actions 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
+\section{Using MQTT}
+\label{sec:tutorial-mqtt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Getting Started}
+\label{sec:tutorial-mqtt-start}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The showcase environment contains a running \href{https://mosquitto.org}{Mosquitto} MQTT broker.
+Also, the \textit{Home2L} MQTT gateway driver (\reftool{home2l-drv-mqtt}) is configured to export and
+import a couple of resources. Both are already running.
+
+To get started, we first open two new terminal windows to monitor the MQTT traffic and to publish
+MQTT messages manually.
+
+\begin{itemize}[$\blacktriangleright$]
+
+\item
+  Open a new terminal window and start a command to monitor all messages of the MQTT broker:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER mosquitto_sub -v -t '#'
+    home2l/doorLock 0
+    home2l/frontLight off
+    home2l/online 1
+    mailbox/state 0
+    mailbox/online 1
+  \end{lstlisting}
+  This window will be called the \textit{MQTT broker} window.
+
+  \infobox{
+    The initial output shows a number of topic/payload pairs that are already present as retained MQTT
+    messages. The topics \lst{home2l/doorLock} and \lst{home2l/frontLight} refer to the state of two
+    \textit{Home2L} resources configured to be exported by MQTT (see Section~\ref{sec:tutorial-mqtt-exports}).
+    The topic \lst{home2l/online} indicates that the \textit{Home2L} MQTT gateway driver is online and alive.
+    The topics \lst{mailbox/state} and \lst{mailbox/online} are \textit{not} controlled by the MQTT
+    gateway driver. They refer to an external imported device and have been preset just by the
+    \lst{home2l demo} script (see Section~\ref{sec:tutorial-mqtt-imports}).
+  }
+
+\item
+  Open another new terminal window and start a command shell in the showcase environment:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER bash
+  \end{lstlisting}
+  This window will be called the \textit{MQTT command} window and will be used to manually publish
+  MQTT messages.
+
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Exported Resources}
+\label{sec:tutorial-mqtt-exports}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The MQTT gateway is configured to export the door lock sensor (\lst{/alias/doorLock}) and the front door light (\lst{/alias/frontlight}) of the show house.
+
+
+\begin{itemize}[$\blacktriangleright$]
+
+\item
+  In the \textit{ShowHouse} window, push ''L'' multiple times to lock and unlock the door.
+  In the \textit{MQTT broker} window, you can see the respective state messages:
+  \begin{lstlisting}[language=bash]
+    home2l/doorLock 1
+    home2l/doorLock 0
+  \end{lstlisting}
+
+\item
+  In the \textit{WallClock} window, open the floor plan and switch on and off the front door light.
+  In the \textit{MQTT broker} window, you can see the respective state messages:
+  \begin{lstlisting}[language=bash]
+    home2l/frontLight on
+    home2l/frontLight off
+  \end{lstlisting}
+
+\item
+  In the \textit{MQTT command} window, enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t home2l/frontLight/cmd -m on
+  \end{lstlisting}
+  and see that the front light switches on. Then enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t home2l/frontLight/cmd -m off
+  \end{lstlisting}
+  and see that the front light switches off and remains off, even if it would otherwise be switched on
+  due an automation rule (motion at night).
+  Finally, enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t home2l/frontLight/cmd -n
+  \end{lstlisting}
+  to let the automation rule become effective again.
+
+\item
+  In the \textit{WallClock} window, click on the front door light and expand the window
+  as shown in Figure~\ref{fig:tutorial-floorplan-light-mqtt}. Then repeat the previous step and see
+  that a request with the ID \lst{#mqtt} appears, changes and finally disappears again. This request
+  is maintained by the MQTT commands received.
+
+\end{itemize}
+
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\linewidth]{figs/wallclock-floorplan-light-mqtt.png}
+  \caption[l]{Details of the front door light resource with an active MQTT request}
+  \label{fig:tutorial-floorplan-light-mqtt}
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Importing a (Virtual) Mailbox Sensor}
+\label{sec:tutorial-mqtt-imports}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This section demonstrates how MQTT-enabled devices are integrated into the \textit{Home2L} set of resources.
+
+The MQTT gateway is configured to import a resource (\lst{/host/server/mqtt/mailbox} or \lst{/alias/mailbox}),
+a sensor device that indicates whether there is mail in the mailbox.
+
+The device publishes the state via the MQTT topic \lst{mailbox/state}. Also, the device publishes its aliveness via the MQTT topic \lst{mailbox/online} and sets a last-will-and-testament (LWT) message accordingly.
+
+Since a real sensor device may not be available to you at the time you run this tutorial, we will simulate
+the device by publishing its messages manually. To get started, the \lst{home2l demo} script has already
+published \lst{mailbox/online=1} and \lst{mailbox/state=0} before, which corresponds to a working device
+indicating that the mailbox is empty.
+
+\begin{itemize}[$\blacktriangleright$]
+
+\item
+  Open a new terminal window and run the following command to observe the mailbox resource:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER home2l shell -e "s+ /alias/mailbox; f"
+    home2l-shell v1.1-57 (2020-07-30) by Gundolf Kiefer
+
+    Subscriber 'home2l-showcase<shell:1342>/shell'
+      /host/server/mqtt/mailbox?
+    : /host/server/mqtt/mailbox = ?
+    : /host/server/mqtt/mailbox = 0 @2020-07-30-203102.418
+    : /host/server/mqtt/mailbox connected
+  \end{lstlisting}
+
+\item
+  In the \textit{MQTT command} window, enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t mailbox/state -m 1
+  \end{lstlisting}
+  and see that the mail icon appears in the \textit{WallClock} floor plan to indicate that new mail arrived.
+  Enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t mailbox/state -m 0
+  \end{lstlisting}
+  and see that the mailbox icon disappears again.
+
+\item
+  Enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t mailbox/online -m 0
+  \end{lstlisting}
+  to simulate that the sensor device has a failure and gets disconnected. The mail icon with a red frame
+  appears in the floor plan to indicate that the device is not working properly.
+  Finally enter
+  \begin{lstlisting}[language=bash]
+    $ mosquitto_pub -r -t mailbox/online -m 1
+  \end{lstlisting}
+  to simulate that the device is alive again. The icon disappears.
+
+\end{itemize}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Import Your Own Real Hardware!}
+\label{sec:tutorial-mqtt-real}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This section describes how to replace the outdoor light of the \textit{ShowHouse} with a real MQTT-enabled power switch. It has been tested with a \textit{Delock 11826} device running \href{https://tasmota.github.io/docs}{Sonoff-Tasmota 6.7.1} firmware. For other devices, the file \reftool{home2l.conf} contains commented \refenv{mqtt.import.<ID>} examples that may be used and adapted to match your own actual device. In general, any type of on/off switch that is able to report its state can be used here.
+
+At your choice, it possible to use either your own MQTT broker or the MQTT broker of the demo system.
+
+\warnbox{
+  This tutorial step involves restarting the Docker container in ''host networking'' mode. This means that
+  all listening network ports of the container bind to your host machine’s network, with no network isolation.
+  To avoid conflicts, no process on your host should use the \textit{Home2L} ports 4700 .. 4709 (see
+  \lst{resources.conf}). Also, no MQTT broker should be running on your host machine if you use the container's
+  broker and vice versa.
+}
+
+\begin{itemize}[$\blacktriangleright$]
+
+\item
+  Stop the running Docker container by pressing \textit{Q} and then \textit{Ctrl-D} in the
+  \textit{ShowHouse} window.
+
+\item
+  Start the Docker image again as described Section~\ref{sec:tutorial-start}, but with the additional option
+  \begin{lstlisting}
+    ... --network host ...
+  \end{lstlisting}
+  inserted \textit{before the last argument}.
+
+\item
+  Open the file \lst{resources.conf} in a text editor:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER_ROOT nano home2l.conf
+  \end{lstlisting}
+
+\item
+  Search \textit{(F6)} for the line starting with \lst{mqtt.import.switchTasmota}, read the comments before
+  this line and check that the topic matches the one configured in your device.
+
+\item
+  \textbf{If you want to use your own MQTT broker:}
+  \begin{enumerate}
+    \item Edit the following line and replace \lst{localhost:1883} with the IP address and port of your broker.
+      \begin{lstlisting}
+      mqtt.broker = localhost:1883
+      \end{lstlisting}
+    \item Disable the internal broker by commenting out the following line in section ''Daemon'':
+      \begin{lstlisting}
+      daemon.run.mqtt   = /usr/sbin/mosquitto
+      \end{lstlisting}
+  \end{enumerate}
+
+\item
+  \textbf{If you want to use the broker of the demo container:}
+  \begin{enumerate}
+    \item Make sure that no other MQTT broker is running on your host machine.
+    \item Configure your device to use \lst{<IP>:1883} as the broker, where \lst{<IP>} is the IP address
+      of your machine.
+  \end{enumerate}
+
+\item
+  Save \textit{(Ctrl-S)} and exit \textit{(Ctrl-X)} the editor.
+
+\item
+  Edit the file \lst{resources.conf} in a text editor:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER_ROOT nano resources.conf
+  \end{lstlisting}
+  For the front light, an alias is used. It presently points to a resource provided by the \textit{ShowHouse}
+  and will now be changed to point to your MQTT device.
+
+  Change the line defining the alias \lst{frontLight} as follows:
+  \begin{lstlisting}
+    A frontLight      server/mqtt/switchTasmota
+  \end{lstlisting}
+
+  Save \textit{(Ctrl-S)} and exit \textit{(Ctrl-X)} the editor.
+
+\item
+  To make these changes effective, all tools must be restarted. Quit the \textit{WallClock} and
+  the \textit{ShowHouse} (press ''Q''). Then run the following commands in the \textit{ShowHouse} window:
+  \begin{lstlisting}[language=bash]
+    $ home2l demo stop   # stop background services
+    $ home2l demo run
+  \end{lstlisting}
+
+  \textbf{Your done!}
+
+\item
+  Interact with the \textit{ShowHouse} or \textit{WallClock} and see how the front door light
+  is operated by your device!
+
+\end{itemize}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
 \section{Writing Automation Rules}
 \label{sec:tutorial-rules}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1433,7 +1873,7 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Introduction to the Python Package}
+\subsection{Introduction to the Python API}
 \label{sec:tutorial-rules-python}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1565,15 +2005,15 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
   Resources can be manipulated by setting requests, for example, as follows:
   \begin{lstlisting}[language=python]
     >>> rcLight = RcGet ("/alias/frontLight")
-    >>> rcLight.SetRequest (True, "*8 -5000")
+    >>> rcLight.SetRequest (True, "*5 -5000")
   \end{lstlisting}
   The last command could also be written as:
   \begin{lstlisting}[language=python]
-    >>> rcLight.SetRequest (True, priority = 8, t1 = TicksOf (5000))
+    >>> rcLight.SetRequest (True, priority = 5, t1 = TicksOf (5000))
   \end{lstlisting}
   ... or both together like:
   \begin{lstlisting}[language=python]
-  >>> RcSetRequest ("/alias/frontLight", "1 *8 -5000")
+  >>> RcSetRequest ("/alias/frontLight", "1 *5 -5000")
   \end{lstlisting}
   Actually, the methods \refapipython{CResource.SetRequest()} and \refapipython{RcSetRequest()}
   offer a wide range of possibilities to pass arguments. Values and attributes can be passed as strings
@@ -1614,7 +2054,7 @@ The rule monitors the current time and whenever the time changes, the value is p
   \end{lstlisting}
 
   (Mind the indentation!)
-  
+
   The function \textit{OnTime()} is prefixed with the decorator \refapipython{@onUpdate}, which makes it
   to be executed automatically whenever the passed resource \textit{rcNow} changes its value or state.
 
@@ -1688,7 +2128,7 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
 \item
   In the next steps, we will modify the rules script. To facilitate editing and debugging,
   we will run it in the foreground as long as we work on it.
-  
+
   Stop the \textit{Home2L} daemon:
   \begin{lstlisting}[language=bash]
     $ DOCKER demo stop
@@ -1875,7 +2315,7 @@ The following additional hardware is required for this part of the tutorial:
   \begin{enumerate}
     \item The adapter must support \textit{clock stretching}.
     \item The tutorial assumes a power supply of 5V coming from the adapter or host. Other supply voltages
-          between 2V and 5V are possible, too. If a supply voltage other than 5V is used, the only 
+          between 2V and 5V are possible, too. If a supply voltage other than 5V is used, the only
           required change in the circuit is LED pre-resistor, which should be adapted accordingly.
   \end{enumerate}
 }
@@ -1963,7 +2403,7 @@ Now we will test the hardware step-by-step and then prepare the \textit{Brownie}
 \begin{itemize}[$\blacktriangleright$]
   \item
     Stop the running Docker container by pressing \textit{Q} and then \textit{Ctrl-D} in the \textit{ShowHouse} window.
-    
+
   \item
     Connect the \textit{i2c} interface adapter to the PC.
 
@@ -2120,7 +2560,7 @@ Now we will test the hardware step-by-step and then prepare the \textit{Brownie}
     The errors shown here were caused by the \textit{''scan''} commands as they tried to contact non-existing
     devices. The 452 (=706-254) successful operations are related to the remaining activities, mainly
     firmware programming and configuration.
-    
+
     Reset the statistics:
     \begin{lstlisting}[language=brownie2l]
       brownie2l> statistics -r
@@ -2180,9 +2620,9 @@ Let us replace the outdoor light of the \textit{ShowHouse} with a real light -- 
     \begin{lstlisting}[language=bash]
       $ DOCKER_ROOT nano resources.conf
     \end{lstlisting}
-    For the front light, an alias is used. It presently points to a resource provided by the \textit{ShowHouse} 
+    For the front light, an alias is used. It presently points to a resource provided by the \textit{ShowHouse}
     and will now be changed to point to the \textit{Brownie's} GPIO resource connected to the LED.
-    
+
     Change the line defining the alias \lst{frontLight} as follows:
     \begin{lstlisting}
       A frontLight      server/brownies/showgarden/gpio/00
@@ -2196,7 +2636,7 @@ Let us replace the outdoor light of the \textit{ShowHouse} with a real light -- 
       $ home2l demo stop   # stop background services
       $ home2l demo run
     \end{lstlisting}
-    
+
     \textbf{Your done!}
 
   \item
@@ -2254,7 +2694,7 @@ The \textit{WallClock}'s music player is a \href{https://www.musicpd.org/}{Music
 
   To play audio from the Docker container, it is important that on your host system
   \textit{no other process} uses the sound card.
-  
+
   Such processes can be identified by:
   \lstbox{
     \# lsof 2>/dev/null | grep /dev/snd | grep -v 5000
@@ -2489,8 +2929,6 @@ The following instructions have last been tested with \textit{VirtualBox 5.2.10}
 
 
 
-% TBD: Subsubsection "Multiple containers?"
-
 %\infobox{
 %  \textbf{For experienced users:}
 %
@@ -2535,6 +2973,8 @@ This chapter gives some background information on the \textit{Home2L} build syst
 
 The \textit{Home2L} suite is not a piece of software to be installed on a single computer, but instead, the \textit{Home2Ls} are installed in a ''home'', which is a heterogeneous \textit{cluster} of machines with different hardware (e.g.~x86, ARM) and operating software environments (e.g.~Debian, Android).
 For this reason, the build system supports cross-compilation and installation for multiple architectures.
+
+Sometimes, a user may not want or need a cluster installtion, but only use individual tools and drivers on a single machine and integrate them into an existing environment. In such a case, the installation and administration is \textit{much} simpler than this chapter may suggest. Please skip over to Section~\ref{sec:managing-standalone} for information on a standalone installation.
 
 
 
@@ -2635,8 +3075,7 @@ To build and install the suite, do the following:
     $ make <options>
   \end{lstlisting}
 \item
-  Install the \textit{blob} to \textit{\$HOME2L\_ROOT} (default:
-  \textit{/opt/home2l}):
+  Install the \textit{blob} to \textit{\$HOME2L\_ROOT} (default: \textit{/opt/home2l}):
   \begin{lstlisting}[language=bash]
     $ make <options> install
   \end{lstlisting}
@@ -2644,7 +3083,7 @@ To build and install the suite, do the following:
 
 This will install the so-called \textit{Home2L blob} on your computer. It
 contains all files for all architectures together with a sample
-configuration (in \textit{\$HOME2L\_ROOT/etc/}). This \textit{blob} can now be simply
+configuration (in \textit{\$HOME2L\_ETC}). This \textit{blob} can now be simply
 copied to all machines of your cluster. The \reftool{home2l-rollout} tool
 can automate that for software or configuration updates.
 To use the \textit{Home2Ls}, some additional things have to be set up.
@@ -2845,9 +3284,9 @@ This can be viewed using \textit{adb(1)}:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-A typical \textit{Home2L} installation is distributed over multiple
-computers (\textit{machines}), on each of which one ore multiple \textit{Home2l instances}
-may be running. There is no central server, all \textit{Home2L instances} are equal in rank.
+A typical \textit{Home2L} installation is distributed over multiple computers (\textit{machines}), on each of which one ore multiple \textit{Home2l instances} may be running. There is no central server, all \textit{Home2L instances} are equal in rank.
+
+This chapter assumes a cluster installation with multiple \textit{Home2L} instances potentially running on multiple machines. For a standalone use of selected tools without networking, see Section~\ref{sec:managing-standalone}.
 
 
 
@@ -2933,21 +3372,24 @@ In this document, the following terminology is used:
 \labeltool{home2l-adb}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 The common tools for maintaining \textit{Home2L} installations are:
 
 \begin{itemize}
+\item
+  \textbf{\reftool{home2l-install}:} Internal tool for performing
+  various installation tasks on the local machine. This tool is usually not
+  called manually, but indirectly by \reftool{home2l-rollout}.
+\item
+  \textbf{\reftool{home2l-rollout}:} Tool to distribute configuration
+  changes or software updates from the master to the other machines.
 \item
   \textbf{\reftool{home2l-shell}:} The command line interface
   and ''swiss army knife'' to access and inspect the \textit{Home2L}
   resources. Details can be found in Section~\ref{sec:shell}.
 \item
-  \textbf{\reftool{home2l-rollout}:} Tool to distribute configuration
-  changes or software updates from the master to the other machines.
-\item
-  \textbf{\reftool{home2l-install}:} Internal tool for performing
-  various installation tasks on the local machine. This tool is usually not
-  called manually, but indirectly by \reftool{home2l-rollout}.
+  \textbf{\reftool{home2l-brownie2l}:} The command line interface
+  and ''swiss army knife'' to maintain \textit{Home2L Brownie} networks.
+  Details can be found in Section~\ref{sec:brownies-brownie2l}.
 \item
   \textbf{\reftool{home2l-sudo}:} (optional) Container to allow the
   \textit{home2l} user to perform a limited set tasks with
@@ -2984,11 +3426,40 @@ Tools can generally be invoked in one of two ways:
   \begin{lstlisting}[language=bash]
     $ home2l shell
   \end{lstlisting}
-  The script named \textit{home2l} sets the environment variables and calls the tool passed as arguments.
+  The script named \lst{home2l} sets the environment variables and calls the tool passed as arguments.
   To make this work, a symbolic link to \textit{\$HOME2L\_ROOT/bin/home2l} must exist somewhere in
   the search path (e.g. in \textit{/usr/local/bin})
 
 \end{enumerate}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Environment Variables}
+\label{sec:managing-env}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+The following environment variables have an effect on the execution of any \textit{Home2L}:
+\begin{itemize}
+  \item \lst{HOME2L_ROOT}: Root directory of the \textit{Home2L} installation [Default: \lst{/opt/home2l}]
+  \item \lst{HOME2L_ETC}: Root directory of the \textit{Home2L} configuration files
+      [Default: \lstf{\$HOME2L\_ROOT/etc} ]
+  \item \lst{HOME2L_VAR}: Root directory of \textit{Home2L} generated files
+      [Default: \lstf{\$HOME2L\_ROOT/var} ]
+  \item \lst{HOME2L_TMP}: Root directory of \textit{Home2L} temporary files
+      [Default: \lstf{\$HOME2L\_ROOT/tmp} ]
+  \item \lst{HOME2L_CONF}: Optional whitespace-separated list of extra configuration settings.
+      See Section~\ref{sec:managing-env} for details. These settings may supplement or override
+      those of the \reftool{home2l.conf} configuration file.
+\end{itemize}
+
+By convention, the names \lst{HOME2L_ROOT}, \lst{HOME2L_ETC}, \lst{HOME2L_VAR}, and \lst{HOME2L_TMP} refer to either the value of these variables or to their defaults, if the respective environment variable has not been defined explicitly.
+
+Please note, that \lstf{\$HOME2L\_ROOT/etc}, \lstf{\$HOME2L\_ROOT/var}, and \lstf{\$HOME2L\_ROOT/tmp} may
+be symbolic links, which is the common way to define system-wide locations for these directories.
 
 
 
@@ -3059,9 +3530,8 @@ A set of sample configuration files is automatically installed with a new instal
 \label{sec:home2lconf-overview}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The main configuration file is expected to be \textit{\$HOME2L\_ROOT/etc/home2l.conf}.
-An alternative file can be specified by the \lst{HOME2L_CONFIG} environment
-setting or the \textit{''-c''} command line option of most tools.
+The main configuration file is expected to be \textit{\$HOME2L\_ETC/home2l.conf}.
+An alternative file can be specified by the \refenv{home2l.config} configuration parameter.
 
 All \textit{Home2Ls} and all applications linked against the
 \textit{Home2L} library have access to parameters defined there via the
@@ -3078,7 +3548,6 @@ The characters ';' and '\#' start a comment, everything following them is ignore
 
 Examples:
 \begin{lstlisting}
-
 example.someInt = 17            # some integer value
 example.string1 = Hello world!  # a string with 12 characters
 example.string2 = "  space  "   # a string with 9 characters
@@ -3088,14 +3557,12 @@ example.bool1 = 0               # Boolean value, equivalent to '-', 'F', 'f', ..
                                 # ... 'false', 'False', or 'FALSE'
 example.bool2 = true            # Boolean value, equivalent to '1', '+', 'T', 't', ...
                                 # ... 'True', or 'TRUE'
-                                
+
 \end{lstlisting}
 
 Keys are case-sensitive. Additional parameter settings can be specified
-by the \lst{HOME2L_EXTRA} environment variable (which precedes
-over settings in the configuration file) and as command line parameters
-for most tools (which would precede over the configuration file or
-\lst{HOME2L_EXTRA} settings).
+by the \lst{HOME2L_CONF} environment variable (which precedes
+over settings in the configuration file).
 
 For example, the following command runs the
 \textit{Home2L Server} application with additional debug output:
@@ -3104,15 +3571,16 @@ For example, the following command runs the
 \end{lstlisting}
 
 The contents of the main configuration file can be split into multiple files.
-The following assignment has a special meaning
-and acts as an \textit{include} directive. Multiple and nested includes are possible.
+The following assignment has a special meaning and acts as an \textit{include} directive.
+The file name may be an absolute pathname or is searched relative to \refenv{sys.etcDir}.
+Multiple and nested includes are possible.
 \begin{lstlisting}
-include = <path relative to $HOME2L_ROOT/etc>
+include.<some name> = <file>
 \end{lstlisting}
 
 The available set of keys is tool-dependent. Unknown keys are ignored silently.
 
-The ommonly relevant parameters are explained in Section~\ref{sec:env-common}.
+The commonly relevant parameters are explained in Section~\ref{sec:env-common}.
 Most tools have tool-specific parameters. They are listed and explained with the
 documentation of the respective tool.
 
@@ -3219,8 +3687,8 @@ HOME2L_ENV=<your path to the 'env.sh' file>
 \end{lstlisting}
 
 The correct setting for a running installation can be obtained by:
-\begin{lstlisting}
-home2l -e
+\begin{lstlisting}[language=bash]
+$ home2l -e
 \end{lstlisting}
 
 
@@ -3285,6 +3753,63 @@ tag ''SECURITY'' to facilitate intrusion detection.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Standalone Installation}
+\label{sec:managing-standalone}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Sometimes, a user may not want to exploit the full power of the \textit{Resources} library and just wants to use individual tools and drivers and integrate them into an existing environment. In such a case, the installation is much simpler.
+
+The following instructions describe a standalone installation assuming that only the driver \reftool{home2l-drv-brownies} is to be used, and that some of its sensors are to be exported via MQTT (\reftool{home2l-drv-mqtt}).
+
+
+\subsubsection*{Building and Installing}
+
+\begin{lstlisting}[language=bash]
+$ make CFG=basic                    # Run 'make help' to see further options
+$ sudo make CFG=basic install
+$ /opt/home2l/bin/home2l-install -i
+\end{lstlisting}
+
+
+\subsubsection*{Configuration}
+
+Create a main configuration file \lst{/opt/home2l/etc/home2l.conf} with the following contents:
+\begin{lstlisting}
+rc.config=""            # declare that there is no 'resources.conf' file
+
+# Configure the Brownies driver ...
+drv.brownies=1          # enable the Brownies driver
+br.link=/dev/i2c-1      # define the i2c device (adapt as adequate)
+
+# Configure MQTT ...
+drv.mqtt=1              # enable MQTT
+mqtt.broker=mybroker    # MQTT broker (adapt as adequate)
+mqtt.exportSet=/local/brownies/*/temp  # export some sensors (adapt as adequate)
+\end{lstlisting}
+
+The sections for the \textit{Brownies} driver and the MQTT broker are just examples and may be changed or extended as adequate. For using \textit{Brownies}, the file \lst{/opt/home2l/etc/brownies.conf} must be provided as described in Section~\ref{sec:brownies-database}.
+
+
+\subsubsection*{Running}
+
+To run the two drivers, the tool \reftool{home2l-server} can be used, which may also be run in the background:
+\begin{lstlisting}[language=bash]
+$ home2l server
+\end{lstlisting}
+
+Alternatively, the drivers may be hosted by a \textit{Home2L} shell, which allows an interactive inspection of the resources, for example, for debugging purposes:
+\begin{lstlisting}[language=bash]
+$ home2l shell
+home2l> l /local/brownies/
+...
+\end{lstlisting}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{List of Common Configuration Parameters}
 \label{sec:env-common}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3295,6 +3820,8 @@ Parameters declared ''read-only'' cannot be set in \reftool{home2l.conf}.
 \input{ref_env_common}
 
 \input{ref_env_daemon}
+
+
 
 
 
@@ -3409,7 +3936,7 @@ Applications can participate in the cluster either with or without running a \te
 \infobox{
   \textbf{Checklist: Enabling a \textit{Home2L} Server}
 
-  Each application linked against the \textit{Resources} library has the ability to host drivers and 
+  Each application linked against the \textit{Resources} library has the ability to host drivers and
   to run a server in the background.
 
   To enable the local server, the following conditions must be met:
@@ -3420,9 +3947,9 @@ Applications can participate in the cluster either with or without running a \te
   \end{enumerate}
   For security reasons, the server is not started (and no listening network port is opened) if
   any of these conditions is not met.
-  
+
   Client functionality is always available.
-   
+
   Hosting drivers does not strictly require that the server is enabled, but the resources will then
   only be available locally.
 }
@@ -3528,6 +4055,8 @@ The following command prints an up-to-date list of all types for the current ins
   $ home2l shell -e types
 \end{lstlisting}
 
+The syntax of values is described in Section~\ref{sec:resources-syntax}.
+
 
 
 \subsection{States}
@@ -3537,18 +4066,18 @@ A resource can assume one of the following states:
 
 \begin{itemize}
   \item \textit{valid} (\refapic{rcsValid}): The value is known and valid.
-  \item \textit{busy} (\refapic{rcsBusy}): The value is known, but the resource is busy.
+  \item \textit{busy} (\refapic{rcsBusy}): The value is generally known, but potentially inaccurate.
   \item \textit{unknown} (\refapic{rcsUnknown}): The value is unknown.
 \end{itemize}
 
 The \textit{busy} state may indicate that an actor-like resource is
-anticipating some new value, but has not yet reached it. For example, if
-window shades are requested to close (value 0), the state/value may be
-\textit{busy/0} (also written as ''\textit{!0}'') while the shades are
-moving down and then change to \textit{valid/0} when the shades are
-actually down. Or, if a computer is requested to start (value \textit{true}),
-the driver may report a state/value of \textit{busy/true} while
-the machine is booting and then later switch to \textit{valid/true} as soon as
+currently working and anticipating some new value. For example, if
+open window shades (value 0) are requested to close (value 100), the state may be
+\textit{busy} (also written as ''\textit{!0}'') while the shades are
+moving and then change to \textit{valid/100} after it is sure they reached
+their final position. Or, if a powered-off computer is requested to
+start (value \textit{true}), the driver may report a state/value of \textit{busy/false}
+while the machine is booting and then later switch to \textit{valid/true} as soon as
 it is ready to use.
 
 The \textit{unknown} state may be reported for a variety of reasons, for example:
@@ -3560,9 +4089,9 @@ The \textit{unknown} state may be reported for a variety of reasons, for example
 \end{itemize}
 
 It is important to note that application developers do not have to take
-extra actions for error checking. Whenever anything happens that may
-make the actual state unsure, the \textit{Resources} library will turn the
-state to \textit{unknown} and report this to the subscribers.
+extra care for error checking except checking the state.
+Whenever anything happens that may make the actual state unsure, the \textit{Resources} library
+will turn the state to \textit{unknown} and report this to the subscribers.
 
 The observed state of a resource is not necessarily the same on all hosts. For example, a resource
 may be \textit{valid} on the serving host, but \textit{unknown} on some other host due to
@@ -3727,9 +4256,11 @@ Additionally, a request may have optional attributes as follows. In brackets, th
 
 \item[\textit{Priority}] (\textit{priority} / \texttt{*<prio>}) \\
   This is a number between 0 (= lowest, \refapic{rcPrioMin}) and 9 (= highest, \refapic{rcPrioMax}).
-  The normal priority is 3 (\refapic{rcPrioNormal}). If multiple requests at the same priority exist,
-  the oldest one dominates. (This behavior is required to allow the implementation of Mutexes,
-  where lock owners cannot be preempted.)
+  If multiple requests at the same priority exist, the oldest one dominates
+  (This behavior is required to allow the implementation of Mutexes, where lock owners cannot be preempted).
+
+  The conventions for using the priorities are described in the
+  \refapicgroup{resources__requests}{Resources / Requests secion of the C/C++ API documentation}.
 
 \item[\textit{Start time} (or \textit{on time})] (\textit{t0} / \texttt{[+<rep>]+<time>}) \\
   The request becomes active then, but is not considered before.
@@ -3785,7 +4316,7 @@ recommended to always supply an end time for triggers (which may be equal to the
       \item Pushing one of the user buttons ''up'' and ''down'' generates a timed requests
         \textit{\#user} with the off time attribute set to some time in the future
         (e.~g. 1 hour after the button was pushed)
-        and an increased priority of 7. This request will dominate over the script's
+        and an increased priority of 6. This request will dominate over the script's
         request, and after the off time, the script request will take over again.
     \end{itemize}
 
@@ -3829,7 +4360,7 @@ recommended to always supply an end time for triggers (which may be equal to the
 %
 \clearpage
 \section{The \textit{Shell} -- The Command Line Interface to \textit{Resources}}
-\label{sec:shell} \labeltool{home2l-shell}
+\label{sec:resources-shell} \labeltool{home2l-shell}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -3932,7 +4463,7 @@ As outlined here, the driver must provide up to three operations:
 \item[The ''DriveValue'' operation]
   is only called and required for writable resources. It must drive a new value
   to the real device (e.g.~some actor) to make something happen.
-  
+
   It is \textit{neither necessary nor allowed} to call any \refapic{CResource} method here.
   The sole task of the driver is to operate its hardware. By default, the driven value with
   a state of ''valid'' is reported automatically. If this is not appropriate
@@ -4110,7 +4641,7 @@ The driver function \textit{DriverFunc()} is responsible for driving values to w
 
 Different from binary drivers, a Python driver is always called synchronously from the main Python thread (from \refapipython{Home2lRun()} or \refapipython{Home2lIterate()}) in a deferred way. Before this, immediately after the internal ''Drive'' operation, a state change towards ''busy'' is reported automatically. This automatic reporting behavior can be modified by the optional \textit{successState} argument of \textit{@newDriver} decorator (see \refapipython{NewDriver()} for possible options).
 
-Value and state changes can be reported any time by the \refapic{CResource::ReportValueState()} method. 
+Value and state changes can be reported any time by the \refapic{CResource::ReportValueState()} method.
 If only the value changed, \refapic{CResource::ReportValue()} can be used instead. With the \theapipython{}, the \refapic{CResource::Report...()} methods are the only ones that can be called from any thread. All other API functions must be called from the main thread.
 
 
@@ -4137,7 +4668,7 @@ The syntax of a \textbf{value/state} object is:
 
 <value> ::= <bool> | <int> | <float> | <string> | <time> | <unitval> | <enumval>
 
-  <bool>    ::= [0fF] | [1tT+]              : Boolean value
+  <bool>                                    : Boolean value (see below)
   <int>     ::= [-][0-9]+                   : Integer value
   <float>   ::= [-][0-9]*[.[0-9]+][E[+/-][0-9]+]  : Floating-point value
   <string>  ::= [0-9a-zA-Z\]+ | \0          : String (\-escaped, UTF8 encoding)
@@ -4148,6 +4679,27 @@ The syntax of a \textbf{value/state} object is:
 \end{lstlisting}
 
 A \textit{<valueState>} expression must not contain any spaces. Type and timestamp attributes in \textit{<valueStateFull>} are separated by spaces.
+
+Boolean values (type \textit{bool}) are always output as \lst{0} or \lst{1}, respectively. However, as inputs, any of the following alternative strings are accepted in a case-insensitive way:
+\begin{itemize}
+  \item \lst{0}, \lst{-}, \lst{false}, \lst{off}, \lst{no}
+  \item \lst{1}, \lst{+}, \lst{true}, \lst{on}, \lst{yes}
+\end{itemize}
+
+\textbf{Time values} \textit{<time>} -- either as a value or a an start/end/repeat time specification --  can be
+specified in several alternative formats:
+\begin{lstlisting}
+YYYY-MM-DD[-hhmm[ss[.<millis>]]] : Date and time, interpreted as local time
+
+t<unsigned integer>   : Absolute time in milliseconds since the Epoch (POSIX time)
+
+<integer>[<unit>]     : Relative time in milliseconds or some other unit with, if <unit>
+                        is supplied. Possible units are: seconds ('s'), minutes ('m'),
+                        hours ('h'), days ('d'), and weeks ('w').
+
+hh:mm[:ss[.<millis>]] : Time relative to 0:00 today; hh may be > 23 to specify a time
+                        in the coming day(s).
+\end{lstlisting}
 
 
 
@@ -4173,20 +4725,7 @@ A \textit{<valueState>} expression must not contain any spaces. Type and timesta
   ~<hyst>         : Hysteresis in milliseconds
 \end{lstlisting}
 
-\textbf{Time values} \textit{<time>} -- either as a value or a an start/end/repeat time specification --  can be
-specified in several alternative formats:
-\begin{lstlisting}
-YYYY-MM-DD[-hhmm[ss[.<millis>]]] : Date and time, interpreted as local time
 
-t<unsigned integer>   : Absolute time in milliseconds since the Epoch (POSIX time)
-
-<integer>[<unit>]     : Relative time in milliseconds or some other unit with, if <unit>
-                        is supplied. Possible units are: seconds ('s'), minutes ('m'),
-                        hours ('h'), days ('d'), and weeks ('w').
-
-hh:mm[:ss[.<millis>]] : Time relative to 0:00 today; hh may be > 23 to specify a time
-                        in the coming day(s).
-\end{lstlisting}
 
 With the evolution of the \textit{Home2L} suite, the information above may become outdated or incomplete. The most up-to-date information can be found in the following places of the \theapic{} documentation:
 
@@ -4231,7 +4770,7 @@ With the \textit{Home2L} suite, automation scripts are typically written in Pyth
 
 For a quick start, it is recommended to read the commented sample rules file \reftool{rules-showhouse} used in the tutorial (Chapter~\ref{ch:tutorial}). Also, it is worth looking into the source code of \reftool{home2l-showhouse}, which is implemented like a rules script in Python (see Sections \ref{sec:tutorial-rules} and~\ref{sec:tutorial-goingfurther}).
 
-Typically, a rules script performs some initialization, declares some triggered functions, and finally calls \refapipython{Home2lRun()}) to enter the main event loop of the \textit{Home2L} library/package. While the native \textit{Home2L} library makes use of multi-threading, all Python functions besides \refapipython{CResouce.Report...()} (see Section~\ref{sec:resources-drvdev-app-python}) must be called from the main thread.
+Typically, a rules script performs some initialization, declares some triggered functions, and finally calls \refapipython{Home2lRun()}) to enter the main event loop of the \textit{Home2L} library/package. While the native \textit{Home2L} library makes use of multi-threading, all Python functions besides \refapipython{CResource.Report...()} (see Section~\ref{sec:resources-drvdev-app-python}) must be called from the main thread.
 
 The following subsections give some additional hints and references to the respective places in the \theapipython{} documentation, which serves as a reference manual for rules writing.
 
@@ -4391,19 +4930,19 @@ vs.IsKnown ()   # True, if the value can be retrieved (state is 'rcsValid' or 'r
 
 
 \warnbox{
-  Due to the highly concurrent nature of the \textit{Resources} library, resource values and    
+  Due to the highly concurrent nature of the \textit{Resources} library, resource values and
   states may change any time. In particular, multiple successive calls of \refapipython{CResource.ValueState()} or
   \refapipython{CResource.Value()} may deliver different results.
-  The method \refapipython{CResource.ValueState()} delivers a consistent local copy of 
-  the complete value/state object, so that it is safe to read multiple attributes 
-  from \textit{''vs''}afterwards. 
+  The method \refapipython{CResource.ValueState()} delivers a consistent local copy of
+  the complete value/state object, so that it is safe to read multiple attributes
+  from \textit{''vs''}afterwards.
 }
 
 
 \warnbox{
   To functions decorated with \refapipython{@onEvent()}, an appropriately captured value/state
   object is already passed by the \textit{''vs''} argument, and that must be used in order
-  to avoid race conditions. Event-triggered functions accessing their resources to read values 
+  to avoid race conditions. Event-triggered functions accessing their resources to read values
   most probably have a design flaw and are prone to race conditions!
 }
 
@@ -5051,7 +5590,7 @@ The \textit{Brownie database} represents the plan of a \textit{Brownie} bus tree
   \label{tab:brownies-config}
 \end{table}
 
-The database can either be written manually, created semi-automatically from already configured \textit{Brownies}, or first be written manually and later be updated semi-automatically. The maintenance tool (\reftool{home2l-brownie2l}) does not require a database for any of its tasks. Its \lst{config} and \lst{program} commands can read their parameters either from the command line, but also from the database, if a corresponding entry exists. After (re-)configuring a \textit{Brownie} tree manually, the command \lstf{scan -d} reads out all connected \textit{Brownies} and outputs database entries. 
+The database can either be written manually, created semi-automatically from already configured \textit{Brownies}, or first be written manually and later be updated semi-automatically. The maintenance tool (\reftool{home2l-brownie2l}) does not require a database for any of its tasks. Its \lst{config} and \lst{program} commands can read their parameters either from the command line, but also from the database, if a corresponding entry exists. After (re-)configuring a \textit{Brownie} tree manually, the command \lstf{scan -d} reads out all connected \textit{Brownies} and outputs database entries.
 
 A good practice to create the database is:
 \begin{enumerate}
@@ -5091,7 +5630,7 @@ This section gives background information on the more complex device features (\
   \item in the \refapicgroup{brownies__interface__registers}{code documentation (Brownies / Interface / Registers)}
         for the register interface between the \textit{Brownie} firmware and the Linux host,
   \item in Section~\ref{sec:drvlib-brownies-env} for run-time options,
-  \item in Section~\ref{sec:drvlib-brownies-rc} for the exported resources.
+  \item in Section~\ref{sec:drvlib-brownies-rc} for the provided resources.
 \end{itemize}
 
 
@@ -5132,7 +5671,7 @@ The actuators are controlled in a way that they are never driven into both direc
 
 The current actuator position is traced with the help of a timer. To make this work, the module must be calibrated by setting the \textit{''sha\_*''} configuration options (see Section~\ref{sec:brownies-firmware-config}). These are four time constants to be supplied:
 \begin{itemize}
-  \item the delay after the actuator is powered on until the shades start moving up/down 
+  \item the delay after the actuator is powered on until the shades start moving up/down
         (two values, typically between 0.2 and 1.0 seconds),
   \item the total time to move all way up or down, respectively (two values).
 \end{itemize}
@@ -5170,7 +5709,7 @@ The following points concerning the pin configuration must be taken into account
 \begin{enumerate}[a)]
 
   \item
-    Each \textit{operational} firmware sets all user port directions and eventually activates 
+    Each \textit{operational} firmware sets all user port directions and eventually activates
     internal pull-ups as implied by the respective device features of the firmware.
     This happens very early during startup.
 
@@ -5216,8 +5755,8 @@ The directory \refsrc{brownies/circuits} contains some sample circuits as inspir
     sensor.
 
   \item[Window (\code{window})] ~ \\
-    is a small board to be placed near a window with electrical shades. 
-    It has two inputs for an ''up'' and a ''down'' button as well as outputs suitable for driving up/down actuator relays. 
+    is a small board to be placed near a window with electrical shades.
+    It has two inputs for an ''up'' and a ''down'' button as well as outputs suitable for driving up/down actuator relays.
     In addition, the board can host a temperature sensor.
 
   \item[Dual Window (\code{window_dual})] ~ \\
@@ -5309,7 +5848,7 @@ In the second stage, the \textit{operational} firmware and the configuration rec
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\chapter{\textit{WallClock} -- An Unobtrusive GUI}
+\chapter{\textit{WallClock} -- An Information Display}
 \label{ch:wallclock} \labeltool{home2l-wallclock}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5363,9 +5902,12 @@ The \textit{WallClock} is implemented in native code (C/C++) and uses \textit{SD
 \label{sec:wallclock-floorplan}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 \subsection{Overview}
 
-The floor plan applet (see Figure~\ref{fig:wallclock-floorplan}) allows to view and to interact with all kinds of gadgets in an intuitive way. Possible gadgets include windows, door locks, garage doors, lights, mailboxes, phones, and motion detectors. Intercom phone calls can be initiated by pushing the respective phone icon.
+The floor plan applet (see Figure~\ref{fig:wallclock-floorplan}) allows to view and to interact with all kinds of gadgets in an intuitive way. Possible gadgets include windows, door locks, garage doors, lights, mailboxes, phones, and motion detectors.
+
+Controllable gadgets can be controlled as shown in Section~\ref{sec:tutorial-firststeps-dialogs}. Shades can be opened and closed by touching their windows, lights and services can be switched on and off.  Intercom phone calls can be initiated by pushing the target phone icon.
 
 Depending on the presence state, gadgets can be highlighted to attract the user's attention, if, for example, a window is still open at night or the main door not locked.
 
@@ -5392,7 +5934,7 @@ The home screen of the \textit{WallClock} shows a mini floor plan, which also sh
 
 The floor plan is specified by an \href{https://en.wikipedia.org/wiki/Scalable_Vector_Graphics}{SVG} drawing and is editable using \href{https://inkscape.org}{Inkscape}, a powerful free drawing tool. A symbol library contains all available gadgets. They can be placed in the drawing, which besides this can be drawn freely.
 The \textit{Home2L Floor Plan Compiler} (\reftool{home2l-fpc}) analyses the drawing and creates all necessary data files for the \textit{WallClock} application as well as a template file listing all resources to be used as a template for the \reftool{resources.conf} file.
-Gadgets and their resources are identified by their \textit{object IDs} in the SVG drawing. 
+Gadgets and their resources are identified by their \textit{object IDs} in the SVG drawing.
 
 
 \subsubsection*{Step 1: Draw the floor plan using \textit{Inkscape}.}
@@ -5402,7 +5944,7 @@ Gadgets and their resources are identified by their \textit{object IDs} in the S
     The file \refsrc{wallclock/floorplan-template.svg} should be used as a template.
     It also contains a number of hints on how to draw it.
     After a new installation, a copy of this file can usually be found as
-    \lstf{\$HOME2L\_ROOT/etc/floorplan.svg}. If the file is not at this location: Copy it there.
+    \lstf{\$HOME2L\_ETC/floorplan.svg}. If the file is not at this location: Copy it there.
   \item
     Gadgets are available as a symbol library, which is embedded in the template SVG file.
   \item
@@ -5453,7 +5995,7 @@ Gadgets and their resources are identified by their \textit{object IDs} in the S
 \subsubsection*{Step 5: Copy the floor plan object into the 'etc' directory.}
 
 To activate the floor plan, make sure that the floor plan compiler (\reftool{home2l-fpc})
-output resides in \lstf{\$HOME2L\_ROOT/etc/floorplan.fpo}.
+output resides in \lstf{\$HOME2L\_ETC/floorplan.fpo}.
 
 
 
@@ -5649,7 +6191,7 @@ for details.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{List of Exported Resources}
+\section{List of Provided Resources}
 \label{sec:wallclock-rc}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5688,7 +6230,7 @@ planned).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{List of Exported Resources}
+\section{List of Provided Resources}
 \label{sec:doorman-rc}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5717,7 +6259,7 @@ This chapter is the reference documentation of all supplied drivers. The driver 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Driver \textit{Signal} (built-in)}
+\section{The Signal Driver (built-in)}
 \label{sec:drvlib-signal} \labeltool{home2l-drv-signal}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5736,7 +6278,7 @@ They can be defined inside a \reftool{resources.conf} configuration file
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Driver \textit{Timer} (built-in)}
+\section{The Timer Driver (built-in)}
 \label{sec:drvlib-timer} \labeltool{home2l-drv-timer}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5744,12 +6286,12 @@ They can be defined inside a \reftool{resources.conf} configuration file
 \subsection{Description}
 \label{sec:drvlib-timer-description}
 
-The \textit{Timer} driver provides resources reflecting the current time, triggers to initiate hourly or daily tasks, and a set of resources reflecting day and night times, suitable, for example, to control an automatic outdoor light.
+The driver \textit{timer} provides resources reflecting the current time, triggers to initiate hourly or daily tasks, and a set of resources reflecting day and night times, suitable, for example, to control an automatic outdoor light.
 
 The driver is statically built into the \textit{Resources} library and enabled by default. It can be disabled by the \refenv{rc.timer} setting.
 
 
-\subsection{Exported Resources}
+\subsection{Provided Resources}
 \label{sec:drvlib-timer-rc}
 
 \input{ref_rc_resources}
@@ -5759,7 +6301,7 @@ The driver is statically built into the \textit{Resources} library and enabled b
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Driver \textit{GPIO}}
+\section{The GPIO Driver}
 \label{sec:drvlib-gpio} \labeltool{home2l-drv-gpio}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5767,11 +6309,11 @@ The driver is statically built into the \textit{Resources} library and enabled b
 \subsection{Description}
 \label{sec:drvlib-gpio-description}
 
-The \textit{GPIO} driver is a universal driver leveraging the Linux \textit{sysfs} GPIO capabilities to access general purpose inputs and outputs (GPIO).
+The driver \textit{gpio} is a universal driver leveraging the Linux \textit{sysfs} GPIO capabilities to access general purpose inputs and outputs (GPIO).
 
 In order to allow GPIOs to be used from a normal user application, they must be set up properly beforehand. This preparation requires \textit{root} privileges and is therefore done by the \textit{Home2L} init script at boot time. The names and configurations (e.~g. direction, initial value) of available GPIOs are defined by symbolic links residing in
 \begin{lstlisting}
-  $HOME2L_ROOT/etc/gpio.<machine name>
+  $HOME2L_ETC/gpio.<machine name>
 \end{lstlisting}
 
 pointing to the actual device, typically:
@@ -5782,7 +6324,7 @@ pointing to the actual device, typically:
 The links are read both by the \textit{GPIO} driver and the init script,
 and they must conform to the following naming conventions:
 \begin{lstlisting}
-$HOME2L_ROOT/etc/gpio.<machine name>/<port name>.<options>
+$HOME2L_ETC/gpio.<machine name>/<port name>.<options>
 
 <options> is a sequence of characters and may include:
     i - The port is an input.
@@ -5800,10 +6342,10 @@ $HOME2L_ROOT/etc/gpio.<machine name>/<port name>.<options>
 % ! Then the previous lines have to be commented in.
 
 
-\subsection{Exported Resources}
+\subsection{Provided Resources}
 \label{sec:drvlib-gpio-rc}
 
-The exported resources depend on the configuration (see above).
+The provided resources depend on the configuration (see above).
 They are named after their port names (\textit{gpio/<port name>})
 as specified in the name of the symbolic link.
 
@@ -5812,7 +6354,154 @@ as specified in the name of the symbolic link.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Driver \textit{Brownies}}
+\section{The MQTT Gateway Driver}
+\label{sec:drvlib-mqtt} \labeltool{home2l-drv-mqtt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Description}
+\label{sec:drvlib-mqtt-description}
+
+The MQTT gateway driver (\reftool{home2l-drv-mqtt}) allows to interconnect a \textit{Home2L} cluster with an MQTT network. Strictly speaking, it is not just driver, but actually performs two task:
+\begin{enumerate}[a)]
+  \item It can \textit{import} arbitrary resources from the MQTT network and make them available as \textit{Home2L} resources (this is the driver functionality).
+  \item It can \textit{export} \textit{Home2L} resources to the MQTT network in order to make them available to external visualization tools or other home automation frameworks, for example.
+\end{enumerate}
+
+Figure~\ref{fig:mqtt-topology} sketches an example topology an the role of the MQTT gateway driver.
+The gateway driver can export and import resources of and and for the complete \textit{Home2L} cluster and may be hosted by any of the instances at the administrator's choice. It is also possible to run multiple instances of the driver in multiple \textit{Home2L} instances, for example, in order to communicate with multiple brokers.
+
+Towards the MQTT broker, the gateway driver acts like an MQTT client.
+
+\begin{figure}[ht]
+  \centering
+  \figsvg[width=0.9\linewidth]{figs/mqtt-topology.svg}
+  \caption[l]{Example topology of a \textit{Home2L} cluster and an MQTT broker/client network}
+  \label{fig:mqtt-topology}
+\end{figure}
+
+%Section~\ref{sec:drvlib-mqtt-background} gives some background information for understanding how messages are translated between the \textit{Home2L} and the MQTT domain. Sections~\ref{sec:drvlib-mqtt-importing} and \ref{sec:drvlib-mqtt-exporting} contain instructions and examples on importing MQTT devices and exporting \textit{Home2L} resources, respectively. Section~\ref{drvlib-mqtt-details} contain some specific details related to the MQTT protocol and the client implementation of the driver.
+
+
+
+%\subsection{}
+%\label{sec:drvlib-mqtt-background}
+
+Actually, the communication of \textit{Home2L} instances and the MQTT protocol are very similar:
+\begin{itemize}
+  \item Both use a publish-subscribe pattern for communication.
+  \item There is a hierarchical name space for identifying resources (\textit{Home2L} URIs and MQTT topics, respectively). The syntax is very similar.
+\end{itemize}
+
+But there are also some differences:
+
+\begin{itemize}
+
+  \item
+    \textit{Home2L Resources} is object-oriented, whereas MQTT is message-oriented. \textit{Home2L Resources}
+    specifies an API, wheras MQTT specifies a protocol. The \textit{Home2L Resources} library offers API methods to
+    obtain and manipulate both the value and state of \refapic{CResource} objects. It keeps track of the state and
+    validity of an object (= resource) and coordinates manipulation requests to it. A resource is identified by a single
+    URI.
+
+    Different from this, MQTT-enabled devices typically use multiple different topics per physical resource for
+    state reporting, manipulation and reporting of its validity.
+
+  \item
+    The MQTT protocol has no equivalent to the \textit{Home2L} request resolution mechanism. With MQTT, concurrent
+    manipulations must be coordinated at the application level.
+
+  \item
+    \textit{Home2L} resources are typed, MQTT payloads are not.
+
+  \item
+    With MQTT, all messages are sent to and received from a central broker, whereas \textit{Home2L} instances
+    communicate directly.
+
+\end{itemize}
+
+These differences should be kept in mind when configuring the gateway driver.
+
+
+
+\subsection{Importing External Resources from the MQTT Broker}
+\label{sec:drvlib-mqtt-importing}
+
+External resources are imported by a single-line \refenv{mqtt.import.<ID>} entry in the \reftool{home2l.conf} file.
+
+Up to three different topics can be specified for a resource:
+\begin{itemize}
+  \item the \textit{state} topic for reporting the current state,
+  \item the \textit{request} topic (also known as the \textit{command} topic) for manipulations,
+  \item the \textit{validity} topic (sometimes called the \textit{alive} topic) for indicating whether the client
+      is currently alive and a connection to the broker exists.
+\end{itemize}
+
+Messages to the state topic are reported as valid values for the respective resource. If a message for the
+validity indicates that the client is offline, a state of \refapic{rcsUnknown} is reported.
+
+Whenever the set of active requests indicates that a new value has to be driven (see Figure~\ref{fig:resources-terminology}), the gateway sends a message with the new value on the request topic.
+
+
+
+\subsection{Exporting \textit{Home2L} Resources to the MQTT Broker}
+\label{sec:drvlib-mqtt-exporting}
+
+Each \textit{Home2L} resource can be exported by a single-line \refenv{mqtt.export.<ID>} entry in the \reftool{home2l.conf} file. Alternatively, multiple resources can be exported with a single \refenv{mqtt.exportSet}
+entry. However, the latter variant has some restrictions and is thus only recommended for testing purposes.
+
+For each exported resource, the \textit{state} topic and optionally the \textit{request} (aka \textit{command})
+topic can be specified.
+
+Values are published as UTF-8 strings with the \textit{Home2L} syntax, which should be acceptable by most devices and other MQTT clients. For Boolean resources, the strings sent for the values ''false'' and ''true'' can be specified explicitly with the \refenv{mqtt.export.<ID>} setting.
+Unknown values or values of state \refapic{rcsBusy} are published with the \textit{Home2L} syntax (''?'' or with a ''!'' prefix, respectively). This behavior can be adjusted with the \refenv{mqtt.unknownSign} and \refenv{mqtt.busySign} settings.
+
+Messages received for the request topic originating from some other MQTT client are automatically transformed
+into a \textit{Home2L} request. The attributes of such requests can be adjusted by the \refenv{mqtt.reqId} and \refenv{mqtt.reqAttrs} settings.
+
+
+
+\subsection{Background Information}
+\label{sec:drvlib-mqtt-details}
+
+The currently supported protocol versions are MQTT version 3.1 / 3.1.1.
+
+The driver always connects in ''clean session'' mode (no persistent session).
+
+The driver opens a single session for all imports and exports. Sometimes, multiple sessions for different \textit{Home2L} resources may be desired, for example, to connect with multiple different brokers. This can be implemented by running multiple \textit{Home2L} instances, each of which exporting or importing a subset of resources.
+
+All messages sent by the driver are sent as retained messages, and they are cleared when the driver is stopped properly. Adversely, \textit{state} messages for imported resources should be sent as retained messages by their sender. Devices should be configured to send retained messages.
+
+Some considerations on selecting the QoS level, which can be set by the \refenv{mqtt.qos} option:
+\begin{itemize}
+  \item For the common case of a TCP network connection to the broker, QoS level 0
+      may be sufficient, since TCP itself implements a reliable transmission.
+  \item The \textit{Home2L Resources} library can tolerate duplicated messages. However, it implements strict event
+      ordering and relies on the correct ordering of messages. For this reason, QoS level 1 should not be used.
+      According to the MQTT 3.1.1 specification, it may happen that a re-send of an earlier message
+      is received after its successor message unless the client explicitly waits for the earlier message
+      to be acknowledged before sending the next message. Such a behavior is not implemented in this driver.
+  \item With an unreliable connection to the broker, QoS level 2 should be considered.
+\end{itemize}
+
+
+
+\subsection{Configuration Parameters}
+\label{sec:drvlib-mqtt-env}
+\input{ref_env_drv_mqtt}
+
+
+
+\subsection{Provided Resources}
+
+The set of provided resources is controlled by the \refenv{mqtt.import.<ID>} settings.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \textit{Brownies} Driver}
 \label{sec:drvlib-brownies} \labeltool{home2l-drv-brownies}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5820,7 +6509,7 @@ as specified in the name of the symbolic link.
 \subsection{Description}
 \label{sec:drvlib-brownies-description}
 
-The \textit{Brownies} driver is a universal driver continuously polling a \textit{Brownie} bus tree and exporting resources for all features of all \textit{Brownies} declared in the database. 
+The \textit{Brownies} driver is a universal driver continuously polling a \textit{Brownie} bus tree and exporting resources for all features of all \textit{Brownies} declared in the database.
 
 For its operation, a database (\reftool{brownies.conf}) is required, which defines the set of \textit{Brownies} to be polled. Devices without a valid and consistent database entry are ignored by the driver. Details on creating, updating and verifying the database can be found in Section~\ref{sec:brownies-database}.
 
@@ -5834,7 +6523,7 @@ Note: This driver cannot be hosted by \reftool{home2l-brownie2l}, which contains
 \input{ref_env_brownies}
 
 
-\subsection{Exported Resources}
+\subsection{Provided Resources}
 \label{sec:drvlib-brownies-rc}
 \input{ref_rc_brownies}
 
@@ -5844,7 +6533,7 @@ Note: This driver cannot be hosted by \reftool{home2l-brownie2l}, which contains
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Driver \textit{Weather}}
+\section{The \textit{Weather} Driver}
 \label{sec:drvlib-weather} \labeltool{home2l-drv-weather}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5862,7 +6551,7 @@ Service (DWD).
 \input{ref_env_drv_weather}
 
 
-\subsection{Exported Resources}
+\subsection{Provided Resources}
 \label{sec:drvlib-weather-rc}
 \input{ref_rc_drv_weather}
 
@@ -5910,14 +6599,14 @@ Service (DWD).
     Inline listing formattable. LaTeX formatting is allowed, but '\_' characters must be escaped,
     for example.
   \item[\lst{\begin{lstlisting}} ... \lst{\end{lstlisting}}] ~ \\
-    Display listing: full text witdh, with auto-wrapping. The following languages are supported 
+    Display listing: full text witdh, with auto-wrapping. The following languages are supported
     (\lst{\begin{lstlisting}[language=<language>]}):
     \begin{description}
       \item[(default):] Plain, all text black.
       \item[comments:] All text black, only comments starting with \lst{#} are grey.
-      \item[bash:] Bash session: Lines starting with \lst{\$ } (commands) black, output and 
+      \item[bash:] Bash session: Lines starting with \lst{\$ } (commands) black, output and
          comments grey. Command lines can be prefixed with ''§'' explicitly.
-      \item[python:] Python session: Lines starting with \lst{>>> } (commands) black, output and 
+      \item[python:] Python session: Lines starting with \lst{>>> } (commands) black, output and
          comments grey. Command lines can be prefixed with ''§'' explicitly.
       \item[home2l:] \reftool{home2l-shell} session: Commands black, output grey.
       \item[brownie2l:] \reftool{home2l-brownie2l} session: Commands black, output grey.
@@ -5979,7 +6668,7 @@ Service (DWD).
     Presently, this prints the name of the object (''\code{name}'') and links it to the main
     page of the C/C++ API. The name can be entered into the ''search'' field of the Doxygen internal
     search.
-  \item[\lst{\refapicgroup{group__subgroup}{code documentation (Group / Subgroup)}}] ~ \\
+  \item[\lst{\refapicgroup{group__subgroup}{code_documentation_(group/subgroup)}}] ~ \\
     Add a reference to a Doxygen group in the C/C++ API as declared by '@newgroup'.
     The second argument is an example for the written text.
     \\ \textbf{Note:} Underscores must be doubled in the first argument!
@@ -5991,7 +6680,7 @@ Service (DWD).
     Presently, this prints the name of the object (''\code{name}'') and links it to the main
     page of the Python API. The name can be entered into the ''search'' field of the Doxygen internal
     search.
-  \item[\lst{\refapipythongroup{group__subgroup}{code documentation (Group / Subgroup)}}] ~ \\
+  \item[\lst{\refapipythongroup{group__subgroup}{code_documentation_(group/subgroup)}}] ~ \\
     Add a reference to a Doxygen group in the Python API as declared by '@newgroup'.
     The second argument is an example for the written text.
     \\ \textbf{Note:} Underscores must be doubled in the first argument!
@@ -6008,7 +6697,7 @@ Service (DWD).
 Configuration parameters are documented by means of a specially formatted comment following the respective
 \refapicgroup{env__declaration}{\code{ENV_PARA_...}} macro defined in \refsrc{common/env.H}. The comment has the following structure:
 \begin{lstlisting}
-ENV_PARA_... (...)
+ENV_PARA_... (...);
   /* Short description (max. ~40 chars, no trailing period)
    *
    * Optional long description, optionally covering multiple lines or empty lines.

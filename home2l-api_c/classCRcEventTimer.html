@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -71,7 +71,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Timer that sends 'rceTimer' events over the event system. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01715">1715</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01728">1728</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -150,10 +150,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="separator:af8f0dc10d3d8548324baba4240552dec inherit pub_methods_classCRcEventProcessor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a948f9ee0f2f3984d9a13a06f3ce18924 inherit pub_methods_classCRcEventProcessor"><td class="memItemLeft" align="right" valign="top"><a id="a948f9ee0f2f3984d9a13a06f3ce18924"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcEventProcessor.html#a948f9ee0f2f3984d9a13a06f3ce18924">FlushEvents</a> ()</td></tr>
-<tr class="memdesc:a948f9ee0f2f3984d9a13a06f3ce18924 inherit pub_methods_classCRcEventProcessor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all presently queued events. <br /></td></tr>
+<tr class="memdesc:a948f9ee0f2f3984d9a13a06f3ce18924 inherit pub_methods_classCRcEventProcessor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all presently queued events; also waits until a concurrently running <a class="el" href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2" title="Handle an event asynchronously (may have been called from any thread) ">OnEvent()</a> invocation returns. <br /></td></tr>
 <tr class="separator:a948f9ee0f2f3984d9a13a06f3ce18924 inherit pub_methods_classCRcEventProcessor"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac425fb5b6a5ea3d7c33788ea66e585d2 inherit pub_methods_classCRcEventProcessor"><td class="memItemLeft" align="right" valign="top"><a id="ac425fb5b6a5ea3d7c33788ea66e585d2"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>OnEvent</b> (<a class="el" href="classCRcEvent.html">CRcEvent</a> *ev)</td></tr>
+<tr class="memitem:ac425fb5b6a5ea3d7c33788ea66e585d2 inherit pub_methods_classCRcEventProcessor"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2">OnEvent</a> (<a class="el" href="classCRcEvent.html">CRcEvent</a> *ev)</td></tr>
+<tr class="memdesc:ac425fb5b6a5ea3d7c33788ea66e585d2 inherit pub_methods_classCRcEventProcessor"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle an event asynchronously (may have been called from any thread)  <a href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2">More...</a><br /></td></tr>
 <tr class="separator:ac425fb5b6a5ea3d7c33788ea66e585d2 inherit pub_methods_classCRcEventProcessor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76d7368bfd94f8ea43eaf20d29018b75 inherit pub_methods_classCRcEventProcessor"><td class="memItemLeft" align="right" valign="top"><a id="a76d7368bfd94f8ea43eaf20d29018b75"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetCbOnEvent</b> (<a class="el" href="group__resources__subscribe.html#gaa505e7c9b11754d46294afabc64d5bf4">FRcEventFunc</a> *_cbEvent, void *_cbEventData=NULL)</td></tr>

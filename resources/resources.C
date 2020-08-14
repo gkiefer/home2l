@@ -92,11 +92,13 @@ static bool IsValidIdentifier (const char *id, bool allowSlash) {
 
 
 static const char *rcTypeNames [] = {   // names of base and special types
+  //~ "none", "bool", "int", "float", "string", "blob", "time", "color", "trigger", "mutex"
   "none", "bool", "int", "float", "string", "time", "trigger", "mutex"
 };
 
 
 static ERcType rcBaseTypeList [] = {    // base type for base and special types
+  //~ rctNone, rctBool, rctInt, rctFloat, rctString, rctBlob, rctTime, rctColor, rctInt, rctString
   rctNone, rctBool, rctInt, rctFloat, rctString, rctTime, rctInt, rctString
 };
 
@@ -168,6 +170,9 @@ static const TRcEnumType rcEnumTypeList[rctEnumTypesEND - rctEnumTypesBase] = {
 #define rcEnumTypes ((int) (sizeof (rcEnumTypeList) / sizeof (TRcEnumType)))
 
 
+static inline void URcValueClear (URcValue *val) { val->vAny = 0; }
+
+
 const char *RcTypeGetName (ERcType t) {
   if (t < rctUnitTypesBase) {         // Base type...
     return rcTypeNames[(int) t];
@@ -185,11 +190,11 @@ ERcType RcTypeGetFromName (const char *name) {
   int n;
 
   for (n = 1; n < rcBaseTypes; n++)
-    if (strcmp (name, rcTypeNames[n]) == 0) return (ERcType) n;
+    if (strcasecmp (name, rcTypeNames[n]) == 0) return (ERcType) n;
   for (n = 0; n < rcUnitTypes; n++)
-    if (strcmp (name, rcUnitTypeList[n].id) == 0) return (ERcType) (n + rctUnitTypesBase);
+    if (strcasecmp (name, rcUnitTypeList[n].id) == 0) return (ERcType) (n + rctUnitTypesBase);
   for (n = 0; n < rcEnumTypes; n++)
-    if (strcmp (name, rcEnumTypeList[n].id) == 0) return (ERcType) (n + rctEnumTypesBase);
+    if (strcasecmp (name, rcEnumTypeList[n].id) == 0) return (ERcType) (n + rctEnumTypesBase);
 
   // Failure...
   return rctNone;
@@ -322,7 +327,6 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
   // and '*retVal' remains unchanged.
   // This function expects the value and nothing more as an input 'p'. In particular,
   // white spaces (leading, trailing) are not tolerated!
-  CString str;
   URcValue val;
   ERcType baseType;
   char *q;
@@ -340,8 +344,10 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
   }
   else switch (baseType) {
     case rctBool:
-      if (strchr ("1tT+", *p)) val.vBool = true;
-      else if (strchr ("0fF-", *p)) val.vBool = false;
+      if (strchr ("1tT+yY", *p)) val.vBool = true;
+      else if (strchr ("0fF-nN", *p)) val.vBool = false;
+      else if (strcasecmp (p, "on") == 0) val.vBool = true;
+      else if (strcasecmp (p, "off") == 0) val.vBool = false;
       else ok = false;
       break;
     case rctInt:
@@ -384,9 +390,12 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
       }
       break;
     case rctString:
-      ok = str.SetUnescaped (p);
-      //~ INFOF (("### ParseValue (rctString, '%s') -> OK=%i, '%s'", p, (int) ok, str.Get ()));
-      if (ok) val.vString = str.Disown ();
+      {
+        CString str;
+        ok = str.SetUnescaped (p);
+        //~ INFOF (("### ParseValue (rctString, '%s') -> OK=%i, '%s'", p, (int) ok, str.Get ()));
+        if (ok) val.vString = str.Disown ();
+      }
       break;
     case rctTime:
       ok = TicksFromString (p, &val.vTime, true);
@@ -409,23 +418,38 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
 
 
 void CRcValueState::Clear (ERcType _type, ERcState _state) {
-  Set (_type, URcValueCleared (), _state);
+  if (RcTypeIsStringBased (type)) free ((void *) val.vString);
+  URcValueClear (&val);
+  type = _type;
+  state = _state;
+  timeStamp = 0;
 }
 
 
-void CRcValueState::Set (ERcType _type, URcValue _val, ERcState _state) {
+void CRcValueState::Set (const CRcValueState *vs2) {
+  //~ CString s1, s2;
+  //~ INFOF (("### CRcValueState::Set (): %s <- %s", ToStr (&s1, true), vs2->ToStr (&s2, true)));
+
+  // Free string on old value ...
   if (RcTypeIsStringBased (type)) {
-    if (val.vString) free ((void *) val.vString);
-  }
-  if (RcTypeIsStringBased (_type)) {
-    if (_val.vString) {
-      if (!_val.vString[0]) _val.vString = NULL;    // empty string => normalize to 'NULL'
-      else _val.vString = strdup (_val.vString);    // non-empty string => create own copy
+    if (val.vString) {
+      free ((void *) val.vString);
+      val.vString = NULL;
     }
   }
-  type = _type;
-  val = _val;
-  state = _state;
+
+  // Copy value ...
+  if (RcTypeIsStringBased (vs2->type)) {
+    val.vString = NULL;
+    if (vs2->val.vString) if (vs2->val.vString[0])
+      val.vString = strdup (vs2->val.vString);    // non-empty string => create own copy
+    // empty string are implicitly normalize to 'NULL'
+  }
+  else val = vs2->val;    // no string => just copy
+
+  // Copy attributes ...
+  type = vs2->type;
+  state = vs2->state;
   timeStamp = 0;
 }
 
@@ -469,18 +493,22 @@ void CRcValueState::SetGenericFloat (float _val, ERcType _type, ERcState _state)
 
 
 bool CRcValueState::SetGenericString (const char *_val, ERcType _type, ERcState _state) {
-  URcValue uVal;
 
+  // Init ...
   Clear (_type, _state);
+
+  // Handle target type string ...
   if (RcTypeIsStringBased (_type)) {
-    uVal.vString = (char *) _val;
-    Set (_type, uVal, _state);
+    val.vString = _val ? strdup (_val) : NULL;
     return true;
   }
 
-  // Target type is no string: Try to convert...
-  Clear ();
-  return ParseValue (_val, _type, &val);
+  // Target type is no string: Try to convert ...
+  if (ParseValue (_val, _type, &val)) return true;
+  else {
+    state = rcsUnknown;
+    return false;
+  }
 }
 
 
@@ -592,33 +620,26 @@ int CRcValueState::ValidEnumIdx (ERcType _type, int defaultVal) const {
 
 
 
-
-
 // ***** Attributes *****
 
 
-bool CRcValueState::Equals (CRcValueState *val2) const {
-  if (state != val2->state) return false;
+bool CRcValueState::Equals (const CRcValueState *vs2) const {
+  if (state != vs2->state) return false;
   if (state == rcsUnknown) return true;     // "unknown" is always equal to "unknown"
-  return ValueEquals (val2->val);
+  return ValueEquals (vs2);
 }
 
 
-bool CRcValueState::ValueEquals (URcValue val2) const {
+bool CRcValueState::ValueEquals (const CRcValueState *vs2) const {
+  if (type != vs2->type) return false;
   if (RcTypeIsStringBased (type)) {
-    if (!val.vString && !val2.vString) return true;    // both strings are empty
-    if (!val.vString || !val2.vString) return false;   // one string is empty, the other is not
+    if (!val.vString && !vs2->val.vString) return true;    // both strings are empty
+    if (!val.vString || !vs2->val.vString) return false;   // one string is empty, the other is not
     // now no string is empty...
-    return strcmp (val.vString, val2.vString) == 0;
+    return strcmp (val.vString, vs2->val.vString) == 0;
   }
   else
-    return val.vAny == val2.vAny;
-}
-
-
-bool CRcValueState::ValueEquals (CRcValueState *val2) const {
-  if (type != val2->type) return false;
-  return ValueEquals (val2->val);
+    return val.vAny == vs2->val.vAny;
 }
 
 
@@ -631,10 +652,10 @@ bool CRcValueState::Convert (ERcType _type) {
   bool valBool;
 
   // Sanity / No-Op...
-  if (_type == type) return true;   // nothing to do
+  if (_type == type || state == rcsUnknown) return true;   // nothing to do
   baseType = RcTypeGetBaseType (type);
   _baseType = RcTypeGetBaseType (_type);
-  if (_baseType == baseType || state == rcsUnknown) {      // types are compatible?
+  if (_baseType == baseType) {      // types are compatible?
     type = _type;
     return true;
   }
@@ -647,7 +668,7 @@ bool CRcValueState::Convert (ERcType _type) {
     vs.Clear (_type, state);
     if (!vs.SetFromStr (val.vString)) return false;
     if (vs.type != _type) return false;   // The string may have contained type information incompatible with what we want.
-    Set (_type, vs.val, state);
+    Set (&vs);
     return true;
   }
 
@@ -655,8 +676,7 @@ bool CRcValueState::Convert (ERcType _type) {
   if (_baseType == rctString) {
     CString s;
 
-    SetGenericString (ToStr (&s), _type, state);
-    return true;
+    return SetGenericString (ToStr (&s), _type, state);
   }
 
   // All other possible cases...
@@ -767,7 +787,7 @@ bool CRcValueState::SetFromStr (const char *str) {
         if (*q != ')') ok = false;
         else {
           *q = '\0';   // Strings in 'args' are local copies, we are allowed to modify them.
-          type = RcTypeGetFromName (p + 1);
+          Clear (RcTypeGetFromName (p + 1));
         }
         break;
       case '@':
@@ -818,8 +838,9 @@ bool CRcValueState::SetFromStrFast (const char *str, bool warn) {
   if (state != rcsUnknown) {
     if (type != rctNone) ok = ParseValue (str, type, &val);
     else {
+      Clear (rctString, state);
       ok = ParseValue (str, rctString, &val);
-      if (ok) type = rctString;
+      if (!ok) Clear (rctNone);
     }
   }
 
@@ -1479,12 +1500,14 @@ void CResource::SetRequestFromObj (CRcRequest *_request) {
   // Lock...
   Lock ();
 
-  // Check and convert the request...
-  if (!writable) {
-    WARNINGF (("Request '%s' to write-protected resource '%s' will have no effect", _request->ToStr (), Uri ()));
+  // Check and convert the request (but only if the resource is already registered) ...
+  if (Type () != rctNone) {
+    if (!writable) {
+      WARNINGF (("Request '%s' to write-protected resource '%s' will have no effect", _request->ToStr (), Uri ()));
+    }
+    else
+      _request->Convert (this);
   }
-  else
-    _request->Convert (this);
 
   // Add the request - locally or to remote host - and unlock...
   if (rcHost) {
@@ -1683,7 +1706,7 @@ void CResource::NotifySubscribersAL (int evType) {
 }
 
 
-void CResource::ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStamp) {
+void CResource::ReportValueStateAL (const CRcValueState *_valueState, TTicks _timeStamp) {
   bool changed;
 
   //~ CString s(valueState.ToStr ());
@@ -1699,19 +1722,35 @@ void CResource::ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStam
       valueState.SetTrigger ();
     if (_valueState) valueState.SetState (_valueState->State ());
   }
-  else if (_valueState->Type () == rctNone) {
-    // Value/type was empty: Only report new state ...
-    if (valueState.state == _valueState->state || valueState.state == rcsUnknown) changed = false;    // a previously unknown state remains so
-    else {
-      valueState.state = _valueState->state;
-      changed = true;
-    }
-  }
   else {
-    // General case ...
-    ASSERT (_valueState->Type () == Type ());
-    changed = !valueState.Equals (_valueState);
-    if (changed) valueState = *_valueState;   // Be careful to not overwrite the time stamp if there is no change!
+    // Sanity ...
+    if (!_valueState) {
+      WARNINGF (("Unable to report nothing ('NULL') for resource '%s' - ignoring.", Uri ()));
+      return;
+    }
+    if (_valueState->Type () == rctNone) {
+      // Value/type was empty: Only report new state ...
+      if (valueState.state == _valueState->state || valueState.state == rcsUnknown) changed = false;    // a previously unknown state remains so
+      else {
+        valueState.state = _valueState->state;
+        changed = true;
+      }
+    }
+    else {
+      // General case ...
+      CRcValueState _valueStateConverted;
+      if (_valueState->Type () != Type ()) {
+        _valueStateConverted.Set (_valueState);
+        if (!_valueStateConverted.Convert (Type ())) {
+          CString s;
+          WARNINGF (("Failed to report value '%s' for resource '%s': Incompatible type!", _valueState->ToStr (&s), Uri ()));
+          return;
+        }
+        _valueState = &_valueStateConverted;
+      }
+      changed = !valueState.Equals (_valueState);
+      if (changed) valueState = *_valueState;   // Be careful to not overwrite the time stamp if there is no change!
+    }
   }
 
   // If changed: Set time stamp and notify subscribers...
@@ -1722,29 +1761,15 @@ void CResource::ReportValueStateAL (CRcValueState *_valueState, TTicks _timeStam
 }
 
 
-void CResource::ReportValueState (CRcValueState *_valueState) {
+void CResource::ReportValueState (const CRcValueState *_valueState) {
   Lock ();          // Lock resource
   ReportValueStateAL (_valueState);
   Unlock ();        // Unlock resource
 }
 
 
-void CResource::ReportValueAL (URcValue _value, ERcState _state) {
-  CRcValueState vs (Type (), _value, _state);
-  ReportValueStateAL (&vs);
-}
-
-
-void CResource::ReportValue (URcValue _value, ERcState _state) {
-  CRcValueState vs (Type (), _value, _state);
-  Lock ();
-  ReportValueStateAL (&vs);
-  Unlock ();
-}
-
-
 void CResource::ReportValue (bool _value, ERcState _state) {
-  CRcValueState vs (Type (), _value, _state);
+  CRcValueState vs (rctBool, _value, _state);
   Lock ();
   ReportValueStateAL (&vs);
   Unlock ();
@@ -1752,7 +1777,7 @@ void CResource::ReportValue (bool _value, ERcState _state) {
 
 
 void CResource::ReportValue (int _value, ERcState _state) {
-  CRcValueState vs (Type (), _value, _state);
+  CRcValueState vs (rctInt, _value, _state);
   Lock ();
   ReportValueStateAL (&vs);
   Unlock ();
@@ -1760,7 +1785,7 @@ void CResource::ReportValue (int _value, ERcState _state) {
 
 
 void CResource::ReportValue (float _value, ERcState _state) {
-  CRcValueState vs (Type (), _value, _state);
+  CRcValueState vs (rctFloat, _value, _state);
   Lock ();
   ReportValueStateAL (&vs);
   Unlock ();
@@ -1791,7 +1816,7 @@ void CResource::ReportValue (const char *_value, ERcState _state) {
 
 
 void CResource::ReportValue (TTicks _value, ERcState _state) {
-  CRcValueState vs (Type (), _value, _state);
+  CRcValueState vs (rctTime, _value, _state);
   Lock ();
   ReportValueStateAL (&vs);
   Unlock ();
@@ -1816,7 +1841,7 @@ void CResource::ReportNetLost () {
 }
 
 
-void CResource::DriveValue (CRcValueState *vs) {
+void CResource::DriveValue (CRcValueState *vs, bool force) {
 
   //~ INFOF (("### CResource::DriveValue ('%s', '%s')", Uri (), vs->ToStr ()));
 
@@ -1826,7 +1851,7 @@ void CResource::DriveValue (CRcValueState *vs) {
 
   // Drive via driver...
   Lock ();
-  if (!valueState.ValueEquals (vs) || !valueState.IsValid () || !vs->IsValid ()) {
+  if (force || !valueState.ValueEquals (vs) || !valueState.IsValid () || !vs->IsValid ()) {
     //~ INFOF (("### CResource::DriveValue ('%s', '%s')", Uri (), vs->ToStr (true)));
     rcDriver->DriveValue (this, vs);
     // Note: The driver may have changed 'vs' to report a busy state or changes due to hardware.
@@ -1946,11 +1971,10 @@ CRcRequest *CResource::GetWinningRequest (TTicks t) {
 }
 
 
-void CResource::EvaluateRequests () {
+void CResource::EvaluateRequests (bool force) {
   CRcRequest *req, *bestReq, *finalReq, **pReq, **pBestReq;
   CRcValueState finalValueState;
-  URcValue finalValue;
-  TTicks curTime, nextTime, bestTime, finalTime;
+  TTicks curTime, nextTime, bestTime;
   TTicksMonotonic curTicks, t;
 
   // NOTE on race conditions:
@@ -1964,7 +1988,7 @@ void CResource::EvaluateRequests () {
   //~ INFOF(("### '%s'->EvaluateRequests () ...", Gid ()));
 
   // Sanity...
-  if (!Driver () || Type () == rctNone) return;
+  if (!Driver () || Type () == rctNone || !IsWritable ()) return;
     // If the type is 'rctNone', this resource has not been registered yet.
     // The evaluation will be triggered again after registration.
 
@@ -1988,7 +2012,6 @@ void CResource::EvaluateRequests () {
     }
 
   // Evaluate ...
-  finalTime = 0;   //  > 0 indicates that 'finalValue' is valid and to be propagated to the driver
   if (Type () == rctTrigger) {
 
     // Case 1: Triggers (are handled differently) ...
@@ -2012,24 +2035,12 @@ void CResource::EvaluateRequests () {
       delete req;
 
       // Let trigger happen...
-      finalValue.vInt = 0;  // drive a cleared value; In the 'Report...' methods, the value is ignored anyway. (TBD: Better drive the current value?)
-      finalTime = curTime;
+      finalValueState.Clear (rctTrigger);  // drive a cleared value; In the 'Report...' methods, the value is ignored anyway. (TBD: Better drive the current value?)
     }
   }
   else {
 
     // Case 2: Normal values (non-triggers)...
-
-    // Find the final value...
-    //   If all present requests ended in the past, we have to set the correct final value.
-    for (req = requestList; req; req = req->next) {
-      if (req->t1 <= 0) break;      // final value irrelevant (=> not set!)
-      if (req->t0 && req->t0 > curTime) break;    // request starts in the future => must ignore it here
-      if (req->t1 >= finalTime) {   // the last (= oldest) element in the list dominates
-        finalValue = req->value.val;
-        finalTime = req->t1;
-      }
-    }
 
     // Remove all obsolete requests...
     pReq = &requestList;
@@ -2066,10 +2077,10 @@ void CResource::EvaluateRequests () {
 
       // Set value as final value if no hysteresis drop applies...
       if (finalReq) {
-        finalValue = finalReq->value.val;
-        finalTime = curTime;
+        finalValueState.Set (&finalReq->value);
+        ASSERT (finalValueState.State () == rcsValid);
       }
-      //~ else INFOF (("###    ... dropped due hysteresis (%i)", finalReq->hysteresis));
+      //~ else INFOF (("###    ... dropped due to hysteresis (%i)", finalReq->hysteresis));
     }
   }
 
@@ -2090,11 +2101,8 @@ void CResource::EvaluateRequests () {
   // Unlock...
   Unlock ();
 
-  // Apply new value (cannot be done when 'this' is locked) ...
-  if (finalTime > 0)  finalValueState.Set (Type (), finalValue, rcsValid);
-  else                finalValueState.Clear ();
-  //~ INFOF (("### CResource::EvaluateRequests (): Driving %s := %s", Gid (), finalValueState.ToStr (true)));
-  DriveValue (&finalValueState);
+  // Drive the value (cannot be done when 'this' is locked) ...
+  DriveValue (&finalValueState, force);
 }
 
 
@@ -2183,8 +2191,10 @@ CRcEventProcessor::CRcEventProcessor (bool _inSelectSet) {
 
 CRcEventProcessor::~CRcEventProcessor () {
   //~ INFOF(("### ~CRcEventProcessor ('%s'/%08x)", InstId (), this));
+  globMutex.Lock ();      // This will wait (amoung others) if an OnEvent() instance is still running
   while (firstEv) DeleteFirstEventAL ();
   UnlinkAL ();
+  globMutex.Unlock ();
 }
 
 
@@ -2326,7 +2336,7 @@ void CRcEventProcessor::Interrupt () {
 void CRcEventProcessor::FlushEvents () {
   CRcEvent ev;
 
-  globMutex.Lock ();
+  globMutex.Lock ();      // This will wait (amoung others) if an OnEvent() instance is still running
   while (DoPollEventAL (&ev)) {}
   globMutex.Unlock ();
 }
@@ -3155,7 +3165,7 @@ void CRcEventDriver::DriveValue (CResource *rc, CRcValueState *vs) {
   PutEvent (&ev);
   switch (successState) {
     case rcsValid:    break;   // no change; direct reporting
-    case rcsBusy:     vs->SetToReportBusyOldVal (); break;
+    case rcsBusy:     vs->SetToReportBusy (); break;
       // If the desired success state is 'rcsBusy', always report the old value with it
       // (important for shades, for example).
     case rcsUnknown:  vs->SetToReportNothing ();    break;
@@ -3222,11 +3232,8 @@ void RcDone () {
    */
   int n;
 
-  // Phase 1: Stop all threads (except this main one and eventual driver threads)...
+  // Phase 1: Stop all threads (except this main one)...
   if (rcInitCompleted) {
-
-    // Stop all drivers...
-    RcDriversStop ();
 
     // Stop timer thread if we are owner...
     if (weOwnTheTimerThread) {
@@ -3238,6 +3245,9 @@ void RcDone () {
 
     // Stop networking...
     RcNetStop ();
+
+    // Stop all drivers...
+    RcDriversStop ();
 
     // Phase 1 completed...
     rcInitCompleted = false;
@@ -3252,6 +3262,11 @@ void RcDone () {
   // Phase 2: Clean up objects...
   RcDriversDone ();
   hostMap.Clear ();
+#if WITH_CLEANMEM
+  aliasMap.Clear ();
+  for (n = 0; n < unregisteredResourceMap.Entries (); n++)
+    delete unregisteredResourceMap.Get (n);
+#endif
 }
 
 
@@ -3262,10 +3277,10 @@ void RcIterate () {
 }
 
 
-void RcRun () {
+int RcRun (bool catchSignals) {
   ASSERT (!weOwnTheTimerThread);     // other case not supported
   if (!rcInitCompleted) RcStart ();
-  TimerRun ();
+  return TimerRun (catchSignals);
 }
 
 

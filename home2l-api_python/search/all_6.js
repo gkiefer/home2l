@@ -3,6 +3,7 @@ var searchData=
   ['garbagecollection',['GarbageCollection',['../classhome2l_1_1CResource.html#ae024d6febbd6ef01e92bee896cab9e5f',1,'home2l::CResource']]],
   ['genericfloat',['GenericFloat',['../classhome2l_1_1CRcValueState.html#a3d1038d93901360dbed755e0788683f6',1,'home2l::CRcValueState']]],
   ['genericint',['GenericInt',['../classhome2l_1_1CRcValueState.html#a11c307ead1159f3323544e5f3967d18f',1,'home2l::CRcValueState']]],
+  ['genericstring',['GenericString',['../classhome2l_1_1CRcValueState.html#a226fad1e11c545f5dc8e94603f4ddcb3',1,'home2l::CRcValueState']]],
   ['get',['Get',['../classhome2l_1_1CResource.html#a44649770d413eae5af8c7bdba2d949b2',1,'home2l::CResource']]],
   ['getlocalrequest',['GetLocalRequest',['../classhome2l_1_1CResource.html#a1e7da818e98d1044d567fb30de235022',1,'home2l::CResource']]],
   ['getlocalsubscriber',['GetLocalSubscriber',['../classhome2l_1_1CResource.html#a6d809453d63bf0814a2f7058d5af7ff2',1,'home2l::CResource']]],

@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -136,6 +136,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3610a025e24decbbfa0569c426f6d167"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1429392a055c89cedacd9e41e83c5409"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CResource.html#a1429392a055c89cedacd9e41e83c5409">ReportValue</a> (self, args)</td></tr>
 <tr class="separator:a1429392a055c89cedacd9e41e83c5409"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1319592ee56dea0b136c14bfdd8172dd"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CResource.html#a1319592ee56dea0b136c14bfdd8172dd">RedriveValue</a> (self, force=True)</td></tr>
+<tr class="separator:a1319592ee56dea0b136c14bfdd8172dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a3853402ae8a3bd8aa142038e96aef1"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CResource.html#a9a3853402ae8a3bd8aa142038e96aef1">PrintInfo</a> (self, args)</td></tr>
 <tr class="separator:a9a3853402ae8a3bd8aa142038e96aef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24a1e1aba190065f757ac9d918a8603e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classhome2l_1_1CResource.html#a24a1e1aba190065f757ac9d918a8603e">LockLocalSubscribers</a> (self)</td></tr>
@@ -830,9 +832,7 @@ SetDefault(CResource self, TTicks valTime)
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">ReportValue(CResource self, URcValue _value, ERcState _state=rcsValid)
-ReportValue(CResource self, URcValue _value)
-ReportValue(CResource self, bool _value, ERcState _state=rcsValid)
+<pre class="fragment">ReportValue(CResource self, bool _value, ERcState _state=rcsValid)
 ReportValue(CResource self, bool _value)
 ReportValue(CResource self, int _value, ERcState _state=rcsValid)
 ReportValue(CResource self, int _value)
@@ -844,6 +844,36 @@ ReportValue(CResource self, TTicks _value, ERcState _state=rcsValid)
 ReportValue(CResource self, TTicks _value)
 ReportValue(CResource self, CRcValueState vs, ERcState _state=rcsValid)
 ReportValue(CResource self, CRcValueState vs)
+</pre> 
+</div>
+</div>
+<a id="a1319592ee56dea0b136c14bfdd8172dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1319592ee56dea0b136c14bfdd8172dd">&#9670;&nbsp;</a></span>RedriveValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def RedriveValue </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>force</em> = <code>True</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">RedriveValue(CResource self, bool force=True)
+RedriveValue(CResource self)
 </pre> 
 </div>
 </div>

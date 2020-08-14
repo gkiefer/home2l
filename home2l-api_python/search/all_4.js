@@ -22,6 +22,8 @@ var searchData=
   ['envinit',['EnvInit',['../group__env.html#ga534aee114b36da5663816f2fcad1ce54',1,'home2l']]],
   ['envinitpersistence',['EnvInitPersistence',['../group__env.html#ga920e06e2a5de621690a2159c7fdacbff',1,'home2l']]],
   ['envinstancename',['EnvInstanceName',['../group__env.html#ga746fdf59980c0ac36fbf78a8ef91c35d',1,'home2l']]],
+  ['envlocationlatituden',['EnvLocationLatitudeN',['../group__env.html#ga0360bd46e7bb33d8d352e72c3b41f38e',1,'home2l']]],
+  ['envlocationlongitudee',['EnvLocationLongitudeE',['../group__env.html#gaf24c13d8fcf48bddd8b19f4a9d37d5f9',1,'home2l']]],
   ['envmachinename',['EnvMachineName',['../group__env.html#gaadfbe747b2d071b848c93c8bb23b50fd',1,'home2l']]],
   ['envmktmpdir',['EnvMkTmpDir',['../group__env.html#gad3b2dbcf4b4ca942246b481019798166',1,'home2l']]],
   ['envmkvardir',['EnvMkVarDir',['../group__env.html#gaaaa63bfcd7e8728e3aec4e6fe3227656',1,'home2l']]],
@@ -29,5 +31,5 @@ var searchData=
   ['envpid',['EnvPid',['../group__env.html#gaad514fba6a94cc4c1770c7c13bd8f907',1,'home2l']]],
   ['envput',['EnvPut',['../group__env.html#ga0a813e7bf3ebe761bea2cfc0b359b357',1,'home2l']]],
   ['envreadinifile',['EnvReadIniFile',['../group__env.html#gaf4aa262c2f089768387c6b2a90b58734',1,'home2l']]],
-  ['equals',['Equals',['../classhome2l_1_1CRcValueState.html#a3bda297665e5c182adf0bf6acb0a5ce0',1,'home2l::CRcValueState']]]
+  ['equals',['Equals',['../classhome2l_1_1CRcValueState.html#a2b86f5a542a966c6a9e44467cca68b05',1,'home2l::CRcValueState']]]
 ];

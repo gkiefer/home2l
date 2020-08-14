@@ -120,20 +120,30 @@ void SystemWakeupStandby ();  ///< Wakeup into standby mode; Reset the off timer
 static inline void SystemWakeup () { SystemWakeupActive (); }   ///< Unspecific wakeup (redirects to SystemWakeupActive() ).
 
 
-void SystemActiveLock (const char *reqName);
+void SystemActiveLock (const char *reqName, bool withWakeup = true);
   ///< @brief Lock the device in active mode, e.g. during a phone call.
   /// @param reqName is the ID of the request as visible in the resource(s).
-void SystemActiveUnlock (const char *reqName);
+  /// @param withWakeup issues a new wakeup event to avoid a switch back to standby or "off" mode too quickly;
+  ///        here, the same value as for the corresponding SystemActiveUnlock() call should be passed.
+void SystemActiveUnlock (const char *reqName, bool withWakeup = true);
   ///< @brief Remove the specified active lock.
   /// @param reqName is the ID of the request as previously passed to SystemActiveLock().
+  /// @param withWakeup issues a new wakeup event to avoid a switch back to standby or "off" mode too quickly;
+  ///        here, the same value as for the corresponding SystemActiveUnlock() call should be passed.
+  ///        Examples: For an the auto-stop situation after a playlist of the music player, this should be
+  ///        'true' (the default). For floorplan view on a weather alert, this should be 'false'.
 
 
-void SystemStandbyLock (const char *reqName);
+void SystemStandbyLock (const char *reqName, bool withWakeup = true);
   ///< @brief Lock the device in standby mode to prevent the screen to be switched off completely, e.g. during alarm clock wakeup.
   /// @param reqName is the ID of the request as visible in the resource(s).
-void SystemStandbyUnlock (const char *reqName);
+  /// @param withWakeup ensures the UI to stay in standby mode for some time after removing the lock;
+  ///        the same value as for the corresponding SystemStandbyUnlock() call should be passed here.
+
+void SystemStandbyUnlock (const char *reqName, bool withWakeup = true);
   ///< @brief Remove the specified standby lock.
   /// @param reqName is the ID of the request as previously passed to SystemActiveLock().
+  /// @param withWakeup ensures the UI to stay in standby mode for some time after removing the lock.
 
 
 /// @}

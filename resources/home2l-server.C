@@ -23,15 +23,18 @@
 
 
 int main (int argc, char **argv) {
+  int sig;
 
   // Startup...
   EnvInit (argc, argv);
   RcInit (true);
 
   // Run main timer loop in the foreground...
-  RcRun ();
+  sig = RcRun ();
+  if (sig) INFOF(("Received signal %i (%s) - exiting.", sig, strsignal (sig)));
+  else INFO ("Exiting.");
 
-  // Done (we presently never get here)...
+  // Done ...
   RcDone ();
   EnvDone ();
   return 0;

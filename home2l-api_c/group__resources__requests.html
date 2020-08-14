@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -105,7 +105,7 @@ Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Request Priorities</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp2b14023afd552b16144120bcae6afc71"></a>Request priorities are in the range from 0..15, and the following constants define some recommended values.</p>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp2b14023afd552b16144120bcae6afc71"></a>Request priorities are in the range from 0..9, and the following constants define some recommended values.</p>
 <p>For writable resources, their drivers should set a permanent request at prio 0 for the default value. If no default is set, this lib will keep the last value if the last request is removed. </p>
 </td></tr>
 <tr class="memitem:gaafdfffca3695ae82a8fcb979354210bd"><td class="memItemLeft" align="right" valign="top"><a id="gaafdfffca3695ae82a8fcb979354210bd"></a>
@@ -114,32 +114,44 @@ Request Priorities</h2></td></tr>
 <tr class="separator:gaafdfffca3695ae82a8fcb979354210bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="memItemLeft" align="right" valign="top"><a id="gae7cb63c674f17bf1ed77eb9cad5bb3aa"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gae7cb63c674f17bf1ed77eb9cad5bb3aa">rcPrioNormal</a>&#160;&#160;&#160;3</td></tr>
-<tr class="memdesc:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default value (automation rules level) <br /></td></tr>
+<tr class="memdesc:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">General default for new requests and default for automation rules. <br /></td></tr>
 <tr class="separator:gae7cb63c674f17bf1ed77eb9cad5bb3aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa59f8432fb0f392f7d6c8fc576bb71e2"><td class="memItemLeft" align="right" valign="top"><a id="gaa59f8432fb0f392f7d6c8fc576bb71e2"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa59f8432fb0f392f7d6c8fc576bb71e2">rcPrioMax</a>&#160;&#160;&#160;9</td></tr>
 <tr class="memdesc:gaa59f8432fb0f392f7d6c8fc576bb71e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum (highest) priority. <br /></td></tr>
 <tr class="separator:gaa59f8432fb0f392f7d6c8fc576bb71e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa235196dd1fc20eae9473051b6972285"><td class="memItemLeft" align="right" valign="top"><a id="gaa235196dd1fc20eae9473051b6972285"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa235196dd1fc20eae9473051b6972285">rcPrioDefault</a>&#160;&#160;&#160;<a class="el" href="group__resources__requests.html#gaafdfffca3695ae82a8fcb979354210bd">rcPrioMin</a></td></tr>
-<tr class="memdesc:gaa235196dd1fc20eae9473051b6972285"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Preset defaults (typically by the driver) <br /></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa235196dd1fc20eae9473051b6972285">rcPrioDefault</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gaa235196dd1fc20eae9473051b6972285"><td class="mdescLeft">&#160;</td><td class="mdescRight">Preset defaults (typically by the driver) <br /></td></tr>
 <tr class="separator:gaa235196dd1fc20eae9473051b6972285"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7e5deba92ba55d32d2524f2dfc28206b"><td class="memItemLeft" align="right" valign="top"><a id="ga7e5deba92ba55d32d2524f2dfc28206b"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga7e5deba92ba55d32d2524f2dfc28206b">rcPrioRuleMin</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga7e5deba92ba55d32d2524f2dfc28206b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum for automation rules. <br /></td></tr>
+<tr class="separator:ga7e5deba92ba55d32d2524f2dfc28206b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga425849739733f95b42bba4cad092b1b9"><td class="memItemLeft" align="right" valign="top"><a id="ga425849739733f95b42bba4cad092b1b9"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga425849739733f95b42bba4cad092b1b9">rcPrioRule</a>&#160;&#160;&#160;3</td></tr>
-<tr class="memdesc:ga425849739733f95b42bba4cad092b1b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Automation rules (e.g. close window shades at certain times) <br /></td></tr>
+<tr class="memdesc:ga425849739733f95b42bba4cad092b1b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default for automation rules. <br /></td></tr>
 <tr class="separator:ga425849739733f95b42bba4cad092b1b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae006f1f159bd45757bca850e0a02fdfd"><td class="memItemLeft" align="right" valign="top"><a id="gae006f1f159bd45757bca850e0a02fdfd"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gae006f1f159bd45757bca850e0a02fdfd">rcPrioRuleMax</a>&#160;&#160;&#160;5</td></tr>
+<tr class="memdesc:gae006f1f159bd45757bca850e0a02fdfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum for automation rules (unless safety-relevant, see <a class="el" href="group__resources__requests.html#gaa11c057c98c4c3ed3144a9599f55cc89">rcPrioSafety</a>) <br /></td></tr>
+<tr class="separator:gae006f1f159bd45757bca850e0a02fdfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="memItemLeft" align="right" valign="top"><a id="ga8cf36062e827ab7ff06e3a3aee91330c"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga8cf36062e827ab7ff06e3a3aee91330c">rcPrioUser</a>&#160;&#160;&#160;7</td></tr>
-<tr class="memdesc:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Direct user interaction (e.g. user pushes button to open window shades) <br /></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga8cf36062e827ab7ff06e3a3aee91330c">rcPrioUser</a>&#160;&#160;&#160;6</td></tr>
+<tr class="memdesc:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct user interaction (e.g. user pushes button to open window shades) <br /></td></tr>
 <tr class="separator:ga8cf36062e827ab7ff06e3a3aee91330c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga9d6359fa02c067c762afda7ecb0981c6"><td class="memItemLeft" align="right" valign="top"><a id="ga9d6359fa02c067c762afda7ecb0981c6"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga9d6359fa02c067c762afda7ecb0981c6">rcPrioAdmin</a>&#160;&#160;&#160;8</td></tr>
-<tr class="memdesc:ga9d6359fa02c067c762afda7ecb0981c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Administrative interaction (default priority in the Home2l shell) <br /></td></tr>
-<tr class="separator:ga9d6359fa02c067c762afda7ecb0981c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga22673be7fbc59820601a2b74cc20b799"><td class="memItemLeft" align="right" valign="top"><a id="ga22673be7fbc59820601a2b74cc20b799"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga22673be7fbc59820601a2b74cc20b799">rcPrioShell</a>&#160;&#160;&#160;7</td></tr>
+<tr class="memdesc:ga22673be7fbc59820601a2b74cc20b799"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shell or administrative interaction (default priority in the Home2l shell) <br /></td></tr>
+<tr class="separator:ga22673be7fbc59820601a2b74cc20b799"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="memItemLeft" align="right" valign="top"><a id="gaa11c057c98c4c3ed3144a9599f55cc89"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa11c057c98c4c3ed3144a9599f55cc89">rcPrioSafety</a>&#160;&#160;&#160;<a class="el" href="group__resources__requests.html#gaa59f8432fb0f392f7d6c8fc576bb71e2">rcPrioMax</a></td></tr>
-<tr class="memdesc:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typical use: Necessary actions to avoid damage (e.g. close roof window on bad weather) <br /></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaa11c057c98c4c3ed3144a9599f55cc89">rcPrioSafety</a>&#160;&#160;&#160;8</td></tr>
+<tr class="memdesc:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Automatic actions necessary to avoid damage (e.g. close roof window on bad weather) <br /></td></tr>
 <tr class="separator:gaa11c057c98c4c3ed3144a9599f55cc89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaed778516d8e0fdacb23fbda22379e0f"><td class="memItemLeft" align="right" valign="top"><a id="gaaed778516d8e0fdacb23fbda22379e0f"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaaed778516d8e0fdacb23fbda22379e0f">rcPrioIKnowWhatImDoing</a>&#160;&#160;&#160;9</td></tr>
+<tr class="memdesc:gaaed778516d8e0fdacb23fbda22379e0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum priority is reserved for explicit manual intervention (should not be used by any automation rule) <br /></td></tr>
+<tr class="separator:gaaed778516d8e0fdacb23fbda22379e0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="ga80c0199d3895471a9fd151433a69a480"></a>

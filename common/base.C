@@ -303,9 +303,9 @@ void LogSetCallbacks (FLogCbMessage *_cbMessage, FLogCbToast *_cbToast) {
 static bool syslogOpen = false;
 
 
-void LogToSyslog () {
+void LogToSyslog (const char *instanceName) {
   static CString ident;
-  openlog (StringF (&ident, "home2l-%s", EnvInstanceName ()), 0, LOG_USER);
+  openlog (StringF (&ident, "home2l-%s", instanceName ? instanceName : EnvInstanceName ()), 0, LOG_USER);
   syslogOpen = true;
 }
 
@@ -761,20 +761,26 @@ void StringStrip (char *str, const char *sepChars) {
 
 void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, const char *sepChars, char **retRef) {
   int argc;
+  bool sepMerge;
   char *c, sep, *buf, *src, *dst;
 
   // Sanity...
+  if (sepChars) sepMerge = false;
+  else {
+    sepChars = WHITESPACE;
+    sepMerge = true;
+  }
   *retArgc = 0;
   *retArgv = NULL;
   if (retRef) *retRef = NULL;
-  if (!str || !sepChars || !sepChars[0]) return;
+  if (!str || !sepChars[0]) return;
 
   // Copy and strip...
   buf = strdup (str);
   src = dst = buf;
-  while (src[0] && strchr (sepChars, src[0])) src++;
+  while (src[0] && strchr (WHITESPACE, src[0])) src++;
   while (src[0]) *dst++ = *src++;
-  while (dst > buf && strchr (sepChars, dst[-1])) dst--;
+  while (dst > buf && strchr (WHITESPACE, dst[-1])) dst--;
   *dst = '\0';
   if (!buf[0]) {      // buffer empty => return empty array
     free (buf);
@@ -791,7 +797,7 @@ void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, c
   // Pass 1: Count arguments (= word beginnings)...
   argc = 1;
   for (c = buf + 1; c[0]; c++)
-    if (c[-1] == sep && c[0] != sep) argc++;
+    if (c[-1] == sep && (!sepMerge || (c[0] != sep))) argc++;
   *retArgc = MIN (argc, maxArgc);
 
   // Pass 2: Write out word beginnings...
@@ -799,11 +805,11 @@ void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, c
   (*retArgv) [0] = buf;
   argc = 1;
   for (c = buf + 1; c[0] && argc < maxArgc; c++)
-    if (c[-1] == sep && c[0] != sep) (*retArgv) [argc++] = c;
+    if (c[-1] == sep && (!sepMerge || (c[0] != sep))) (*retArgv) [argc++] = c;
 
   // Pass 3: Generate terminating null-characters...
   for (c = buf + 1; c < (*retArgv) [argc-1]; c++)
-    if (c[-1] != sep && c[0] == sep) c[0] = '\0';
+    if (c[0] == sep) c[0] = '\0';
 }
 
 
@@ -946,9 +952,10 @@ void CString::Set (const char *str, int maxLen) {
   int len;
 
   if (!str) Clear ();
+  else if (!str[0]) Clear ();
   else {
-    len = strlen (str);
-    if (maxLen < len) len = maxLen;
+    len = 0;
+    while (str[len] && len < maxLen) len++;
     if (size) ptr[0] = '\0'; else ptr = (char *) emptyStr;  // accelerate 'SetSize' by resetting to empty string first
     if (len > 0) {
       SetSize (len+1);
@@ -971,8 +978,8 @@ void CString::SetFV (const char *fmt, va_list ap) {
   Clear ();
   if (fmt) {
     // TBD: need 'va_copy`? -> man 3 stdarg
-    vasprintf (&ptr, fmt, ap);
-    size = strlen (ptr) + 1;
+    size = vasprintf (&ptr, fmt, ap) + 1;
+    ASSERT (size > 0);      // otherwise, vasprintf() has returned an error - this should never ever happen and is a bug
   }
 }
 
@@ -1475,6 +1482,7 @@ void CDictRaw::RecInit (int idx) {
 
 void CDictRaw::RecClear (int idx) {
   uint8_t *p = GetKeyAdr (idx);
+  //~ INFOF (("### CDictRaw::RecClear (%i: %s = '%s')", idx, GetKey (idx), ((CString *) p)->Get ()));
   ((CString *) p)->Clear ();
   ValueClear (p + DICT_KEYSIZE);
 }
@@ -1981,7 +1989,29 @@ const char *DayNameShort (int wd)   { return _(dayNamesShort[wd]);      }
 
 static CMutex timerMutex;
 static CCond timerCond;
-static volatile bool timerRunMainloop = true;
+static volatile bool timerRunMainloop;
+static volatile int timerSigNum;
+static CThread *timerThread = NULL;
+
+
+void *TimerThreadRoutine (void *) {
+  timerMutex.Lock ();
+  while (timerRunMainloop) {
+    //~ INFO ("TimerRun");
+    CTimer::ClassIterateAL ();
+    //~ INFO ("### TimerRun: timerCond.Wait...");
+    timerCond.Wait (&timerMutex, CTimer::GetDelayTimeAL ());
+    //~ INFOF (("### TimerRun: timerCond.Wait: done. Continue running = %i.", timerRunMainloop));
+  }
+  timerMutex.Unlock ();
+  return NULL;
+}
+
+
+static void TimerSignalHandler (int sigNum) {
+  timerSigNum = sigNum;
+  TimerStop ();
+}
 
 
 bool CTimer::ClassIterateAL () {
@@ -2060,34 +2090,34 @@ TTicksMonotonic TimerGetDelay () {
 }
 
 
-void TimerRun () {
-  timerMutex.Lock ();
-  while (timerRunMainloop) {
-    //~ INFO ("TimerRun");
-    CTimer::ClassIterateAL ();
-    //~ INFO ("### TimerRun: timerCond.Wait...");
-    timerCond.Wait (&timerMutex, CTimer::GetDelayTimeAL ());
-    //~ INFOF (("### TimerRun: timerCond.Wait: done. Continue running = %i.", timerRunMainloop));
-  }
-  timerMutex.Unlock ();
-}
-
-
-static CThread *timerThread = NULL;
-
-
-static void *TimerThreadRoutine (void *) {
-  TimerRun ();
-  //~ INFO("TimerThreadRoutine done");
-  return NULL;
-}
-
-
 void TimerStart () {
   ASSERT (timerThread == NULL);
   timerRunMainloop = true;
   timerThread = new CThread ();
   timerThread->Start (TimerThreadRoutine);
+}
+
+
+int TimerRun (bool catchSignals) {
+  struct sigaction sigAction, sigActionSavedTerm, sigActionSavedInt;
+
+  timerRunMainloop = true;
+  timerSigNum = 0;
+  if (catchSignals) {
+    // Set signal handlers for SIGTERM (kill) and SIGINT (Ctrl-C) ...
+    sigAction.sa_handler = TimerSignalHandler;
+    sigemptyset (&sigAction.sa_mask);
+    sigAction.sa_flags = 0;
+    sigaction (SIGTERM, &sigAction, &sigActionSavedTerm);
+    sigaction (SIGINT, &sigAction, &sigActionSavedInt);
+  }
+  TimerThreadRoutine (NULL);
+  if (catchSignals) {
+    // Restore signal handlers
+    sigaction (SIGTERM, &sigActionSavedTerm, NULL);
+    sigaction (SIGINT, &sigActionSavedInt, NULL);
+  }
+  return timerSigNum;
 }
 
 

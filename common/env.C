@@ -53,8 +53,8 @@ ENV_PARA_BOOL("debug.enableCoreDump", envEnableCoreDump, false);
 // ***** Domain 'home2l' *****
 
 
-ENV_PARA_VAR ("home2l.config", static const char *, envConfig, "etc/home2l.conf");
-  /* Main configuration file (relative to HOME2L\_ROOT) (read-only)
+ENV_PARA_VAR ("home2l.config", static const char *, envConfig, "home2l.conf");
+  /* Main configuration file (relative to \lstf{\$HOME2L\_ETC}) (read-only)
    */
 ENV_PARA_NOVAR ("home2l.version", const char *, buildVersion, NULL);
   /* Version of the Home2L suite (read-only)
@@ -122,25 +122,22 @@ ENV_PARA_STRING ("sys.droidId", envDroidId, "000");
 
 // Directories...
 ENV_PARA_VAR ("sys.rootDir", const char*, envRootDir, NULL);
-  /* Home2L installation root directory (HOME2L\_ROOT)
+  /* Home2L installation root directory [= \lstf{\$HOME2L\_ROOT}] (read-only)
    */
 ENV_PARA_STRING ("sys.etcDir", envEtcDir, NULL);   // Debian: "/etc/home2l" by symlink from "$HOME2L_ROOT/etc"
-  /* Root directory for configuration data (HOME2L\_ROOT/etc)
+  /* Root directory for configuration data [= \lstf{\$HOME2L\_ETC}] (read-only)
    *
-   * This setting can only be modified via the command line or the HOME2L\_CONFIG
-   * environment variable, but *not* in a config file (guess why!).
-   *
-   * The path must be an absolute path.
+   * The path may be absolute or relative to \lstf{\$HOME2L\_ROOT}.
    */
 ENV_PARA_STRING ("sys.varDir", envVarDir, "var");  // Debian: "/var/opt/home2l"
-  /* Root directory for variable data (HOME2L\_ROOT/var)
+  /* Root directory for variable data [Default: \lstf{\$HOME2L\_VAR}]
    *
-   * The path must be an absolute path.
+   * The path may be absolute or relative to \lstf{\$HOME2L\_ROOT}.
    */
 ENV_PARA_STRING ("sys.tmpDir", envTmpDir, "tmp");  // Debian: "/tmp/home2l"
-  /* Root directory for temporary data (HOME2L\_ROOT/tmp)
+  /* Root directory for temporary data [Default: \lstf{\$HOME2L\_TMP}]
    *
-   * The path must be an absolute path.
+   * The path may be absolute or relative to \lstf{\$HOME2L\_ROOT}.
    */
 
 // Locale
@@ -170,45 +167,47 @@ ENV_PARA_SPECIAL ("net.resolve.<alias>", const char *, NULL);
 
 
 
+// ***** Domain 'location' *****
+
+
+ENV_PARA_FLOAT ("location.latitudeN", envLocationLatitudeN, 48.371667);
+  /* WGS84 coordinate (latitude north) of the home
+   *
+   * This value is (amoung others) used by the 'timer' driver for twilight
+   * calculations and by the 'weather' driver for radar eye.
+   */
+ENV_PARA_FLOAT ("location.longitudeE", envLocationLongitudeE, 10.898333);
+  /* WGS84 coordinate (longitude east) of the home
+   *
+   * This value is (amoung others) used by the 'timer' driver for twilight
+   * calculations and by the 'weather' driver for radar eye.
+   */
+
+
+
 // ***** Getters for frequently used variables *****
 
 
-const char *EnvBuildOS ()   { return buildOS; }
-const char *EnvBuildArch () { return buildArch; }
+const char *EnvBuildOS ()       { return buildOS; }
+const char *EnvBuildArch ()     { return buildArch; }
 
 const char *EnvMachineName ()   { return envMachineName; }
 const char *EnvExecPathName ()  { return envExecPathName; }
 const char *EnvExecName ()      { return envExecName; }
 
-int EnvPid () { return envPid; }
+int EnvPid ()                   { return envPid; }
 
 const char *EnvInstanceName ()  { return envInstanceName; }
 
-const char *EnvDroidId ()   { return envDroidId; }
+const char *EnvDroidId ()       { return envDroidId; }
 
+const char *EnvHome2lRoot ()    { ASSERT (envRootDir != NULL); return envRootDir; }
+const char *EnvHome2lEtc ()     { ASSERT (envEtcDir != NULL && envEtcDir[0] == '/'); return envEtcDir; }
+const char *EnvHome2lVar ()     { ASSERT (envVarDir != NULL && envVarDir[0] == '/'); return envVarDir; }
+const char *EnvHome2lTmp ()     { ASSERT (envTmpDir != NULL && envTmpDir[0] == '/'); return envTmpDir; }
 
-const char *EnvHome2lRoot () {
-  ASSERT (envRootDir != NULL);
-  return envRootDir;
-}
-
-
-const char *EnvHome2lEtc () {
-  ASSERT (envEtcDir != NULL && envEtcDir[0] == '/');
-  return envEtcDir;
-}
-
-
-const char *EnvHome2lVar () {
-  ASSERT (envVarDir != NULL && envVarDir[0] == '/');
-  return envVarDir;
-}
-
-
-const char *EnvHome2lTmp ()   {
-  ASSERT (envTmpDir != NULL && envTmpDir[0] == '/');
-  return envTmpDir;
-}
+float EnvLocationLatitudeN () { return envLocationLatitudeN; }
+float EnvLocationLongitudeE () { return envLocationLongitudeE; }
 
 
 
@@ -436,6 +435,7 @@ void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
         else {
           valStr.Set (val);
           map->Set (key, &valStr);
+          //~ map->Set (key, new CString (val));
         }
     }
     if (!ok) ERRORF (("Syntax error at '%s:%i'", fileName, lineNo));
@@ -470,10 +470,13 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
   EnvPut (buildOSKey, buildOS);
   EnvPut (buildArchKey, buildArch);
 
-  // Main config file...
-  str = getenv ("HOME2L_CONFIG");
-  if (str) envConfig = str;
-  EnvPut (envConfigKey, envConfig);
+  // Process environment...
+  envExecPathName = EnvPut (envExecPathNameKey, argv0);
+  str = strrchr (argv0, '/');
+  envExecName = EnvPut (envExecNameKey, str ? str + 1 : argv0);
+
+  envPid = getpid ();
+  EnvPut (envPidKey, StringF (&s, "%i", envPid));
 
   // Host name...
 #if !ANDROID
@@ -487,14 +490,6 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
   ASSERT (envMachineName != NULL);
 #endif
 
-  // Process environment...
-  envExecPathName = EnvPut (envExecPathNameKey, argv0);
-  str = strrchr (argv0, '/');
-  envExecName = EnvPut (envExecNameKey, str ? str + 1 : argv0);
-
-  envPid = getpid ();
-  EnvPut (envPidKey, StringF (&s, "%i", envPid));
-
   // Instance name ...
   if (!instanceName) {
     instanceName = envExecName;
@@ -505,7 +500,6 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
   // Root & main directories ...
 #if !ANDROID
   str = getenv ("HOME2L_ROOT");
-  if (!str) str = getenv ("PWD");
   if (!str) str = "/opt/home2l";    // Default: Assume an /opt installation
   envRootDir = EnvPut (envRootDirKey, str);
 #else
@@ -513,9 +507,15 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
   // in advance (in 'Home2l.init()'), and 'envRootDir' is set in 'SystemPreInit ()'.
   ASSERT (envRootDir != NULL);
 #endif // ANDROID
-  envEtcDir = EnvPut (envEtcDirKey, StringF (&s, "%s/etc", envRootDir));
-  envVarDir = EnvPut (envVarDirKey, StringF (&s, "%s/var", envRootDir));
-  envTmpDir = EnvPut (envTmpDirKey, StringF (&s, "%s/tmp", envRootDir));
+  str = getenv ("HOME2L_ETC");
+  envEtcDir = EnvPut (envEtcDirKey, EnvGetHome2lRootPath (&s, str ? str : "etc"));
+  str = getenv ("HOME2L_VAR");
+  envVarDir = EnvPut (envVarDirKey, EnvGetHome2lRootPath (&s, str ? str : "var"));
+  str = getenv ("HOME2L_TMP");
+  envTmpDir = EnvPut (envTmpDirKey, EnvGetHome2lRootPath (&s, str ? str : "tmp"));
+
+  // Main config file...
+  envConfig = EnvPut (envConfigKey, EnvGetHome2lEtcPath (&s, envConfig));
 
   // Droid ID...
   len = strlen (envMachineName);
@@ -560,7 +560,7 @@ static void PrintUsage (const char *specOptions) {
           "  -h            : Print this help\n"
           "  -s <sections> : Define comma-separated list of additional\n"
           "                  configuration file sections\n"
-          "  -c <conffile> : Set main configuration file [etc/home2l.conf]\n"
+          "  -c <conffile> : Set main configuration file [$HOME2L_ETC/home2l.conf]\n"
           "  -x <instname> : Set instance name [%s]\n",
           EnvExecName (), EnvInstanceName ());
   if (specOptions) printf ("\nTool-specific options:\n%s", specOptions);
@@ -621,7 +621,7 @@ static void ReadConfAssignmentsFromEnv () {
   char **argv, *env;
   int argc;
 
-  env = getenv ("HOME2L_EXTRA");
+  env = getenv ("HOME2L_CONF");
   if (!env) return;
   StringSplit (env, &argc, &argv, INT_MAX, " ;");
   if (!argv) return;
@@ -632,6 +632,7 @@ static void ReadConfAssignmentsFromEnv () {
 
 
 void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *instanceName) {
+  static CString home2lVarDef, home2lTmpDef;
   CString s;
   const char *key, *val;
   char *str, *token;
@@ -649,7 +650,7 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
 
   // Read main config file...
   if (envConfig) if (envConfig[0]) {      // skip, if explicitly disabled
-    INFOF (("### envConfig == '%s'", envConfig));
+    //~ INFOF (("### envConfig == '%s'", envConfig));
 
     // Determine relevant sections...
     sectionSet.Clear ();
@@ -668,12 +669,12 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
     //~ sectionSet.DumpKeys ();
 
     // Read the file...
-    str = (char *) EnvGetPath (envConfigKey);     // convert config file path to absolute path
+    str = (char *) EnvGetHome2lEtcPath (&s, envConfig);     // convert config file path to absolute path
     //~ INFOF (("### envConfig = %s, HOME2L_ROOT = %s", envConfig, envRootDir));
     EnvReadIniFile (str, &envMap);
   }
 
-  // Parse extra assignments from 'HOME2L_EXTRA' and the command line...
+  // Parse extra assignments from 'HOME2L_CONF' and the command line...
   ReadConfAssignmentsFromEnv ();
   ParseConfAssignments (argc, argv);
 
@@ -695,10 +696,10 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
   LangInit (EnvGetHome2lRootPath (&s, "locale"), envSysLocale);
 
   // Set some environment variables for child processes...
-  s.SetF ("HOME2L_VAR=%s", envVarDir);
-  putenv (s.Disown ());
-  s.SetF ("HOME2L_TMP=%s", envTmpDir);
-  putenv (s.Disown ());
+  home2lVarDef.SetF ("HOME2L_VAR=%s", envVarDir);
+  putenv ((char *) home2lVarDef.Get ());
+  home2lTmpDef.SetF ("HOME2L_TMP=%s", envTmpDir);
+  putenv ((char *) home2lTmpDef.Get ());
 
   // Done...
   if (envDebug >= 1) {
@@ -714,6 +715,7 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
 
 
 void EnvDone () {
+  //~ INFOF (("### EnvDone()"));
   EnvFlush ();
   LangDone ();
   LogClose ();
@@ -826,6 +828,7 @@ const char *EnvPut (const char *key, const char *value) {
   if (value) {
     valStr.SetC (value);
     idx = envMap.Set (key, &valStr);
+    //~ idx = envMap.Set (key, new CString (value));
     //~ INFOF (("###   value = %08x, valStr.ptr = %08x, envMap.Get ()->Get () = %08x", value, valStr.Get (), envMap.Get (key)->Get ()));
   }
   else

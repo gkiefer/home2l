@@ -963,7 +963,7 @@ class CBrFeatureShades: public CBrFeature {
 
       // Refresh driven REXT after Brownie reboot ...
       //   If a Brownie is rebooted, it forgets its position and RINT/REXT values.
-      //   We refresh REXT here. The suitation is detected via an invalidated postion.
+      //   We refresh REXT here. The sitation is detected via an invalidated position.
       if (pos > 100) link->RegWrite (brownie->Adr (), regRExt, rExt);
 
       // Report resource values ...
@@ -977,11 +977,16 @@ class CBrFeatureShades: public CBrFeature {
       //   This is done based on the RINT register, since the device does all debouncing and cannot
       //   loose button events due to bus delays.
       if (rInt <= 100 && pos <= 100) {         // RINT has been set due to a device button push ...
-        // We skip this step in the special case of an unknown position is unknown because otherwise there
+        // We skip this step in the special case of an unknown position because otherwise
         // the shades would be startable, but not stoppable by the device buttons. If a device button is
         // pushed while the engine is active, the device sets RINT to the current position, which is the
         // unknown or passive value of 0xff if the position is unkown.
         //~ INFOF (("### Caught RINT=%i ...", rInt));
+        //
+        // TBD: If the communication has been stopped (e.g. by a brownie2l socket connection) for some time,
+        //   and the Brownie auto-moves the shades based on a SHADES_x_RINT_FAILSAFE setting, this auto-set RINT
+        //   value will be read back here, and it will appear as if the user has pushed a button for that failsafe
+        //   position. Fix?
 
         // Clear RINT ...
         if (rExt > 100) link->RegWrite (brownie->Adr (), regRExt, rInt);

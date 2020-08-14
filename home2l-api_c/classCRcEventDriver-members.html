@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -74,18 +74,19 @@ $(function() {
   <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#a948f9ee0f2f3984d9a13a06f3ce18924">FlushEvents</a>()</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classCRcEventDriver.html#a08492f9ca7aefa97661e8b473ec5e70f">InstId</a>()</td><td class="entry"><a class="el" href="classCRcEventDriver.html">CRcEventDriver</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
   <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#af8f0dc10d3d8548324baba4240552dec">Interrupt</a>()</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7">PollEvent</a>(CRcEvent *ev)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#a403920b96bb31fa35628bf431d9a4175">PutEvent</a>(CRcEvent *ev)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcDriver.html#ae5b1cce300799a29d59b0b29a0c57457">Register</a>()</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcDriver.html#a39731a38dbd9201bcb52a11e8630df5a">RegisterAndInit</a>(const char *_lid, FRcDriverFunc *_func)</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcDriver.html#a92989a1503d4f9ba129496ad5b229a7a">RegisterResource</a>(const char *rcLid, const char *rcTypeDef)</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#af5265a0434478dd692cfb6e334ef2074">Select</a>(TTicksMonotonic maxTime=-1)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#a1879b9cd4375e2132e5f9ee4edcc9484">SetInSelectSet</a>(bool _inSelectSet)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcEventDriver.html#a2d44a9e0c9446a5af7476d3ab2620820">Stop</a>()</td><td class="entry"><a class="el" href="classCRcEventDriver.html">CRcEventDriver</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#af5f9deffd52f0c71baac405802397b50">CRcEventProcessor::ToStr</a>()</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcEventDriver.html#aa14e8d855c4b6e198f01118d36768bfd">TypeId</a>()</td><td class="entry"><a class="el" href="classCRcEventDriver.html">CRcEventDriver</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classCRcDriver.html#a1872bf6af29a539334e0b8bf765d8663">Unregister</a>()</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"></td></tr>
-  <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#a42008924cc1b0add1ba0fb7deb91189d">WaitEvent</a>(CRcEvent *ev, int *maxTime=NULL)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#ac425fb5b6a5ea3d7c33788ea66e585d2">OnEvent</a>(CRcEvent *ev)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7">PollEvent</a>(CRcEvent *ev)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#a403920b96bb31fa35628bf431d9a4175">PutEvent</a>(CRcEvent *ev)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcDriver.html#ae5b1cce300799a29d59b0b29a0c57457">Register</a>()</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcDriver.html#a39731a38dbd9201bcb52a11e8630df5a">RegisterAndInit</a>(const char *_lid, FRcDriverFunc *_func)</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcDriver.html#a92989a1503d4f9ba129496ad5b229a7a">RegisterResource</a>(const char *rcLid, const char *rcTypeDef)</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#af5265a0434478dd692cfb6e334ef2074">Select</a>(TTicksMonotonic maxTime=-1)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#a1879b9cd4375e2132e5f9ee4edcc9484">SetInSelectSet</a>(bool _inSelectSet)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcEventDriver.html#a2d44a9e0c9446a5af7476d3ab2620820">Stop</a>()</td><td class="entry"><a class="el" href="classCRcEventDriver.html">CRcEventDriver</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcEventProcessor.html#af5f9deffd52f0c71baac405802397b50">CRcEventProcessor::ToStr</a>()</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcEventDriver.html#aa14e8d855c4b6e198f01118d36768bfd">TypeId</a>()</td><td class="entry"><a class="el" href="classCRcEventDriver.html">CRcEventDriver</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr><td class="entry"><a class="el" href="classCRcDriver.html#a1872bf6af29a539334e0b8bf765d8663">Unregister</a>()</td><td class="entry"><a class="el" href="classCRcDriver.html">CRcDriver</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classCRcEventProcessor.html#a42008924cc1b0add1ba0fb7deb91189d">WaitEvent</a>(CRcEvent *ev, int *maxTime=NULL)</td><td class="entry"><a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -23,9 +23,9 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-4-g7904 (2020-05-08)</span>
+   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
    </div>
-   <div id="projectbrief">Clever Tools for a Private Smart Home</div>
+   <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
  </tr>
  </tbody>
@@ -331,10 +331,10 @@ typedef void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga59354e7b87fccf99042e996cbbaa29f2"><td class="memItemLeft" align="right" valign="top">
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga59354e7b87fccf99042e996cbbaa29f2">LogToSyslog</a> ()</td></tr>
-<tr class="memdesc:ga59354e7b87fccf99042e996cbbaa29f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Redirect logging to syslog from now (under non-Android) <br /></td></tr>
-<tr class="separator:ga59354e7b87fccf99042e996cbbaa29f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga70c4601b20beabd915106681f46900fd"><td class="memItemLeft" align="right" valign="top">
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga70c4601b20beabd915106681f46900fd">LogToSyslog</a> (const char *instanceName=NULL)</td></tr>
+<tr class="memdesc:ga70c4601b20beabd915106681f46900fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Redirect logging to syslog from now; instance name must be passed if this is called before EnvInit() <br /></td></tr>
+<tr class="separator:ga70c4601b20beabd915106681f46900fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab0f1ea671d51c7c52f8b79af9988cdaa"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#gab0f1ea671d51c7c52f8b79af9988cdaa">LogStack</a> ()</td></tr>
 <tr class="memdesc:gab0f1ea671d51c7c52f8b79af9988cdaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Log a stack trace (requires linker flag '-rdynamic' to print function names) <br /></td></tr>
@@ -379,9 +379,9 @@ float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="gro
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gacc3fe693f3186625d44b0c10906e1928">StringStrip</a> (char *str, const char *sepChars=<a class="el" href="group__common__strings.html#gabfa0d183e035eb9705b5faec98294d0f">WHITESPACE</a>)</td></tr>
 <tr class="memdesc:gacc3fe693f3186625d44b0c10906e1928"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove seperator (whitespace) characters at the beginning and end of the string. <br /></td></tr>
 <tr class="separator:gacc3fe693f3186625d44b0c10906e1928"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaea6a585be8ea4df1e94dd16e6bfaaad1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaea6a585be8ea4df1e94dd16e6bfaaad1">StringSplit</a> (const char *str, int *retArgc, char ***retArgv, int maxArgc=INT_MAX, const char *sepChars=<a class="el" href="group__common__strings.html#gabfa0d183e035eb9705b5faec98294d0f">WHITESPACE</a>, char **retRef=NULL)</td></tr>
-<tr class="memdesc:gaea6a585be8ea4df1e94dd16e6bfaaad1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split a string into (whitespace-)separated arguments.  <a href="group__common__strings.html#gaea6a585be8ea4df1e94dd16e6bfaaad1">More...</a><br /></td></tr>
-<tr class="separator:gaea6a585be8ea4df1e94dd16e6bfaaad1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga53187daef823121298c2f01c5bdf040d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d">StringSplit</a> (const char *str, int *retArgc, char ***retArgv, int maxArgc=INT_MAX, const char *sepChars=NULL, char **retRef=NULL)</td></tr>
+<tr class="memdesc:ga53187daef823121298c2f01c5bdf040d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split a string into (whitespace-)separated arguments.  <a href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d">More...</a><br /></td></tr>
+<tr class="separator:ga53187daef823121298c2f01c5bdf040d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac7fd872b1a286c4b50db018851e1d48f"><td class="memItemLeft" align="right" valign="top">
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gac7fd872b1a286c4b50db018851e1d48f">CharIsWhiteSpace</a> (char c)</td></tr>
 <tr class="memdesc:gac7fd872b1a286c4b50db018851e1d48f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicate whether the given character is white space (see WHITSPACE). <br /></td></tr>
@@ -520,19 +520,18 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="separator:ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf5dfe8e17766ad61574db9e0643be6ae"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__timers.html#gaf5dfe8e17766ad61574db9e0643be6ae">TimerGetDelay</a> ()</td></tr>
-<tr class="memdesc:gaf5dfe8e17766ad61574db9e0643be6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns number of milliseconds until next call to <code><a class="el" href="group__common__timers.html#ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff" title="Returns false if nothing was done. ">TimerIterate()</a></code> is necessary, or -1 if no timer is pending. <br /></td></tr>
+<tr class="memdesc:gaf5dfe8e17766ad61574db9e0643be6ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns number of milliseconds until next call to <a class="el" href="group__common__timers.html#ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff">TimerIterate()</a> is necessary, or -1 if no timer is pending. <br /></td></tr>
 <tr class="separator:gaf5dfe8e17766ad61574db9e0643be6ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaeec8353aae05aa37f6d0d94383a7394f"><td class="memItemLeft" align="right" valign="top">
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__timers.html#gaeec8353aae05aa37f6d0d94383a7394f">TimerRun</a> ()</td></tr>
-<tr class="memdesc:gaeec8353aae05aa37f6d0d94383a7394f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform an endless loop calling timers until <code><a class="el" href="group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0" title="Request TimerRun() to return at next occasion (can be called from any thread). If a dedicatd timer th...">TimerStop()</a></code> is called. <br /></td></tr>
-<tr class="separator:gaeec8353aae05aa37f6d0d94383a7394f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8aa5740e41ec2bf235a1d237bc2be895"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__timers.html#ga8aa5740e41ec2bf235a1d237bc2be895">TimerStart</a> ()</td></tr>
-<tr class="memdesc:ga8aa5740e41ec2bf235a1d237bc2be895"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start <code><a class="el" href="group__common__timers.html#gaeec8353aae05aa37f6d0d94383a7394f" title="Perform an endless loop calling timers until TimerStop() is called. ">TimerRun()</a></code> in a background thread, which is to be stopped using <code><a class="el" href="group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0" title="Request TimerRun() to return at next occasion (can be called from any thread). If a dedicatd timer th...">TimerStop()</a></code>. All timer functions are then run from the same, namely this background thread. <br /></td></tr>
+<tr class="memdesc:ga8aa5740e41ec2bf235a1d237bc2be895"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start <a class="el" href="group__common__timers.html#ga36892df2fc0f1587dce0eda3c1478f81">TimerRun()</a> in a background thread, which is to be stopped using <a class="el" href="group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0">TimerStop()</a>. All timer functions are then run from the same, namely that background thread. <br /></td></tr>
 <tr class="separator:ga8aa5740e41ec2bf235a1d237bc2be895"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga36892df2fc0f1587dce0eda3c1478f81"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__timers.html#ga36892df2fc0f1587dce0eda3c1478f81">TimerRun</a> (bool catchSignals=true)</td></tr>
+<tr class="memdesc:ga36892df2fc0f1587dce0eda3c1478f81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform an endless loop calling timers until <a class="el" href="group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0">TimerStop()</a> is called.  <a href="group__common__timers.html#ga36892df2fc0f1587dce0eda3c1478f81">More...</a><br /></td></tr>
+<tr class="separator:ga36892df2fc0f1587dce0eda3c1478f81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf54dbe87cfe61ae25cc47bcba6b725c0"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0">TimerStop</a> ()</td></tr>
-<tr class="memdesc:gaf54dbe87cfe61ae25cc47bcba6b725c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request <code><a class="el" href="group__common__timers.html#gaeec8353aae05aa37f6d0d94383a7394f" title="Perform an endless loop calling timers until TimerStop() is called. ">TimerRun()</a></code> to return at next occasion (can be called from any thread). If a dedicatd timer thread was started, this is joined, too. <br /></td></tr>
+<tr class="memdesc:gaf54dbe87cfe61ae25cc47bcba6b725c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request <a class="el" href="group__common__timers.html#ga36892df2fc0f1587dce0eda3c1478f81">TimerRun()</a> to return at next occasion (can be called from any thread). If a dedicated timer thread was started, this is joined, too. <br /></td></tr>
 <tr class="separator:gaf54dbe87cfe61ae25cc47bcba6b725c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
