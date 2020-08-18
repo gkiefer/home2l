@@ -2543,7 +2543,7 @@ bool CShellBare::Start (const char *cmd, bool readStdErr) {
   int pipeToScript[2], pipeFromScript[2];
   CString s1, s2, sCmd;
 
-  DEBUGF (1, (host ? "Starting shell command on host '%2$s': '%1$s' ..." :  "Starting shell command locally: '%s' ...", cmd ? cmd : host ? "<ssh>" : "<bash>", host));
+  DEBUGF (1, (host.Get () ? "Starting shell command on host '%2$s': '%1$s' ..." :  "Starting shell command locally: '%s' ...", cmd ? cmd : host.IsEmpty () ? "<bash>" : "<ssh>", host.Get ()));
 
   // Preparation ...
   Wait ();
@@ -2577,13 +2577,12 @@ bool CShellBare::Start (const char *cmd, bool readStdErr) {
     if (newProcessGroup) setpgid (0, 0);
 
     // Execute script...
-    if (host) if (host[0] == '\0') host = NULL;     // Normalize 'host'
-    if (ANDROID && !host && cmd && cmd[0] != '/') {        // Local command with relativ path: prepend HOME2L_ROOT ...
+    if (ANDROID && host.IsEmpty () && cmd && cmd[0] != '/') {        // Local command with relativ path: prepend HOME2L_ROOT ...
       sCmd.SetF ("%s/%s", EnvHome2lRoot (), cmd);
       cmd = sCmd.Get ();
     }
 #if ANDROID
-    if (!host) {
+    if (host.IsEmpty ()) {
       //~ INFOF (("### CShellBare: Starting '%s' ...", cmd));
       execl ("/system/bin/sh", "/system/bin/sh",
              cmd ? "-c" : NULL, cmd, NULL);
@@ -2594,7 +2593,7 @@ bool CShellBare::Start (const char *cmd, bool readStdErr) {
              "-o", StringF (&s2, "UserKnownHostsFile=%s/etc/secrets/ssh/known_hosts", EnvHome2lRoot ()),    // known hosts
              "-o", "NoHostAuthenticationForLocalhost=yes",
              "-o", "LogLevel=QUIET",
-             "-l", "home2l", host,              // remote user and host
+             "-l", "home2l", host.Get (),              // remote user and host
              cmd ? cmd : "/bin/bash", NULL);    // command or shell
         /*
          * Example: Pre-test a connection from 'inf629' to '192.168.2.11'
@@ -2605,12 +2604,12 @@ bool CShellBare::Start (const char *cmd, bool readStdErr) {
          */
     }
 #else
-    if (!host)
+    if (host.IsEmpty ())
       execl ("/bin/bash", "/bin/bash",
              cmd ? "-c" : NULL, cmd, NULL);
     else
       execl ("/usr/bin/ssh", "/usr/bin/ssh",
-             "-l", "home2l", host,              // remote user and host
+             "-l", "home2l", host.Get (),       // remote user and host
              cmd ? cmd : "/bin/bash", NULL);    // command or shell
 #endif
     ERRORF (("Failed to start '%s': %$s", cmd, strerror (errno)));

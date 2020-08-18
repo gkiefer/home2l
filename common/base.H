@@ -1677,7 +1677,7 @@ class CShellBare: public CShell {
 
     /// @name Extra features...
     /// @{
-    void SetHost (const char *_host) { host = _host; }
+    void SetHost (const char *_host) { host.Set (_host); }
       ///< @brief Set host to run subsequent commands on; 'NULL' represents the local host.
     const char *Host () { return host; }
     void SetNewProcessGroup (bool on = true) { newProcessGroup = on; }
@@ -1687,7 +1687,7 @@ class CShellBare: public CShell {
     /// @}
 
   protected:
-    const char *host;
+    CString host;
     bool newProcessGroup;
     CString readBuf;
     bool readBufMayContainLine;

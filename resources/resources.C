@@ -1855,8 +1855,8 @@ void CResource::DriveValue (CRcValueState *vs, bool force) {
     //~ INFOF (("### CResource::DriveValue ('%s', '%s')", Uri (), vs->ToStr (true)));
     rcDriver->DriveValue (this, vs);
     // Note: The driver may have changed 'vs' to report a busy state or changes due to hardware.
-    if (!(vs->State () == rcsValid && vs->Type () == rctNone)) ReportValueStateAL (vs);
-      // Special case: rcsValid / rctNone indicates that nothing should be reported at all.
+    if (vs->IsKnown ()) ReportValueStateAL (vs);
+      // report the value (if known)
   }
   //~ else INFO ("###    ... skipping (not new)");
   Unlock ();
@@ -3165,7 +3165,7 @@ void CRcEventDriver::DriveValue (CResource *rc, CRcValueState *vs) {
   PutEvent (&ev);
   switch (successState) {
     case rcsValid:    break;   // no change; direct reporting
-    case rcsBusy:     vs->SetToReportBusy (); break;
+    case rcsBusy:     vs->SetToReportBusyOldVal (); break;
       // If the desired success state is 'rcsBusy', always report the old value with it
       // (important for shades, for example).
     case rcsUnknown:  vs->SetToReportNothing ();    break;

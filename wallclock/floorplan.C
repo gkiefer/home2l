@@ -2891,8 +2891,9 @@ void CScreenFloorplan::CheckAlert (CScreen *_returnScreen) {
       returnScreen = _returnScreen;
     }
     else {
-      SystemActiveUnlock ("_floorplan", false);
       if (returnScreen) returnScreen->Activate ();
+      returnScreen = NULL;
+      SystemActiveUnlock ("_floorplan", false);
     }
     haveAlert = _haveAlert;
   }

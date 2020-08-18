@@ -506,10 +506,8 @@ class CRcValueState {
       ///< @brief Modify object to auto-report a busy state together with a value.
       /// This is to be used in @ref CRcDriver::DriveValue(). If the value is not
       /// set explicitly, the current value to drive will be reported back.
-    void SetToReportNothing () { Clear (rctNone, rcsValid); }
+    void SetToReportNothing () { state = rcsUnknown; }
       ///< @brief Modify object to not auto-report anything.
-      /// **Note:** Only for use in @ref CRcDriver::DriveValue()! Normally,
-      /// the combination of no type and a state != rcsUnknown are forbidden.
     /// @}
 
     /// @name Set value and state (multi-type capable setters) ...
@@ -2397,16 +2395,16 @@ class CRcDriver {
       /// In all other cases, the state of '*vs' is preset with @ref rcsValid.
       ///
       /// It is legal to modify '*vs' to reflect a new state or even a value different from the driven one.
-      /// The method shall change it to an appropriate state ('rcsUnknown' or 'rcsBusy') as adequate.
+      /// The method shall change the value and eventually the state as adequate.
+      ///
       /// If the new value is not known yet, the state should be set to 'rcsBusy' by calling
-      /// @ref CRcValueState::SetToReportBusyOldVal() now and a 'CRcResource::Report...()' method
+      /// @ref CRcValueState::SetToReportBusy() now, and a 'CRcResource::Report...()' method
       /// should be called later with a valid value and state @ref rcsValid.
+      /// To report a certain (e.g. the new) value with the @ref rcsBusy state now, the state may be set to @ref rcsBusy
+      /// and the value be set as appropriate or left as it is, in which case the driven value is reported.
       ///
-      /// To report another (e.g. the new) value with the @ref rcsBusy state now,  the state may be set to @ref rcsBusy'
-      /// the value be set as appropriate or left as it is, in which case the driven value is reported.
-      /// To report @ref rcsBusy with the old value instead (the normal case), call @ref CRcValueState::SetToReportBusyOldVal() on '*vs'.
-      ///
-      /// To report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs'.
+      /// To report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs' or set the state
+      /// to @ref rcsUnknown.
       ///
       /// It is not allowed to call any method of the '*rc' object (e.g. 'Report' methods) from here, since the
       /// resource may be locked.

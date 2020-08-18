@@ -195,14 +195,14 @@ void UiIterate (bool noWait) {
             newMode = (ESystemMode) (uint32_t) (long) ev.user.data1;
             lastMode = (ESystemMode) (uint32_t) (long) ev.user.data2;
             //~ INFOF (("### evSystemModeChanged %i -> %i", lastMode, newMode));
-            if (lastMode >= smStandby && newMode < smStandby)              // fall asleep ...
+            if (lastMode >= smStandby && newMode < smStandby) {       // fall asleep ...
               if (CScreen::ActiveScreen ()) CScreen::ActiveScreen ()->Deactivate ();
-            if (lastMode < smStandby && newMode >= smStandby) {            // wake up ...
+            }
+            else if (lastMode < smStandby && newMode >= smStandby) {  // wake up ...
               if (CScreen::ActiveScreen ()) CScreen::ActiveScreen ()->Activate ();
               else AppActivate (appIdHome);
             }
-
-            if (newMode == smStandby) AppActivate (appIdHome);
+            else if (newMode == smStandby) AppActivate (appIdHome);   // Activate home screen when switching down to standby
 
             haveEvent = true;
             break;

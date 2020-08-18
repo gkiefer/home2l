@@ -687,7 +687,9 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
       GetMouseEventPos (ev, &x, &y);
 
       // In listbox area? ...
-      if (!RectContains (&area, x, y) && !evIsDown) {
+      if (!RectContains (&area, x, y)) {
+        if (evIsDown) break;      // button down outside => not our event (break with 'ret == false')
+
         // Have dragged out of the area => cancel and restore selection ...
         switch (mode) {
           case lmReadOnly:
@@ -703,8 +705,8 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
             if (downIdx >= 0) SelectItem (downIdx, !itemArr[downIdx].isSelected);
             break;
         }
-        downIdx = -1;
-        ret = true;
+        downIdx = -1;             // cancel dragging
+        ret = true;               // it remains our event
         break;   // case SDL_MOUSEMOTION:
       }
 

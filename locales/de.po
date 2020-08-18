@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2020-08-15 00:27+0200\n"
+        "POT-Creation-Date: 2020-08-17 21:34+0200\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -185,21 +185,21 @@ msgstr  "Kann die Kalenderdatei '%s/%s.rem' nicht laden:\n"
 
 #. TRANSLATORS: Format string for the day header in the calendar event list (de_DE: "%s   %i.%i.%i")
 #. Arguments are: <week day name>, <day>, <month>, <year>
-#: ../wallclock/app_calendar.C:691
+#: ../wallclock/app_calendar.C:696
 #, c-format
 msgid   "%1$s   %3$i/%2$i/%4$i"
 msgstr  "%s   %i.%i.%i"
 
-#: ../wallclock/app_calendar.C:781
+#: ../wallclock/app_calendar.C:786
 msgid   "Really remove the current entry?"
 msgstr  "Bist Du sicher, dass Du\n"
         "den Eintrag löschen möchtest?"
 
-#: ../wallclock/app_calendar.C:939
+#: ../wallclock/app_calendar.C:944
 msgid   "Today"
 msgstr  "Heute"
 
-#: ../wallclock/app_calendar.C:1443
+#: ../wallclock/app_calendar.C:1448
 msgid   "Calendar"
 msgstr  "Kalender"
 
@@ -310,7 +310,7 @@ msgstr  "100% = Auf"
 msgid   "0% = Closed"
 msgstr  "0% = Zu"
 
-#: ../wallclock/floorplan.C:754 ../wallclock/floorplan.C:2798
+#: ../wallclock/floorplan.C:754 ../wallclock/floorplan.C:2796
 msgid   "Auto"
 msgstr  "Auto"
 
@@ -341,43 +341,43 @@ msgstr  "Home2L %s ist installiert und funktioniert, wurde aber auf\n"
         "bitte den Eintrag 'home2l.unconfigured = 1' in 'etc/home2l.conf'.\n"
 
 #. TRANSLATORS: Standard buttons for message boxes
-#: ../wallclock/ui_widgets.C:1117
+#: ../wallclock/ui_widgets.C:1119
 msgid   "Cancel"
 msgstr  "Abbrechen"
 
-#: ../wallclock/ui_widgets.C:1117
+#: ../wallclock/ui_widgets.C:1119
 msgid   "OK"
 msgstr  "OK"
 
-#: ../wallclock/ui_widgets.C:1117
+#: ../wallclock/ui_widgets.C:1119
 msgid   "No"
 msgstr  "Nein"
 
-#: ../wallclock/ui_widgets.C:1117
+#: ../wallclock/ui_widgets.C:1119
 msgid   "Yes"
 msgstr  "Ja"
 
-#: ../wallclock/ui_widgets.C:1216
+#: ../wallclock/ui_widgets.C:1218
 msgid   "Information"
 msgstr  "Information"
 
-#: ../wallclock/ui_widgets.C:1226
+#: ../wallclock/ui_widgets.C:1228
 msgid   "Warning"
 msgstr  "Warnung"
 
-#: ../wallclock/ui_widgets.C:1236
+#: ../wallclock/ui_widgets.C:1238
 msgid   "Error"
 msgstr  "Fehler"
 
-#: ../wallclock/ui_widgets.C:1246
+#: ../wallclock/ui_widgets.C:1248
 msgid   "Sure?"
 msgstr  "Sicher?"
 
-#: ../wallclock/ui_widgets.C:1256
+#: ../wallclock/ui_widgets.C:1258
 msgid   "Question"
 msgstr  "Frage"
 
-#: ../wallclock/ui_widgets.C:1821
+#: ../wallclock/ui_widgets.C:1823
 msgid   "Discard changes?"
 msgstr  "Sollen die Änderungen im Eintrag\n"
         "verworfen werden?"

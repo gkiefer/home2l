@@ -303,18 +303,23 @@ bool CCalFile::Load (CShellSession *shell) {
 
 
 CCalViewData::CCalViewData () {
+  CString s;
+
   weeks = 0;
   firstEntry = NULL;
   errorFile = -1;
   firstDate = refDate = 0;
-  shellRemote.SetHost (envCalendarHost);
+  EnvNetResolve (envCalendarHost, &s);
+  shellRemote.SetHost (s.Get ());
   if (!envCalendarNearbyHost) shellNearby = NULL;
   else if (!envCalendarNearbyHost[0]) shellNearby = NULL;
   else {
     DEBUGF (1, ("Enabling nearby session on '%s'...", envCalendarNearbyHost));
     shellNearby = new CShellSession ();
-    if (ANDROID || strcmp (envCalendarNearbyHost, "localhost") != 0)    // On Linux, skip ssh if 'localhost' is entered.
-      shellNearby->SetHost (envCalendarNearbyHost);
+    if (ANDROID || strcmp (envCalendarNearbyHost, "localhost") != 0) {    // On Linux, skip ssh if 'localhost' is entered.
+      EnvNetResolve (envCalendarNearbyHost, &s);
+      shellNearby->SetHost (s.Get ());
+    }
   }
 }
 
