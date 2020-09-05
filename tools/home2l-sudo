@@ -31,8 +31,11 @@ if [[ "$1" == "" ]]; then
   echo "Usage: ${0##*/} <command>"
   echo
   echo "Run a command with root privileges. Available commands are:"
-  echo "  restart-openvpn : Restart the OpenVPN system service"
-  echo "  restart-usb     : Restart the USB subsystem (reload USB kernel modules)"
+  echo "  openvpn-restart      : Restart the OpenVPN system service"
+  echo "  openvpn-soft-restart : Soft-restart the OpenVPN system service"
+  echo "  usb-reset <dev>      : Reset a USB device (run 'usbreset' to see info on <dev>)"
+  echo "  usb-restart          : Restart the whole USB subsystem (reload USB kernel modules)"
+  echo "  if-restart <if>      : Restart a network interface"
   exit 3
 fi
 
@@ -52,16 +55,35 @@ source ${SELF%/bin/*}/env.sh
 ############################## Internal commands ###############################
 
 
-do_restart_openvpn () {
-  echo "home2l-sudo: Restartung OpenVPN ..."
+do_openvpn_restart () {
+  echo "home2l-sudo: Restarting OpenVPN ..."
   service openvpn restart
 }
 
 
-do_restart_usb () {
-  echo "home2l-sudo: Restartung USB system ..."
+do_openvpn_softrestart () {
+  echo "home2l-sudo: Soft-restarting OpenVPN ..."
+  service openvpn soft-restart
+}
+
+
+do_usb_reset () {
+  echo "home2l-sudo: Resetting USB device '"$1"' ..."
+  /usr/bin/usbreset $1
+}
+
+
+do_usb_restart () {
+  echo "home2l-sudo: Restarting USB system ..."
   modprobe -r ehci_platform
   modprobe ehci_platform
+}
+
+
+do_if_restart () {
+  echo "home2l-sudo: Restarting network interface '"$1"' ..."
+  /sbin/ifdown $1
+  /sbin/ifup $1
 }
 
 
@@ -74,11 +96,20 @@ do_restart_usb () {
 CMD="$1"
 shift
 case "$CMD" in
-  restart-openvpn)
-    do_restart_openvpn $@
+  openvpn-restart)
+    do_openvpn_restart $@
     ;;
-  restart-usb)
-    do_restart_usb $@
+  openvpn-restart)
+    do_openvpn_softrestart $@
+    ;;
+  usb-reset)
+    do_usb_reset $@
+    ;;
+  usb-restart)
+    do_usb_restart $@
+    ;;
+  if-restart)
+    do_if_restart $@
     ;;
   # legal external commands...
   #install)    # 'home2l-install' should only be allowed for the admin user, not home2l.

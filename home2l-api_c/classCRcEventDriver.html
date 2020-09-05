@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
+   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -73,7 +73,7 @@ $(function() {
 <div class="textblock"><p>Local driver using the event processor mechanism for the '<a class="el" href="classCRcEventDriver.html#a20a39acbd142e14a0c0a36dfe3227ab1" title="Drive a new value; Will be called from CResource::DriveValue(). ">DriveValue()</a>' functionality. </p>
 <p>The class is useful for the Python API to allow writing simple applications (e.g. 'rules' scripts) without parallel threads and an event loop design. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02451">2451</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02449">2449</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -261,7 +261,7 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02453">2453</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02451">2451</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -304,9 +304,9 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 <p>Propagate a new requested value to the device (e.g. to an actor). Afterwards, the new value and state pointed at by 'vs' will be reported automatically by the caller.</p>
 <p>If there are no pending requests at all, this method is called with 'vs-&gt;State() == rcsUnkown'. Most drivers will do nothing then (e.g. the "signal" driver does so) and keep the previous value active. Some drivers (e.g. brownies/shades) may switch off their actors now.</p>
 <p>In all other cases, the state of '*vs' is preset with <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>.</p>
-<p>It is legal to modify '*vs' to reflect a new state or even a value different from the driven one. The method shall change it to an appropriate state ('rcsUnknown' or 'rcsBusy') as adequate. If the new value is not known yet, the state should be set to 'rcsBusy' by calling <a class="el" href="classCRcValueState.html#aa5d0ed8d663bd55e1a63ba89ddc277aa">CRcValueState::SetToReportBusyOldVal()</a> now and a 'CRcResource::Report...()' method should be called later with a valid value and state <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>.</p>
-<p>To report another (e.g. the new) value with the <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a> state now, the state may be set to <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a>' the value be set as appropriate or left as it is, in which case the driven value is reported. To report <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a> with the old value instead (the normal case), call <a class="el" href="classCRcValueState.html#aa5d0ed8d663bd55e1a63ba89ddc277aa">CRcValueState::SetToReportBusyOldVal()</a> on '*vs'.</p>
-<p>To report nothing at all this time, call <a class="el" href="classCRcValueState.html#a1643547d6e810bca096473fe8dbe4056">CRcValueState::SetToReportNothing()</a> on '*vs'.</p>
+<p>It is legal to modify '*vs' to reflect a new state or even a value different from the driven one. The method shall change the value and eventually the state as adequate.</p>
+<p>If the new value is not known yet, the state should be set to 'rcsBusy' by calling <a class="el" href="classCRcValueState.html#a912f23a1d1b22c1b59eb413d00c05373">CRcValueState::SetToReportBusy()</a> now, and a 'CRcResource::Report...()' method should be called later with a valid value and state <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>. To report a certain (e.g. the new) value with the <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a> state now, the state may be set to <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a> and the value be set as appropriate or left as it is, in which case the driven value is reported.</p>
+<p>To report nothing at all this time, call <a class="el" href="classCRcValueState.html#a1643547d6e810bca096473fe8dbe4056">CRcValueState::SetToReportNothing()</a> on '*vs' or set the state to <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a>.</p>
 <p>It is not allowed to call any method of the '*rc' object (e.g. 'Report' methods) from here, since the resource may be locked.</p>
 <p>In most cases, just writing to the device is sufficient. </p>
 

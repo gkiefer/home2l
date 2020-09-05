@@ -98,24 +98,24 @@ CMD_START="am start org.home2l.app/.Home2lActivity"
 CMD_STOP="am force-stop org.home2l.app"
 case "$1" in
   x-stop)
-    echo "Stopping Home2l app on $DEV_NAME ..."
+    echo "home2l-adb: Stopping Home2l app on $DEV_NAME ..."
     run_adb "shell $CMD_STOP"
     ;;
   x-start)
-    echo "Starting Home2l app on $DEV_NAME ..."
+    echo "home2l-adb: Starting Home2l app on $DEV_NAME ..."
     run_adb "shell $CMD_START"
     ;;
   x-restart)
-    echo "Restarting Home2l app on $DEV_NAME ..."
+    echo "home2l-adb: Restarting Home2l app on $DEV_NAME ..."
     run_adb "shell ($CMD_STOP; $CMD_START)"
     ;;
 
   x-install-apk)
-    echo "Installing the Home2l app on $DEV_NAME ..."
+    echo "home2l-adb: Installing the Home2l app on $DEV_NAME ..."
     run_adb "install -r $HOME2L_ROOT/install/Home2lApp.apk"
     ;;
   x-install-etc)
-    echo "Updating the Home2l app configuration ('etc') on $DEV_NAME ..."
+    echo "home2l-adb: Updating the Home2l app configuration ('etc') on $DEV_NAME ..."
     # This procedure requires root permissions for adb (uses su).
     # Determine root and UID of the APK owner...
     APK_ROOT=/data/data/org.home2l.app/files
@@ -166,7 +166,7 @@ case "$1" in
 
   x-connect)
     run_adb "forward tcp:$DEV_PORT tcp:1194"
-    echo "Connecting $DEV_NAME ($CMD) ..."
+    echo "home2l-adb: Connecting $DEV_NAME ..."
     ;;
 
   *)

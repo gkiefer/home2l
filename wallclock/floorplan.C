@@ -43,7 +43,7 @@ ENV_PARA_STRING ("floorplan.rcTree", envFloorplanRcTree, "/alias");
   /* Root of the resource tree for floorplan gadgets
    *
    * Resources for floorplan gadgets are expected to have an ID like
-   * \texttt{<floorplan.rcTree>/<floorplan ID>/<gadget ID>/<resource>}.
+   * \lst{<floorplan.rcTree>/<floorplan ID>/<gadget ID>/<resource>}.
    */
 
 ENV_PARA_STRING ("floorplan.useStateRc", envFloorplanUseState, "/local/timer/twilight/day");
@@ -69,7 +69,7 @@ ENV_PARA_STRING ("floorplan.weatherRc", envFloorplanWeather, NULL);
    */
 
 
-ENV_PARA_STRING("floorplan.requestAttrs", envFloorplanReqAttrs, NULL);
+ENV_PARA_STRING("floorplan.reqAttrs", envFloorplanReqAttrs, NULL);
   /* Request attributes for user interactions with the floorplan [\refenv{rc.userReqAttrs}]
    *
    * Define request attributes for any user interactions with the floorplan.
@@ -87,37 +87,60 @@ ENV_PARA_INT ("floorplan.motionRetention", envFloorplanMotionRetention, 300);
 // ***** Documentation of per-gadget options *****
 
 
-ENV_PARA_BOOL ("floorplan.rwin.shades", envFloorplanRwinShades, false);
-  /* Enable/disable the shades resource for roof window (rwin) gadgets.
+ENV_PARA_BOOL ("floorplan.win.handle", envFloorplanWinHandle, false);
+  /* Enable/disable an extra mechanical handle resource for window (win) gadgets
    *
-   * This sets the default for any \refenv{floorplan.gadgets.<gadgetID>.shades}
-   * setting.
+   * This sets the default for \refenv{floorplan.gadgets.<gadgetID>.handle}
+   * for gadgets of type window (win).
+   */
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.handle", bool, NODEFAULT);
+  /* For window (win) gadgets: Enable resource for an extra mechanical handle sensor
+   *
+   * If the window is equipped with sensors for detecting their actual
+   * closed/open(/tilted) states \textit{and} with sensors to detect the state of
+   * its mechanical handles, this option should be activated ('true').
+   *
+   * If activated, the resource \lst{/alias/<floorplan>/<gadgetID>/handle} is
+   * monitored, and if its state is unknown or its value is different from the
+   * value of \lst{/alias/<floorplan>/<gadget>/state}, the gadget will be
+   * highlighted. This way, it is noticable whether, for example, a patio door
+   * is closed, but unlocked or closed and locked.
+   *
+   * If your window/door only provides a handle sensor, but not other sensor,
+   * this setting should not be activated. Instead, the alias
+   * \lst{/alias/<floorplan>/<gadget>/state} should be pointed at the handle
+   * sensor resource.
+   */
+
+
+ENV_PARA_BOOL ("floorplan.rwin.shades", envFloorplanRwinShades, false);
+  /* Enable/disable the shades resource for roof window (rwin) gadgets
+   *
+   * This sets the default for \refenv{floorplan.gadgets.<gadgetID>.shades}
+   * for gadgets of type roof window (rwin).
    */
 ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.shades", bool, NODEFAULT);
   /* For roof window (rwin) gadgets: Enable shades resource
    *
-   * If \texttt{<gadgetID>} refers to a roof window with electric shades,
-   * this option should be set 'true' and a resource referred by
-   * \texttt{/alias/<floorplan>/<gadget>/shades} is used to control it.
-   *
-   * By default, the \refenv{floorplan.rwin.shades} setting is used.
+   * If the roof window is equipped with electric shades, this option should be
+   * activated ('true'). A resource named \lst{/alias/<floorplan>/<gadget>/shades}
+   * must then be defined and will be used to control it.
    */
 
 
-ENV_PARA_BOOL ("floorplan.rwin.actuator", envFloorplanRwinActuator, false);
-  /* Enable/disable the actuator resource for roof window (rwin) gadgets.
+ENV_PARA_BOOL ("floorplan.rwin.opener", envFloorplanRwinOpener, false);
+  /* Enable/disable the opener resource for roof window (rwin) gadgets
    *
-   * This sets the default for any \refenv{floorplan.gadgets.<gadgetID>.actuator}
-   * setting.
+   * This sets the default for \refenv{floorplan.gadgets.<gadgetID>.opener}
+   * for gadgets of type roof window (rwin).
    */
-ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.actuator", bool, NODEFAULT);
-  /* For roof window (rwin) gadgets: Enable an actuator resource
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.opener", bool, NODEFAULT);
+  /* For roof window (rwin) gadgets: Enable an opener resource
    *
-   * If \texttt{<gadgetID>} refers to a roof window with an actuator for opening/closing,
-   * this option should be set 'true' and a resource referred by
-   * \texttt{/alias/<floorplan>/<gadget>/actuator} is used to control it.
-   *
-   * By default, the \refenv{floorplan.rwin.actuator} setting is used.
+   * If \texttt{<gadgetID>} refers to a roof window with an electric opener
+   * for opening/closing, this option should be activated ('true').
+   * A resource named \lst{/alias/<floorplan>/<gadget>/opener} must then be
+   * defined and will be used to control it.
    */
 
 
@@ -162,7 +185,7 @@ static inline bool GadgetTypeIsIcon (EGadgetType t) { return t >= gtLock && t <=
 enum EGadgetEmph {
   geNone = 0,
   geAttention,  // attention recommended; e.g. unlocked door at night or running service when out of home.
-  geAlert,      // action required; e.g. open window during bad weather
+  geAlert,      // action required; e.g. open roof window during bad weather
   geError,      // technical problem (resource unavailable)
   geEND
 };
@@ -656,8 +679,17 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
       title.SetC (rc->Uri ());
   }
 
-  // Analyse type and prepare choices and color ...
-  color = DARK_BLUE;
+  // Determine color based on subtype ...
+  switch (_subType) {
+    case gtWindow:
+    case gtRoofWindow:
+      color = DARK_RED;
+      break;
+    default:
+      color = DARK_BLUE;
+  }
+
+  // Analyse type and prepare choices ...
   rcType = rc->Type ();
   switch (rcType) {
 
@@ -688,7 +720,6 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
           break;
         case gtWindow:
         case gtRoofWindow:
-          color = DARK_RED;
           choiceText[0].SetC (_("100% = Open"));
           choiceText[RCDLG_PERCENT_STEPS-1].SetC (_("0% = Closed"));
           break;
@@ -1197,8 +1228,8 @@ static ERctWindowState ReadValidWindowState (CRcValueState *vs) {
   // Read 'vs' as a window state in a type-tolerant way. Boolean values are
   // allowed as well, where 'false' is interpreted as "closed" and anything else
   // as "open or tilted".
-  // Percentage values are interpreted as a actuator state, where 0.0% represents
-  // the "closed" state, everything else "open or tilted".
+  // Percentage values are interpreted as "closed" if equal to 0.0% and
+  // "open or tilted" otherwise.
   if (vs->Type () == rctWindowState)
     return (ERctWindowState) vs->ValidEnumIdx (rctWindowState, rcvWindowOpenOrTilted);
   else if (vs->Type () == rctPercent)
@@ -1321,7 +1352,7 @@ class CGadgetWindow: public CGadget {
     virtual bool UpdateSurface ();
 
   protected:
-    CResource *rcState;
+    CResource *rcState, *rcHandle;
     int orient, size;
 };
 
@@ -1368,7 +1399,10 @@ void CGadgetWindow::InitSub (int _x, int _y, int _orient, int _size) {
 
   // Resources...
   rcState = GetGadgetResource (this, "state");
+  rcHandle = EnvGetBool (GetGadgetEnvKey (this, "handle"), envFloorplanWinHandle) ?
+                GetGadgetResource (this, "handle") : NULL;
   RegisterResource (rcState);
+  if (rcHandle) RegisterResource (rcHandle);
   RegisterResource (floorplan->UseStateRc ());
   RegisterResource (floorplan->WeatherRc ());
 }
@@ -1376,7 +1410,7 @@ void CGadgetWindow::InitSub (int _x, int _y, int _orient, int _size) {
 
 bool CGadgetWindow::UpdateSurface () {
   CRcValueState vs;
-  ERctWindowState state;
+  ERctWindowState state, handle;
   char buf[16];
   TColor color;
   int scale, surfOrient;
@@ -1411,6 +1445,16 @@ bool CGadgetWindow::UpdateSurface () {
   else if (state != rcvWindowClosed) {
     if (floorplan->GetValidUseState () >= ((state == rcvWindowTilted) ? rcvUseAway : rcvUseNight)) surfEmph = geAttention;
     if (floorplan->GetValidWeather ()) surfEmph = (state == rcvWindowTilted) ? geAttention : geAlert;
+  }
+  if (surfEmph == geNone && rcHandle) {
+    // Check state of handle (if present) ...
+    rcHandle->GetValueState (&vs);
+    if (!vs.IsKnown ()) surfEmph = geAttention;
+    else {
+      handle = ReadValidWindowState (&vs);
+      if (handle == rcvWindowOpenOrTilted) handle = rcvWindowOpen;
+      if (handle != state) surfEmph = geAttention;
+    }
   }
 
   // Done...
@@ -1586,10 +1630,10 @@ class CGadgetRoofWindow: public CGadget {
     virtual bool UpdateSurface ();
     virtual void OnPushed (CButton *btn, bool longPush);
 
-    // TBD: Query parameters for an implicit text gadget showing the actuator state
+    // TBD: Query parameters for an implicit text gadget showing the opener state
 
   protected:
-    CResource *rcState, *rcShades, *rcActuator;
+    CResource *rcState, *rcShades, *rcOpener;
     int size, orient;
     SDL_Surface *surfMerged;
 };
@@ -1619,12 +1663,12 @@ void CGadgetRoofWindow::InitSub (int _x, int _y, int _orient, int _size) {
   // Resources...
   rcState = GetGadgetResource (this, "state");
   rcShades = EnvGetBool (GetGadgetEnvKey (this, "shades"), envFloorplanRwinShades) ?
-              GetGadgetResource (this, "shades") : NULL;
-  rcActuator = EnvGetBool (GetGadgetEnvKey (this, "actuator"), envFloorplanRwinActuator) ?
-                GetGadgetResource (this, "actuator") : NULL;
+                GetGadgetResource (this, "shades") : NULL;
+  rcOpener = EnvGetBool (GetGadgetEnvKey (this, "opener"), envFloorplanRwinOpener) ?
+                GetGadgetResource (this, "opener") : NULL;
   RegisterResource (rcState);
   RegisterResource (rcShades);
-  RegisterResource (rcActuator);
+  RegisterResource (rcOpener);
   RegisterResource (floorplan->UseStateRc ());
   RegisterResource (floorplan->WeatherRc ());
 }
@@ -1666,10 +1710,10 @@ bool CGadgetRoofWindow::UpdateSurface () {
   }
   else shades = 0.0;
 
-  if (rcActuator) {
-    // If an actuator is present, the only thing we do here is to set 'stateOpen' if
-    // its state is known and according to the actuator, the window is not fully closed.
-    rcActuator->GetValueState (&vs);
+  if (rcOpener) {
+    // If an opener is present, the only thing we do here is to set 'stateOpen' if
+    // its state is known and according to the opener, the window is not fully closed.
+    rcOpener->GetValueState (&vs);
     if (!vs.IsKnown ()) surfEmph = geError;
     else {
       if (vs.ValidFloat (0.0) != 0.0) stateOpen = true;
@@ -1753,11 +1797,11 @@ bool CGadgetRoofWindow::UpdateSurface () {
 
 void CGadgetRoofWindow::OnPushed (CButton *btn, bool longPush) {
   if (longPush) {   // long push ...
-    if (rcActuator) {
-      if (rcShades) RunResourceDialog (rcActuator, gtRoofWindow);
-        // have both shades and actuator: run actuator dialog
-      else HandleLongPush (rcActuator);
-        // have actuator only: auto-set actuator (dialog would appear on simple push)
+    if (rcOpener) {
+      if (rcShades) RunResourceDialog (rcOpener, gtRoofWindow);
+        // have both shades and opener: run opener dialog
+      else HandleLongPush (rcOpener);
+        // have opener only: auto-set opener (dialog would appear on simple push)
     }
     else {
       if (rcShades) HandleLongPush (rcShades);
@@ -1766,7 +1810,7 @@ void CGadgetRoofWindow::OnPushed (CButton *btn, bool longPush) {
   }
   else {            // simple push ...
     if (rcShades) RunResourceDialog (rcShades, gtShades);
-    else if (rcActuator) RunResourceDialog (rcActuator, gtRoofWindow);
+    else if (rcOpener) RunResourceDialog (rcOpener, gtRoofWindow);
   }
 }
 

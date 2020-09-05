@@ -461,6 +461,12 @@ bool IntFromString (const char *str, int *ret, int radix = 0);
   /// If 'radix == 0', it is auto-detected from the string (16 with a preceeding "0x", 10 otherwise).
 int ValidIntFromString (const char *str, int defaultVal, int radix = 0);
   ///< @brief Convert a string to an integer. On failure, 'defaultVal' is returned.
+bool UnsignedFromString (const char *str, unsigned *ret, int radix = 0);
+  ///< @brief Convert a string to an unsigned integer using 'strtoul'. On success, '*ret' is set accordingly and 'true' is returned.
+  /// On failure, 'false' is returned and '*ret' remains unchanged.
+  /// If 'radix == 0', it is auto-detected from the string (16 with a preceeding "0x", 10 otherwise).
+unsigned ValidUnsignedFromString (const char *str, unsigned defaultVal, int radix = 0);
+  ///< @brief Convert a string to an unsigned integer. On failure, 'defaultVal' is returned.
 bool FloatFromString (const char *str, float *ret);
   ///< @brief Convert a string to a floating-point value using 'strtof'.
   /// On success, '*ret' is set accordingly and 'true' is returned.
@@ -1072,7 +1078,8 @@ typedef int64_t TTicks;
 typedef int32_t TTicksMonotonic;
   ///< @brief Monotonic clock; number of milliseconds since the first invocation of GetTicksMonotonic()
 
-#define NEVER 0                   ///< Represents no time (for both types `TTicks` and `TTicksMonotonic`)
+#define NEVER 0     ///< Represents no time (for both types `TTicks` and `TTicksMonotonic`)
+#define ALWAYS -1   ///< Another special time value, e.g. to mark that some timed event has successfully been handled in the past (for both types `TTicks` and `TTicksMonotonic`)
 
 static inline bool TicksIsNever (TTicks t) { return t == 0; }
 static inline bool TicksMonotonicIsNever (TTicksMonotonic t) { return t == 0; }
@@ -1447,10 +1454,15 @@ class CSleeper {
     /// @}
 
     /// @name For the sleeping thread: Preparation...
+    ///
+    /// These methods must be called before each invocation of Sleep().
     /// @{
-    void Clear ();
-    void AddReadable (int fd);  ///< @brief Add file descriptor `fd` to monitor for readability, descriptors < 0 are silently ignored.
-    void AddWritable (int fd);  ///< @brief Add file descriptor `fd` to monitor for writability, descriptors < 0 are silently ignored.
+    void Prepare ();
+      ///< @brief Prepare for sleeping, clear all file descriptors.
+    void AddReadable (int fd);
+      ///< @brief Add file descriptor `fd` to monitor for readability, descriptors < 0 are silently ignored.
+    void AddWritable (int fd);
+      ///< @brief Add file descriptor `fd` to monitor for writability, descriptors < 0 are silently ignored.
     /// @}
 
     /// @name For the sleeping thread: Sleep...
@@ -1468,7 +1480,7 @@ class CSleeper {
     bool IsWritable (int fd);   ///< @brief Check if file descriptor is writable (flags are only updated in Sleep() ).
     bool GetCmd (void *retCmdRec);
       ///< @brief Get and consume next command (non-blocking).
-      /// @return 'true' if none is available
+      /// @return 'false' if no command is available.
     /// @}
 
     /// @name For other threads...
@@ -1479,6 +1491,9 @@ class CSleeper {
       /// `cmd == NULL` represents "no command" and will be ignored by receiver.
       /// The command can optionally be scheduled for a certain time or even be repeated.
       /// `t` is an absolute time, `t == 0` represents "now".
+    void ClearTimedCmds () { CTimer::DelByCreator (this); }
+      ///< @brief Clear any scheduled commands which have not yet been put into the queue.
+      /// **Note:** Respective commands may still be in the queue and returned by GetCmd() after calling this!
     /// @}
 
   protected:

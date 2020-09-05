@@ -113,11 +113,7 @@ typedef struct {
 typedef struct {
   const char *id;
   int values;
-//~ #if ANDROID
-  //~ const char *valueList[64];   // [2018-09-15] Android NDK compiler appears to not accept unbound arrays here
-//~ #else
   const char **valueList;
-//~ #endif
 } TRcEnumType;
 
 
@@ -1038,6 +1034,7 @@ CResource *CResource::Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const ch
     if (rcInitCompleted)
       ERRORF (("Registration attempt for a local resource '%s/%s' after the initialization phase.", _rcDriver->Lid (), _lid));
     _rcDriver->Lock ();
+    //~ INFOF (("### Adding resource '%s' to resource map of driver '%s'", rc->Uri (), _rcDriver->Lid ()));
     _rcDriver->resourceMap.Set (_lid, rc);
     _rcDriver->Unlock ();
   }
@@ -3432,4 +3429,23 @@ CResource *RcRegisterSignal (const char *name, ERcType type) {
 
 CResource *RcRegisterSignal (const char *name, CRcValueState *vs) {
   return RcDriversAddSignal (name, vs);
+}
+
+
+
+// ***** Special functions *****
+
+
+void RcBump (CResource *rc) {
+  CRcHost *host;
+  int i;
+
+  if (rc) {
+    host = rc->Host ();
+    if (host) host->RequestConnect ();
+  }
+  else {
+    for (i = hostMap.Entries () - 1; i >= 0; i--)
+      hostMap.Get (i)->RequestConnect ();
+  }
 }

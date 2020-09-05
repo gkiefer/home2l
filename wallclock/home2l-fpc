@@ -172,14 +172,16 @@ for g in gadgets:
 
   # Store sample resource entries ...
   aliasFmt = "A " + fpName + "/{:24} sample/signal/fp_{}"
+  aliasFmtOptional = aliasFmt + "   # (optional)"
   if gdtType == "win":
     sampleEntry = aliasFmt.format (gdtId + "/state", "win");
+    sampleEntry = aliasFmtOptional.format (gdtId + "/handle", "win");
   elif gdtType == "shades":
     sampleEntry = aliasFmt.format (gdtId + "/shades", "shades");
   elif gdtType == "rwin":
     sampleEntry = aliasFmt.format (gdtId + "/state", "win");
     sampleEntry += '\n' + aliasFmt.format (gdtId + "/shades", "shades");
-    sampleEntry += '\n' + aliasFmt.format (gdtId + "/actuator", "actuator");
+    sampleEntry += '\n' + aliasFmtOptional.format (gdtId + "/opener", "opener");
   elif gdtType == "temp":
     sampleEntry = aliasFmt.format (gdtId + "/data", "temp");
   else:
@@ -219,7 +221,7 @@ with open (sampleName, 'w') as sampleFile:
     "\n"
     "S sample fp_win       window  closed\n"
     "S sample fp_shades    percent 0.0\n"
-    "S sample fp_actuator  percent 0.0\n"
+    "S sample fp_opener    percent 0.0\n"
     "S sample fp_garage    bool    false\n"
     "S sample fp_lock      bool    false\n"
     "S sample fp_motion    bool    false\n"

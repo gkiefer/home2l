@@ -726,6 +726,28 @@ int ValidIntFromString (const char *str, int defaultVal, int radix) {
 }
 
 
+bool UnsignedFromString (const char *str, unsigned *ret, int radix) {
+  unsigned long lRet;
+  char *endPtr;
+
+  while (str[0] == '0' && str[1] >= '0' && str[1] <= '9') str++;
+    // remove leading 0's to prevent strtoul to interpret the number in octal
+  lRet = strtoul (str, &endPtr, radix);
+  if (*str != '\0' && *endPtr == '\0') {
+    *ret = (unsigned) lRet;
+    return true;
+  }
+  else
+    return false;
+}
+
+
+unsigned ValidUnsignedFromString (const char *str, unsigned defaultVal, int radix) {
+  UnsignedFromString (str, &defaultVal, radix);
+  return defaultVal;
+}
+
+
 bool FloatFromString (const char *str, float *ret) {
   float fRet;
   char *endPtr;
@@ -2372,7 +2394,7 @@ static void CbSleeperTimer (CTimer *timer, void *data) {
 CSleeper::CSleeper () {
   selfPipe[0] = selfPipe[1] = -1;
   cmdRecSize = 0;
-  Clear ();
+  Prepare ();   // clear sets
 }
 
 
@@ -2392,7 +2414,7 @@ void CSleeper::EnableCmds (int _cmdRecSize) {
 }
 
 
-void CSleeper::Clear () {
+void CSleeper::Prepare () {
   FD_ZERO (&fdSetRead);
   FD_ZERO (&fdSetWrite);
   maxFd = -1;
@@ -2444,6 +2466,7 @@ bool CSleeper::IsWritable (int fd) {
 
 
 bool CSleeper::GetCmd (void *retCmdRec) {
+  //~ INFOF (("### CSleeper<%08x>::GetCmd () ... selfPipe = %i/%i", this, selfPipe[0], selfPipe[1]));
   if (selfPipe[0] < 0) return false;
   if (!IsReadable (selfPipe[0])) return false;
   ASSERT (read (selfPipe[0], retCmdRec, cmdRecSize) == cmdRecSize);
@@ -2452,7 +2475,7 @@ bool CSleeper::GetCmd (void *retCmdRec) {
 
 
 void CSleeper::PutCmd (const void *cmdRec, TTicksMonotonic t, TTicksMonotonic _interval) {
-  //~ INFOF (("### CSleeper<%08x>::PutCmd... selfPipe = %i/%i", this, selfPipe[0], selfPipe[1]));
+  //~ INFOF (("### CSleeper<%08x>::PutCmd (%i) ... selfPipe = %i/%i", this, * (int *) cmdRec, selfPipe[0], selfPipe[1]));
   ASSERT (selfPipe[1] >= 0 && cmdRecSize > 0);   // commands must have been enabled
   if (t || _interval)
     new CTimer (t, _interval, CbSleeperTimer, this, this);

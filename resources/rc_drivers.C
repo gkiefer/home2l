@@ -708,7 +708,7 @@ void CExtDriver::ThreadRoutine () {
 
     // Sleep...
     //~ INFO("### Sleeping");
-    sleeper.Clear ();
+    sleeper.Prepare ();
     for (drv = first; drv; drv = drv->next) {
       drv->OnShellReadable ();            // Iterate shell
       sleeper.AddReadable (drv->shell.ReadFd ());

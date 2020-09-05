@@ -12,6 +12,7 @@ var searchData=
   ['validtrigger',['ValidTrigger',['../classCResource.html#afc80d42a681a834857333ce16051bdb0',1,'CResource']]],
   ['validunitfloat',['ValidUnitFloat',['../classCResource.html#a63d35307f0976c25db150c2d206bed73',1,'CResource']]],
   ['validunitint',['ValidUnitInt',['../classCResource.html#a79554af5eb73c589359b33b42264684d',1,'CResource']]],
+  ['validunsignedfromstring',['ValidUnsignedFromString',['../group__common__strings.html#ga215e4aa805691299b7427cc7768e1947',1,'base.H']]],
   ['valueequals',['ValueEquals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState']]],
   ['videolockframe',['VideoLockFrame',['../classCPhone.html#a627e407e9522e793392fe53fa4b91878',1,'CPhone']]],
   ['videounlock',['VideoUnlock',['../classCPhone.html#a2eb6d9fb405200625ba72503a1f819a7',1,'CPhone']]]

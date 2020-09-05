@@ -27,6 +27,7 @@ var searchData=
   ['alarmclockrunsetdialog',['AlarmClockRunSetDialog',['../group__wallclock__alarmclock.html#gacec2b457d133c4572147991f33da22aa',1,'alarmclock.H']]],
   ['alarmclocksetbutton',['AlarmClockSetButton',['../group__wallclock__alarmclock.html#ga38ffb0df7c879fc55d385fc1cc48e9de',1,'alarmclock.H']]],
   ['alarmclocksnooze',['AlarmClockSnooze',['../group__wallclock__alarmclock.html#ga622b63c785a7b3868dc0f06fe21c83cf',1,'alarmclock.H']]],
+  ['always',['ALWAYS',['../group__common__datetime.html#gafaa4e46bb91ebf05695f7a8c1bf63abe',1,'base.H']]],
   ['app_5finit_5ffail',['APP_INIT_FAIL',['../group__wallclock__apps.html#gad9a9f561dbe73fdc5dedc324392a0e83',1,'apps.H']]],
   ['app_5finit_5fok',['APP_INIT_OK',['../group__wallclock__apps.html#ga30cb4d9f67c8161dc5b3bd49cbab5ac3',1,'apps.H']]],
   ['app_5fmusic_2eh',['app_music.H',['../app__music_8H.html',1,'']]],

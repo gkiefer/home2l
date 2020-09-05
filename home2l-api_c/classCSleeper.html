@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
+   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -71,7 +71,7 @@ $(function() {
 <div class="textblock"><p>Class allowing to sleep until one out of multiple i/o operations becomes possible. </p>
 <p>This class serves as an interface to the 'select' system call. Furthermore, it helps to implement worker threads that (may) monitor files and receive commands (events) with the help of a self-pipe. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01463">1463</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01470">1470</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="base_8H_source.html">base.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -83,9 +83,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:a6b824ce5896bd3a205b1532900794dd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable sending commands by <a class="el" href="classCSleeper.html#a5c5465b20b7bcebe932c4d20e4460e51" title="Send message to sleeper. ">PutCmd()</a>. To be called immediately after initialization and only if the command feature is used. <br /></td></tr>
 <tr class="separator:a6b824ce5896bd3a205b1532900794dd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">For the sleeping thread: Preparation...</div></td></tr>
-<tr class="memitem:ade9c0a6999c4d338259d64666ce7bdbb"><td class="memItemLeft" align="right" valign="top"><a id="ade9c0a6999c4d338259d64666ce7bdbb"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>Clear</b> ()</td></tr>
-<tr class="separator:ade9c0a6999c4d338259d64666ce7bdbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupText"><p>These methods must be called before each invocation of <a class="el" href="classCSleeper.html#a5a8cd0c3c5618bd918e406223fbb8da6" title="Sleep until one file descriptor is readable/writable or a new command was received. ">Sleep()</a>. </p>
+</div></td></tr>
+<tr class="memitem:a15bd4d4cb9e9ac8518555df89f65a02d"><td class="memItemLeft" align="right" valign="top"><a id="a15bd4d4cb9e9ac8518555df89f65a02d"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSleeper.html#a15bd4d4cb9e9ac8518555df89f65a02d">Prepare</a> ()</td></tr>
+<tr class="memdesc:a15bd4d4cb9e9ac8518555df89f65a02d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare for sleeping, clear all file descriptors. <br /></td></tr>
+<tr class="separator:a15bd4d4cb9e9ac8518555df89f65a02d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99f72512cc6c22b7382453a0ad29c8e2"><td class="memItemLeft" align="right" valign="top"><a id="a99f72512cc6c22b7382453a0ad29c8e2"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSleeper.html#a99f72512cc6c22b7382453a0ad29c8e2">AddReadable</a> (int fd)</td></tr>
 <tr class="memdesc:a99f72512cc6c22b7382453a0ad29c8e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add file descriptor <code>fd</code> to monitor for readability, descriptors &lt; 0 are silently ignored. <br /></td></tr>
@@ -114,6 +117,10 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a5c5465b20b7bcebe932c4d20e4460e51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSleeper.html#a5c5465b20b7bcebe932c4d20e4460e51">PutCmd</a> (const void *cmdRec, <a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a> t=0, <a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a> _interval=0)</td></tr>
 <tr class="memdesc:a5c5465b20b7bcebe932c4d20e4460e51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send message to sleeper.  <a href="#a5c5465b20b7bcebe932c4d20e4460e51">More...</a><br /></td></tr>
 <tr class="separator:a5c5465b20b7bcebe932c4d20e4460e51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad20e131db83edc347d2f825d425808f5"><td class="memItemLeft" align="right" valign="top"><a id="ad20e131db83edc347d2f825d425808f5"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCSleeper.html#ad20e131db83edc347d2f825d425808f5">ClearTimedCmds</a> ()</td></tr>
+<tr class="memdesc:ad20e131db83edc347d2f825d425808f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear any scheduled commands which have not yet been put into the queue. <b>Note:</b> Respective commands may still be in the queue and returned by <a class="el" href="classCSleeper.html#ac568a8817a212cdeaa13dbeb2268b6f8" title="Get and consume next command (non-blocking). ">GetCmd()</a> after calling this! <br /></td></tr>
+<tr class="separator:ad20e131db83edc347d2f825d425808f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a5a8cd0c3c5618bd918e406223fbb8da6"></a>
@@ -160,7 +167,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 </div><div class="memdoc">
 
 <p>Get and consume next command (non-blocking). </p>
-<dl class="section return"><dt>Returns</dt><dd>'true' if none is available </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>'false' if no command is available. </dd></dl>
 
 </div>
 </div>

@@ -16,6 +16,7 @@ var searchData=
   ['clearlabel',['ClearLabel',['../classCButton.html#a4294f0a7f6ad4c75def5a2ba0dd82981',1,'CButton']]],
   ['clearresources',['ClearResources',['../classCRcDriver.html#aaaea097aeec893fc59334019ff6b055f',1,'CRcDriver']]],
   ['cleartexture',['ClearTexture',['../classCWidget.html#a268e0110cb1b35e3bc7bbcdc3b7801c1',1,'CWidget']]],
+  ['cleartimedcmds',['ClearTimedCmds',['../classCSleeper.html#ad20e131db83edc347d2f825d425808f5',1,'CSleeper']]],
   ['colorblend',['ColorBlend',['../group__ui__base.html#gafa4dc090d42c3f5fa4646ad88ce3dca8',1,'ui_base.H']]],
   ['colorbrighter',['ColorBrighter',['../group__ui__base.html#ga99ebab916d2c5aeff968086bd1c12f7b',1,'ui_base.H']]],
   ['colordarker',['ColorDarker',['../group__ui__base.html#ga4081ed8b189ccf3cf998a475f9bf2316',1,'ui_base.H']]],

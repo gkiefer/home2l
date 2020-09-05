@@ -214,6 +214,10 @@ ref_env_drv_mqtt.tex: ../drivers/mqtt/home2l-drv-mqtt.C
 	@echo EXCODE $@
 	@./excode.py e : $^ > $@ || (rm $@; exit 7)
 
+ref_env_drv_enocean.tex: ../drivers/enocean/enocean.C ../drivers/enocean/home2l-drv-enocean.C
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
 ref_env_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 	@echo EXCODE $@
 	@./excode.py e : $^ > $@ || (rm $@; exit 7)
@@ -231,7 +235,7 @@ ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 REFS_ENV := ref_env_common.tex ref_env_resources.tex ref_env_daemon.tex \
 						ref_env_brownies.tex \
 	          ref_env_wallclock.tex ref_env_doorman.tex \
-	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_weather.tex
+	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_enocean.tex ref_env_drv_weather.tex
 
 REFS_RC  := ref_rc_resources.tex  \
 						ref_rc_brownies.tex \

@@ -64,7 +64,6 @@
 
 
 static uint8_t CalcCRC (const void *data, int8_t bytes, uint8_t seed, uint8_t poly) {
-  // Return a 4-bit checksum in the upper 4 bits of the returned value.
   uint8_t crc, i;
   const uint8_t *p;
 #ifdef TEST_CRC
@@ -101,13 +100,13 @@ static uint8_t CalcCRC (const void *data, int8_t bytes, uint8_t seed, uint8_t po
 
 
 static inline uint8_t BrCalcCheck8 (const void *data, uint8_t bytes) {
-  // Return a 8-bit checksum of the passed array.
+  // Return an 8-bit checksum of the passed array.
   return CalcCRC (data, bytes, CRC8_SEED, ((CRC8_POLY << 1) & 0xff) | 1);
 }
 
 
 static inline uint8_t BrCalcCheck4 (const void *data, uint8_t bytes) {
-  // Return a 8-bit checksum of the passed array.
+  // Return a 4-bit checksum in the upper 4 bits of the returned value.
   return CalcCRC (data, bytes, CRC4_SEED << 4, ((CRC4_POLY << 5) & 0xf0) | 0x10);
 }
 

@@ -7,6 +7,7 @@ var searchData=
   ['phonestateisdevicepermitting',['PhoneStateIsDevicePermitting',['../group__common__phone.html#gae00b692030f3090ebebbc2eb2b30b6e4',1,'phone.H']]],
   ['pollevent',['PollEvent',['../classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7',1,'CRcEventProcessor']]],
   ['prefixsearch',['PrefixSearch',['../classCDictRaw.html#acaf054e1b218ac4c60eb23fc10367021',1,'CDictRaw']]],
+  ['prepare',['Prepare',['../classCSleeper.html#a15bd4d4cb9e9ac8518555df89f65a02d',1,'CSleeper']]],
   ['preparetransfer',['PrepareTransfer',['../classCPhone.html#ad5c5e1049d7fdba8a48d387c507b847e',1,'CPhone']]],
   ['put',['Put',['../classCNetpbmReader.html#a932c96bbab03e41d78f92ea8b4e2c14c',1,'CNetpbmReader']]],
   ['putcmd',['PutCmd',['../classCSleeper.html#a5c5465b20b7bcebe932c4d20e4460e51',1,'CSleeper']]],

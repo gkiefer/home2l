@@ -307,7 +307,7 @@ int main (int argc, char **argv) {
     //~ INFOF(("### TimerGetDelay () -> %i", delay))
 
     // Prepare & run 'select'...
-    sleeper.Clear ();
+    sleeper.Prepare ();
     for (n = 0; n < taskMap.Entries (); n++) sleeper.AddReadable (taskMap [n]->ReadFd ());
     sleeper.Sleep (delay);
 
@@ -322,7 +322,7 @@ int main (int argc, char **argv) {
         case SIGCHLD:
           // Some child exited: Process all tasks...
           for (n = 0; n < taskMap.Entries (); n++) taskMap[n]->Process ();
-          sleeper.Clear ();   // we do not have to process them later again
+          sleeper.Prepare ();   // We do not have to process them later again (hack to make 'sleeper.IsReadable()' return 'false' from now)
           break;
         default: break;
       }

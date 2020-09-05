@@ -40,6 +40,7 @@ var searchData=
   ['pmvideoout',['pmVideoOut',['../group__common__phone.html#gga1cf770d3bb1be23857d1ca84d4e5a71fa8d660ba7fcbca93a93e84b3257e19992',1,'phone.H']]],
   ['pollevent',['PollEvent',['../classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7',1,'CRcEventProcessor']]],
   ['prefixsearch',['PrefixSearch',['../classCDictRaw.html#acaf054e1b218ac4c60eb23fc10367021',1,'CDictRaw']]],
+  ['prepare',['Prepare',['../classCSleeper.html#a15bd4d4cb9e9ac8518555df89f65a02d',1,'CSleeper']]],
   ['preparetransfer',['PrepareTransfer',['../classCPhone.html#ad5c5e1049d7fdba8a48d387c507b847e',1,'CPhone']]],
   ['psdialing',['psDialing',['../group__common__phone.html#gga0d76e1d6143bcf28584b464506575dafa4a530e87f215a0532d179b39864db36e',1,'phone.H']]],
   ['psidle',['psIdle',['../group__common__phone.html#gga0d76e1d6143bcf28584b464506575dafaa464c9191b7aeece84c3a433e16db097',1,'phone.H']]],

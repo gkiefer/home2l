@@ -683,7 +683,7 @@ void *CNetThread::Run () {
 
     // Collect all receiving FDs from hosts and servers...
     //~ INFO("### CNetThread: Begin main loop...");
-    sleeper.Clear ();
+    sleeper.Prepare ();
     if (listenFd >= 0) sleeper.AddReadable (listenFd);
     for (n = 0; n < hostMap.Entries (); n++) {
       host = hostMap.Get (n);
@@ -1748,8 +1748,8 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
    * 2. The state 'hcsConnecting' must not by left as long as 'conThread' is running. The only exception is the
    *    operation 'noExit' to quickly exit the program (see comment there).
    *
-   * 3. NetOps are sent asynchronously and may be received here in any order, even a very weird one (e.g.: 'hnoSend'
-   *    -> 'hnoDisconnet' -> 'hnoSend'). For this reason, each operation must be executed correctly independent on the
+   * 3. NetOps are sent asynchronously and may be received here in any order, even in a very weird one (e.g.: 'hnoSend'
+   *    -> 'hnoDisconnet' -> 'hnoSend'). For this reason, each operation must be executed correctly independent of the
    *    current state - 'ASSERT' statements are not allowed.
    *    An exception are the 'hnoCon*' operations, which are only allowed to be received in the 'hcsConnecting' state,
    *    which can never be left without any of these two operations.

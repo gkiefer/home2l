@@ -6,7 +6,7 @@ What are the *Home2Ls*?
 
 The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for automation in private homes. Its main features are:
 
-* **_Home2L Resources_**: Novel concept to integrate and manage **sensors, actors or services of any kind efficiently and precisely**.
+* **_Home2L Resources_**: Novel concept to integrate and manage sensors, actors or services of any kind **efficiently and precisely**.
 
 * **Automation rules written in Python** - but not limited to that.
 
@@ -33,14 +33,9 @@ The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for autom
 What is New?
 ============
 
+* **EnOcean driver** for native support of energy harvesting sensor devices.
+
 * **MQTT gateway driver** to import devices and export *Home2L* resources to external MQTT clients.
-
-* **_Home2L Brownies_**: Simple and efficient **automation bus to interconnect cheap 8-bit microcontrollers**
-  for do-it-yourself sensor or actor hardware.
-
-* **Improved interactive floor plan** for all kinds of gadgets (windows, shades, lights, phones, computers, services, ...).
-
-* **Docker image** and improved tutorial for getting started quickly.
 
 
 
@@ -152,6 +147,13 @@ Great contributions would be:
 - **Documentation**: Write good documentation, particularly for end users.
 
 For any questions on how to participate, do not hesitate to contact the author via the project page.
+
+
+
+Questions?
+==========
+
+For any questions or support requests, feel free to submit an issue labeled with "support" on the [GitHub project page](https://github.com/gkiefer/home2l/issues).
 
 
 

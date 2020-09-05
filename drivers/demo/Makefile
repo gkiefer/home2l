@@ -41,19 +41,19 @@ all: build
 
 
 
-############################## GPIO ############################################
+############################## Driver ##########################################
 
 
-DEMO := home2l-drv-demo
-DEMO_BIN := $(DIR_OBJ)/$(DEMO).so
+DRIVER := home2l-drv-demo
+DRIVER_BIN := $(DIR_OBJ)/$(DRIVER).so
 
-SRC_DEMO := $(DEMO).C
-OBJ_DEMO := $(SRC_DEMO:%.C=$(DIR_OBJ)/%-pic.o)
+SRC_DRIVER := $(DRIVER).C
+OBJ_DRIVER := $(SRC_DRIVER:%.C=$(DIR_OBJ)/%-pic.o)
 
 
-$(DEMO_BIN): $(DEP_CONFIG) $(OBJ_DEMO)
-	@echo LD $(DEMO)
-	@$(CC) -shared -o $@ $(LDFLAGS) $(OBJ_DEMO)
+$(DRIVER_BIN): $(DEP_CONFIG) $(OBJ_DRIVER)
+	@echo LD $(DRIVER)
+	@$(CC) -shared -o $@ $(LDFLAGS) $(OBJ_DRIVER)
 
 
 
@@ -63,7 +63,7 @@ $(DEMO_BIN): $(DEP_CONFIG) $(OBJ_DEMO)
 
 
 # Automatic dependencies...
--include $(OBJ_DEMO:%.o=%.d)
+-include $(OBJ_DRIVER:%.o=%.d)
 
 
 
@@ -75,8 +75,8 @@ $(DEMO_BIN): $(DEP_CONFIG) $(OBJ_DEMO)
 clean: clean-build
 
 
-build-arch: $(DEMO_BIN)
+build-arch: $(DRIVER_BIN)
 
 
 install-arch:
-	install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(DEMO_BIN)
+	install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(DRIVER_BIN)

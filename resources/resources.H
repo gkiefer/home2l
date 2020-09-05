@@ -2762,12 +2762,17 @@ static inline CResource *RcGet (const char *uri, bool allowWait = false) { retur
 
 
 static inline void RcGarbageCollection () { CResource::GarbageCollection (); }
-  ///< @brief (For experts only) Remove all presently unregistered resources from memory.
+  ///< @brief (For experts) Remove all presently unregistered resources from memory.
   ///
   /// This may free some memory, but at the same time invalidates any existing reference to @ref CResource objects.
-  /// May only be called if no 'CResource *' reference is presently used!
-
-
+  /// Can only be called if no 'CResource *' reference is presently used!
+void RcBump (CResource *rc = NULL);
+  ///< @brief (For experts) Try to reconnect a remote host now.
+  ///
+  /// This may be used to accelerate automatic network reconnections, for example, if it is known that a link
+  /// has just been re-established.
+  /// @param rc is a resource which should be updated soon. Its host will be reconnected.
+  ///   If NULL is passed, all remote hosts are (re)connected.
 
 
 /// @}

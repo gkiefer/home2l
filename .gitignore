@@ -30,7 +30,7 @@ home2l-*.armhf
 core
 __pycache__
 
-!home2l-showcase.tar.gz
+!home2l-showcase-vbox.tar.gz
 
 external/archive
 external/*/archive

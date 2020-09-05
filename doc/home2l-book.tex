@@ -438,7 +438,6 @@ Figure~\ref{fig:home2l-components} shows an overview on the \textit{Home2L} suit
 
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{About This Book}
@@ -489,8 +488,6 @@ Chapter~\ref{ch:drvlib} documents the library of drivers supplied with the \text
 
 
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{How Can I Help?}
@@ -524,6 +521,16 @@ via the project page.
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Questions?}
+\label{sec:support}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+For any questions or support requests, feel free to submit an issue labeled with \textit{''support''} on the \href{https://github.com/gkiefer/home2l/issues}{GitHub project page}.
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -535,7 +542,7 @@ via the project page.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\lstset{language=bash}
+
 
 
 
@@ -2971,10 +2978,9 @@ The official up-to-date reference for building and installing the \textit{Home2L
 
 This chapter gives some background information on the \textit{Home2L} build system and covers some special aspects such as cross-compilation and building the Android app.
 
-The \textit{Home2L} suite is not a piece of software to be installed on a single computer, but instead, the \textit{Home2Ls} are installed in a ''home'', which is a heterogeneous \textit{cluster} of machines with different hardware (e.g.~x86, ARM) and operating software environments (e.g.~Debian, Android).
-For this reason, the build system supports cross-compilation and installation for multiple architectures.
+Sometimes, a user may not want or need a cluster installation, but only use individual tools and drivers on a single machine and integrate them into an existing environment. The simple case of a standalone is addressed in Section~\ref{sec:installing-standalone}.
 
-Sometimes, a user may not want or need a cluster installtion, but only use individual tools and drivers on a single machine and integrate them into an existing environment. In such a case, the installation and administration is \textit{much} simpler than this chapter may suggest. Please skip over to Section~\ref{sec:managing-standalone} for information on a standalone installation.
+A key strength of the \textit{Home2L} suite and particularly its \textit{Resources} library is the support for distributed operation in a heterogeneous \textit{cluster} of machines with different hardware (e.g.~x86, ARM) and operating software environments (e.g.~Debian, Android). For this reason, the build system supports cross-compilation and installation for multiple architectures.
 
 
 
@@ -3001,10 +3007,64 @@ The requirements for building the core part of the \textit{Home2Ls} are intentio
 
 An exact list of packages to install on Debian or Debian-based systems can be found in the \refsrc{Dockerfile}.
 
-Building the documentation (module '\textit{doc}') requires a couple
-of additional packages (\textit{doxygen, texlive, graphviz, ...}).
-Most users do not have to build the documentation, since readable
-versions are available on the project page.
+Building the documentation (module '\textit{doc}') requires a couple of additional packages (\textit{doxygen, texlive, graphviz, ...}). Most users do not have to build the documentation, since readable versions are available on the project page.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Standalone Installation}
+\label{sec:installing-standalone}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+To use individual tools and drivers and integrate them into an existing environment, a simple \textit{standalone} installation is typically sufficient.
+
+The following instructions describe a standalone installation for the example that the driver \reftool{home2l-drv-brownies} is to be used, and that some of its sensors are to be exported via MQTT (\reftool{home2l-drv-mqtt}).
+
+
+\subsubsection*{Building and Installing}
+
+\begin{lstlisting}[language=bash]
+$ make CFG=basic                    # Run 'make help' to see further options
+$ sudo make CFG=basic install
+$ /opt/home2l/bin/home2l-install -i
+\end{lstlisting}
+
+
+\subsubsection*{Configuration}
+
+Create a main configuration file \lst{/opt/home2l/etc/home2l.conf} with the following contents:
+\begin{lstlisting}
+rc.config=""            # declare that there is no 'resources.conf' file
+
+# Configure the Brownies driver ...
+drv.brownies=1          # enable the Brownies driver
+br.link=/dev/i2c-1      # define the i2c device (adapt as adequate)
+
+# Configure MQTT ...
+drv.mqtt=1              # enable MQTT
+mqtt.broker=mybroker    # MQTT broker (adapt as adequate)
+mqtt.exportSet=/local/brownies/*/temp  # export some sensors (adapt as adequate)
+\end{lstlisting}
+
+The sections for the \textit{Brownies} driver and the MQTT broker are just examples and may be changed or extended as adequate. For using \textit{Brownies}, the file \lst{/opt/home2l/etc/brownies.conf} must be provided as described in Section~\ref{sec:brownies-database}.
+
+
+\subsubsection*{Running}
+
+To run the two drivers, the tool \reftool{home2l-server} can be used, which may also be run in the background:
+\begin{lstlisting}[language=bash]
+$ home2l server
+\end{lstlisting}
+
+Alternatively, the drivers may be hosted by a \textit{Home2L} shell, which allows an interactive inspection of the resources, for example, for debugging purposes:
+\begin{lstlisting}[language=bash]
+$ home2l shell
+home2l> l /local/brownies/
+...
+\end{lstlisting}
 
 
 
@@ -3208,7 +3268,7 @@ installation blob can be cloned from an existing (typically the \textit{master})
   \item
     On the master, run
     \begin{lstlisting}
-    $ home2l-rollout
+    $ home2l rollout
     \end{lstlisting}
     and check, if the new machine is listed. Press 'y' (''yes'') to run the rollout procedure
     and see if updating the new machine works without errors.
@@ -3278,17 +3338,17 @@ This can be viewed using \textit{adb(1)}:
 
 
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Administration and Configuration}
+\chapter{Configuration and Cluster Administration}
 \label{ch:managing}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-A typical \textit{Home2L} installation is distributed over multiple computers (\textit{machines}), on each of which one ore multiple \textit{Home2l instances} may be running. There is no central server, all \textit{Home2L instances} are equal in rank.
+A \textit{Home2L} cluster installation is distributed over multiple computers (\textit{machines}), on each of which one ore multiple \textit{Home2l instances} may be running. There is no central server, all \textit{Home2L instances} are equal in rank.
 
-This chapter assumes a cluster installation with multiple \textit{Home2L} instances potentially running on multiple machines. For a standalone use of selected tools without networking, see Section~\ref{sec:managing-standalone}.
-
-
+This chapter covers the configuration and administration of \textit{Home2L} clusters. For users of a standalone installation may concentrate on Section~\ref{sec:home2lconf}, which describes the syntax of the main configuration file.
 
 
 
@@ -3385,7 +3445,7 @@ The common tools for maintaining \textit{Home2L} installations are:
 \item
   \textbf{\reftool{home2l-shell}:} The command line interface
   and ''swiss army knife'' to access and inspect the \textit{Home2L}
-  resources. Details can be found in Section~\ref{sec:shell}.
+  resources. Details can be found in Section~\ref{sec:resources-shell}.
 \item
   \textbf{\reftool{home2l-brownie2l}:} The command line interface
   and ''swiss army knife'' to maintain \textit{Home2L Brownie} networks.
@@ -3417,7 +3477,7 @@ Tools can generally be invoked in one of two ways:
   example:
   \begin{lstlisting}[language=bash]
     $ source /opt/home2l/env.sh     # This line may be put into .bashrc .
-    $ home2l-shell
+    $ home2l shell
   \end{lstlisting}
 
 \item
@@ -3753,63 +3813,6 @@ tag ''SECURITY'' to facilitate intrusion detection.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Standalone Installation}
-\label{sec:managing-standalone}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-Sometimes, a user may not want to exploit the full power of the \textit{Resources} library and just wants to use individual tools and drivers and integrate them into an existing environment. In such a case, the installation is much simpler.
-
-The following instructions describe a standalone installation assuming that only the driver \reftool{home2l-drv-brownies} is to be used, and that some of its sensors are to be exported via MQTT (\reftool{home2l-drv-mqtt}).
-
-
-\subsubsection*{Building and Installing}
-
-\begin{lstlisting}[language=bash]
-$ make CFG=basic                    # Run 'make help' to see further options
-$ sudo make CFG=basic install
-$ /opt/home2l/bin/home2l-install -i
-\end{lstlisting}
-
-
-\subsubsection*{Configuration}
-
-Create a main configuration file \lst{/opt/home2l/etc/home2l.conf} with the following contents:
-\begin{lstlisting}
-rc.config=""            # declare that there is no 'resources.conf' file
-
-# Configure the Brownies driver ...
-drv.brownies=1          # enable the Brownies driver
-br.link=/dev/i2c-1      # define the i2c device (adapt as adequate)
-
-# Configure MQTT ...
-drv.mqtt=1              # enable MQTT
-mqtt.broker=mybroker    # MQTT broker (adapt as adequate)
-mqtt.exportSet=/local/brownies/*/temp  # export some sensors (adapt as adequate)
-\end{lstlisting}
-
-The sections for the \textit{Brownies} driver and the MQTT broker are just examples and may be changed or extended as adequate. For using \textit{Brownies}, the file \lst{/opt/home2l/etc/brownies.conf} must be provided as described in Section~\ref{sec:brownies-database}.
-
-
-\subsubsection*{Running}
-
-To run the two drivers, the tool \reftool{home2l-server} can be used, which may also be run in the background:
-\begin{lstlisting}[language=bash]
-$ home2l server
-\end{lstlisting}
-
-Alternatively, the drivers may be hosted by a \textit{Home2L} shell, which allows an interactive inspection of the resources, for example, for debugging purposes:
-\begin{lstlisting}[language=bash]
-$ home2l shell
-home2l> l /local/brownies/
-...
-\end{lstlisting}
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{List of Common Configuration Parameters}
 \label{sec:env-common}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3850,7 +3853,7 @@ Examples for resources are:
 \item
   physical sensors (temperatur sensors, motion detectors, \ldots{}),
 \item
-  physical actors (window shades, room lights, \ldots{}),
+  physical actors (window shades or blinds, room lights, \ldots{}),
 \item
   computers (that may be woken up or shut down remotely),
 \item
@@ -5660,10 +5663,10 @@ In addition, the \textit{matrix} module can combine the information of two windo
 
 
 
-\subsection{Window Shades and Actuators (\textit{shades})}
+\subsection{Window Shades and Openers (\textit{shades})}
 \label{sec:brownies-features-shades}
 
-The \textit{shades} module implements the functionality of one or two shades or window opening actuators together with a pair of push buttons (up/down) each.
+The \textit{shades} module implements the functionality of one or two shades (or blinds) or window opening actuators together with a pair of push buttons (up/down) each.
 
 The shades can be controlled either with the device buttons directly or remotely by the Linux host via the \reftool{home2l-drv-brownies} driver. The firmware ensures that even in case of a bus failure, the actuators can be be controlled by the device buttons directly. Optionally, they can be configured to automatically move into a fail-safe position (e.g. "window closed") in case of a bus failure. This behavior is compiled into the firmware by the \refapic{SHADES\_0\_RINT\_FAILSAFE} / \refapic{SHADES\_1\_RINT\_FAILSAFE} feature settings and cannot be accidentally disabled or changed by configuration.
 
@@ -5907,7 +5910,7 @@ The \textit{WallClock} is implemented in native code (C/C++) and uses \textit{SD
 
 The floor plan applet (see Figure~\ref{fig:wallclock-floorplan}) allows to view and to interact with all kinds of gadgets in an intuitive way. Possible gadgets include windows, door locks, garage doors, lights, mailboxes, phones, and motion detectors.
 
-Controllable gadgets can be controlled as shown in Section~\ref{sec:tutorial-firststeps-dialogs}. Shades can be opened and closed by touching their windows, lights and services can be switched on and off.  Intercom phone calls can be initiated by pushing the target phone icon.
+Controllable gadgets can be controlled as shown in Section~\ref{sec:tutorial-firststeps-dialogs}. Shades can be opened and closed by touching their windows, lights and services can be switched on and off. Intercom phone calls can be initiated by pushing the target phone icon.
 
 Depending on the presence state, gadgets can be highlighted to attract the user's attention, if, for example, a window is still open at night or the main door not locked.
 
@@ -6390,7 +6393,8 @@ Towards the MQTT broker, the gateway driver acts like an MQTT client.
 Actually, the communication of \textit{Home2L} instances and the MQTT protocol are very similar:
 \begin{itemize}
   \item Both use a publish-subscribe pattern for communication.
-  \item There is a hierarchical name space for identifying resources (\textit{Home2L} URIs and MQTT topics, respectively). The syntax is very similar.
+  \item There is a hierarchical name space for identifying resources (\textit{Home2L} URIs and MQTT topics, respectively).
+    The syntax is very similar.
 \end{itemize}
 
 But there are also some differences:
@@ -6437,10 +6441,15 @@ Up to three different topics can be specified for a resource:
       is currently alive and a connection to the broker exists.
 \end{itemize}
 
-Messages to the state topic are reported as valid values for the respective resource. If a message for the
-validity indicates that the client is offline, a state of \refapic{rcsUnknown} is reported.
+Messages to the state topic are reported as valid values for the respective resource. If a message for the validity indicates that the client is offline, a state of \refapic{rcsUnknown} is reported.
 
 Whenever the set of active requests indicates that a new value has to be driven (see Figure~\ref{fig:resources-terminology}), the gateway sends a message with the new value on the request topic.
+
+The correct settings for an \refenv{mqtt.import.<ID>} entry can be found in the documentation of the respective device or determined by monitoring MQTT messages with:
+\begin{lstlisting}[language=bash]
+  $ mosquitto_sub [-t <broker>] -v -t '#'
+\end{lstlisting}
+The tool \textit{mosquitto\_sub} is part of the \href{https://mosquitto.org}{Mosquitto} project.
 
 
 
@@ -6526,6 +6535,57 @@ Note: This driver cannot be hosted by \reftool{home2l-brownie2l}, which contains
 \subsection{Provided Resources}
 \label{sec:drvlib-brownies-rc}
 \input{ref_rc_brownies}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \textit{EnOcean} Driver}
+\label{sec:drvlib-enocean} \labeltool{home2l-drv-enocean}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Description}
+\label{sec:drvlib-enocean-description}
+
+The \textit{EnOcean} driver allows to import energy harvesting sensors using the \textit{EnOcean} radio protocol over a \textit{USB 300 / TCM 310} gateway module.
+
+The set of supported devices includes push buttons and mechanical window handles. The \textit{WallClock} floor plan applet can combine window state sensors together with window handle data to, for example, visualize whether a closed patio door is locked or still unlocked (handle in the "open" position).
+
+A complete list together with their \textit{EnOcean Equippment Profile (EPP)} identifiers can be found in \refsrc{drivers/enocean/home2l-drv-enocean.C} in section \textit{Equipment Drivers}. Support for new equipment profiles can be added there.
+
+
+
+\subsection{Importing \textit{EnOcean} Devices}
+\label{sec:drvlib-enocean-importing}
+\labeltool{home2l-enocean2l}
+
+Devices are imported by a single-line \refenv{enocean.device.<ID>} entry in the \reftool{home2l.conf} file. The device ID and profile can usually be found in the device configuration.
+
+To determine the device ID and for testing, the tool \reftool{home2l-enocean2l} can be used. It displays all radio telegrams received together with the signal strength:
+\begin{lstlisting}[language=bash]
+  $ home2l enocean2l enocean.link=/dev/ttyUSB1
+  home2l-enocean2l v1.1-92-g02cc (2020-09-05) by Gundolf Kiefer
+
+  Waiting for EnOcean telegrams on '/dev/ttyUSB1' ...
+  : DevID=0517fca6 RORG=f6 Data=e0 Status=20 dBm=61
+  : DevID=0517fca6 RORG=f6 Data=f0 Status=20 dBm=58
+  ...
+
+\end{lstlisting}
+
+
+
+\subsection{Configuration Parameters}
+\label{sec:drvlib-enocean-env}
+\input{ref_env_drv_enocean}
+
+
+
+\subsection{Provided Resources}
+
+The set of provided resources is controlled by the \refenv{enocean.device.<ID>} settings.
 
 
 

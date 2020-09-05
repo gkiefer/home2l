@@ -39,7 +39,7 @@
 #define SHADES_OVERDRIVE 10
   // Units by which shades moved into an end position (0 or 100) are overdriven
   // a) for calibration purposes and b) to let the relay switch after the internal
-  // end switch of the actuator has already stopped the motor
+  // end switch of the actuator has already stopped the engine
   // (=> increased lifetime of the relay by avoiding arcs and sparks)
 #define SHADES_DEBOUNCE_TIME  50
   // Time in ms for which a button state is held (for debouncing)
@@ -48,7 +48,7 @@
 
 
 
-// ********************** Shade / actuator / button state **********************
+// ********************** Actuator / Button State ******************************
 
 
 // 'actBtnState' bits...
@@ -71,7 +71,7 @@ typedef struct {
   bool    calibrating;  // Indicates whether we are in a calibration run, and 'rawPos' contains a
                         // valid (!= SHADES_POS_NONE) value, which is however virtual and may be far from reality.
 
-    /* If the shades are in an known position (rawPos == SHADES_POS_NONE), the following is done
+    /* If the shades are in an unknown position (rawPos == SHADES_POS_NONE), the following is done
      * to get it calibrated:
      *
      * 1. Nothing happens unless a request is issued.

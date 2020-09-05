@@ -41,19 +41,21 @@ all: build
 
 
 
-############################## MQTT ############################################
+############################## Driver ##########################################
 
 
-MQTT := home2l-drv-mqtt
-MQTT_BIN := $(DIR_OBJ)/$(MQTT).so
+DRIVER := home2l-drv-mqtt
+DRIVER_BIN := $(DIR_OBJ)/$(DRIVER).so
 
-SRC_MQTT := $(MQTT).C
-OBJ_MQTT := $(SRC_MQTT:%.C=$(DIR_OBJ)/%-pic.o)
+SRC_DRIVER := $(DRIVER).C
+OBJ_DRIVER := $(SRC_DRIVER:%.C=$(DIR_OBJ)/%-pic.o)
+
+LDFLAGS += -lmosquitto
 
 
-$(MQTT_BIN): $(DEP_CONFIG) $(OBJ_MQTT)
-	@echo LD $(MQTT)
-	@$(CC) -shared -o $@ $(LDFLAGS) -lmosquitto $(OBJ_MQTT)
+$(DRIVER_BIN): $(DEP_CONFIG) $(OBJ_DRIVER)
+	@echo LD $(DRIVER)
+	@$(CC) -shared -o $@ $(LDFLAGS) $(OBJ_DRIVER)
 
 
 
@@ -63,7 +65,7 @@ $(MQTT_BIN): $(DEP_CONFIG) $(OBJ_MQTT)
 
 
 # Automatic dependencies...
--include $(OBJ_MQTT:%.o=%.d)
+-include $(OBJ_DRIVER:%.o=%.d)
 
 
 
@@ -75,8 +77,8 @@ $(MQTT_BIN): $(DEP_CONFIG) $(OBJ_MQTT)
 clean: clean-build
 
 
-build-arch: $(MQTT_BIN)
+build-arch: $(DRIVER_BIN)
 
 
 install-arch:
-	install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(MQTT_BIN)
+	install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(DRIVER_BIN)

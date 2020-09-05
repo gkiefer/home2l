@@ -99,7 +99,7 @@ def LightOffDuringDay ():
 #   Change this to a value of 25 degrees or higher to try the 'RoofWindowCooling' rule.
 rcTempDayMaxOutside = NewSignal ("tempDayMaxOutside", rctTemp, 20.0)
 
-rcRoofWindow = RcGet ("/alias/floorplan/living-roofwin/actuator")
+rcRoofWindow = RcGet ("/alias/floorplan/living-roofwin/opener")
 rcRoofShades = RcGet ("/alias/floorplan/living-roofwin/shades")
 
 

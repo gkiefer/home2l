@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-5-g9467* (2020-08-15)</span>
+   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -367,6 +367,14 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga05a6c663f76ae12a9752ba31e60e47d3">ValidIntFromString</a> (const char *str, int defaultVal, int radix=0)</td></tr>
 <tr class="memdesc:ga05a6c663f76ae12a9752ba31e60e47d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an integer. On failure, 'defaultVal' is returned. <br /></td></tr>
 <tr class="separator:ga05a6c663f76ae12a9752ba31e60e47d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0130d6e071185d8466cb5f461b48e4bc"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga0130d6e071185d8466cb5f461b48e4bc">UnsignedFromString</a> (const char *str, unsigned *ret, int radix=0)</td></tr>
+<tr class="memdesc:ga0130d6e071185d8466cb5f461b48e4bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an unsigned integer using 'strtoul'. On success, '*ret' is set accordingly and 'true' is returned. On failure, 'false' is returned and '*ret' remains unchanged. If 'radix == 0', it is auto-detected from the string (16 with a preceeding "0x", 10 otherwise). <br /></td></tr>
+<tr class="separator:ga0130d6e071185d8466cb5f461b48e4bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga215e4aa805691299b7427cc7768e1947"><td class="memItemLeft" align="right" valign="top">
+unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga215e4aa805691299b7427cc7768e1947">ValidUnsignedFromString</a> (const char *str, unsigned defaultVal, int radix=0)</td></tr>
+<tr class="memdesc:ga215e4aa805691299b7427cc7768e1947"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an unsigned integer. On failure, 'defaultVal' is returned. <br /></td></tr>
+<tr class="separator:ga215e4aa805691299b7427cc7768e1947"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab500728b3e8b7d99ca2993745e5fc8db"><td class="memItemLeft" align="right" valign="top">
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gab500728b3e8b7d99ca2993745e5fc8db">FloatFromString</a> (const char *str, float *ret)</td></tr>
 <tr class="memdesc:gab500728b3e8b7d99ca2993745e5fc8db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a floating-point value using 'strtof'. On success, '*ret' is set accordingly and 'true' is returned. On failure, 'false' is returned and '*ret' remains unchanged. <br /></td></tr>
@@ -547,6 +555,10 @@ Ticks (real and monotonic) ...</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga9e5c19968af97bd64f46650ec8732318">NEVER</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:ga9e5c19968af97bd64f46650ec8732318"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents no time (for both types <code>TTicks</code> and <code>TTicksMonotonic</code>) <br /></td></tr>
 <tr class="separator:ga9e5c19968af97bd64f46650ec8732318"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafaa4e46bb91ebf05695f7a8c1bf63abe"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#gafaa4e46bb91ebf05695f7a8c1bf63abe">ALWAYS</a>&#160;&#160;&#160;-1</td></tr>
+<tr class="memdesc:gafaa4e46bb91ebf05695f7a8c1bf63abe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Another special time value, e.g. to mark that some timed event has successfully been handled in the past (for both types <code>TTicks</code> and <code>TTicksMonotonic</code>) <br /></td></tr>
+<tr class="separator:gafaa4e46bb91ebf05695f7a8c1bf63abe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae3cec4def438f60ce079aef1eae8e21f"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#gae3cec4def438f60ce079aef1eae8e21f">TICKS_FROM_SECONDS</a>(S)&#160;&#160;&#160;(((<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>) (S)) * 1000)</td></tr>
 <tr class="memdesc:gae3cec4def438f60ce079aef1eae8e21f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert seconds (integer!) to ticks. <br /></td></tr>

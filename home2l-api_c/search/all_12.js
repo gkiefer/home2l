@@ -108,7 +108,7 @@ var searchData=
   ['startsession',['StartSession',['../classCShellBare.html#aa21f94a0b08e267d018fb624c929ae5d',1,'CShellBare']]],
   ['statisticsreset',['StatisticsReset',['../classCBrownieLink.html#a7edc0046a244c175914e76e18c8d3e5e',1,'CBrownieLink']]],
   ['statisticsstr',['StatisticsStr',['../classCBrownieLink.html#a64b53855ef733a450b232c0a3847a30e',1,'CBrownieLink']]],
-  ['status',['status',['../structSBrReply.html#a6ab5f2f84edca3530f2a1553c55a9335',1,'SBrReply::status()'],['../classCBrownieLink.html#afcac2615f4314845ffdd421ee80d2e77',1,'CBrownieLink::Status()']]],
+  ['status',['Status',['../classCBrownieLink.html#afcac2615f4314845ffdd421ee80d2e77',1,'CBrownieLink::Status()'],['../structSBrReply.html#a6ab5f2f84edca3530f2a1553c55a9335',1,'SBrReply::status()']]],
   ['stop',['Stop',['../classCRcDriver.html#a9e393b40f522b8a1fe5e2a44d1b487c2',1,'CRcDriver::Stop()'],['../classCRcEventDriver.html#a2d44a9e0c9446a5af7476d3ab2620820',1,'CRcEventDriver::Stop()'],['../classCModalWidget.html#a6397e549a91cfd5691ee9c53980de2fe',1,'CModalWidget::Stop()'],['../classCMessageBox.html#adc02e609d6724bb34998e4ab1efa7e4e',1,'CMessageBox::Stop()']]],
   ['str',['STR',['../group__common__basics.html#gaae57f17e11e61cf0519e2004414f5629',1,'base.H']]],
   ['strbusy',['strBusy',['../group__common__streamer.html#gga1ffb6eeefc4a6ea137df5a76cc27f574a5ba05d5ade3afbb218565e38c3549428',1,'streamer.H']]],

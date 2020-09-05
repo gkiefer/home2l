@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2020-08-17 21:34+0200\n"
+        "POT-Creation-Date: 2020-09-05 00:00+0200\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -22,151 +22,151 @@ msgstr  "Project-Id-Version: Home2L\n"
 msgid   ". (decimal point)"
 msgstr  ","
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "January"
 msgstr  "Januar"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "February"
 msgstr  "Februar"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "March"
 msgstr  "März"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "April"
 msgstr  "April"
 
-#: ../common/base.C:1968 ../common/base.C:1969
+#: ../common/base.C:1990 ../common/base.C:1991
 msgid   "May"
 msgstr  "Mai"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "June"
 msgstr  "Juni"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "July"
 msgstr  "Juli"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "August"
 msgstr  "August"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "September"
 msgstr  "September"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "October"
 msgstr  "Oktober"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "November"
 msgstr  "November"
 
-#: ../common/base.C:1968
+#: ../common/base.C:1990
 msgid   "December"
 msgstr  "Dezember"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Jan"
 msgstr  "Jan"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Feb"
 msgstr  "Feb"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Mar"
 msgstr  "Mär"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Apr"
 msgstr  "Apr"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Jun"
 msgstr  "Jun"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Jul"
 msgstr  "Jul"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Aug"
 msgstr  "Aug"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Sep"
 msgstr  "Sep"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Oct"
 msgstr  "Okt"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Nov"
 msgstr  "Nov"
 
-#: ../common/base.C:1969
+#: ../common/base.C:1991
 msgid   "Dec"
 msgstr  "Dez"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Monday"
 msgstr  "Montag"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Tuesday"
 msgstr  "Dienstag"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Wednesday"
 msgstr  "Mittwoch"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Thursday"
 msgstr  "Donnerstag"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Friday"
 msgstr  "Freitag"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Saturday"
 msgstr  "Samstag"
 
-#: ../common/base.C:1970
+#: ../common/base.C:1992
 msgid   "Sunday"
 msgstr  "Sonntag"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Mon"
 msgstr  "Mo"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Tue"
 msgstr  "Di"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Wed"
 msgstr  "Mi"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Thu"
 msgstr  "Do"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Fri"
 msgstr  "Fr"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Sat"
 msgstr  "Sa"
 
-#: ../common/base.C:1971
+#: ../common/base.C:1993
 msgid   "Sun"
 msgstr  "So"
 
@@ -203,7 +203,7 @@ msgstr  "Heute"
 msgid   "Calendar"
 msgstr  "Kalender"
 
-#: ../wallclock/app_home.C:499 ../wallclock/floorplan.C:649
+#: ../wallclock/app_home.C:499 ../wallclock/floorplan.C:678
 msgid   "Mail"
 msgstr  "Mail"
 
@@ -250,67 +250,67 @@ msgstr  "* Hauptmenü *"
 msgid   "Music Collection"
 msgstr  "Musik-Sammlung"
 
-#: ../wallclock/app_music.C:1955 ../wallclock/floorplan.C:651
+#: ../wallclock/app_music.C:1955 ../wallclock/floorplan.C:680
 msgid   "Music"
 msgstr  "Musik"
 
-#: ../wallclock/app_phone.C:967 ../wallclock/floorplan.C:650
+#: ../wallclock/app_phone.C:967 ../wallclock/floorplan.C:679
 msgid   "Phone"
 msgstr  "Telefon"
 
-#: ../wallclock/floorplan.C:593
+#: ../wallclock/floorplan.C:622
 msgid   "Syntax error in request specification"
 msgstr  "Syntax-Fehler in der Request-Spezifikation"
 
-#: ../wallclock/floorplan.C:646
+#: ../wallclock/floorplan.C:675
 msgid   "Window"
 msgstr  "Fenster"
 
-#: ../wallclock/floorplan.C:647
+#: ../wallclock/floorplan.C:676
 msgid   "Shades"
 msgstr  "Rolladen"
 
-#: ../wallclock/floorplan.C:648
+#: ../wallclock/floorplan.C:677
 msgid   "Light"
 msgstr  "Licht"
 
-#: ../wallclock/floorplan.C:652
+#: ../wallclock/floorplan.C:681
 msgid   "Wifi Access Point"
 msgstr  "WLAN Access Point"
 
-#: ../wallclock/floorplan.C:653
+#: ../wallclock/floorplan.C:682
 msgid   "Bluetooth"
 msgstr  "Bluetooth"
 
-#: ../wallclock/floorplan.C:654
+#: ../wallclock/floorplan.C:683
 msgid   "Service"
 msgstr  "Service"
 
-#: ../wallclock/floorplan.C:668
+#: ../wallclock/floorplan.C:706
 msgid   "Off"
 msgstr  "Aus"
 
-#: ../wallclock/floorplan.C:670
+#: ../wallclock/floorplan.C:708
 msgid   "On"
 msgstr  "Ein"
 
-#: ../wallclock/floorplan.C:686
+#: ../wallclock/floorplan.C:724
 msgid   "0% = Up"
 msgstr  "0% = Oben"
 
-#: ../wallclock/floorplan.C:687
+#: ../wallclock/floorplan.C:725
 msgid   "100% = Down"
 msgstr  "100% = Unten"
 
-#: ../wallclock/floorplan.C:692
+#: ../wallclock/floorplan.C:729
 msgid   "100% = Open"
 msgstr  "100% = Auf"
 
-#: ../wallclock/floorplan.C:693
+#: ../wallclock/floorplan.C:730
 msgid   "0% = Closed"
 msgstr  "0% = Zu"
 
-#: ../wallclock/floorplan.C:754 ../wallclock/floorplan.C:2796
+#: ../wallclock/floorplan.C:791 ../wallclock/floorplan.C:2846
 msgid   "Auto"
 msgstr  "Auto"
 

@@ -63,8 +63,11 @@ def CheckFile (fileName, locPath):
       try:
         req = requests.get (uri)
         if req.status_code == 200: ok = True
+      except requests.exceptions.SSLError:
+        print ("WARNING: SSL error with URL '{}' {}".format (uri, sorted (pageSet)))
+        ok = True
       except: pass
-      if not ok: print ("ERROR: Non-existing remote URL '{}' {}.".format (uri, sorted (pageSet)))
+      if not ok: print ("ERROR: Non-existing remote URL '{}' {}".format (uri, sorted (pageSet)))
     else:
       # Check local file ...
       uri = uri.rstrip(".")

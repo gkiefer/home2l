@@ -41,19 +41,19 @@ all: build
 
 
 
-############################## GPIO ############################################
+############################## Driver ##########################################
 
 
-GPIO := home2l-drv-gpio
-GPIO_BIN := $(DIR_OBJ)/$(GPIO).so
+DRIVER := home2l-drv-gpio
+DRIVER_BIN := $(DIR_OBJ)/$(DRIVER).so
 
-SRC_GPIO := $(GPIO).C
-OBJ_GPIO := $(SRC_GPIO:%.C=$(DIR_OBJ)/%-pic.o)
+SRC_DRIVER := $(DRIVER).C
+OBJ_DRIVER := $(SRC_DRIVER:%.C=$(DIR_OBJ)/%-pic.o)
 
 
-$(GPIO_BIN): $(DEP_CONFIG) $(OBJ_GPIO)
-	@echo LD $(GPIO)
-	@$(CC) -shared -o $@ $(LDFLAGS) $(OBJ_GPIO)
+$(DRIVER_BIN): $(DEP_CONFIG) $(OBJ_DRIVER)
+	@echo LD $(DRIVER)
+	@$(CC) -shared -o $@ $(LDFLAGS) $(OBJ_DRIVER)
 
 
 
@@ -63,7 +63,7 @@ $(GPIO_BIN): $(DEP_CONFIG) $(OBJ_GPIO)
 
 
 # Automatic dependencies...
--include $(OBJ_GPIO:%.o=%.d)
+-include $(OBJ_DRIVER:%.o=%.d)
 
 
 
@@ -75,11 +75,11 @@ $(GPIO_BIN): $(DEP_CONFIG) $(OBJ_GPIO)
 clean: clean-build
 
 
-build-arch: $(GPIO_BIN)
+build-arch: $(DRIVER_BIN)
 
 
 install-arch:
-	install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(GPIO_BIN)
+	install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(DRIVER_BIN)
 
 
 install-indep:

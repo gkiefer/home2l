@@ -76,7 +76,7 @@ ENV_PARA_INT("br.checksPerScan", envBrChecksPerScan, 1);
   /* Number of devices polled completely per fast scan
    *
    * Increasing this value will increase the general polling frequency of Brownie
-   * devices at the expense of a decreased the responsiveness on events with
+   * devices at the expense of a decreased responsiveness on events with
    * notifications (e.g. button events or switch sensor events).
    *
    * As a rule of thumb, this value should be set such that the average times
@@ -100,15 +100,14 @@ ENV_PARA_INT("br.temperatureInterval", envBrTempInterval, 5000);
   /* Approximate polling interval for temperature values
    */
 
-ENV_PARA_STRING("br.shades.requestAttrs", envBrShadesReqAttrs, NULL);
+ENV_PARA_STRING("br.shades.reqAttrs", envBrShadesReqAttrs, NULL);
   /* Request attributes for requests generated on button pushes [\refenv{rc.userReqAttrs}]
    *
    * If a shades button is pushed, a request is auto-generated (or removed) to let
    * the shades move up or down. This parameter defines the attributes of such
-   * requests. The most useful attribute is the off-time. For example, if the
-   * attribute string is "-31:00" and a user pushes a button to close the shades,
-   * this overrides automatic rules until 7 a.m. on the next morning. Afterwards,
-   * automatic rules may open them again.
+   * requests. For example, if the attribute string is "-31:00" and a user pushes a
+   * button to close the shades, this overrides automatic rules until 7 a.m. on
+   * the next morning. Afterwards, automatic rules may open them again.
    *
    * By default, the value of \refenv{rc.userReqAttrs} is used.
    *
@@ -875,7 +874,7 @@ class CBrFeatureShades: public CBrFeature {
          * or always 0, if there is only one.
          *
          * The driver issues automatic user requests if one of the buttons are pushed.
-         * The attributes of such requests are specified by \refenv{br.shades.requestAttrs},
+         * The attributes of such requests are specified by \refenv{br.shades.reqAttrs},
          * \refenv{rc.userReqId}, and \refenv{rc.userReqAttrs}.
          */
       rcActUp = RcRegisterResource (drv, MakeRcLid ("shades%s/actUp", idStr), rctBool, false);
