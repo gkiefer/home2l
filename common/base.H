@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,12 +36,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
-#include <stdarg.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/select.h>
 #include <unistd.h>
+#include <signal.h>
+#include <pthread.h>
 #include <regex.h>
+#include <stdarg.h>
 
 #include <config.H>
 
@@ -49,7 +48,7 @@
 
 
 
-// ***************** Configuration *********************************************
+// *************************** Configuration ***********************************
 
 
 #ifdef __ANDROID__
@@ -78,8 +77,11 @@
 #define STR(X) #X
   ///< @brief Stringify macro
 
-#define OFFSETOF(type, field) ((unsigned) &(((type *) 0)->field))
+#define OFFSET(type, field) ((unsigned) &(((type *) 0)->field))
   ///< @brief Byte offset of a field in struct or class
+
+#define ENTRIES(ARRAY) ((int) (sizeof (ARRAY) / sizeof (ARRAY[0])))
+  ///< @brief Number of entries of a statically declared constant array
 
 #define CLEAR(X) bzero (&(X), sizeof (X))
   ///< @brief Set variable/object 'X' to all-zero
@@ -97,23 +99,27 @@
 /// @name Enhanced file and directory operations ...
 /// @{
 size_t Write (int fd, const void *buf, size_t count);
-  ///< @brief Similar to POSIX write(), but returns all 'count' bytes whenever possible.
+  ///< @brief Similar to POSIX write(), but returns all 'count' bytes as possible.
   ///
   /// This function repeatedly calls write(2) until 'count' bytes have been written.
   /// On error, the actual number of bytes written is returned (which is less than
   /// 'count'), and 'errno' is set accordingly.
+  /// If the file is opened in non-blocking mode, the function does not wait, but
+  /// returns the bytes available immediately and sets/leaves 'errno == EAGAIN'.
   /// @return the number of bytes written successfully.
 
 size_t Read (int fd, void *buf, size_t count);
-  ///< @brief Similar to POSIX read(), but reads all 'count' bytes whenever possible.
+  ///< @brief Similar to POSIX read(), but reads all 'count' bytes as possible.
   ///
   /// This function repeatedly calls read(2) until 'count' bytes have been read.
   /// On error or end-of-file, the actual number of bytes read is returned (which
   /// is less than 'count'), and 'errno' is set accordingly. In the case of an
   /// end-of-file condition, 'errno' is set to 0.
+  /// If the file is opened in non-blocking mode, the function does not wait, but
+  /// returns the bytes available immediately and sets/leaves 'errno == EAGAIN'.
   /// @return the number of bytes read successfully.
 
-bool MakeDir (const char *relOrAbsPath, bool setHome2lGroup);
+bool MakeDir (const char *relOrAbsPath, bool setHome2lGroup = true);
   ///< @brief Create a directory (and all its parents as necessary).
   ///
   /// If the argument is a symbolic links, the target directory (tree) is created
@@ -153,7 +159,7 @@ bool ReadDir (const char *relOrAbsPath, class CKeySet *ret);
 
 
 
-// ***************** Logging and Debugging *************************************
+// ********************** Logging and Debugging ********************************
 
 
 /** @defgroup common_logging Logging
@@ -326,7 +332,58 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 
 
 
-// ***************** Localization and language *********************************
+// *************************** Version Helpers *********************************
+
+
+/** @defgroup common_version Version
+ * @brief Numeric version handling
+ *
+ * Helpers to convert version strings to numbers and vice versa.
+ * Version numbers of type `uint32_t` can be compared arbitrarily in order to check
+ * if some tool is newer or older than some reference.
+ *
+ * @{
+ */
+
+
+static inline uint32_t VersionCompose (uint8_t major, uint8_t minor, uint16_t revision, bool dirty = false) {
+  ///< @brief Compose a numeric representation of the version.
+  /// @param major is the major version component.
+  /// @param minor is the minor version component.
+  /// @param revision is the revision version component.
+  /// @param dirty is a flag indicating whether the code has been modified locally compared to the version.
+  return (((uint32_t) major) << 24) + (((uint32_t) minor) << 16) + (((uint32_t) revision) << 1) + ((uint32_t) dirty);
+}
+static inline int VersionMajor (uint32_t ver) { return (int) (ver >> 24); }
+  ///< @brief Get the major component of the version
+static inline int VersionMinor (uint32_t ver) { return (int) ((ver >> 16) & 0xff); }
+  ///< @brief Get the minor component of the version
+static inline int VersionRevision (uint32_t ver) { return (int) ((ver >> 1) & 0x7fff); }
+  ///< @brief Get the revision component of the version
+static inline bool VersionDirty (uint32_t ver) { return (ver & 1) == 1; }
+  ///< @brief Get the "dirty" component of the version
+
+uint32_t VersionFromStr (const char *str);
+  ///< @brief Get a numeric representation of the version string.
+  /// On syntax error, a warning is logged and 0 is returned.
+const char *VersionToStr (class CString *ret, uint32_t ver);
+  ///< @brief Get a string representation of the version.
+  ///  This may be shorter than an eventual original string passed to @ref VersionFromStr(),
+  ///  i.e. an eventual git ID is missing.
+
+static inline const char *VersionGetOwnAsStr () { return buildVersion; }
+  ///< Get my own build version as a string.
+uint32_t VersionGetOwn ();
+  ///< Get my own build version.
+
+
+/// @}  // Version
+
+
+
+
+
+// ********************** Localization and language ****************************
 
 
 /** @defgroup common_language Language
@@ -445,9 +502,9 @@ void LangTranslateNumber (char *str);
 
 
 class CString *GetThreadTempString ();
-  ///< @brief Get the thread-local temporary string (TTS) of the calling thread
+  ///< @brief Get the thread-local temporary string (TTS) of the calling thread.
 static inline class CString *GetTTS () { return GetThreadTempString (); }
-  ///< @brief Get the TTS (same as above, but shorter)
+  ///< @brief Get the TTS (same as above, but shorter).
 
 const char *StringF (class CString *ret, const char *fmt, ...);
   ///< @brief Return 'ret->Get ()'
@@ -587,7 +644,7 @@ class CString {
 
     /// @name Static elements ...
     ///@{
-    static const char emptyStr[];       ///< Use this whenever you need an empty string ("")
+    static const char * const emptyStr;       ///< Use this whenever you need an empty string ("")
     ///@}
 
     /// @name Character encoding (see special not on string encoding in this file) ...
@@ -813,7 +870,7 @@ class CRegex {
 
 
 
-// ***************** Dictionaries and key sets *********************************
+// ********************** Dictionaries and key sets ****************************
 
 
 /** @defgroup common_containers Containers
@@ -1048,7 +1105,7 @@ class CKeySet: public CDictRaw {
 
 
 
-// ********************** Date & Time ******************************************
+// *************************** Date & Time *************************************
 
 
 /** @defgroup common_datetime Date and Time
@@ -1090,9 +1147,9 @@ TTicksMonotonic TicksMonotonicNow (); ///< Get the current monotonic in millisec
 TTicks TicksFromMonotic (TTicksMonotonic tm); ///< Conversion function
 TTicksMonotonic TicksToMonotonic (TTicks t);  ///< Conversion function
 
-const char *TicksToString (TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
+const char *TicksAbsToString (TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
   ///< @brief (TTS) Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
-const char *TicksToString (CString *ret, TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
+const char *TicksAbsToString (CString *ret, TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
   ///< @brief Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
   /// @param ret Return string
   /// @param ticks Ticks to be converted, must be an absolute time
@@ -1101,17 +1158,43 @@ const char *TicksToString (CString *ret, TTicks ticks, int fracDigits = INT_MAX,
   ///             automatically (trailing 0s may be skipped).
   /// @param precise If 'true', a string of the form "`t<n>`" is returned, where
   ///             `<n>` is the decimal number milliseconds since the Epoch.
+const char *TicksRelToString (TTicks ticks);
+  ///< @brief (TTS) Get a string of the form "<integer>[<unit>]" for a relative time.
+const char *TicksRelToString (CString *ret, TTicks ticks);
+  ///< @brief (TTS) Get a string of the form "<integer>[<unit>]" for a relative time.
+  /// @param ret Return string
+  /// @param ticks Ticks to be converted
+  ///
+  /// The function guesses an appropriate time unit, e.g. seconds ('s') or minutes ('m')
+  /// and outputs a string that is precise and at best effort human-readable.
+  /// This implies that the original value was a multiple of the resulting unit.
+  /// See TicksFromString () for a list of possible units.
+
 bool TicksFromString (const char *str, TTicks *ret, bool absolute);
-  ///< @brief Convert a string to an (absolute) ticks value.
+  ///< @brief Convert a string to a relative or absolute ticks value.
   ///
   /// The following formats are accepted:
-  ///  - `YYYY-MM-DD[-hhmm[ss[.<millis>]]]` : readable time, interpreted as local time
-  ///  - `t<unsigned integer>`              : absolute time in milliseconds since the Epoch
+  ///
+  ///  - `YYYY-MM-DD[-hhmm[ss[.<millis>]]]` : readable time, interpreted as local time (only absolute).
+  ///
+  ///  - `t<unsigned integer>`              : absolute time in milliseconds since the Epoch (only absolute).
+  ///
   ///  - `<integer>[<unit>]`                : relative time in milliseconds (or some other unit with `<unit>`);
-  ///                                         Possible units are: seconds ('s'), minutes ('m'), hours ('h'), days ('d'), and weeks ('w').
-  ///  - `hh:mm[:ss[.<millis>]]`            : time relative to 0:00 today (if 'absolute == true'); `hh` may be > 23 to specify a time in the coming days (*Beware of potential race conditions when using this close to midnight!*)
+  ///                                         Possible units are: seconds ('s'), minutes ('m'), hours ('h'), days ('d'), and weeks ('w');
+  ///                                         If 'absolute == true': time is interpreted as relative from now.
+  ///
+  ///  - `hh:mm[:ss[.<millis>]]`            : `hh` may be > 23 to specify a time in the coming days (*Beware of potential race conditions when using this close to midnight!*);
+  ///                                         If 'absolute == true': time relative to 0:00 today.
+  ///
   /// If 'absolute' is set, an absolute time is returned in any case.
-  /// Otherwise, in the two latter formats, the relative number of ticks is returned.
+  /// Otherwise, the relative number of ticks is returned.
+  ///
+  /// **Note:** For code readability, this function should not be called directly.
+  ///   Instead, TicksAbsFromString() or TicksRelFromString() should be used.
+static inline bool TicksAbsFromString (const char *str, TTicks *ret) { return TicksFromString (str, ret, true); }
+  ///< @brief Convert a string to an absolute ticks value. See TicksFromString() for supported string formats.
+static inline bool TicksRelFromString (const char *str, TTicks *ret) { return TicksFromString (str, ret, false); }
+  ///< @brief Convert a string to a relative ticks value. See TicksFromString() for supported string formats.
 
 void TicksMonotonicToStructTimeval (TTicksMonotonic t, struct timeval *retTv);
 
@@ -1258,15 +1341,15 @@ class CTimer {
       ///< @brief Setup timer without (re-)scheduling it.
     void Set (TTicksMonotonic _time, TTicksMonotonic _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL);
       ///< @brief Setup and (re-)schedule timer.
+      /// @param _time Absolute time of the next invocation. A value of 0 means "now".
+      ///             A value < 0 means "in `-_time` milliseconds from now".
+      /// @param _interval Repeat interval. A value of 0 inserts a one-shot timer.
+      ///             This number should be a power of 2 (see note above).
       /// @param _func Callback function to be executed at the given times.
       /// @param _data Data to be passed as the `data` argument to the callback function.
       /// @param _creator A reference to the creator. If set (`!= NULL`), the class takes over the ownership.
       ///             of this object. In consequence, the caller does not need to keep a reference to this object,
       ///             but can eventually remove all of them using `DelByCreator()`.
-      /// @param _time Absolute time of the next invocation. A value of 0 means "now".
-      ///             A value < 0 means "in `-_time` milliseconds from now".
-      /// @param _interval Repeat interval. A value of 0 inserts a one-shot timer.
-      ///             This number should be a power of 2 (see note above).
 
     void Reschedule (TTicksMonotonic _time, TTicksMonotonic _interval = 0);
       ///< @brief Change a timer (like 'Set'), but leave function and creator unchanged.
@@ -1337,7 +1420,7 @@ void TimerStop ();
 
 
 
-// ***************** Threading and Synchronization ****************************
+// ********************** Threading and Synchronization ************************
 
 
 /** @defgroup common_threads Threads and Synchronization
@@ -1517,7 +1600,7 @@ void Sleep (TTicksMonotonic mSecs);
 
 
 
-// ********************** CShell and variants **********************************
+// *************************** CShell and variants *****************************
 
 
 /** @defgroup common_shells Shells
@@ -1768,7 +1851,133 @@ class CShellSession: public CShell {
 
 
 
-// ********************** Doxygen Hooks  ***************************************
+// *************************** Service managing ********************************
+
+
+/** @defgroup common_service Service Management
+ * @brief Helper class(es) for managing services.
+ *
+ * @{
+ */
+
+
+
+// ***** CServiceKeeper *****
+
+
+/** @brief Service keeper: Helper class to keep an unreliable service running.
+ *
+ * This class takes care of keeping a service running by scheduling re-open attempts according
+ * to some given strategy.
+ *
+ * The class can be used in two ways:
+ *
+ * 1. Callback use: Deriving a sub-class and overriding the virtual methods @ref DoOpen() and @ref DoClose().
+ *    @ref Iterate() must be called regularly to get necessary actions performed.
+ *
+ * 2. Polling use: Instantiating this class and calling @ref OpenAttemptNow() and @ref CloseNow()
+ *    and (re-)open or close the service accordingly.
+ *
+ */
+class CServiceKeeper {
+  public:
+
+    /// @name Initialization and setup ...
+    /// @{
+    CServiceKeeper () { isOpen = shouldBeOpen = false; tDShort = tDLong = tShortToLong = 0; }
+    CServiceKeeper (TTicksMonotonic _tDShort, TTicksMonotonic _tDLong = NEVER, TTicksMonotonic _tShortToLong = NEVER)
+      { isOpen = shouldBeOpen = false; Setup (_tDShort, _tDLong, _tShortToLong); }
+    ~CServiceKeeper () { Close (); }
+
+    void Setup (TTicksMonotonic _tDShort, TTicksMonotonic _tDLong = NEVER, TTicksMonotonic _tShortToLong = NEVER) { tDShort = _tDShort; tDLong = _tDLong; tShortToLong = _tShortToLong; }
+      ///< @brief Setup the retry policy.
+      /// @param _tDShort is the retry interval after the service got lost (e.g. disconnected / closed).
+      /// @param _tDLong is the retry interval after the service was lost for a longer time.
+      /// @param _tShortToLong is the time after which the retry interval is changed from _tDShort to _tDLong.
+    /// @}
+
+    /// @name Using the service ...
+    /// @{
+    void Open () { shouldBeOpen = true; Refresh (); }
+      ///< @brief Request the service to open.
+      ///
+      /// Actual opening will be deferred until the next call to Iterate().
+      ///
+    void Close () { shouldBeOpen = false; }
+      ///< @brief Request the service to close.
+      ///
+      /// Actual opening will be deferred until the next call to Iterate().
+      /// To properly close the service, it must be closed explicitely by the caller.
+      /// In callback use, this can be accomplished by calling Iterate() until IsOpen()
+      /// returns 'false'.
+      ///
+
+    void Refresh ();
+      ///< @brief Force retry on next Iterate() and return to short retry intervals.
+
+    void Iterate ();
+      ///< @brief Iterate (callback use); perform all open/close actions as adequate. Not needed for polling use.
+
+    bool IsOpen () { return isOpen; }
+      ///< @brief check if the service is actually open.
+    bool ShouldBeOpen () { return shouldBeOpen; }
+      ///< @brief check if the service has been requested to be open.
+    /// @}
+
+    /// @name Callbacks (for callback use) ...
+    ///
+    /// These callbacks are always called from @ref Iterate().
+    ///
+    /// @{
+    virtual void DoOpen () {}
+      ///< @brief Attempt to open the service in callback use.
+      /// If this method is overloaded it must call @ref ReportOpenAttempt() to report that the attempt has occurred.
+      ///
+    virtual void DoClose () {}
+      ///< @brief Actually close the service.
+      /// If this method is overloaded it must call @ref ReportClosed() to report that the closing has succeeded.
+      /// Otherwise, this method will be called again on next call of @ref Iterate().
+    /// @}
+
+    /// @name Polling methods (for polling use) ...
+    /// @{
+    bool OpenAttemptNow ();
+      ///< @brief Query if the connection should be (re-)opened now.
+      /// After the attempt, @ref ReportOpenAttempt() must be called to report whether the attempt was successful or not.
+    bool CloseNow ();
+      ///< @brief Query if the connection should be closed now.
+      /// Closing must not fail.
+    /// @}
+
+    /// @name Reporting about the service (for callback and polling use) ...
+    /// @{
+    void ReportLost ();
+      ///< @brief Report that the service is no longer running.
+    void ReportOpenAttempt (bool success);
+      ///< @brief Report an open attempt (either successful or not).
+      /// This must be called from DoOpen() or after OpenAttemptNow() has returned 'true' to confirm that
+      /// an open attempt has taken placed.
+    void ReportClosed () { isOpen = false; }
+      ///< @brief Report that the service was actually closed.
+      /// This must be calld from DoClose() or after CloseNow() has returned 'true' to confirm that
+      /// the service is actually closed.
+    /// @}
+
+  protected:
+    bool isOpen, shouldBeOpen;
+    TTicksMonotonic tLastOpen;    // last time the service was known to be open (only valid if 'isOpen == false' and 'shouldBeOpen == true')
+    TTicksMonotonic tNextAttempt; // time of next open attempt (only valid if 'isOpen == false' and 'shouldBeOpen == true')
+    TTicksMonotonic tDShort, tDLong, tShortToLong;
+};
+
+
+/// @}  // Service managing
+
+
+
+
+
+// *************************** Doxygen Hooks  **********************************
 //
 // Declare groups for the other modules in "common".
 

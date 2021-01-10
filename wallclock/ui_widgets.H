@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -290,6 +290,7 @@ class CButton: public CWidget {
 
 #define FLATBUTTON_COL_UP   BLACK
 #define FLATBUTTON_COL_DOWN ToColor (0x60, 0x00, 0x00)
+//~ #define FLATBUTTON_COL_DOWN LIGHT_BROWN // DARK_YELLOW
 
 
 /** @brief Flat Push-button widget.
@@ -764,6 +765,7 @@ void StopMessageBox (CMessageBox *msgBox);
 /// @{
 
 
+#define INPUTLINE_FONTSIZE 24
 #define INPUTLINE_UNDOS 32
 
 
@@ -776,7 +778,7 @@ class CInputLine: public CCanvas {
 
     /// @name Setup ...
     /// @{
-    void Setup (int fontSize = 24);
+    void Setup (int fontSize = INPUTLINE_FONTSIZE);
     void SetInput (const char *_inputStr = NULL, int _mark0 = 0, int _markD = 0);
       ///< @brief Set the input contents; implicitly calls 'ClearHistory' afterwards.
     void ClearHistory ();   ///< @brief Clear the undo & redo history.
@@ -878,14 +880,15 @@ class CInputLine: public CCanvas {
 class CInputScreen: public CScreen {
   public:
     CInputScreen () {}
-    ~CInputScreen () {}
+    ~CInputScreen ();
 
     /// @name Setup ...
     /// @{
-    void Setup (const char *inputPreset, TColor color = GREY, int userBtns = 0, CButton **userBtnList = NULL, const int *userBtnWidth = NULL);
+    void Setup (const char *label, const char *inputPreset, TColor color = GREY, int userBtns = 0, CButton **userBtnList = NULL, const int *userBtnWidth = NULL);
       ///< Set up the screen.
+      /// @param label is an optional label printed before the input line (may be NULL for no label).
       /// @param inputPreset is the preset for the input string.
-      /// @param color is the user button color.
+      /// @param color is the button color, individual colors may be set afterwards.
       /// @param userBtns is the number of user buttons.
       /// @param userBtnList is a list of pointers to the user button (may be NULL if userBtns == 0).
       /// @param userBtnWidth is a list of width arguments for the user button (see @ref LayoutRow(); may be NULL if userBtns == 0).
@@ -905,6 +908,7 @@ class CInputScreen: public CScreen {
     /// @}
 
   protected:
+    CWidget wdgLabel;
     CInputLine wdgInput;
     CButton btnBack, btnUndo, btnRedo, btnCut, btnCopy, btnPaste, btnOk;
 

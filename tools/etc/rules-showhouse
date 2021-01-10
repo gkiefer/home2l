@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,24 +62,23 @@ rcWeatherWarning = RcGet ("/alias/weatherWarning")
 
 rcMotion = RcGet ("/alias/motion")
 rcLight  = RcGet ("/alias/frontLight")
-rcLight.SetDefault (False)
 
+# Set default request (0 = light off) ...
+rcLight.SetDefault (0)
 
-@onUpdate (rcMotion)
-def LightOnIfMotion ():
-  # If the motion sensor shows activity, turn on the light for 5 seconds.
-  if rcMotion.Value () == True:
-    rcLight.SetRequest ("1 #motion -5000")
+# Switch on the light based on the motion sensor ...
+Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = "#motion *3", delDelay = "5s")
+  # This connector connects the 'rcMotion' sensor to the 'rcLight' resource by
+  # maintaining requests with attributes "#motion *3" (ID = "motion", priority 3).
+  # The lambda function transforms the value of the motion sensor to a requested
+  # value for the light. In this case, a motion value of 'True' causes the light
+  # to be switched on (value '1'), in all other cases, no request is set (value 'None').
+  # If a request is deleted, this happens with a delay of 5 seconds ("delDelay = '5s'").
 
-
-@onUpdate (rcDaylight)
-def LightOffDuringDay ():
-  # (Only) At day time, switch off the light. This gets a higher priority
-  # than #motion requests to have the light off.
-  if rcDaylight.Value () == True:
-    rcLight.SetRequest ("0 #daytime *4")
-  else:
-    rcLight.DelRequest ("#daytime")
+# Keep the light off at day time ...
+Connect (rcLight, rcDaylight, lambda x: 0 if x == True else None, attrs = "#daytime *4")
+  # (Only) At day time, this rule switches off the light. This gets a higher priority
+  # than '#motion' requests.
 
 
 
@@ -110,16 +109,16 @@ rcRoofShades = RcGet ("/alias/floorplan/living-roofwin/shades")
 # The set of shades actually controlled by this rule is defined by the below "for" loop.
 
 @onUpdate (rcDaylight)
-def ShadesAtNight ():
+def ShadesAtNight (daylight):
   # Determine whether shades should be up (0) or down (100) ...
-  if rcDaylight.ValidValue (True):
+  if daylight != False:
     value = 0     # day time or daylight status unknown: leave shades open
   else:
     value = 100   # night time: close the shades
   # Set requests for all relevant windows ...
   #   The resources URIs can be looked up in the floorplan / resources.conf.
   for room in ( "dining", "kitchen", "bedroom", "bath" ):
-    RcGet ("/alias/floorplan/" + room + "-shades/shades").SetRequest (value);
+    RcSetRequest ("/alias/floorplan/" + room + "-shades/shades", value);
 
 
 
@@ -129,13 +128,23 @@ def ShadesAtNight ():
 # to let fresh, cool air get in. At day time, the window is closed as well as
 # the shades to keep warm air and sun rays outside.
 
-@onUpdate (rcTempDayMaxOutside, rcDaylight)
-def RoofWindowCooling ():
-  if rcTempDayMaxOutside.ValidValue (0.0) < 25.0:   # outside temperature < 25 degrees?
-    valWindow = 0       # default (not a hot day): do not open the window, ...
+
+# Gate resource to encapsulate the decision on whether the day is a hot day.
+@gate ("hotDay", rctBool, rcTempDayMaxOutside)
+def GateHotDay (temp):
+  if temp >= 25.0: return True
+  return False
+
+rcHotDay = GetGateRc (GateHotDay)
+
+
+@onUpdate (rcHotDay, rcDaylight)
+def RoofWindowCooling (hot, daylight):
+  if hot != True:       # Default (not a hot day) ...
+    valWindow = 0       # ... do not open the window, ...
     valShades = 0       # ... and do not close the shades
   else:
-    if rcDaylight.ValidValue (False):
+    if daylight == True:
       valWindow = 0     # day time: close window ...
       valShades = 100   # ... and close shades as a heat protection
     else:
@@ -181,36 +190,31 @@ def RoofWindowCooling ():
 # for demonstration purposes.
 
 
-# Helper to refresh the watchdog request ...
-def RefreshWatchdogRequest ():
-  rcRoofWindow.SetRequest ("0 #safety_wd *8 +5s")
-
-
 # Timed rule to refresh the watchdog request, but only if the weather warning
-# resource is a known Boolean value ...
-@at ( 0, TicksOf ("1s") )
-def RoofWindowSafetyOnTime ():
-  if rcWeatherWarning.Value () != None: RefreshWatchdogRequest ()
+# resource is available ...
+@at (dt = "1s")
+def RefreshWatchdogRequest ():
+  if rcWeatherWarning.Value () != None:
+    rcRoofWindow.SetRequest ("0 #safety_wd *8 +5s")
 
 
 # Rule to explicitely close the window on a weather warning ...
-@onUpdate ( rcWeatherWarning )
-def RoofWindowSafetyUpdate ():
+@onUpdate (rcWeatherWarning)
+def RoofWindowSafetyUpdate (warn):
   # If the resource value is unknown (warn == None), nothing happens here. In this
   # case, we rely on the watchdog request which will become active after some time.
-  warn = rcWeatherWarning.Value ()
   if warn == True:
     # Bad weather (known): Close window immediately ...
     rcRoofWindow.SetRequest ("0 #safety *8")
   elif warn == False:
     # Nice weather (known): Remove an existing safety request ...
-    rcRoofWindow.DelRequest ("#safety", TicksAbsOf ("3s"))
+    rcRoofWindow.DelRequest ("#safety", "3s")
       # To avoid mechanical stress due to frequent opening/closing, the request
       # deletion is tagged with a delay (3 seconds in this example, typically in
       # the order of minutes or an hour in a real installation).
       # If no "#safety" request exists so far, the previous line has no effect.
-    # Refresh the watchdog (the resource may have just become valid again) ...
     RefreshWatchdogRequest ()
+      # refresh the watchdog (the resource may have just become valid again)
 
 
 
@@ -252,9 +256,9 @@ def WallClockDisplay ():
 # This rule sets the default use state according to the day/night time.
 
 
-@onUpdate (rcDaylight)
-def SetDefaultUseState ():
-  rcUse.SetRequest ((rcvUseNight, rcvUseDay) [rcDaylight.ValidValue (False)], priority = 1)
+@connect (rcUse, rcDaylight, priority = 1)
+def SetDefaultUseState (daylight):
+  return rcvUseDay if daylight else rcvUseNight
 
 
 

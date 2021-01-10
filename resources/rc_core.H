@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -118,6 +118,11 @@ const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir = 
   // Resolve alias or '/local' path (up to at most 'maxDepth' levels of indirection) and return real path.
   // If the real path is equal to 'uri' (i.e. no resolution was necessary), '*ret' may contain a pointer to 'uri'
   // been set by 'CString::SetC ()'. Hence, 'uri' must live as long as '*ret'.
+
+bool RcUriMatches (const char *uri, const char *pattern);
+  // Check if the URI matches a pattern. The pattern may be a comma- or whitespace-seperated list of patterns.
+  // 'uri' is not normalized to its real path before, and no alias checking is performed. Hence, both 'uri'
+  // and the pattern(s) must be real paths ("/host" domain).
 
 ERcPathDomain RcAnalysePath (const char *uri, const char **retLocalPath, CRcHost **retHost, CRcDriver **retDriver, CResource **retResource, bool allowWait = false);
   // Analyse an URI, which must be a full path starting with '/' and normalized (i.e. must not contain any "//", "/./" or "..").

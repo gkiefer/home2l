@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -165,7 +165,7 @@ static void UpdateAcSurface () {
   TDate dt;
   TColor col;
 
-  //~ INFOF (("### UpdateAcSurface (): state = %i, tAlarm = %s", acState, TicksToString (tAlarm)));
+  //~ INFOF (("### UpdateAcSurface (): state = %i, tAlarm = %s", acState, TicksAbsToString (tAlarm)));
   switch (acState) {
     case acsDisabled:
       SurfaceFree (&acSurf);
@@ -310,9 +310,9 @@ static void UpdateExtAlarm () {
   }
 
   // Issue script if adequate...
-  //~ INFOF (("###   tAlarm = %s", TicksToString (&s, tAlarm)));
-  //~ INFOF (("###   tExtAlarm = %s", TicksToString (&s, tExtAlarm)));
-  //~ INFOF (("###   _tExtAlarm = %s", TicksToString (&s, _tExtAlarm)));
+  //~ INFOF (("###   tAlarm = %s", TicksAbsToString (&s, tAlarm)));
+  //~ INFOF (("###   tExtAlarm = %s", TicksAbsToString (&s, tExtAlarm)));
+  //~ INFOF (("###   _tExtAlarm = %s", TicksAbsToString (&s, _tExtAlarm)));
   if (_tExtAlarm != tExtAlarm) {
     if (envExtAlarmHost) shell.SetHost (envExtAlarmHost);
     if (_tExtAlarm != NEVER) {
@@ -409,7 +409,7 @@ static void Iterate (CTimer *timer = NULL, void *data = NULL) {
   TTicks t;
   bool updateTimer;
 
-  //~ INFOF (("### Iterate (): state = %i, tAlarm = %s", acState, TicksToString (tAlarm)));
+  //~ INFOF (("### Iterate (): state = %i, tAlarm = %s", acState, TicksAbsToString (tAlarm)));
   updateTimer = false;
   switch (acState) {
     case acsDisabled:
@@ -528,6 +528,7 @@ static void AlarmClockStop (TAlarmClockState toState) {
 #define UI_SLIDER_WIDTH UI_ROW_HEIGHT
 #define UI_DEC_INC_WIDTH (UI_BUTTONS_HEIGHT * 2)
 
+#define COL_AC_BUTTONS  GREY // ORANGE
 #define COL_AC_MAIN     ORANGE
 #define COL_AC_WORKDAY  DARK_DARK_GREY
 #define COL_AC_WEEKEND  BLACK
@@ -739,28 +740,28 @@ CScreenSetAlarmClock::CScreenSetAlarmClock () {
 
   //    hour slider...
   layoutRow = LayoutRow (layoutMain[4], 2 * UI_SPACE, UI_DEC_INC_WIDTH, -1, UI_DEC_INC_WIDTH, 0);
-  btnHourDec.Set (layoutRow[0], COL_AC_MAIN, "- 1:00", WHITE, fntNorm);
+  btnHourDec.Set (layoutRow[0], COL_AC_BUTTONS, "- 1:00", WHITE, fntNorm);
   btnHourDec.SetCbPushed (CbOnButtonPushed, this);
   btnHourDec.SetHotkey (SDLK_DOWN);
   sldHour.SetFormat (COL_AC_MAIN, DARK_GREY, DARK_GREY, TRANSPARENT, UI_SLIDER_WIDTH);
   sldHour.SetArea (layoutRow[1]);
   sldHour.SetInterval (0, 23);
   sldHour.SetCbValueChanged (CbOnSliderValueChanged, this);
-  btnHourInc.Set (layoutRow[2], COL_AC_MAIN, "+ 1:00", WHITE, fntNorm);
+  btnHourInc.Set (layoutRow[2], COL_AC_BUTTONS, "+ 1:00", WHITE, fntNorm);
   btnHourInc.SetCbPushed (CbOnButtonPushed, this);
   btnHourInc.SetHotkey (SDLK_UP);
   free (layoutRow);
 
   //   minute slider...
   layoutRow = LayoutRow (layoutMain[5], 2 * UI_SPACE, UI_DEC_INC_WIDTH, -1, UI_DEC_INC_WIDTH, 0);
-  btnMinDec.Set (layoutRow[0], COL_AC_MAIN, "- 0:10", WHITE, fntNorm);
+  btnMinDec.Set (layoutRow[0], COL_AC_BUTTONS, "- 0:10", WHITE, fntNorm);
   btnMinDec.SetCbPushed (CbOnButtonPushed, this);
   btnMinDec.SetHotkey (SDLK_LEFT);
   sldMin.SetFormat (COL_AC_MAIN, DARK_GREY, DARK_GREY, TRANSPARENT, UI_SLIDER_WIDTH);
   sldMin.SetArea (layoutRow[1]);
   sldMin.SetInterval (0, 59);
   sldMin.SetCbValueChanged (CbOnSliderValueChanged, this);
-  btnMinInc.Set (layoutRow[2], COL_AC_MAIN, "+ 0:10", WHITE, fntNorm);
+  btnMinInc.Set (layoutRow[2], COL_AC_BUTTONS, "+ 0:10", WHITE, fntNorm);
   btnMinInc.SetCbPushed (CbOnButtonPushed, this);
   btnMinInc.SetHotkey (SDLK_RIGHT);
   free (layoutRow);

@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -70,7 +70,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p><em>Brownie</em> communication (TWI) link </p>
 
-<p class="definition">Definition at line <a class="el" href="brownies_8H_source.html#l00414">414</a> of file <a class="el" href="brownies_8H_source.html">brownies.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="brownies_8H_source.html#l00421">421</a> of file <a class="el" href="brownies_8H_source.html">brownies.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="brownies_8H_source.html">brownies.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -139,16 +139,32 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:a8bee2cfe242345b4279fde0d6836659b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check the device for reachability and (optionally) return its feature and configuration records.  <a href="#a8bee2cfe242345b4279fde0d6836659b">More...</a><br /></td></tr>
 <tr class="separator:a8bee2cfe242345b4279fde0d6836659b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4acd5f7b912dbf31d458164cabc1fc81"><td class="memItemLeft" align="right" valign="top"><a id="a4acd5f7b912dbf31d458164cabc1fc81"></a>
-<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a4acd5f7b912dbf31d458164cabc1fc81">RegRead</a> (int adr, uint8_t reg, uint8_t *retVal, bool noResend=false)</td></tr>
-<tr class="memdesc:a4acd5f7b912dbf31d458164cabc1fc81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a register. <br /></td></tr>
+<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><b>RegRead</b> (int adr, uint8_t reg, uint8_t *retVal, bool noResend=false)</td></tr>
 <tr class="separator:a4acd5f7b912dbf31d458164cabc1fc81"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7480f4986d48ab744d4dd75f21c26f02"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a7480f4986d48ab744d4dd75f21c26f02">RegReadNext</a> (int adr, uint8_t reg, <a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *status)</td></tr>
-<tr class="memdesc:a7480f4986d48ab744d4dd75f21c26f02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a register (alternative arguments).  <a href="#a7480f4986d48ab744d4dd75f21c26f02">More...</a><br /></td></tr>
-<tr class="separator:a7480f4986d48ab744d4dd75f21c26f02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71c5621d69aea8f2f0639364c71cb1ae"><td class="memItemLeft" align="right" valign="top"><a id="a71c5621d69aea8f2f0639364c71cb1ae"></a>
-<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a71c5621d69aea8f2f0639364c71cb1ae">RegWrite</a> (int adr, uint8_t reg, uint8_t val)</td></tr>
-<tr class="memdesc:a71c5621d69aea8f2f0639364c71cb1ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a register. <br /></td></tr>
-<tr class="separator:a71c5621d69aea8f2f0639364c71cb1ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bbd543d7988ff5e4f2fc0eb5a11476e"><td class="memItemLeft" align="right" valign="top"><a id="a0bbd543d7988ff5e4f2fc0eb5a11476e"></a>
+<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a0bbd543d7988ff5e4f2fc0eb5a11476e">RegRead</a> (<a class="el" href="classCBrownie.html">CBrownie</a> *brownie, uint8_t reg, uint8_t *retVal, bool noResend=false)</td></tr>
+<tr class="memdesc:a0bbd543d7988ff5e4f2fc0eb5a11476e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a register. <br /></td></tr>
+<tr class="separator:a0bbd543d7988ff5e4f2fc0eb5a11476e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3401282b142ad5159e1143724c51be6"><td class="memItemLeft" align="right" valign="top"><a id="ac3401282b142ad5159e1143724c51be6"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>RegReadNext</b> (<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *status, int adr, uint8_t reg, bool noResend=false)</td></tr>
+<tr class="separator:ac3401282b142ad5159e1143724c51be6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a427690fc9d045a4041f4e7180d276eb1"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a427690fc9d045a4041f4e7180d276eb1">RegReadNext</a> (<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *status, <a class="el" href="classCBrownie.html">CBrownie</a> *brownie, uint8_t reg, bool noResend=false)</td></tr>
+<tr class="memdesc:a427690fc9d045a4041f4e7180d276eb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a register (alternative arguments).  <a href="#a427690fc9d045a4041f4e7180d276eb1">More...</a><br /></td></tr>
+<tr class="separator:a427690fc9d045a4041f4e7180d276eb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad02b91e64d0e3d9c655f2d77007ed863"><td class="memItemLeft" align="right" valign="top"><a id="ad02b91e64d0e3d9c655f2d77007ed863"></a>
+<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><b>RegWrite</b> (int adr, uint8_t reg, uint8_t val, bool noResend=false)</td></tr>
+<tr class="separator:ad02b91e64d0e3d9c655f2d77007ed863"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0715c11a7d869b4ed5f0dd9bb051111e"><td class="memItemLeft" align="right" valign="top"><a id="a0715c11a7d869b4ed5f0dd9bb051111e"></a>
+<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a0715c11a7d869b4ed5f0dd9bb051111e">RegWrite</a> (<a class="el" href="classCBrownie.html">CBrownie</a> *brownie, uint8_t reg, uint8_t val, bool noResend=false)</td></tr>
+<tr class="memdesc:a0715c11a7d869b4ed5f0dd9bb051111e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a register. <br /></td></tr>
+<tr class="separator:a0715c11a7d869b4ed5f0dd9bb051111e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac60f4c3b9dda1cd876cf55311268fd45"><td class="memItemLeft" align="right" valign="top"><a id="ac60f4c3b9dda1cd876cf55311268fd45"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>RegWriteNext</b> (<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *status, int adr, uint8_t reg, uint8_t val, bool noResend=false)</td></tr>
+<tr class="separator:ac60f4c3b9dda1cd876cf55311268fd45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8907a2951c325f6e8b5eec93de60b02"><td class="memItemLeft" align="right" valign="top"><a id="ac8907a2951c325f6e8b5eec93de60b02"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#ac8907a2951c325f6e8b5eec93de60b02">RegWriteNext</a> (<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *status, <a class="el" href="classCBrownie.html">CBrownie</a> *brownie, uint8_t reg, uint8_t val, bool noResend=false)</td></tr>
+<tr class="memdesc:ac8907a2951c325f6e8b5eec93de60b02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a register (alternative arguments, see comment on RegReadNext()). <br /></td></tr>
+<tr class="separator:ac8907a2951c325f6e8b5eec93de60b02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a559318b85713da074b579652bae1e821"><td class="memItemLeft" align="right" valign="top"><a id="a559318b85713da074b579652bae1e821"></a>
 <a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a559318b85713da074b579652bae1e821">MemRead</a> (int adr, unsigned memAdr, int bytes, uint8_t *retData, bool printProgress=false)</td></tr>
 <tr class="memdesc:a559318b85713da074b579652bae1e821"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read from memory. <br /></td></tr>
@@ -158,16 +174,16 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:ae1f972a0acae2d7e12cf9cfea11d1074"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to memory. <br /></td></tr>
 <tr class="separator:ae1f972a0acae2d7e12cf9cfea11d1074"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Maintenance socket server ...</div></td></tr>
-<tr class="memitem:aa5a61002531652ce1f22f224b193c541"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#aa5a61002531652ce1f22f224b193c541">SocketServerStart</a> ()</td></tr>
-<tr class="memdesc:aa5a61002531652ce1f22f224b193c541"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the socket server, if configured by 'br.serveSocket'.  <a href="#aa5a61002531652ce1f22f224b193c541">More...</a><br /></td></tr>
-<tr class="separator:aa5a61002531652ce1f22f224b193c541"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ba9e90000340ba512491c001f9862a8"><td class="memItemLeft" align="right" valign="top"><a id="a0ba9e90000340ba512491c001f9862a8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a0ba9e90000340ba512491c001f9862a8">SocketServerStop</a> ()</td></tr>
-<tr class="memdesc:a0ba9e90000340ba512491c001f9862a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the socket server (if it was running). <br /></td></tr>
-<tr class="separator:a0ba9e90000340ba512491c001f9862a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07d45a079c5eb9506b2c70bd750565cb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a07d45a079c5eb9506b2c70bd750565cb">SocketServerIterate</a> (<a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a> maxSleepTime=-1)</td></tr>
-<tr class="memdesc:a07d45a079c5eb9506b2c70bd750565cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform all socket server services (if enabled).  <a href="#a07d45a079c5eb9506b2c70bd750565cb">More...</a><br /></td></tr>
-<tr class="separator:a07d45a079c5eb9506b2c70bd750565cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af02253e28b8dd68d98e683fb73aca737"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#af02253e28b8dd68d98e683fb73aca737">ServerStart</a> ()</td></tr>
+<tr class="memdesc:af02253e28b8dd68d98e683fb73aca737"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the socket server, if configured by 'br.serveSocket'.  <a href="#af02253e28b8dd68d98e683fb73aca737">More...</a><br /></td></tr>
+<tr class="separator:af02253e28b8dd68d98e683fb73aca737"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d24581a567a6ac21094e47a4e9369d6"><td class="memItemLeft" align="right" valign="top"><a id="a6d24581a567a6ac21094e47a4e9369d6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#a6d24581a567a6ac21094e47a4e9369d6">ServerStop</a> ()</td></tr>
+<tr class="memdesc:a6d24581a567a6ac21094e47a4e9369d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the socket server (if it was running). <br /></td></tr>
+<tr class="separator:a6d24581a567a6ac21094e47a4e9369d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaedb84bc99841048a252c22bc988a417"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCBrownieLink.html#aaedb84bc99841048a252c22bc988a417">ServerIterate</a> (<a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a> maxSleepTime=-1)</td></tr>
+<tr class="memdesc:aaedb84bc99841048a252c22bc988a417"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform all socket server services (if enabled).  <a href="#aaedb84bc99841048a252c22bc988a417">More...</a><br /></td></tr>
+<tr class="separator:aaedb84bc99841048a252c22bc988a417"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Statistics ...</h2></td></tr>
@@ -350,24 +366,33 @@ Statistics ...</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">adr</td><td>is the device's TWI address. </td></tr>
-    <tr><td class="paramname">brownie</td><td>is the object into which the ID, the feature, and the configuration record are read. If set to 'NULL', no such records are returned, and the communication is much simpler and faster. </td></tr>
+    <tr><td class="paramname">brownie</td><td>is the object into which the ID, the feature, and the configuration record are read. If set to 'NULL', the feature record and firmware version are not checked, no records are returned, and the communication is much simpler and faster. </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="a7480f4986d48ab744d4dd75f21c26f02"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7480f4986d48ab744d4dd75f21c26f02">&#9670;&nbsp;</a></span>RegReadNext()</h2>
+<a id="a427690fc9d045a4041f4e7180d276eb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a427690fc9d045a4041f4e7180d276eb1">&#9670;&nbsp;</a></span>RegReadNext()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">uint8_t CBrownieLink::RegReadNext </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>adr</em>, </td>
+          <td class="paramtype"><a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *&#160;</td>
+          <td class="paramname"><em>status</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classCBrownie.html">CBrownie</a> *&#160;</td>
+          <td class="paramname"><em>brownie</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -378,8 +403,8 @@ Statistics ...</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> *&#160;</td>
-          <td class="paramname"><em>status</em>&#160;</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>noResend</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -387,10 +412,17 @@ Statistics ...</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Read a register (alternative arguments). </p>
-<p>This method is optimized for fetching multiple registers. The register contents are returned by the return value, and the status field is updated on the fly. If '*status' is not 'brOk' on method entry, nothing is done. This allows to read multiple registers without checking the status after each single one. </p>
+<p>These methods are optimized for fetching multiple registers. The register contents are returned by the return value, and the status field is updated on the fly. If '*status' is not 'brOk' on method entry, nothing is done. This allows to read multiple registers without checking the status after each single one. </p>
+
+<p class="definition">Definition at line <a class="el" href="brownies_8H_source.html#l00515">515</a> of file <a class="el" href="brownies_8H_source.html">brownies.H</a>.</p>
 
 </div>
 </div>
@@ -457,14 +489,14 @@ Statistics ...</h2></td></tr>
 
 </div>
 </div>
-<a id="aa5a61002531652ce1f22f224b193c541"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa5a61002531652ce1f22f224b193c541">&#9670;&nbsp;</a></span>SocketServerStart()</h2>
+<a id="af02253e28b8dd68d98e683fb73aca737"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af02253e28b8dd68d98e683fb73aca737">&#9670;&nbsp;</a></span>ServerStart()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool CBrownieLink::SocketServerStart </td>
+          <td class="memname">bool CBrownieLink::ServerStart </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -477,14 +509,14 @@ Statistics ...</h2></td></tr>
 
 </div>
 </div>
-<a id="a07d45a079c5eb9506b2c70bd750565cb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07d45a079c5eb9506b2c70bd750565cb">&#9670;&nbsp;</a></span>SocketServerIterate()</h2>
+<a id="aaedb84bc99841048a252c22bc988a417"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaedb84bc99841048a252c22bc988a417">&#9670;&nbsp;</a></span>ServerIterate()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool CBrownieLink::SocketServerIterate </td>
+          <td class="memname">bool CBrownieLink::ServerIterate </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a>&#160;</td>
           <td class="paramname"><em>maxSleepTime</em> = <code>-1</code></td><td>)</td>

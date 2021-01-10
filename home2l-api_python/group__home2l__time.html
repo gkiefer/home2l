@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-9-g0486* (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -69,7 +69,7 @@ $(function() {
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <p>Date and time helpers. </p>
-<h1>home2l_drivers</h1>
+<h1>home2l_rules</h1>
 <div class="dynheader">
 Collaboration diagram for Time:</div>
 <div class="dyncontent">
@@ -94,12 +94,14 @@ Functions</h2></td></tr>
 <tr class="separator:ga0ec06f73bf300db4c1bab0e1651454ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1aa2b55f8c057abd04c904af390b6763"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga1aa2b55f8c057abd04c904af390b6763">TicksOfMillis</a> (ms)</td></tr>
 <tr class="separator:ga1aa2b55f8c057abd04c904af390b6763"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2572c06e78e15a59692a0224e29a7137"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga2572c06e78e15a59692a0224e29a7137">TicksStr</a> (ticks)</td></tr>
-<tr class="separator:ga2572c06e78e15a59692a0224e29a7137"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7482f4f7de153f03149628ec183cbb75"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga7482f4f7de153f03149628ec183cbb75">TicksOf</a> (something)</td></tr>
-<tr class="separator:ga7482f4f7de153f03149628ec183cbb75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga11cbb85e851a01d8cbffc3ba718448c7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga11cbb85e851a01d8cbffc3ba718448c7">TicksAbsStr</a> (ticks)</td></tr>
+<tr class="separator:ga11cbb85e851a01d8cbffc3ba718448c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaab9be96ae2c3986b7898f83702aa53f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#gaaab9be96ae2c3986b7898f83702aa53f">TicksRelStr</a> (ticks)</td></tr>
+<tr class="separator:gaaab9be96ae2c3986b7898f83702aa53f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga54b2517593fa32ec4e52be8c60b6b061"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga54b2517593fa32ec4e52be8c60b6b061">TicksAbsOf</a> (something)</td></tr>
 <tr class="separator:ga54b2517593fa32ec4e52be8c60b6b061"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gada32331993896bd7485b5b923350e327"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#gada32331993896bd7485b5b923350e327">TicksRelOf</a> (something)</td></tr>
+<tr class="separator:gada32331993896bd7485b5b923350e327"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga66b549393393f7a610c578089aec04c4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga66b549393393f7a610c578089aec04c4">TicksToPyDateTime</a> (t)</td></tr>
 <tr class="separator:ga66b549393393f7a610c578089aec04c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7c237867a77e26343ed659f8f98ad4db"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__time.html#ga7c237867a77e26343ed659f8f98ad4db">TicksToPyTimeDelta</a> (t)</td></tr>
@@ -183,7 +185,7 @@ Get the time 0:00 of the current day in units of 'TTicks' (milliseconds).
 </div><div class="memdoc">
 <pre class="fragment">TicksOfDate(int dy, int dm, int dd) -&gt; TTicks
 
-Convert a date into 'TTicks' units.
+Convert a date into 'TTicks' units (absolute).
 </pre> 
 </div>
 </div>
@@ -266,14 +268,14 @@ TicksOfSeconds(float secs) -&gt; TTicks
 <pre class="fragment">TicksOfMillis(int ms) -&gt; TTicks</pre> 
 </div>
 </div>
-<a id="ga2572c06e78e15a59692a0224e29a7137"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga2572c06e78e15a59692a0224e29a7137">&#9670;&nbsp;</a></span>TicksStr()</h2>
+<a id="ga11cbb85e851a01d8cbffc3ba718448c7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga11cbb85e851a01d8cbffc3ba718448c7">&#9670;&nbsp;</a></span>TicksAbsStr()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">def home2l.TicksStr </td>
+          <td class="memname">def home2l.TicksAbsStr </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>ticks</em></td><td>)</td>
@@ -281,42 +283,25 @@ TicksOfSeconds(float secs) -&gt; TTicks
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Return a TTicks value as a string in Home2L format.</pre> 
+<pre class="fragment">Return an absolute TTicks value as a string in Home2L format.</pre> 
 </div>
 </div>
-<a id="ga7482f4f7de153f03149628ec183cbb75"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga7482f4f7de153f03149628ec183cbb75">&#9670;&nbsp;</a></span>TicksOf()</h2>
+<a id="gaaab9be96ae2c3986b7898f83702aa53f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaaab9be96ae2c3986b7898f83702aa53f">&#9670;&nbsp;</a></span>TicksRelStr()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">def home2l.TicksOf </td>
+          <td class="memname">def home2l.TicksRelStr </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>something</em></td><td>)</td>
+          <td class="paramname"><em>ticks</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Magic wand to convert anything to an absolute or relative TTicks value as intuitively
-as possible. Whether the returned value is absolute or relative depends on the argument
-passed.
-
-- Values of type string are interpreted as time specifications for TicksFromString()
-  or as accepted by the Home2L Shell. The returned value is always an absolute time.
-
-- Values of numeral types are returned as they are.
-
-- Values of type 'datetime.date' or 'datetime.datetime' are interpreted as absolute
-  times and converted.
-
-- For values of type 'datetime.time', the relative time from the beginning of a day
-  is returned.
-
-- For values of type 'datetime.timedelta', the relative delta time in milliseconds
-  is returned.
-</pre> 
+<pre class="fragment">Return a relative TTicks value as a string in Home2L format.</pre> 
 </div>
 </div>
 <a id="ga54b2517593fa32ec4e52be8c60b6b061"></a>
@@ -335,7 +320,7 @@ passed.
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Magic wand to convert anything to an absolute TTicks value as intuitively as possible.
-The function is similar to TicksOf(), but it guarantees to return an absolute time.
+The function is similar to TicksRelOf(), but it guarantees to return an absolute time.
 
 - Values of type string are interpreted as time specifications for TicksFromString()
   or as accepted by the Home2L Shell. The returned value is always an absolute time.
@@ -347,11 +332,44 @@ The function is similar to TicksOf(), but it guarantees to return an absolute ti
   times and returned.
 
 - Values of type 'datetime.time', are interpreted relative to today.
-  Note: Be careful when calling tthis variant close to midnight. Functions triggered by
+  Note: Be careful when calling this variant close to midnight. Functions triggered by
   the '/local/timer/daily' resource or the '@daily()' decorator are guaranteed to be called
   (shortly) after midnight and can thus safely use this variant.
 
 - For values of type 'datetime.timedelta', the time relative to now is returned.
+</pre> 
+</div>
+</div>
+<a id="gada32331993896bd7485b5b923350e327"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gada32331993896bd7485b5b923350e327">&#9670;&nbsp;</a></span>TicksRelOf()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def home2l.TicksRelOf </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>something</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Magic wand to convert anything to a relative 'TTicks' value as intuitively as possible.
+The function is similar to TicksAbsOf(), but it guarantees to return a relative time.
+
+- Values of type string are interpreted as time specifications for TicksFromString()
+  or as accepted by the Home2L Shell.
+
+- Values of numeral types are returned as they are.
+
+- For values of type 'datetime.time', the relative time from the beginning of a day
+  is returned.
+
+- For values of type 'datetime.timedelta', the relative delta time in milliseconds
+  is returned.
+
+Note: Values of type 'datetime.date' or 'datetime.datetime' are not supported.
 </pre> 
 </div>
 </div>
@@ -370,7 +388,7 @@ The function is similar to TicksOf(), but it guarantees to return an absolute ti
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Return a Python 'datetime.datetime' object for the ticks value.</pre> 
+<pre class="fragment">Return a Python 'datetime.datetime' object for an absolute ticks value.</pre> 
 </div>
 </div>
 <a id="ga7c237867a77e26343ed659f8f98ad4db"></a>
@@ -388,7 +406,7 @@ The function is similar to TicksOf(), but it guarantees to return an absolute ti
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Return a Python 'datetime.timedelta' object for the ticks value.</pre> 
+<pre class="fragment">Return a Python 'datetime.timedelta' object for a relative ticks value.</pre> 
 </div>
 </div>
 <a id="ga680876416e15821dd6b4ff0b04f1e3ed"></a>
@@ -406,7 +424,7 @@ The function is similar to TicksOf(), but it guarantees to return an absolute ti
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Correct a ticks value created from a UTC time string.</pre> 
+<pre class="fragment">Correct an absolute ticks value created from a UTC time string.</pre> 
 </div>
 </div>
 <a id="gada86fa0b100aadb397ea66dc69d188a2"></a>
@@ -424,7 +442,7 @@ The function is similar to TicksOf(), but it guarantees to return an absolute ti
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Convert a ticks value to a value that will return UTC time when converted to a string.</pre> 
+<pre class="fragment">Convert an absolute ticks value to a value that will return UTC time when converted to a string.</pre> 
 </div>
 </div>
 </div><!-- contents -->

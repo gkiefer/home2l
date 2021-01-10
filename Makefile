@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -288,7 +288,6 @@ build:
 
 
 install:
-	echo ##### BUILD_VERSION=$(BUILD_VERSION) BUILD=$(BUILD)
 	@mkdir -p $(HOME2L_INSTALL); \
 	for P in $(MODS) $(PREP_DRVS); do \
 	  echo -e "\n\n\n############################################################"; \

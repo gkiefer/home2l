@@ -11,5 +11,5 @@ var searchData=
   ['writedatabase',['WriteDatabase',['../classCBrownieSet.html#a461c8e6cea2e2b3a96d84948c4e5f8ee',1,'CBrownieSet']]],
   ['writefd',['WriteFd',['../classCShellBare.html#ad11b3f9e4ed89694ef403d058869dd42',1,'CShellBare::WriteFd()'],['../classCShellSession.html#aa6ae32398eea3cf3a8e37a1f0b02bc03',1,'CShellSession::WriteFd()']]],
   ['writeline',['WriteLine',['../classCShell.html#a73a27d23fa52cf22c8f31eb00c8692de',1,'CShell::WriteLine(const char *line)=0'],['../classCShell.html#ae4b638051073b61d4092338565360075',1,'CShell::WriteLine(CString *str)'],['../classCShellBare.html#adf0df92bcb82d7eb76751cd615e1e7ca',1,'CShellBare::WriteLine()'],['../classCShellSession.html#a670206bfcd524ecc28170ec8cac4c1c1',1,'CShellSession::WriteLine()']]],
-  ['writevalue',['WriteValue',['../classCResource.html#a9cf07590120f0331392dd115e78065db',1,'CResource']]]
+  ['writevalue',['WriteValue',['../classCResource.html#a16e1cf42772576f471e014a6009dde8d',1,'CResource']]]
 ];

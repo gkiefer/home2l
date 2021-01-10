@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@
  *
  * 3. Add the source file *foobar.c* to the list of source files'SRC' in 'brownies/avr/Makefile'.
  *
- * 4. In file @ref config.h, add a new section for the compile-time parameters of your module.
+ * 4. In file @ref configure.h, add a new section for the compile-time parameters of your module.
  *    At least one parameter, 'WITH_FOOBAR' must be defined. Other parameters must be prefixed
  *    with 'FOOBAR_'.
  *
@@ -99,7 +99,7 @@
  *    "Ports: Auto-Completion", "Ports: Checks", and "MCU: Reset Pin Configuration".
  *
  * 5. If the module *foobar* requires new MCU pins: Add them in section "MCU Port Assignments"
- *    in file @ref config.h.
+ *    in file @ref configure.h.
  *
  * 6. If the module *foobar* requires new registers: Go to section "Register Map" in
  *    file @ref interface.h (starting with @ref BR_REG_CHANGED), identify a resonable unused
@@ -112,6 +112,8 @@
 
 
 #include <avr/io.h>
+
+#include "interface.h"
 
 
 
@@ -214,7 +216,7 @@
 
 
 
-// *************************** MCU Types ***************************************
+// *************************** MCU Type ****************************************
 
 
 /// @}
@@ -222,26 +224,20 @@
 /// @{
 
 #if DOXYGEN
-#define MCU_TYPE    ///< MCU type compiled for; is set to any of the following values except @ref MCU_TYPE_NONE.
+#define MCU_TYPE    ///< MCU type compiled for; is set to any 'BR_MCU_*' value (see @ref BR_MCU_NONE and friends).
 #endif
-
-
-#define MCU_TYPE_NONE       0     ///< No/unknown MCU type
-#define MCU_TYPE_ATTINY85   1     ///< AVR ATtiny85 (8 pins) or any software- and pin-compatible model
-#define MCU_TYPE_ATTINY84   2     ///< AVR ATtiny84 (14 pins) or any software- and pin-compatible model
-#define MCU_TYPE_ATTINY861  3     ///< AVR ATtiny861 (20 pins) or any software- and pin-compatible model
 
 
 #if defined(__AVR_ATtiny85__)
-#define MCU_TYPE MCU_TYPE_ATTINY85
+#define MCU_TYPE BR_MCU_ATTINY85
 #endif
 
 #if defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny84A__)
-#define MCU_TYPE MCU_TYPE_ATTINY84
+#define MCU_TYPE BR_MCU_ATTINY84
 #endif
 
 #if defined(__AVR_ATtiny861__) || defined(__AVR_ATtiny861A__)
-#define MCU_TYPE MCU_TYPE_ATTINY861
+#define MCU_TYPE BR_MCU_ATTINY861
 #endif
 
 #ifndef MCU_TYPE

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +44,10 @@ void AppMusicPlayerOn ();
   /// and that player is set into the "play" state.
 void AppMusicPlayerOff ();
   ///< @brief Stop the music player.
+
+
+bool AppMusicSetServer (const char *id);
+  ///< @brief Select MPD server by its ID.
 
 
 bool AppMusicIsPlaying ();

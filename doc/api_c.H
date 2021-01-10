@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,14 +23,14 @@
 
 
 /** @mainpage
- * This is the documentation of the **C/C++ API** of the <em>Home2L</em> suite. It
- * is meant as a reference for developers of
+ * This is the documentation of the **C/C++ API** of the <em>Home2L</em> suite.
+ * It is meant as a reference for developers of
  * - resource drivers,
  * - new <em>WallClock</em> applets and
  * - new software tools using the *Home2L Resources* library.
  *
  * The main documentation of the *Home2L* project can be found in the
- * [*Home2L Book*](../home2l-book.pdf). Automatition rules are best written
+ * [*Home2L Book*](../home2l-book.pdf). Automation rules are best written
  * using the [*Python API*](../home2l-api_python/index.html).
  *
  * To get started, navigate to the [Modules](modules.html) page.

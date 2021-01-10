@@ -1,12 +1,15 @@
 var searchData=
 [
   ['textrender',['TextRender',['../group__ui__base.html#ga71d91e783e7ca0aec2c4397ba4a19ba4',1,'ui_base.H']]],
+  ['ticksabsfromstring',['TicksAbsFromString',['../group__common__datetime.html#ga258f94d9f9402acc38c5c1768bddbc8a',1,'base.H']]],
+  ['ticksabstostring',['TicksAbsToString',['../group__common__datetime.html#ga48cfa0ea2db98357120e96ea471c7aad',1,'TicksAbsToString(TTicks ticks, int fracDigits=INT_MAX, bool precise=false):&#160;base.H'],['../group__common__datetime.html#ga137fa320afde4a5a8d7a4bb9b061803a',1,'TicksAbsToString(CString *ret, TTicks ticks, int fracDigits=INT_MAX, bool precise=false):&#160;base.H']]],
   ['ticksfrommonotic',['TicksFromMonotic',['../group__common__datetime.html#ga008b9c39d1d712da72b549dcfe68bcc3',1,'base.H']]],
   ['ticksfromstring',['TicksFromString',['../group__common__datetime.html#ga20c795c71a6d242af414a359b78ad30c',1,'base.H']]],
   ['ticksmonotonicnow',['TicksMonotonicNow',['../group__common__datetime.html#ga0ad4b907b1d042bf2607b9eb6a0d4b3b',1,'base.H']]],
   ['ticksnow',['TicksNow',['../group__common__datetime.html#gaf4b0a5831609ae5d5f2b7e936f2a0e7f',1,'base.H']]],
+  ['ticksrelfromstring',['TicksRelFromString',['../group__common__datetime.html#ga75a492a07d4bc6d74e0584ffd0d29e56',1,'base.H']]],
+  ['ticksreltostring',['TicksRelToString',['../group__common__datetime.html#ga305fd2a6b9d5cbd275e01ef53e706a63',1,'TicksRelToString(TTicks ticks):&#160;base.H'],['../group__common__datetime.html#gac265f4555dc7729919b30ff2e69e835d',1,'TicksRelToString(CString *ret, TTicks ticks):&#160;base.H']]],
   ['tickstomonotonic',['TicksToMonotonic',['../group__common__datetime.html#ga0b508d97231d511be48bb2af8c1a90a9',1,'base.H']]],
-  ['tickstostring',['TicksToString',['../group__common__datetime.html#gac5c738c74e95d77d72fee04e96be5c3f',1,'TicksToString(TTicks ticks, int fracDigits=INT_MAX, bool precise=false):&#160;base.H'],['../group__common__datetime.html#ga0ba2a2fd4695c51d95f56c5b57caf150',1,'TicksToString(CString *ret, TTicks ticks, int fracDigits=INT_MAX, bool precise=false):&#160;base.H']]],
   ['timergetdelay',['TimerGetDelay',['../group__common__timers.html#gaf5dfe8e17766ad61574db9e0643be6ae',1,'base.H']]],
   ['timeriterate',['TimerIterate',['../group__common__timers.html#ga9e53a0bf1ac4ba4ac146e3b1ef2f95ff',1,'base.H']]],
   ['timernow',['TimerNow',['../group__brownies__firmware.html#ga4f5acc67ca7e44b717bb69c295056ac9',1,'core.h']]],

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -92,7 +92,11 @@ const char *BrStatusStr (EBrStatus s);
   ///< @brief Get a readable string for Brownie status codes.
 
 const char *BrMcuStr (int mcuType);
-  ///< @brief Get a readable string for an MCU type (MCU_TYPE_* macros), for example, "t84".
+  ///< @brief Get a readable string (for example, "t84") for an MCU model ID (see BR_MCU_* macros).
+  /// On error, 'NULL' is returned.
+int BrMcuFromStr (const char *mcuStr);
+  ///< @brief Get the MCU model ID (see BR_MCU_* macros) from a string (for example, "t84").
+  /// On error, @ref BR_MCU_NONE is returned.
 
 
 
@@ -109,10 +113,11 @@ typedef enum {
   ctUint8,
   ctInt8,
   ctUint16,
-  ctId,           // special: ID (stored in EEPROM at BR_EEPROM_ID_BASE)
-  ctFw,           // special: Firmware name (stored in TBrFeatureRecord.fwName)
   ctVersion,      // special: Version number (stored in TBrFeatureRecord.version*)
-  ctFeatures,     // special: Features (stored in TBrFeatureRecord.features, TBrFeatureRecord.gpi*, and TBrFeatureRecord.gpo*)
+  ctFeatures,     // special: Feature information relevant for resources
+  ctMcu,          // special: MCU model
+  ctFw,           // special: Firmware name (stored in TBrFeatureRecord.fwName)
+  ctId,           // special: ID (stored in EEPROM at BR_EEPROM_ID_BASE)
   ctShadesDelay,  // special: Shades delay (byte displayed as seconds)
   ctShadesSpeed   // special: Shades speed (byte displayed as seconds of 100% movement)
 } EBrCfgType;
@@ -136,10 +141,12 @@ extern const int brCfgDescs;                    ///< @internal
 
 // ***** Feature record to/from string *****
 
-const char *BrVersionNumberToStr (CString *ret, TBrFeatureRecord *featureRecord);
+uint32_t BrVersionGet (TBrFeatureRecord *featureRecord);
+  ///< @brief Retrieve version from feature record.
+static inline const char *BrVersionGetAsStr (CString *ret, TBrFeatureRecord *featureRecord) { return VersionToStr (ret, BrVersionGet (featureRecord)); }
   ///< @brief Get a readable string of the version fields of the feature record.
   /// The result is written to '*ret' and returned.
-bool BrVersionNumberFromStr (TBrFeatureRecord *featureRecord, const char *str);
+bool BrVersionFromStr (TBrFeatureRecord *featureRecord, const char *str);
   ///< @brief Set the version fields of the feature record according to the given version string.
 
 const char *BrFeaturesToStr (CString *ret, TBrFeatureRecord *featureRecord);
@@ -318,7 +325,7 @@ class CBrownieSet {
 
     bool ReadDatabase (const char *fileName = NULL);
       ///< @brief Read a database file.
-      /// @param fileName is the name of the database file relative to the etc domain (default: use 'br.database')
+      /// @param fileName is the name of the database file relative to the etc domain (default: use 'br.config')
       ///
     bool WriteDatabase (const char *fileName = NULL);
       ///< @brief Write the set as a database file.
@@ -426,7 +433,7 @@ class CBrownieLink {
       /// @return success/error status (also stored in 'status').
     EBrStatus Reopen () { TwiOpen (false); return status; }
       ///< @brief Reopen a previously open link.
-    void Close () { SocketServerStop (); TwiClose (); }
+    void Close () { ServerStop (); TwiClose (); }
 
     const char *IfName () { return twiIfName.Get (); }
       ///< @brief Get the current interface file name.
@@ -498,19 +505,26 @@ class CBrownieLink {
       ///< @brief Check the device for reachability and (optionally) return its feature and configuration records.
       /// @param adr is the device's TWI address.
       /// @param brownie is the object into which the ID, the feature, and the configuration record are read.
-      ///   If set to 'NULL', no such records are returned, and the communication is much simpler and faster.
+      ///   If set to 'NULL', the feature record and firmware version are not checked, no records are returned,
+      ///   and the communication is much simpler and faster.
 
     EBrStatus RegRead (int adr, uint8_t reg, uint8_t *retVal, bool noResend = false);
+    EBrStatus RegRead (CBrownie *brownie, uint8_t reg, uint8_t *retVal, bool noResend = false) { return RegRead (brownie->Adr (), reg, retVal, noResend); }
       ///< @brief Read a register.
-    uint8_t RegReadNext (int adr, uint8_t reg, EBrStatus *status);
+    uint8_t RegReadNext (EBrStatus *status, int adr, uint8_t reg, bool noResend = false);
+    uint8_t RegReadNext (EBrStatus *status, CBrownie *brownie, uint8_t reg, bool noResend = false) { return RegReadNext (status, brownie->Adr (), reg, noResend); }
       ///< @brief Read a register (alternative arguments).
       ///
-      /// This method is optimized for fetching multiple registers. The register contents are returned
+      /// These methods are optimized for fetching multiple registers. The register contents are returned
       /// by the return value, and the status field is updated on the fly. If '*status' is not 'brOk'
       /// on method entry, nothing is done. This allows to read multiple registers without checking the
       /// status after each single one.
-    EBrStatus RegWrite (int adr, uint8_t reg, uint8_t val);
+    EBrStatus RegWrite (int adr, uint8_t reg, uint8_t val, bool noResend = false);
+    EBrStatus RegWrite (CBrownie *brownie, uint8_t reg, uint8_t val, bool noResend = false) { return RegWrite (brownie->Adr (), reg, val, noResend); }
       ///< @brief Write to a register.
+    void RegWriteNext (EBrStatus *status, int adr, uint8_t reg, uint8_t val, bool noResend = false);
+    void RegWriteNext (EBrStatus *status, CBrownie *brownie, uint8_t reg, uint8_t val, bool noResend = false) { return RegWriteNext (status, brownie->Adr (), reg, val, noResend); }
+      ///< @brief Write a register (alternative arguments, see comment on RegReadNext()).
 
     EBrStatus MemRead (int adr, unsigned memAdr, int bytes, uint8_t *retData, bool printProgress = false);
       ///< @brief Read from memory.
@@ -539,15 +553,15 @@ class CBrownieLink {
     /// @name Maintenance socket server ...
     /// @{
 
-    bool SocketServerStart ();
+    bool ServerStart ();
       ///< @brief Start the socket server, if configured by 'br.serveSocket'.
       ///
       /// If none is configured, this method will fail silently.
       /// Otherwise, a warning is logged on failure.
       /// @return success status.
-    void SocketServerStop ();
+    void ServerStop ();
       ///< @brief Stop the socket server (if it was running).
-    bool SocketServerIterate (TTicksMonotonic maxSleepTime = -1);
+    bool ServerIterate (TTicksMonotonic maxSleepTime = -1);
       ///< @brief Perform all socket server services (if enabled).
       /// @param maxSleepTime is the maximum time to sleep if a client is connected
       /// (<0 = wait unlimited until the connection proceeds).

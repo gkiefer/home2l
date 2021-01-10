@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -652,7 +652,7 @@ class CMqttExport: public CRcSubscriber {
         rc = NULL;
         return false;
       }
-      CRcSubscriber::Register (StringF (&s, "mqtt:%s", id));
+      CRcSubscriber::Register (StringF (&s, "MQTT/%s", id));
       return true;
     }
 
@@ -660,7 +660,7 @@ class CMqttExport: public CRcSubscriber {
     bool InitSet (const char *pattern) {
       topic.Set (pattern);
       rc = NULL;
-      CRcSubscriber::Register ("mqtt-set");
+      CRcSubscriber::Register ("MQTT");
       return true;
     }
 

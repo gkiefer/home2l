@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-9-g0486* (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -83,15 +83,19 @@ Collaboration diagram for General:</div>
 Functions</h2></td></tr>
 <tr class="memitem:ga1994e0e0cc361853b5fa8d1f6d6a4554"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#ga1994e0e0cc361853b5fa8d1f6d6a4554">Home2lInit</a> (instance=None, server=False, args=True)</td></tr>
 <tr class="separator:ga1994e0e0cc361853b5fa8d1f6d6a4554"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga5bee352625785568c54c716916d100e6"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#ga5bee352625785568c54c716916d100e6">Home2lStart</a> ()</td></tr>
-<tr class="separator:ga5bee352625785568c54c716916d100e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga46a220b039611ddd02a0c2e7fbc01138"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#ga46a220b039611ddd02a0c2e7fbc01138">Home2lDone</a> ()</td></tr>
 <tr class="separator:ga46a220b039611ddd02a0c2e7fbc01138"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5bee352625785568c54c716916d100e6"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#ga5bee352625785568c54c716916d100e6">Home2lStart</a> ()</td></tr>
+<tr class="memdesc:ga5bee352625785568c54c716916d100e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">End the elaboration and start the background activities of the Home2L package.  <a href="group__home2l__general.html#ga5bee352625785568c54c716916d100e6">More...</a><br /></td></tr>
+<tr class="separator:ga5bee352625785568c54c716916d100e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf11b3f0594bd567180900e16488e8871"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#gaf11b3f0594bd567180900e16488e8871">Home2lIterate</a> (maxTime=0)</td></tr>
+<tr class="memdesc:gaf11b3f0594bd567180900e16488e8871"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterate Home2L and run all pending callback functions.  <a href="group__home2l__general.html#gaf11b3f0594bd567180900e16488e8871">More...</a><br /></td></tr>
 <tr class="separator:gaf11b3f0594bd567180900e16488e8871"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae72deaa0f304a84fdb817ce8ff5c3369"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#gae72deaa0f304a84fdb817ce8ff5c3369">Home2lRun</a> ()</td></tr>
+<tr class="memdesc:gae72deaa0f304a84fdb817ce8ff5c3369"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the Home2L main loop indefinitely (or until stopped).  <a href="group__home2l__general.html#gae72deaa0f304a84fdb817ce8ff5c3369">More...</a><br /></td></tr>
 <tr class="separator:gae72deaa0f304a84fdb817ce8ff5c3369"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4ed29ccca01ab3a70471f5b7de60e2e8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__general.html#ga4ed29ccca01ab3a70471f5b7de60e2e8">Home2lStop</a> ()</td></tr>
+<tr class="memdesc:ga4ed29ccca01ab3a70471f5b7de60e2e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Let '<a class="el" href="group__home2l__general.html#gae72deaa0f304a84fdb817ce8ff5c3369" title="Run the Home2L main loop indefinitely (or until stopped). ">Home2lRun()</a>' stop at next occasion.  <a href="group__home2l__general.html#ga4ed29ccca01ab3a70471f5b7de60e2e8">More...</a><br /></td></tr>
 <tr class="separator:ga4ed29ccca01ab3a70471f5b7de60e2e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -140,28 +144,6 @@ The following optional arguments may be set:
   args     : Parse the command line arguments for standard Home2L arguments</pre> 
 </div>
 </div>
-<a id="ga5bee352625785568c54c716916d100e6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga5bee352625785568c54c716916d100e6">&#9670;&nbsp;</a></span>Home2lStart()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def home2l.Home2lStart </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<pre class="fragment">Home2lStart()
-
-Start the background activities of the Home2L package.
-
-This primarily ends the elaboration phase of the Resources library and starts
-the server (if enabled). New drivers and resources must be defined before this.</pre> 
-</div>
-</div>
 <a id="ga46a220b039611ddd02a0c2e7fbc01138"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga46a220b039611ddd02a0c2e7fbc01138">&#9670;&nbsp;</a></span>Home2lDone()</h2>
 
@@ -184,6 +166,29 @@ It is not necessary to call this as the last command in a script, since it
 is executed automatically on exit.</pre> 
 </div>
 </div>
+<a id="ga5bee352625785568c54c716916d100e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5bee352625785568c54c716916d100e6">&#9670;&nbsp;</a></span>Home2lStart()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def home2l.Home2lStart </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>End the elaboration and start the background activities of the Home2L package. </p>
+<pre class="fragment">Start the background activities of the Home2L package.
+
+This primarily ends the elaboration phase of the Resources library and starts
+the server (if enabled). New drivers and resources must be defined before this.
+</pre> 
+</div>
+</div>
 <a id="gaf11b3f0594bd567180900e16488e8871"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#gaf11b3f0594bd567180900e16488e8871">&#9670;&nbsp;</a></span>Home2lIterate()</h2>
 
@@ -199,6 +204,8 @@ is executed automatically on exit.</pre>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Iterate Home2L and run all pending callback functions. </p>
 <pre class="fragment">Iterate Home2L for a time of 'maxTime' ms and run all pending callback functions.
 
 If 'maxTime == 0', only the currently pending work is done, and the
@@ -221,8 +228,10 @@ indefinitely (this feature is used by 'Run').
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Run the Home2L main loop indefinitely (or until stopped). </p>
 <pre class="fragment">Run the Home2L main loop indefinitely (or until stopped).
-Implies 'Start'.
+Executes 'Home2lStart()' if this has not happened before.
 </pre> 
 </div>
 </div>
@@ -240,7 +249,9 @@ Implies 'Start'.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Let 'Run' stop at next occasion.
+
+<p>Let '<a class="el" href="group__home2l__general.html#gae72deaa0f304a84fdb817ce8ff5c3369" title="Run the Home2L main loop indefinitely (or until stopped). ">Home2lRun()</a>' stop at next occasion. </p>
+<pre class="fragment">Let 'Home2lRun()' stop at next occasion.
 
 Note: This (and all top-level) functions may presently only be called
 from a single (main) thread. In particular, stopping from a different

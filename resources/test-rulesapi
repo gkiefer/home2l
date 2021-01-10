@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ Home2lInit ("test-rulesapi", True)
 
 NewResource ("pytest", "pyInt", rctInt, True)   # writeable resource
 
-@newDriver ("pytest", rcsBusy)
+@driver ("pytest", rcsBusy)
 def DrivePytest (rc, vs):
   print ("DrivePytest: ", vs, " -> ", rc)
   rc.ReportValueState (vs)      # ", rcsValid" is not necessary

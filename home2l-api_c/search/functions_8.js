@@ -14,9 +14,10 @@ var searchData=
   ['isempty',['IsEmpty',['../classCString.html#af16d3f1517186539f2da695380149a26',1,'CString']]],
   ['isknown',['IsKnown',['../classCRcValueState.html#a418d4c6ac995aebe00988b139a3fd6fe',1,'CRcValueState']]],
   ['islike',['IsLike',['../classCResource.html#ab2c106e92a9118e5038c5760a75f0f1f',1,'CResource']]],
+  ['isopen',['IsOpen',['../classCServiceKeeper.html#a9c521d27bcde8bc1d2e849fc70589ec3',1,'CServiceKeeper']]],
   ['isreadable',['IsReadable',['../classCSleeper.html#ae35e56483950309ced12a674f0ceb5fc',1,'CSleeper']]],
   ['isrunning',['IsRunning',['../classCThread.html#aec940d427283aa4a703ab91495a9ead0',1,'CThread::IsRunning()'],['../classCShell.html#a17140ad8bc43330ed6e1f6cb78c542d9',1,'CShell::IsRunning()'],['../classCShellBare.html#a817e485dd196e4b6bd813458bc47bd92',1,'CShellBare::IsRunning()'],['../classCModalWidget.html#a61b1aacf5fae249de188d408c00712ea',1,'CModalWidget::IsRunning()']]],
   ['isvalid',['IsValid',['../classCRcValueState.html#af596c8a99db69b6e63fbb035fabacdb4',1,'CRcValueState::IsValid()'],['../classCBrownie.html#a4a5862b5a54a19e2ededde75986e4cc4',1,'CBrownie::IsValid()']]],
   ['iswritable',['IsWritable',['../classCSleeper.html#a785315667c1df4b1e486306bb8ceb938',1,'CSleeper']]],
-  ['iterate',['Iterate',['../classCPhone.html#abbc0c04660360f759f769046298ff550',1,'CPhone']]]
+  ['iterate',['Iterate',['../classCServiceKeeper.html#a96053ba6d1a96ea6081991a5b60efa08',1,'CServiceKeeper::Iterate()'],['../classCPhone.html#abbc0c04660360f759f769046298ff550',1,'CPhone::Iterate()']]]
 ];

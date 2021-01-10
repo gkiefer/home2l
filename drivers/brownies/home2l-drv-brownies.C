@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,17 +43,17 @@ class CRcBrownieDriver: public CRcEventDriver, public CThread {
     virtual void *Run () {      // from CRcThread
       bool haveSocketClient;
 
-      brLink.SocketServerStart ();
+      brLink.ServerStart ();
       //~ INFO ("### CRcBrownieDriver: Entering main loop.");
       while (!stop) {
-        haveSocketClient = brLink.SocketServerIterate (256);
+        haveSocketClient = brLink.ServerIterate (256);
           // Do not let the socket server sleep forever to allow the resources to
           // get invalidated if expired. Expiration is the only thing 'ResourcesIterate'
           // does if a socket client is connected.
         db->ResourcesIterate (haveSocketClient);
       }
       //~ INFO ("### CRcBrownieDriver: Leaving main loop.");
-      brLink.SocketServerStop ();
+      brLink.ServerStop ();
       db->ResourcesDone ();
       return NULL;
     }

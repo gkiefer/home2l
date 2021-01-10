@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -156,13 +156,13 @@ static void TwiCalculate (TDate d) {
   ticksTrueNoon = TicksOfDate (YEAR_OF(d), 1, 1) + TICKS_FROM_SECONDS (86400 * (dayOfYear - 1) + 43200); // -> local noon time
   TicksToDateTimeUTC (ticksTrueNoon, NULL, &t);   // t is UTC time of local noon
   ticksTrueNoon += TICKS_FROM_SECONDS (TIME_OF (12, 0, 0) - t);  // -> UTC noon time
-  //~ INFOF (("### clock noon (local time at UTC noon) = %s", TicksToString (ticksTrueNoon, 0)));
+  //~ INFOF (("### clock noon (local time at UTC noon) = %s", TicksAbsToString (ticksTrueNoon, 0)));
   ticksTrueNoon -= TICKS_FROM_SECONDS (3600.0 * (EnvLocationLongitudeE () / 15.0 + hTimeDiff) + 0.5);  // correct by location and time difference
-  //~ INFOF (("### true noon = %s", TicksToString (ticksTrueNoon, 0)));
+  //~ INFOF (("### true noon = %s", TicksAbsToString (ticksTrueNoon, 0)));
 
   // Report results...
   for (n = 0; n < 4; n++) {
-    //~ CString s1, s2; INFOF (("### Day time, h = %i°: %s - %s", n * 6, TicksToString (&s1, ticksTrueNoon - ticksDelta[n], 0), TicksToString (&s2, ticksTrueNoon + ticksDelta[n], 0)));
+    //~ CString s1, s2; INFOF (("### Day time, h = %i°: %s - %s", n * 6, TicksAbsToString (&s1, ticksTrueNoon - ticksDelta[n], 0), TicksAbsToString (&s2, ticksTrueNoon + ticksDelta[n], 0)));
     dawn[n] = ticksTrueNoon - ticksDelta[n];
     dusk[n] = ticksTrueNoon + ticksDelta[n];
   }
@@ -354,7 +354,7 @@ ENV_PARA_INT ("rc.drvCrashWait", envCrashWait, 60000);
 ENV_PARA_INT ("rc.drvMaxReportTime", envExtReportTime, 5000);
   /* Maximum time (ms) to wait until all external drivers have reported their resources
    */
-ENV_PARA_INT ("rc.drvIterateWait", envIterateWait, 1000);
+ENV_PARA_INT ("rc.drvIterateWait", envIterateWait, 256);
   /* Iteration interval (ms) for the manager of external drivers
    */
 
@@ -524,13 +524,13 @@ void CExtDriver::PutCmd (EExtDriverCmd cmd, TTicksMonotonic t, TTicksMonotonic i
 
 
 void CExtDriver::DriveValue (CResource *rc, CRcValueState *vs) {
-  ASSERT (vs && vs->IsValid ());
+  ASSERT (vs);
 
   assignSetMutex.Lock ();
   assignSet.Set (rc->Lid (), vs);
   PutCmd (cmdIterate);
   assignSetMutex.Unlock ();
-  vs->SetState (rcsBusy);
+  if (vs->IsValid ()) vs->SetToReportBusy ();
 }
 
 
@@ -558,9 +558,8 @@ void CExtDriver::OnShellReadable () {
           rc = CResource::Register (this, arg[1], StringF (&s, "%s %s", arg[2], arg[3]));   // [RC:-] External drivers must document themselves
           ok = (rc != NULL);
           if (ok && arg.Entries () == 5) {
-            CRcRequest req;
-            req.SetPriority (rcPrioDefault);
-            req.SetFromStr (arg[4]);
+            CRcRequest *req = new CRcRequest (RCREQ_NOVALUE, rcDefaultRequestId, rcPrioDefault);
+            if (req->SetFromStr (arg[4])) rc->SetRequest (req);
           }
         }
         break;
@@ -594,7 +593,12 @@ void CExtDriver::OnShellReadable () {
         }
         if (ok) {
           vs.SetType (rc->Type ());
-          ok = vs.SetFromStrFast (arg[2]);
+          if (arg[2][0] == '!' && arg[2][1] == '\0') {
+            // Special case: "!" reports rcsBusy without a value change ...
+            vs.SetToReportBusy ();
+            ok = true;
+          }
+          else ok = vs.SetFromStrFast (arg[2]);
           if (!ok) {
             WARNINGF (("Illegal value '%s' received - invalidating: '%s'", arg[2], line.Get ()));
             vs.Clear ();
@@ -614,6 +618,7 @@ void CExtDriver::OnShellReadable () {
 
 
 void CExtDriver::OnIterate () {
+  CResource *rc;
   CString s;
   TTicks tNow;
   int n;
@@ -622,8 +627,11 @@ void CExtDriver::OnIterate () {
 
   // Check if process has died or exited ...
   if (shellInUse) {
+    //~ INFOF(("# CExtDriver::OnIterate (): shell in use..."));
     if (!shell.IsRunning ()) {
+      //~ INFOF(("# CExtDriver::OnIterate (): not running ..."));
       shell.Wait ();
+      //~ INFOF(("# CExtDriver::OnIterate (): ... waited"));
       shellInUse = false;
       if (keepRunning) {
         // A "keep running" process has died just now...
@@ -644,6 +652,12 @@ void CExtDriver::OnIterate () {
     }
     else {
       if (!shellInUse) {
+        // Report "busy" again...
+        //   This has been done already in DriveValue(). However, if multiple invocations occur, the
+        //   busy state may have been left again. It is set again now.
+        rc = GetResource (assignSet.GetKey (0));
+        if (rc) rc->ReportState (rcsBusy);
+        // Run "-drive command" ...
         if (shell.Start (StringF (&s, "%s -drive %s %s", shellCmd.Get (), assignSet.GetKey (0), assignSet.Get (0)->ToStr ()))) {
           shellInUse = true;
           tStart = TicksNow ();
@@ -655,7 +669,7 @@ void CExtDriver::OnIterate () {
   assignSetMutex.Unlock ();
 
   // Trigger a new poll if one pending and shell is idle...
-  if (!keepRunning && !shellInUse) PutCmd (cmdInvokePoll);
+  if (pollPending && !keepRunning && !shellInUse) PutCmd (cmdInvokePoll);
 }
 
 
@@ -672,9 +686,7 @@ void CExtDriver::OnInvoke (EExtDriverCmd cmd) {
     case cmdInvokePoll:
       ASSERT (!keepRunning);
       if (shellInUse) {
-        if (pollPending) WARNINGF (("Failed to poll driver process '%s': still running"));
-          // Another poll is still pending: Warn because there may be a problem with the driver.
-          // This one will be (reasonably) discarded.
+        // Another script process is still running. Run poll at next occasion ...
         pollPending = true;
         return;
       }

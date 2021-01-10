@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -213,6 +213,9 @@ class CResourceLink;
 /// @}  // @name
 
 
+extern const char *const rcDefaultRequestId;    ///< Request ID for default requests ("default")
+
+
 /// @}  // resources_requests
 #ifdef SWIG
 %pythoncode %{
@@ -322,6 +325,8 @@ enum ERcType {
     ///< Window opening state ("closed", "tilted", "open", "openOrTilted")
   rctPhoneState,
     ///< Phone state ("idle", "ringing", "inCall")
+  rctPlayerState,
+    ///< Music player state ("stop", "pause", "play")
   rctEnumTypesEND
   /// @}
 };
@@ -386,6 +391,14 @@ enum ERctPhoneState {
   rcvPhoneIdle = 0,   /// idle
   rcvPhoneRinging,    /// ringing
   rcvPhoneInCall      /// includes 'psDialing' and all 'psTransfer...' states (anything where a user is actively using the phone)
+};
+
+
+/// Music player state (for 'rctPlayerState')
+enum ERctPlayerState {
+  rcvPlayerStopped = 0, /// stopped
+  rcvPlayerPaused,      /// paused
+  rcvPlayerPlaying      /// playing
 };
 
 
@@ -459,8 +472,8 @@ enum ERcState {
 class CRcValueState {
   public:
     CRcValueState () { type = rctNone; Clear (); }
-    CRcValueState (const CRcValueState *vs) { type = rctNone; Set (vs); timeStamp = vs->timeStamp; }
-    CRcValueState (ERcType _type) { type = rctNone; Clear (_type); }   ///< for initializing type, but no value & state
+    CRcValueState (const CRcValueState *vs) { type = rctNone; Set (vs); if (vs) timeStamp = vs->timeStamp; }
+    CRcValueState (ERcType _type) { type = rctNone; Clear (_type); }   ///< for initializing type, but without setting value
 
     CRcValueState (ERcType _type, bool _val, ERcState _state = rcsValid) { type = rctNone; SetBool (_val, _state); }
     CRcValueState (ERcType _type, int _val, ERcState _state = rcsValid) { type = rctNone; SetGenericInt (_val, _type, _state); }
@@ -675,7 +688,7 @@ class CRcValueState {
       ///     <float>   ::= [-][0-9]*[.[0-9]+][E[+/-][0-9]+]: floating-point value
       ///     <precise> ::= $[0-9a-f]{8}                    : float value encoded as a 8-digit hex value
       ///     <string>  ::= [0-9a-zA-Z\]+ | \0              : string (\-escaped, UTF8 encoding); terminating 0 is optional except for the emtpy string (= "\0")
-      ///     <time>    ::= <time>                          : time value; see TicksFromString() for syntax
+      ///     <time>    ::= <time>                          : absolute time value; see TicksFromString() for syntax
       ///     <unit>    ::= [<float>|<int>]<unit>           : unit value (<unit> is the unit string)
       ///     <enum>    ::= [_a-zA-Z][_a-zA-Z0-9]+          : enumeration value
       /// @endcode
@@ -1025,8 +1038,8 @@ class CResource /* final */ {
     ///
     /// @{
 
-    void SetRequestFromObj (CRcRequest *_request);
 #ifndef SWIG
+    void SetRequestFromObj (CRcRequest *_request);
     void SetRequest (CRcRequest *_request) { SetRequestFromObj (_request); }
       ///< @brief Add or replace a request (generic version).
       /// @param _request must by a dynamically allocated object, which is handed over and must no longer be used by the caller afterwards.
@@ -1055,20 +1068,19 @@ class CResource /* final */ {
     void SetRequestFromStr (const char *reqDef);
       ///< @brief Set request by textual definition. See CRcRequest::SetFromStr() and the
       /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
-#endif // SWIG
 
-#ifndef SWIG
     void SetTrigger (const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0) { SetRequest (1, reqGid, priority, t0, t1, repeat, hysteresis); }
       ///< @brief Set a trigger request (no value needs to be given).
     void SetTriggerFromStr (const char *reqDef);
       ///< @brief Set trigger request by textual definition.
-#endif // SWIG
 
     void DelRequest (const char *reqGid = NULL, TTicks t1 = 0);
       ///< @brief Delete a request.
       /// @param reqGid is the global request identifierr (GID) and identifies the request.
       ///    If set to 'NULL', the instance name is used.
       /// @param t1 is the time at which the request is to be deleted (optional).
+
+#endif // SWIG
 
     void GetRequest (CRcRequest *ret, const char *reqGid, bool allowNet = true);
       ///< @brief Query a request by its request GID.
@@ -1098,10 +1110,10 @@ class CResource /* final */ {
       /// Internally, a temporary subscription is generated and the @ref CRcSubscriber methods are used
       /// to implement this reading.
 #endif
-    void WriteValue (CRcValueState value, int priority = rcPrioNormal, const char *reqGid = "rclib") { SetRequest (&value, reqGid, priority); }
+    void WriteValue (CRcValueState value, int priority = rcPrioNormal, const char *reqGid = "write") { SetRequest (&value, reqGid, priority); }
       ///< @brief Write a value by issueing or updating a request with the given global id.
       /// The implementation of this method can be used as a tutorial on working with requests.
-    void UnWrite (const char *reqGid = "rclib") { DelRequest (reqGid); }
+    void UnWrite (const char *reqGid = "write") { DelRequest (reqGid); }
 
     /// @}
 
@@ -1130,14 +1142,13 @@ class CResource /* final */ {
       /// Details on the documentation system can be found in the Home2L Book.
 #endif
 
-    void SetDefault (CRcValueState *vs)     { SetRequest (vs,         "_default", rcPrioDefault); }
+    void SetDefault (CRcValueState *vs)     { SetRequest (vs,         rcDefaultRequestId, rcPrioDefault); }
       ///< @brief Set a default value.
-    void SetDefault (bool valBool)          { SetRequest (valBool,    "_default", rcPrioDefault); }
-    void SetDefault (int valInt)            { SetRequest (valInt,     "_default", rcPrioDefault); }
-    void SetDefault (float valFloat)        { SetRequest (valFloat,   "_default", rcPrioDefault); }
-    //~ void SetDefault (double valFloat)       { SetRequest ((float) valFloat, "_default", rcPrioDefault); }
-    void SetDefault (const char *valString) { SetRequest (valString,  "_default", rcPrioDefault); }
-    void SetDefault (TTicks valTime)        { SetRequest (valTime,    "_default", rcPrioDefault); }
+    void SetDefault (bool valBool)          { SetRequest (valBool,    rcDefaultRequestId, rcPrioDefault); }
+    void SetDefault (int valInt)            { SetRequest (valInt,     rcDefaultRequestId, rcPrioDefault); }
+    void SetDefault (float valFloat)        { SetRequest (valFloat,   rcDefaultRequestId, rcPrioDefault); }
+    void SetDefault (const char *valString) { SetRequest (valString,  rcDefaultRequestId, rcPrioDefault); }
+    void SetDefault (TTicks valTime)        { SetRequest (valTime,    rcDefaultRequestId, rcPrioDefault); }
 
     void Unregister ();
       ///< @brief Unregister a resource.
@@ -1164,19 +1175,18 @@ class CResource /* final */ {
     void ReportValueState (const CRcValueState *_valueState);
       ///< @brief Report value and state; if different from previous value/state, notify all subscribers.
       /// If '_valueState->Type () == rctNone', the new state is reported with the old value.
+#ifndef SWIG
     void ReportValue (bool _value, ERcState _state = rcsValid);
     void ReportValue (int _value, ERcState _state = rcsValid);
     void ReportValue (float _value, ERcState _state = rcsValid);
     void ReportValue (const char *_value, ERcState _state = rcsValid);
     void ReportValue (TTicks _value, ERcState _state = rcsValid);
-    void ReportUnknown () { CRcValueState vs (Type ()); ReportValueState (&vs); }
+#endif // SWIG
+    void ReportUnknown () { ReportValueState (NULL); }
     void ReportTrigger () { ReportValueState (NULL); }
       ///< @brief For triggers, this method must be called.
     void ReportState (ERcState _state) { CRcValueState vs; vs.SetState (_state); ReportValueState (&vs); }
       ///< @brief Report state change only, value remains unmodified
-    void ReportValue (const CRcValueState *vs, ERcState _state = rcsValid) { CRcValueState _vs(vs); _vs.state = _state; ReportValueState (&_vs); }
-      ///< @brief Report value of the 'vs' object, but with the state given here.
-      /// **Note:** Do not confuse with ReportValueState()!
     /// @}
 
     /// @name (Drv) Misc. Helpers ...
@@ -1306,8 +1316,9 @@ class CResource /* final */ {
       // The method may shortly release a lock to avoid deadlocks.
 
     // Requests...
+    void UpdatePersistentRequestAL (const char *reqId, CRcRequest *req);
     void ClearRequestsAL ();
-    static bool DoDelRequest (CRcRequest **pList, const char *reqGid, TTicks t1);
+    bool DoDelRequestAL (CRcRequest **pList, const char *reqGid, TTicks t1, bool updatePersistence);
 
     CRcRequest *GetWinningRequest (TTicks t);
     void EvaluateRequests (bool force = false);    // check and process all pending requests
@@ -1351,7 +1362,7 @@ class CResource /* final */ {
 
     // Resource properties...
     unsigned regSeq;            // [atomic]
-    bool writable;              // (not "atomic" since only one byte is relevant)
+    bool writable, persistent;  // (not "atomic" since only one byte is relevant)
 
     // BEGIN dynamic data ...
     //   All fields may only be accessed if 'this' is locked.
@@ -1379,9 +1390,14 @@ class CResource /* final */ {
   bool __eq__ (CResource *other) { return $self == other; }
   bool __ne__ (CResource *other) { return $self != other; }
 
+  %delobject SetRequestFromObj ();
+
   %feature("docstring") ValueState "Get the current value and state of the resource."
   %newobject ValueState ();
   CRcValueState *ValueState () { CRcValueState *ret = new CRcValueState (); $self->GetValueState (ret); return ret; }
+
+  void _SetRequestFromObj (CRcRequest *_request) { $self->SetRequestFromObj (_request); }
+  void _DelRequest (const char *reqGid = NULL, TTicks t1 = 0) { $self->DelRequest (reqGid, t1); }
 
   %pythoncode %{
     pass    # (Workaround to keep SWIG from scrambling the indentation of the following code.)
@@ -1398,24 +1414,43 @@ class CResource /* final */ {
       """Get the type of this resource."""
       return self.ValueState ().Type ()
 
-    def SetRequest (self, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
-      """Set a request with selected attributes.\n\
+    def SetRequest (self, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None, delDelay = None):
+      """Set or delete a request with selected attributes.\n\
       \n\
-      See CRcRequest::Set() for a detailed explanation of the arguments.\n\
+      This method allows to set any subset of attributes in a flexible way, either by (named) function arguments\n\
+      or by a textual description as accepted by the Home2L Shell or CRcRequest::SetFromStr().\n\
+      \n\
+      If the effective value is 'None' (no value is passed), the call will delete the request with\n\
+      the specified ID passing 'delDelay' as the 't1' argument of DelRequest().\n\
+      \n\
+      See RcSetRequest() for a detailed explanation of the arguments and examples.\n\
       """
       if RcTypeIsStringBased (self.Type ()) and reqDef != None:
         print ("WARNING: Setting a request to the string-type resource '" + str(self) + "' using the 'reqDef' argument is ambiguous!")
       req = CRcRequest ()
       req.Set (reqDef = reqDef, attrs = attrs, value = value, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
-      req.thisown = 0   # tell swig to disown the object
-      self.SetRequestFromObj (req)
+      if req.Value ().IsKnown ():
+        req.thisown = 0   # tell swig to disown the object ([2021-01-03]: '%delobject SetRequestFromObj ()' silently does not work)
+        self._SetRequestFromObj (req)
+      else:
+        self.DelRequest (req.Gid (), delDelay)
 
     def SetTrigger (self, attrs = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
       """Set a request for a trigger resource with selected attributes."""
       req = CRcRequest ()
       req.Set (value = 1, attrs = attrs, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
-      req.thisown = 0   # tell swig to disown the object
-      self.SetRequestFromObj (req)
+      req.thisown = 0   # tell swig to disown the object ([2021-01-03]: '%delobject SetRequestFromObj ()' silently does not work)
+      self._SetRequestFromObj (req)
+
+    def DelRequest (self, reqId = None, t1 = None):
+      """Delete a request by its ID."""
+      self._DelRequest (reqId, 0 if not t1 else TicksAbsOf (t1))
+
+    def ReportValue (self, value, state = rcsValid):
+      """Report a new value and optionally its state. If '_value == None', 'ReportUnknown()' is called."""
+      if value == None: self.ReportUnknown ()
+      else: self.ReportValueState (CRcValueState (self.Type (), value, state))
+
   %}
 };  // %extend CResource
 #endif
@@ -1804,8 +1839,9 @@ class CRcSubscriber: public CRcEventProcessor {
 
     /// @name Registration ...
     /// @{
-    void Register (const char *_lid);
+    bool Register (const char *_lid);
       ///< @brief Enable the subscriber, set its LID and GID. Caller remains owner of object.
+      /// If '_lid' refers to an invalid string, 'false' is returned and a warning is emitted.
     void Unregister ();
       ///< @brief Clear and unregister the subscriber.
     /// @}
@@ -1931,7 +1967,10 @@ class CRcSubscriber: public CRcEventProcessor {
 #endif // SWIG
 
 
-#define RCREQ_NONE INT_MAX     ///< Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis
+#define RCREQ_NONE INT_MAX
+  ///< Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis
+#define RCREQ_NOVALUE ((CRcRequest *) NULL)
+  ///< Special value meaning "none" for the request value
 
 
 const char *RcGetUserRequestId ();
@@ -1992,7 +2031,7 @@ class CRcRequest {
 
     void Set (CRcRequest *req);
       ///< @brief Define a request by copying attributes from another. The origin is not copied.
-    void Set (CRcValueState *_value, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
+    void Set (CRcValueState *_value = NULL, const char *_gid = NULL, int _priority = RCREQ_NONE, TTicks _t0 = RCREQ_NONE, TTicks _t1 = RCREQ_NONE, TTicks _repeat = RCREQ_NONE, TTicks _hysteresis = RCREQ_NONE);
       ///< @brief Define a request with all parameters and attributes.
       /// @param _value is the requested value; Only the type and value are used, the state is irrelevant besides the convention that 'rcsUnknown' indicates that no value set.
       /// @param _gid is the user-defined global ID (GID);  If 'NULL', the instance name is used as the GID.
@@ -2099,7 +2138,7 @@ class CRcRequest {
       ///                     <n> is the number of milliseconds in the future.
       ///                     See TicksFromString() for details and further options.
       ///
-      ///   ~<hyst>         : Hysteresis in milliseconds
+      ///   ~<hyst>         : Hysteresis as a relative time (see TicksFromString() for details)
       ///
       ///   @<origin>       : Origin in the form `<host>/<issue time>`;
       ///                     should never be set manually.
@@ -2171,15 +2210,13 @@ class CRcRequest {
       """Set value and/or selected request attributes.\n\
       \n\
       This method allows to set any subset of attributes in a flexible way, either by (named) function arguments\n\
-      or by a textual description as accepted by the Home2L Shell or CRequest::SetFromStr().\n\
+      or by a textual description as accepted by the Home2L Shell or CRcRequest::SetFromStr().\n\
       \n\
-      See RcSetRequest() for a detailed explanation of the arguments.\n\
+      See RcSetRequest() for a detailed explanation of the arguments and examples.\n\
       """
       if reqDef != None:
-        if isinstance (reqDef, str):
-          self.SetFromStr (reqDef)
-        else:
-          if value == None: value = reqDef
+        if isinstance (reqDef, str):  self.SetFromStr (reqDef)
+        elif value == None:           value = reqDef
       if attrs != None: self.SetAttrsFromStr (attrs)
       if value != None: self.SetValue (value)
       if id: self.SetGid (id)
@@ -2193,7 +2230,7 @@ class CRcRequest {
         if ticks: self.SetTimeOff (ticks)
         else: print ("WARNING: Invalid time specification '" + str(t1) + "' - ignoring!")
       if repeat:
-        ticks = TicksAbsOf (repeat)
+        ticks = TicksRelOf (repeat)
         if ticks: self.SetRepeat (ticks)
         else: print ("WARNING: Invalid time specification '" + str(repeat) + "' - ignoring!")
       if hysteresis: self.SetHysteresis (hysteresis)
@@ -2383,14 +2420,15 @@ class CRcDriver {
       ///< @brief Stop all (own) threads and close all I/Os properly; Will be called from RcDone().
       /// Resources are still registered and will be unregistered afterwards.
     virtual void DriveValue (CResource *rc, CRcValueState *vs);
-      ///< @brief Drive a new value; Will be called from CResource::DriveValue().
+      ///< @brief Callback to drive a new value, will be called from CResource::DriveValue().
       ///
-      /// Propagate a new requested value to the device (e.g. to an actor). Afterwards, the new value and state pointed at
-      /// by 'vs' will be reported automatically by the caller.
+      /// When called, this method must propagate a new requested value to the device (e.g. to an actor).
+      /// Afterwards, the new value and state pointed at by 'vs' will be reported automatically by the caller.
       ///
-      /// If there are no pending requests at all, this method is called with 'vs->State() == rcsUnkown'.
+      /// If there are no pending requests at all, this method is called with vs->State() == @ref rcsUnknown.
       /// Most drivers will do nothing then (e.g. the "signal" driver does so) and keep the previous value active.
       /// Some drivers (e.g. brownies/shades) may switch off their actors now.
+      /// For other drivers, please remember that unknown value/states may come in and must be ignored.
       ///
       /// In all other cases, the state of '*vs' is preset with @ref rcsValid.
       ///
@@ -2398,15 +2436,17 @@ class CRcDriver {
       /// The method shall change the value and eventually the state as adequate.
       ///
       /// If the new value is not known yet, the state should be set to 'rcsBusy' by calling
-      /// @ref CRcValueState::SetToReportBusy() now, and a 'CRcResource::Report...()' method
-      /// should be called later with a valid value and state @ref rcsValid.
-      /// To report a certain (e.g. the new) value with the @ref rcsBusy state now, the state may be set to @ref rcsBusy
-      /// and the value be set as appropriate or left as it is, in which case the driven value is reported.
+      /// @ref CRcValueState::SetToReportBusy() now on 'vs', and the new value should be reported
+      /// later with a valid value and state of @ref rcsValid by calling a 'CRcResource::Report...()' method.
+      ///
+      /// To report a certain (e.g. the new) value with the @ref rcsBusy state now, the state may be set to
+      /// @ref rcsBusy and the value be set as appropriate or left as it is, in which case the driven value
+      /// is reported. Again, a valid value (state of @ref rcsValid) should be reported later.
       ///
       /// To report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs' or set the state
       /// to @ref rcsUnknown.
       ///
-      /// It is not allowed to call any method of the '*rc' object (e.g. 'Report' methods) from here, since the
+      /// It is not allowed to call any method of the 'rc' object (e.g. 'Report' methods) from here, since the
       /// resource may be locked.
       ///
       /// In most cases, just writing to the device is sufficient.
@@ -2695,7 +2735,7 @@ void RcInit (bool enableServer = false, bool inBackground = false);
   ///   - false => server is off, independent on the configuration environment.
   ///   - true  => enable server if and as set in the configuration environment.
   /// @param inBackground switches on the timer thread using 'TimerStart' and friends. If disabled, the caller is
-  ///    responsible for iterating the timer. This can be the case if the caller itself has a an own background timer
+  ///    responsible for iterating the timer. This can be the case if the caller itself has an own background timer
   ///    thread (e.g. 'home2l-wallclock') or if RcRun() / RcStop() is to be used for the main program.
 void RcStart ();
   ///< @brief Complete the elaboration phase and start active operation.
@@ -2858,15 +2898,10 @@ static inline void RcUnsubscribeFromAll (CRcSubscriber **pSubscr) { if (*pSubscr
 #endif // SWIG
 
 
-#ifdef SWIG
-%feature("docstring") RcSetRequest "Add or change a request to a resource."
-%feature("docstring") RcDelRequest "Delete a request from a resource."
-%feature("docstring") RcSetTrigger "Add a trigger request."
-#endif
-
-// Normal requests...
-
 #ifndef SWIG
+
+// Requests...
+
 static inline void RcSetRequest (CResource *rc, CRcRequest *req) { rc->SetRequest (req); }
 void RcSetRequest (const char *rcUri, CRcRequest *req);
   ///< @brief Add or replace a request (generic version).
@@ -2901,83 +2936,15 @@ static inline void RcSetRequestFromStr (CResource *rc, const char *reqDef) { rc-
 void RcSetRequestFromStr (const char *rcUri, const char *reqDef);
   ///< @brief Set request by textual definition - see CRcRequest::SetFromStr() and the
   /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
-#else
-%pythoncode %{
-  def RcSetRequest (rc, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
-    """Set a request to a resource with selected attributes.\n\
-    \n\
-    The attributes can be set in a flexible way, either by (named) function arguments\n\
-    or by a textual description as accepted by the Home2L Shell or CRequest::SetFromStr().\n\
-    \n\
-    The parameters have the following meanings:\n\
-    \n\
-    - reqDef = full definition as a single string ("<val> [<attrs>]");\n\
-               Note: Values of type string should never be passed by this, but\n\
-                     by the 'val' and 'attrs' arguments.\n\
-               If 'reqDef' is not a string instance, it is used as a value ('val').\n\
-    - attrs  = attribute string (similar to 'reqDef', but without the first field interpreted as value)\n\
-    - value      = value (any type or string)\n\
-    - id         = request ID (default = instance name)\n\
-    - priority   = request priority (0..9; default = do not set)\n\
-    - t0         = on time\n\
-    - t1         = off time\n\
-    - repeat     = repetition interval\n\
-    - hysteresis = hysteresis time\n\
-    \n\
-    Information on the syntax of textual request definition can be found in the Home2L Book and\n\
-    in the C/C++ API documentation for CRcRequest::SetFromStr().\n\
-    \n\
-    Examples:\n\
-    \n\
-    - Request integer value 7 with default attributes:\n\
-        RcSetRequest (rc, 7);\n\
-        RcSetRequest (rc, "7");\n\
-        RcSetRequest (rc, value = "7");\n\
-        RcSetRequest (rc, reqDef = "7");\n\
-    \n\
-    - Request integer value 7 with priority 3:\n\
-        RcSetRequest (rc, 7, priority = 3);\n\
-        RcSetRequest (rc, 7, "*3");\n\
-        RcSetRequest (rc, "7 *3");\n\
-    \n\
-    - Request string value "Hello *3" with priority 5 and an off time at 6pm today:\n\
-        RcSetRequest (rc, value = "Hello *3", attrs = "*5 -18:00");\n\
-        RcSetRequest (rc, value = "Hello *3", prio = 5, t1 = "-18:00");\n\
-    \n\
-    - Set request with user-supplied attributes, some of which must not be changed by user\n\
-        RcSetRequest (rc, 7, userAttrs, t1 = "-23:00")    # t1 overrides an eventual off time in userAttrs\n\
-    \n\
-    - Set request with user-supplied attributes and defaults\n\
-        req = CRcRequest (val = 7, t1 = "-23:00")       # Set value and default attributes\n\
-        req->Set (attrs = userAttrs)     # userAttrs may override t1\n\
-    \n\
-    """
-    if isinstance (rc, str): rc = RcGetResource (rc)
-    rc.SetRequest (reqDef = reqDef, attrs = attrs, value = value, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
-%} // %pythoncode
-#endif // SWIG
 
-
-// Triggers...
-#ifndef SWIG
 static inline void RcSetTrigger (CResource *rc, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetTrigger (reqGid, priority, t0, t1, hysteresis); }
 void RcSetTrigger (const char *rcUri, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
   ///< @brief Set a trigger request (no value needs to be given).
 static inline void RcSetTriggerFromStr (CResource *rc, const char *reqDef) { rc->SetTriggerFromStr (reqDef); }
 void RcSetTriggerFromStr (const char *rcUri, const char *reqDef);
   ///< @brief Set trigger request by textual definition.
-#else
-%pythoncode %{
-  def RcSetTrigger (rc, attrs = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
-    """Set a request to a trigger resource with selected attributes."""
-    if isinstance (rc, str): rc = RcGetResource (rc)
-    rc.SetRequest (attrs = attrs, value = 1, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
-%} // %pythoncode
-#endif // SWIG
 
-
-// Delete requests ...
-static inline void RcDelRequest (CResource *rc, const char *reqGid = NULL) { rc->DelRequest (reqGid); }
+static inline void RcDelRequest (CResource *rc, const char *reqGid = NULL, TTicks t1 = 0) { rc->DelRequest (reqGid, t1); }
 void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = 0);
   ///< @brief Delete a request.
   /// @param rcUri identifies the resource.
@@ -2987,6 +2954,100 @@ void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = 0);
   ///
   /// If `t1` is non-zero and a request with the given `reqId` exists, its off-time
   /// is replaced by `t1`.
+
+#else // SWIG
+
+%feature("docstring") RcSetRequest "Add or change a request to a resource."
+%feature("docstring") RcDelRequest "Delete a request from a resource."
+%feature("docstring") RcSetTrigger "Add a trigger request."
+
+%pythoncode %{
+
+  def RcSetRequest (rc, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None, delDelay = None):
+    """Set a request to a resource with selected attributes.\n\
+    \n\
+    The attributes can be set in a flexible way, either by (named) function arguments\n\
+    or by a textual description as accepted by the Home2L Shell or CRcRequest::SetFromStr().\n\
+    \n\
+    The parameters have the following meanings:\n\
+    \n\
+    - reqDef = full definition as a single string '<val> [<attrs>]' or just the value\n\
+               Note: To avoid ambiguities, values of type string should never be passed by this,\n\
+                     but by the 'value' and 'attrs' arguments instead.\n\
+               If 'reqDef' is not a string instance, it is used as a value ('val').\n\
+    - attrs  = attribute string (similar to 'reqDef', but without the first field interpreted as value)\n\
+    \n\
+    - value      = value (any type or string)\n\
+    - id         = request ID [default = instance name]\n\
+    - priority   = request priority (0..9) [default = 3 (= rcPrioNormal)]\n\
+    - t0         = on time\n\
+    - t1         = off time\n\
+    - repeat     = repetition interval\n\
+    - hysteresis = hysteresis time\n\
+    - delDelay   = deletion delay (if no value is passed and the call is used to delete the request)\n\
+    \n\
+    Information on the syntax of textual request definition can be found in the Home2L Book and\n\
+    in the C/C++ API documentation for CRcRequest::SetFromStr(). Arguments representing absolute times\n\
+    (e.g. 't0', 't1') can have any type and format as accepted by 'TicksAbsOf()'.\n\
+    Arguments representing relative times (e.g. 'repeat', 'hysteresis', 'delDelay') can have any type\n\
+    and format as accepted by 'TicksRelOf()'.\n\
+    \n\
+    If an attribute is set both by means of a string ('reqDef' or 'attrs') or a named parameter,\n\
+    the named parameter is taken. If no attributes are specified, their defaults as specified in [...]\n\
+    above are used.\n\
+    \n\
+    If the effective value is 'None' (no value is passed), the call will delete the request with\n\
+    the specified ID passing 'delDelay' as the the 't1' argument of RcDelRequest().\n\
+    \n\
+    Examples:\n\
+    \n\
+    - Request integer value 7 with default attributes:\n\
+        RcSetRequest (rc, 7);\n\
+        RcSetRequest (rc, '7');\n\
+        RcSetRequest (rc, value = '7');\n\
+        RcSetRequest (rc, reqDef = '7');\n\
+    \n\
+    - Request integer value 7 with ID '#user' and priority 3:\n\
+        RcSetRequest (rc, 7, id = 'user', priority = 3);\n\
+        RcSetRequest (rc, 7, '#user *3');\n\
+        RcSetRequest (rc, '7 #user *3');\n\
+    \n\
+    - Delete this request again:\n\
+        RcSetRequest (rc, value = None, id = 'user');\n\
+        RcSetRequest (rc, '? #user');\n\
+    \n\
+    - Delete this request in 5 seconds:\n\
+        RcSetRequest (rc, value = None, id = 'user', delDelay = '5s');\n\
+    \n\
+    - Request string value 'Hello *3' with priority 5 and an off time at 6pm today:\n\
+        RcSetRequest (rc, value = 'Hello *3', attrs = '*5 -18:00');\n\
+        RcSetRequest (rc, value = 'Hello *3', prio = 5, t1 = '-18:00');\n\
+    \n\
+    - Set request with user-supplied attributes, some of which must not be changed by user\n\
+        RcSetRequest (rc, 7, userAttrs, t1 = '-23:00')    # t1 overrides an eventual off time in userAttrs\n\
+    \n\
+    - Set request with user-supplied attributes and defaults\n\
+        req = CRcRequest (val = 7, t1 = '-23:00')       # Set value and default attributes\n\
+        req->Set (attrs = userAttrs)     # userAttrs may override t1\n\
+    \n\
+    """
+    if isinstance (rc, str): rc = RcGetResource (rc)
+    rc.SetRequest (reqDef = reqDef, attrs = attrs, value = value, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis, delDelay = delDelay)
+
+  def RcSetTrigger (rc, attrs = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None):
+    """Set a request to a trigger resource with selected attributes."""
+    if isinstance (rc, str): rc = RcGetResource (rc)
+    rc.SetRequest (attrs = attrs, value = 1, id = id, priority = priority, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
+
+  def RcDelRequest (rc, id = None, t1 = None):
+    """Delete a request."""
+    if isinstance (rc, str): rc = RcGetResource (rc)
+    rc.DelRequest (id, t1)
+
+%} // %pythoncode
+#endif // SWIG
+
+
 
 // Mutex operations (TBD) ...
 //~ static inline CRcSubscriber *RcMutexRequestLock (const char *rcUri, const char *regGid, CRcSubscriber *subscr == NULL) { RcSetRequest (rcUri, reqGid, reqGid); return subscr; }

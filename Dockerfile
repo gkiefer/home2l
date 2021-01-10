@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -159,6 +159,7 @@ RUN adduser --uid=5000 --disabled-password --gecos "User for auto-started Home2L
     adduser home2l i2c && \
     adduser home2l dialout && \
     chown -R home2l.home2l /var/opt/home2l && \
+    chown home2l.root /var/lib/mosquitto /var/log/mosquitto && \
     /opt/home2l/bin/home2l-install -y -i
 
 

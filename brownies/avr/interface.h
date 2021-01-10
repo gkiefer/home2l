@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -343,17 +343,26 @@ typedef struct SBrFeatureRecord {
   uint16_t  gpoPresence;      ///< GPIO output presence mask (must be disjoint with input presence)
   uint16_t  gpoPreset;        ///< GPIO output default state (will be set on init before Z-state is left)
 
-  // MCU model ...
-  uint8_t   mcuType;          ///< MCU type (see BR_MCU_... constants)
+  uint8_t   matDim;           ///< Matrix dimensions (Bits 7:4: rows, bits 3:0 = cols)
+
+  uint8_t   reserved[3];      ///< (reserved for future features)
 
   // Written firmware name ...
-  char      fwName[16];       ///< Written name of the firmware variant (base name of the .elf file)
+  char      fwName[12];       ///< Written name of the firmware variant (base name of the .elf file without MCU part)
+
+  // MCU model ...
+  uint8_t   mcuType;          ///< MCU type (see BR_MCU_... constants)
 
   // Magic byte (for verification) ...
   uint8_t   magic;            ///< Brownie identification (always = BR_MAGIC)
 
 } __attribute__((packed)) TBrFeatureRecord;
 
+
+#define brFeatureRecordRcVec0 offsetof (TBrFeatureRecord, features)
+  ///< Offset of first byte of the feature code stored in the database (key "features") and relevant for resources.
+#define brFeatureRecordRcVec1 offsetof (TBrFeatureRecord, reserved)
+  ///< Offset of first byte behind the feature code stored in the database (key "features") and relevant for resources.
 
 
 /// @}
@@ -365,28 +374,39 @@ typedef struct SBrFeatureRecord {
 #define BR_FEATURE_TIMER    0x0002
 #define BR_FEATURE_NOTIFY   0x0004    ///< Does host notification (usually 0 for primary hubs and maintenance systems, else 1)
 #define BR_FEATURE_TWIHUB   0x0008    ///< Is TWI hub
-#define BR_FEATURE_MATRIX   0x0010    ///< Has a matrix sensor
-#define BR_FEATURE_TEMP     0x0020    ///< Has temperature sensor (TSic 206/306 over ZACwire)
-#define BR_FEATURE_ADC_0    0x0040    ///< Has ADC #0 (e.g. for analog temperatur)
-#define BR_FEATURE_ADC_1    0x0080    ///< Has ADC #1 (e.g. for analog temperatur)
+#define BR_FEATURE_ADC_0    0x0010    ///< Has ADC #0 (e.g. for analog temperatur)
+#define BR_FEATURE_ADC_1    0x0020    ///< Has ADC #1 (e.g. for analog temperatur)
+#define BR_FEATURE_UART     0x0040    ///< Has UART (e.g. for RS485)
+#define BR_FEATURE_TEMP     0x0080    ///< Has temperature sensor (TSic 206/306 over ZACwire)
+//~ #define BR_FEATURE_MATRIX   0x0010    ///< Has a matrix sensor (TBD: implicit based on 'matDim' field)
+//~ #define BR_FEATURE_TEMP     0x0020    ///< Has temperature sensor (TSic 206/306 over ZACwire)
+//~ #define BR_FEATURE_ADC_0    0x0040    ///< Has ADC #0 (e.g. for analog temperatur)
+//~ #define BR_FEATURE_ADC_1    0x0080    ///< Has ADC #1 (e.g. for analog temperatur)
 #define BR_FEATURE_SHADES_0 0x0100    ///< Has shades actuator #0
 #define BR_FEATURE_SHADES_1 0x0200    ///< Has shades actuator #1
-#define BR_FEATURE_MROWS    0x1c00    ///< Number of matrix rows - 1
-#define BR_FEATURE_MROWS_SHIFT  (2+8)
-#define BR_FEATURE_MCOLS    0xe000    ///< Number of matrix columns - 1
-#define BR_FEATURE_MCOLS_SHIFT (5+8)
-
+//~ #define BR_FEATURE_MROWS    0x1c00    ///< Number of matrix rows - 1
+//~ #define BR_FEATURE_MROWS_SHIFT  (2+8)
+//~ #define BR_FEATURE_MCOLS    0xe000    ///< Number of matrix columns - 1
+//~ #define BR_FEATURE_MCOLS_SHIFT (5+8)
 
 
 /// @}
-/// @name ... MCU Type IDs ...
-/// (for @ref SBrFeatureRecord.mcuType)
+/// @name ... Matrix Dimensions ...
+/// (for @ref SBrFeatureRecord.matDim)
 /// @{
 
-#define BR_MCU_NONE       0
-#define BR_MCU_ATTINY85   1
-#define BR_MCU_ATTINY84   2
-#define BR_MCU_ATTINY861  3
+#define BR_MATDIM_ROWS(X) ((X) >> 4)
+#define BR_MATDIM_COLS(X) ((X) & 0x0f)
+
+/// @}
+/// @name ... MCU Type IDs ...
+/// (for @ref SBrFeatureRecord.mcuType and for the 'config.h')
+/// @{
+
+#define BR_MCU_NONE       0     ///< No or unknown MCU type
+#define BR_MCU_ATTINY85   1     ///< AVR ATtiny85 (8 pins) or any software- and pin-compatible model
+#define BR_MCU_ATTINY84   2     ///< AVR ATtiny84 (14 pins) or any software- and pin-compatible model
+#define BR_MCU_ATTINY861  3     ///< AVR ATtiny861 (20 pins) or any software- and pin-compatible model
 
 
 
@@ -480,7 +500,7 @@ typedef struct SBrConfigRecord {
 
 /// @name General ...
 /// @{
-#define BR_REGISTERS         0x40   ///< Number of registers
+#define BR_REGISTERS         0x40     ///< Number of registers
 
 
 
@@ -488,29 +508,36 @@ typedef struct SBrConfigRecord {
 
 
 /// @}
-/// @name Base registers ...
+/// @name Notification register(s) ...
 /// @{
 #define BR_REG_CHANGED       0x00     ///< Change indicator register; Reading resets all bits.
-#define   BR_CHANGED_CHILD     0x01   ///< -- [@ref BR_REG_CHANGED] (hubs only) any child has reported a change
-#define   BR_CHANGED_GPIO      0x02   ///< -- [@ref BR_REG_CHANGED] any GPIO input changed
-#define   BR_CHANGED_MATRIX    0x04   ///< -- [@ref BR_REG_CHANGED] any sensor matrix switch changed
-#define   BR_CHANGED_TEMP      0x08   ///< -- [@ref BR_REG_CHANGED] temperature changed
-#define   BR_CHANGED_SHADES    0x10   ///< -- [@ref BR_REG_CHANGED] state of any shades changed (actuator or button, not position)
 
+#define BR_CHANGED_CHILD     0x01     ///< -- [@ref BR_REG_CHANGED] (hubs only) any child has reported a change
+#define BR_CHANGED_GPIO      0x02     ///< -- [@ref BR_REG_CHANGED] any GPIO input changed
+#define BR_CHANGED_MATRIX    0x04     ///< -- [@ref BR_REG_CHANGED] any sensor matrix switch changed
+#define BR_CHANGED_UART      0x08     ///< -- [@ref BR_REG_CHANGED] UART status register has changed
+#define BR_CHANGED_SHADES    0x10     ///< -- [@ref BR_REG_CHANGED] state of any shades changed (actuator or button, not position)
+
+#define BR_CHANGED_TEMP      0x20     ///< -- [@ref BR_REG_CHANGED] temperature changed (only if configured) (DEPRECATED: may be removed in the future)
+
+
+
+/// @}
+/// @name Registers for GPIO, Timer, Temperature ...
+/// @{
 #define BR_REG_GPIO_0        0x02     ///< GPIOs (0..7): One bit per GPIO
 #define BR_REG_GPIO_1        0x03     ///< GPIOs (8..15, if present): One bit per GPIO
 
 #define BR_REG_TICKS_LO      0x04     ///< Ticks timer (low byte)
 #define BR_REG_TICKS_HI      0x05     ///< Ticks timer (high byte); low byte must be read first, reading low latches high
 
-/// @}
-/// @name Temperature registers ...
-/// @{
 #define BR_REG_TEMP_LO       0x06
-#define BR_REG_TEMP_HI       0x07     ///< @brief temperature (little endian; reading low latches high).
+#define BR_REG_TEMP_HI       0x07     ///< @brief Temperature (little endian; reading low latches high).
   ///<
   /// Bits 12..1 contain the raw temperature value delivered by the TSIC206/306 device.
   /// Bit 0 is set if and only if the value ist valid. A value of 0x0000 indicates an unknown temperature.
+
+
 
 /// @}
 /// @name ADC registers ...
@@ -522,8 +549,82 @@ typedef struct SBrConfigRecord {
 #define BR_REG_ADC_1_LO      0x0a
 #define BR_REG_ADC_1_HI      0x0b     ///< ADC #1 (little endian; reading low latches high)
 
+
+
+/// @}
+/// @name UART registers ...
+///
+/// **Notes on the UART operation:**
+///
+/// The *RX buffer status* value (0..7) indicates how many bytes can be received without error:
+///
+///   - A value of 0 indicates that the buffer is empty. Reading @ref BR_REG_UART_RX now is not allowed
+///     and will return invalid data.
+///
+///   - A value of *n > 0* indicates that at least *n* bytes can be read without error.
+///     Depending on the size of the buffer, more data may be available, so that this register should be checked
+///     again after reading the data.
+///
+/// The *TX buffer status* value (0..7) indicates how many bytes can be transferred without error:
+///
+///   - A value of 0 indicates that the transfer buffer is *full*. Writing to @ref BR_REG_UART_RX now
+///     may have no effect and is not allowed.
+///
+///   - A value of *n > 0* indicates that at least *n* bytes can be sent without error.
+///     Depending on the size of the buffer, more data may be allowed to submit, so that this register
+///     should be checked again after writing the data.
+///
+/// @{
+#define BR_REG_UART_CTRL     0x0c       ///< UART control register
+#define BR_REG_UART_STATUS   0x0d       ///< UART status register
+#define BR_REG_UART_RX       0x0e       ///< UART receive register (must be accessed with the "no resend" option)
+#define BR_REG_UART_TX       0x0f       ///< UART transfer register (must be accessed with the "no resend" option)
+
+#define BR_UART_CTRL_RESET_RX     0x01  ///< -- [@ref BR_REG_UART_CTRL] Reset RX buffer
+#define BR_UART_CTRL_RESET_TX     0x02  ///< -- [@ref BR_REG_UART_CTRL] Reset TX buffer
+#define BR_UART_CTRL_RESET_FLAGS  0x04  ///< -- [@ref BR_REG_UART_CTRL] Reset status flags (overflow, error)
+
+#define BR_UART_STATUS_RX_MASK    0x07  ///< -- [@ref BR_REG_UART_STATUS] Mask for RX buffer status values (3 bits, values 0..7)
+#define BR_UART_STATUS_RX_SHIFT      0  ///< -- [@ref BR_REG_UART_STATUS] RX buffer status shift
+#define BR_UART_STATUS_TX_MASK    0x38  ///< -- [@ref BR_REG_UART_STATUS] Mask for TX buffer status values (3 bits, values 0..7)
+#define BR_UART_STATUS_TX_SHIFT      3  ///< -- [@ref BR_REG_UART_STATUS] TX buffer status shift
+#define BR_UART_STATUS_OVERFLOW   0x40  ///< -- [@ref BR_REG_UART_STATUS] An RX buffer overflow occured, at least one byte was lost
+#define BR_UART_STATUS_ERROR      0x80  ///< -- [@ref BR_REG_UART_STATUS] A receive error (parity or frame) occured; Note: not implemented yet
+
+
+
+
 /// @}
 /// @name Matrix registers ...
+///
+/// **Notes on matrix events:**
+///
+/// Reading removes the oldest entry from the (internal) event queue,
+/// the overflow state is not left on read.
+///
+/// Writing 0x80 clears the queue and overflow state.
+///
+/// The event register allows to detect the precise order of events, which may be
+/// used to detect if a window is tilted or closed.
+///
+/// This register is not synchronized with any of the raw matrix registers.
+/// Initialization/Recovery after overflow or read errors can be done as follows:
+///   1. Clear event queue, then clear the BR_CHANGED_MATRIX bit.
+///   2. Read matrix data.
+///   3. Read out all pending events and apply to the master's representation of the matrix.
+/// From now, the master has an up-to-date representation, which can be kept
+/// up-to-date solely by reading events until an error occurs (read error or overflow).
+///
+/// The cycle counter is incremented whenever the internal row counter wraps around.
+/// It helps to identify whether events have truly happend in the order the events are delivered
+/// by the queue. Two events e1 and e2 received in this order with ecycle values of c1/c2 and
+/// rows of r1/r2, respectively, are proven to have happened in this order, if
+///
+///    (c2 * \#rows + r2) - (c1 * \#rows + r1) >= \#rows
+///
+/// If this condition is not met, the real order may be different due to sampling inaccuracies.
+/// If this is unwanted, the sampling frequency should be increased (MATRIX_T_PERIOD).
+///
 /// @{
 #define BR_REG_MATRIX_0      0x10
 #define BR_REG_MATRIX_1      0x11
@@ -532,98 +633,61 @@ typedef struct SBrConfigRecord {
 #define BR_REG_MATRIX_4      0x14
 #define BR_REG_MATRIX_5      0x15
 #define BR_REG_MATRIX_6      0x16
-#define BR_REG_MATRIX_7      0x17     ///< Sensor matrix: raw data (one byte per row, up to 8x8 = 64 bits).
-#define BR_REG_MATRIX_EVENT  0x18     ///< @brief Sensor matrix: Next matrix event.
-  ///<
-  /// **Notes on matrix events:**
-  ///
-  /// Reading removes the oldest entry from the (internal) event queue,
-  /// the overflow state is not left on read.
-  ///
-  /// Writing 0x80 clears the queue and overflow state.
-  ///
-  /// The event register allows to detect the precise order of events, which may be
-  /// used to detect if a window is tilted or closed.
-  ///
-  /// This register is not synchronized with any of the raw matrix registers.
-  /// Initialization/Recovery after overflow or read errors can be done as follows:
-  ///   1. Clear event queue, then clear the BR_CHANGED_MATRIX bit.
-  ///   2. Read matrix data.
-  ///   3. Read out all pending events and apply to the master's representation of the matrix.
-  /// From now, the master has an up-to-date representation, which can be kept
-  /// up-to-date solely by reading events until an error occurs (read error or overflow).
-  ///
-  /// The cycle counter is incremented whenever the internal row counter wraps around.
-  /// It helps to identify whether events have truly happend in the order the events are delivered
-  /// by the queue. Two events e1 and e2 received in this order with ecycle values of c1/c2 and
-  /// rows of r1/r2, respectively, are proven to have happened in this order, if
-  ///
-  ///    (c2 * \#rows + r2) - (c1 * \#rows + r1) >= \#rows
-  ///
-  /// If this condition is not met, the real order may be different due to sampling inaccuracies.
-  /// If this is unwanted, the sampling frequency should be increased (MATRIX_T_PERIOD).
-  ///
-#define   BR_MATRIX_EV_VAL_SHIFT  6   ///< -- [@ref BR_REG_MATRIX_EVENT] Bit  6 = value
-#define   BR_MATRIX_EV_ROW_SHIFT  3   ///< -- [@ref BR_REG_MATRIX_EVENT] Bits 5..3 = row
-#define   BR_MATRIX_EV_COL_SHIFT  0   ///< -- [@ref BR_REG_MATRIX_EVENT] Bits 2..0 = col
-#define   BR_MATRIX_EV_EMPTY    0x80  ///< -- [@ref BR_REG_MATRIX_EVENT] Special value: event queue empty
-#define   BR_MATRIX_EV_OVERFLOW 0x81  ///< -- [@ref BR_REG_MATRIX_EVENT] Special value: overflow
-
+#define BR_REG_MATRIX_7      0x17     ///< Sensor matrix: raw data (one byte per row, up to 8x8 = 64 bits)
+#define BR_REG_MATRIX_EVENT  0x18     ///< Sensor matrix: Next matrix event
 #define BR_REG_MATRIX_ECYCLE 0x19     ///< Cycle counter of last read matrix event
+
+#define BR_MATRIX_EV_VAL_SHIFT  6     ///< -- [@ref BR_REG_MATRIX_EVENT] Bit  6 = value
+#define BR_MATRIX_EV_ROW_SHIFT  3     ///< -- [@ref BR_REG_MATRIX_EVENT] Bits 5..3 = row
+#define BR_MATRIX_EV_COL_SHIFT  0     ///< -- [@ref BR_REG_MATRIX_EVENT] Bits 2..0 = col
+#define BR_MATRIX_EV_EMPTY    0x80    ///< -- [@ref BR_REG_MATRIX_EVENT] Special value: event queue empty
+#define BR_MATRIX_EV_OVERFLOW 0x81    ///< -- [@ref BR_REG_MATRIX_EVENT] Special value: overflow
+
 
 
 /// @}
 /// @name Shades registers ...
+///
+/// **Notes on shades control:**
+///
+/// - The status bits are read-only and provide direct access to the actuator and buttons
+///
+/// - The *internal* request (RINT) is set ...
+///
+///     - ... to 0 (up) or 100 (down) if the respective button is pushed and the actuator is off
+///
+///     - ... to some value between 0 and 100 if any button is pushed and the actuator is on in any direction
+///           (usually to stop moving);
+///
+///     - ... from outside to 0xff (but no other value)
+///
+/// - The *external* request (REXT) is set from outside only.
+///
+/// - REXT has strict priority over RINT. If both are 0xff, the shades are stopped.
+///
+/// - ACT_UP/ACT_DN: If both are up, the motor has recently been stopped and is effectively off now.
+///
+/// - Safety behavior:
+///      If for a certain time (SHADES_TIMEOUT) no sign of life is received from the master,
+///      REXT is cleared to 0xff, and RINT set to a pre-configured value (BR_SHADES_n_RINT_FAILSAFE).
+///      Both values are compiled in (see config.h) to make sure they are never changed.
+///      A sign of life can be: Reading BR_REG_CHANGE or BR_REG_SHADES_STATUS, writing to any request register.
+///
+/// - For the Resources driver:
+///    - RINT can be read back any time / permanently to maintain a synthetic request representing the
+///      user behavior (or delete that request if RINT == 0xff).
+///    - Driving a value = writing it to REXT
+///    - Whenever 0xff is written to REXT, RINT should be cleared to 0xff before (to avoid unexpected starting).
+///    - To be reported: value = POS, state "busy" if (ACT_UP | ACT_DN), state "unkown" if POS = 0xff.
+///
+///    - *NOTE:* It may happen that the final position reported by POS may be close, but different from
+///            the effectively requested position due to inaccuracies.
+///            a) This may change in the future.
+///            b) The driver should implement some logic to round the reported position to the original driven
+///               one if the state is "valid" (ACT_UP == ACT_DN == 0) and both values only differ slightly.
+///
 /// @{
 #define BR_REG_SHADES_STATUS 0x20     ///< @brief Shades status register
-  ///<
-  /// **Notes on shades control:**
-  ///
-  /// - The status bits are read-only and provide direct access to the actuator and buttons
-  ///
-  /// - The *internal* request (RINT) is set ...
-  ///
-  ///     - ... to 0 (up) or 100 (down) if the respective button is pushed and the actuator is off
-  ///
-  ///     - ... to some value between 0 and 100 if any button is pushed and the actuator is on in any direction
-  ///           (usually to stop moving);
-  ///
-  ///     - ... from outside to 0xff (but no other value)
-  ///
-  /// - The *external* request (REXT) is set from outside only.
-  ///
-  /// - REXT has strict priority over RINT. If both are 0xff, the shades are stopped.
-  ///
-  /// - ACT_UP/ACT_DN: If both are up, the motor has recently been stopped and is effectively off now.
-  ///
-  /// - Safety behavior:
-  ///      If for a certain time (SHADES_TIMEOUT) no sign of life is received from the master,
-  ///      REXT is cleared to 0xff, and RINT set to a pre-configured value (BR_SHADES_n_RINT_FAILSAFE).
-  ///      Both values are compiled in (see config.h) to make sure they are never changed.
-  ///      A sign of life can be: Reading BR_REG_CHANGE or BR_REG_SHADES_STATUS, writing to any request register.
-  ///
-  /// - For the Resources driver:
-  ///    - RINT can be read back any time / permanently to maintain a synthetic request representing the
-  ///      user behavior (or delete that request if RINT == 0xff).
-  ///    - Driving a value = writing it to REXT
-  ///    - Whenever 0xff is written to REXT, RINT should be cleared to 0xff before (to avoid unexpected starting).
-  ///    - To be reported: value = POS, state "busy" if (ACT_UP | ACT_DN), state "unkown" if POS = 0xff.
-  ///
-  ///    - *NOTE:* It may happen that the final position reported by POS may be close, but different from
-  ///            the effectively requested position due to inaccuracies.
-  ///            a) This may change in the future.
-  ///            b) The driver should implement some logic to round the reported position to the original driven
-  ///               one if the state is "valid" (ACT_UP == ACT_DN == 0) and both values only differ slightly.
-  ///
-#define   BR_SHADES_0_ACT_UP   0x01   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 actor is currently moving up
-#define   BR_SHADES_0_ACT_DN   0x02   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 actor is currently moving down
-#define   BR_SHADES_0_BTN_UP   0x04   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 up button is pushed (= button down after debouncing)
-#define   BR_SHADES_0_BTN_DN   0x08   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 down button is pushed (= button down after debouncing)
-#define   BR_SHADES_1_ACT_UP   0x10   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 actor is currently moving up
-#define   BR_SHADES_1_ACT_DN   0x20   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 actor is currently moving down
-#define   BR_SHADES_1_BTN_UP   0x40   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 up button is pushed (= button down after debouncing)
-#define   BR_SHADES_1_BTN_DN   0x80   ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 down button is pushed (= button down after debouncing)
-
 #define BR_REG_SHADES_0_POS  0x22     ///< Shades #0: Current position (0..100);  0xff = "unknown"
 #define BR_REG_SHADES_0_RINT 0x23     ///< Shades #0: Internal request (0..100 or 0xff = "none")
 #define BR_REG_SHADES_0_REXT 0x24     ///< Shades #0: External request (0..100 or 0xff = "none")
@@ -631,12 +695,31 @@ typedef struct SBrConfigRecord {
 #define BR_REG_SHADES_1_RINT 0x26     ///< Shades #1: Internal request (0..100 or 0xff = "none")
 #define BR_REG_SHADES_1_REXT 0x27     ///< Shades #1: External request (0..100 or 0xff = "none")
 
+#define BR_SHADES_0_ACT_UP   0x01     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 actor is currently moving up
+#define BR_SHADES_0_ACT_DN   0x02     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 actor is currently moving down
+#define BR_SHADES_0_BTN_UP   0x04     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 up button is pushed (= button down after debouncing)
+#define BR_SHADES_0_BTN_DN   0x08     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #0 down button is pushed (= button down after debouncing)
+#define BR_SHADES_1_ACT_UP   0x10     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 actor is currently moving up
+#define BR_SHADES_1_ACT_DN   0x20     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 actor is currently moving down
+#define BR_SHADES_1_BTN_UP   0x40     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 up button is pushed (= button down after debouncing)
+#define BR_SHADES_1_BTN_DN   0x80     ///< -- [@ref BR_REG_SHADES_STATUS] Shades #1 down button is pushed (= button down after debouncing)
+
+
+
+/// @}
+/// @name Debugging ...
+/// @{
+#define BR_REG_DEBUG_0       0x38     ///< @brief Debug register 0 (for debugging purposes only)
+#define BR_REG_DEBUG_1       0x39     ///< @brief Debug register 1 (for debugging purposes only)
+#define BR_REG_DEBUG_2       0x3a     ///< @brief Debug register 2 (for debugging purposes only)
+#define BR_REG_DEBUG_3       0x3b     ///< @brief Debug register 3 (for debugging purposes only)
+
 
 
 /// @}
 /// @name System control registers ...
 /// @{
-#define BR_REG_FWBASE        0x3d      ///< @brief Firmware base and boot vector location.
+#define BR_REG_FWBASE        0x3d     ///< @brief Firmware base and boot vector location.
   ///<
   /// This is the base address of the active firmware in units of @ref BR_FLASH_PAGESIZE bytes
   /// (64/0x40 on ATtiny84, ATtiny861).
@@ -644,15 +727,15 @@ typedef struct SBrConfigRecord {
   /// causes the interrupt table to be rewritten and the CPU reset.
   /// This register is initialized with the actual firmware base; reading it allows to locate the running
   /// firmware.
-#define BR_REG_CTRL          0x3e      ///< Control register.
-#define   BR_CTRL_UNLOCK_EEPROM     0x01  ///< -- [@ref BR_REG_CTRL] Setting this bit unlocks EEPROM for writing
-#define   BR_CTRL_UNLOCK_FLASH      0x02  ///< -- [@ref BR_REG_CTRL] Setting this bit unlocks flash memory and SRAM
-#define   BR_CTRL_HUB_RESURRECTION  0x04  ///< -- [@ref BR_REG_CTRL] Setting this bit puts TWI hub into resurrection mode
+#define BR_REG_CTRL          0x3e     ///< Control register.
+#define BR_REG_MAGIC         0x3f     ///< Magic value (returns @ref BR_MAGIC after reset)
 
-#define   BR_CTRL_REBOOT            0xe0  ///< -- [@ref BR_REG_CTRL] Writing this value lets the device reboot
-#define   BR_CTRL_REBOOT_NEWFW      0xa0  ///< -- [@ref BR_REG_CTRL] Writing this value changes the interrupt table according to BR_REG_FWBASE and reboots the device
+#define BR_CTRL_UNLOCK_EEPROM     0x01  ///< -- [@ref BR_REG_CTRL] Setting this bit unlocks EEPROM for writing
+#define BR_CTRL_UNLOCK_FLASH      0x02  ///< -- [@ref BR_REG_CTRL] Setting this bit unlocks flash memory and SRAM
+#define BR_CTRL_HUB_RESURRECTION  0x04  ///< -- [@ref BR_REG_CTRL] Setting this bit puts TWI hub into resurrection mode
 
-#define BR_REG_MAGIC         0x3f    ///< Magic value (returns @ref BR_MAGIC after reset)
+#define BR_CTRL_REBOOT            0xe0  ///< -- [@ref BR_REG_CTRL] Writing this value lets the device reboot
+#define BR_CTRL_REBOOT_NEWFW      0xa0  ///< -- [@ref BR_REG_CTRL] Writing this value changes the interrupt table according to BR_REG_FWBASE and reboots the device
 
 
 /// @}    // name

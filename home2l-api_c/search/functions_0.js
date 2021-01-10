@@ -25,6 +25,7 @@ var searchData=
   ['appmusicisplayingorshouldbe',['AppMusicIsPlayingOrShouldBe',['../group__wallclock__music.html#ga9308b01066e500d58d9bb408f8ffe008',1,'app_music.H']]],
   ['appmusicplayeroff',['AppMusicPlayerOff',['../group__wallclock__music.html#gafd7804dccc5492401031d95c157991fe',1,'app_music.H']]],
   ['appmusicplayeron',['AppMusicPlayerOn',['../group__wallclock__music.html#ga00709190d29be6cf3543a70fd94d4a72',1,'app_music.H']]],
+  ['appmusicsetserver',['AppMusicSetServer',['../group__wallclock__music.html#ga579744665e83eb7ed39406267ca8e638',1,'app_music.H']]],
   ['appphonedial',['AppPhoneDial',['../group__wallclock__phone.html#gac2a47671692e7a49126e5edcbc58e9d9',1,'app_phone.H']]],
   ['audioisplaying',['AudioIsPlaying',['../group__ui__base.html#gaef824d60c3403ae21e3f8fa640f02236',1,'ui_base.H']]],
   ['audiostart',['AudioStart',['../group__ui__base.html#gaf7b820cc88a43228ecb7991480d4f9bc',1,'ui_base.H']]],

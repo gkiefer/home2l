@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -117,16 +117,24 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="separator:gaeeec73fd028a88cc8572be394097f5de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6ce55ef742afe006b88df079da2fbb30"><td class="memItemLeft" align="right" valign="top"><a id="ga6ce55ef742afe006b88df079da2fbb30"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga6ce55ef742afe006b88df079da2fbb30">BrMcuStr</a> (int mcuType)</td></tr>
-<tr class="memdesc:ga6ce55ef742afe006b88df079da2fbb30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string for an MCU type (MCU_TYPE_* macros), for example, "t84". <br /></td></tr>
+<tr class="memdesc:ga6ce55ef742afe006b88df079da2fbb30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string (for example, "t84") for an MCU model ID (see BR_MCU_* macros). On error, 'NULL' is returned. <br /></td></tr>
 <tr class="separator:ga6ce55ef742afe006b88df079da2fbb30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga07884bc9273f1646bfbbf7a98eb2a4fb"><td class="memItemLeft" align="right" valign="top"><a id="ga07884bc9273f1646bfbbf7a98eb2a4fb"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga07884bc9273f1646bfbbf7a98eb2a4fb">BrVersionNumberToStr</a> (<a class="el" href="classCString.html">CString</a> *ret, <a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a> *featureRecord)</td></tr>
-<tr class="memdesc:ga07884bc9273f1646bfbbf7a98eb2a4fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string of the version fields of the feature record. The result is written to '*ret' and returned. <br /></td></tr>
-<tr class="separator:ga07884bc9273f1646bfbbf7a98eb2a4fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga68add1db41117add1e9498eb82bb4cac"><td class="memItemLeft" align="right" valign="top"><a id="ga68add1db41117add1e9498eb82bb4cac"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga68add1db41117add1e9498eb82bb4cac">BrVersionNumberFromStr</a> (<a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a> *featureRecord, const char *str)</td></tr>
-<tr class="memdesc:ga68add1db41117add1e9498eb82bb4cac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the version fields of the feature record according to the given version string. <br /></td></tr>
-<tr class="separator:ga68add1db41117add1e9498eb82bb4cac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7b441daca5556ade1953a760ad850111"><td class="memItemLeft" align="right" valign="top"><a id="ga7b441daca5556ade1953a760ad850111"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga7b441daca5556ade1953a760ad850111">BrMcuFromStr</a> (const char *mcuStr)</td></tr>
+<tr class="memdesc:ga7b441daca5556ade1953a760ad850111"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the MCU model ID (see BR_MCU_* macros) from a string (for example, "t84"). On error, <a class="el" href="group__brownies__interface__memory.html#gaf11edc384a15fbe32b6f41f62f5757a0">BR_MCU_NONE</a> is returned. <br /></td></tr>
+<tr class="separator:ga7b441daca5556ade1953a760ad850111"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga518d0626c48632447c72ada03994451c"><td class="memItemLeft" align="right" valign="top"><a id="ga518d0626c48632447c72ada03994451c"></a>
+uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga518d0626c48632447c72ada03994451c">BrVersionGet</a> (<a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a> *featureRecord)</td></tr>
+<tr class="memdesc:ga518d0626c48632447c72ada03994451c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve version from feature record. <br /></td></tr>
+<tr class="separator:ga518d0626c48632447c72ada03994451c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga65235e093215144835937b9321d6a290"><td class="memItemLeft" align="right" valign="top"><a id="ga65235e093215144835937b9321d6a290"></a>
+static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga65235e093215144835937b9321d6a290">BrVersionGetAsStr</a> (<a class="el" href="classCString.html">CString</a> *ret, <a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a> *featureRecord)</td></tr>
+<tr class="memdesc:ga65235e093215144835937b9321d6a290"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string of the version fields of the feature record. The result is written to '*ret' and returned. <br /></td></tr>
+<tr class="separator:ga65235e093215144835937b9321d6a290"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad64c3205a498366ad1ac41c0593a92c9"><td class="memItemLeft" align="right" valign="top"><a id="gad64c3205a498366ad1ac41c0593a92c9"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#gad64c3205a498366ad1ac41c0593a92c9">BrVersionFromStr</a> (<a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a> *featureRecord, const char *str)</td></tr>
+<tr class="memdesc:gad64c3205a498366ad1ac41c0593a92c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the version fields of the feature record according to the given version string. <br /></td></tr>
+<tr class="separator:gad64c3205a498366ad1ac41c0593a92c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaacbae25ff534ed2291cf474e0da17a3a"><td class="memItemLeft" align="right" valign="top"><a id="gaacbae25ff534ed2291cf474e0da17a3a"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#gaacbae25ff534ed2291cf474e0da17a3a">BrFeaturesToStr</a> (<a class="el" href="classCString.html">CString</a> *ret, <a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a> *featureRecord)</td></tr>
 <tr class="memdesc:gaacbae25ff534ed2291cf474e0da17a3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string of the feature-related fields of the feature record. The result is written to '*ret' and returned. <br /></td></tr>
@@ -172,7 +180,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="brownies_8H_source.html#l00383">383</a> of file <a class="el" href="brownies_8H_source.html">brownies.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="brownies_8H_source.html#l00390">390</a> of file <a class="el" href="brownies_8H_source.html">brownies.H</a>.</p>
 
 </div>
 </div>

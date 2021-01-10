@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -192,8 +192,8 @@ class LocalData:
     # Store time stamp from data set
     d, t = obsVals[0], obsVals[1]
     #~ print ("### d = '" + str(d) + "', t = '" + str(t) + "'")
-    LocalData.rcObsTime = home2l.TicksOf ("20" + d[6:8] + '-' + d[3:5] + '-' + d[0:2] + "-" + t[0:2] + t[3:5])
-    LocalData.rcObsTime = home2l.TicksStr (home2l.TicksFromUTC (LocalData.rcObsTime))
+    LocalData.rcObsTime = home2l.TicksAbsOf ("20" + d[6:8] + '-' + d[3:5] + '-' + d[0:2] + "-" + t[0:2] + t[3:5])
+    LocalData.rcObsTime = home2l.TicksAbsStr (home2l.TicksFromUTC (LocalData.rcObsTime))
 
     # Assign observation data to 'rcObsValues'...
     for desc in LocalData.rcDesc:

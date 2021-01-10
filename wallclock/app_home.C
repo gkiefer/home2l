@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -334,18 +334,6 @@ void CWidgetMultiData::OnPushed (bool longPushed) {
 #define INDOOR_W ((UI_RES_X - RADAR_W - FLOORPLAN_W - 32) / 2)
 #define INDOOR_H INFO_H
 #define INDOOR_Y INFO_Y
-
-//~ // Layout: radar - outdoor - floorplan - indoor ...
-//~ #define RADAR_X 32
-//~ #define OUTDOOR_X (RADAR_X + RADAR_W)
-//~ #define FLOORPLAN_X (OUTDOOR_X + OUTDOOR_W)
-//~ #define INDOOR_X (FLOORPLAN_X + FLOORPLAN_W)
-
-//~ // Layout: outdoor - radar - indoor - floorplan ...
-//~ #define OUTDOOR_X 0
-//~ #define RADAR_X (OUTDOOR_X + OUTDOOR_W)
-//~ #define INDOOR_X (RADAR_X + RADAR_W)
-//~ #define FLOORPLAN_X (INDOOR_X + INDOOR_W)
 
 // Layout: outdoor - radar - indoor - floorplan ...
 #define OUTDOOR_X 0

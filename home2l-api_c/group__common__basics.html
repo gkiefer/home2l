@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -93,10 +93,14 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gaae57f17e11e61cf0519e2004414f5629">STR</a>(X)&#160;&#160;&#160;#X</td></tr>
 <tr class="memdesc:gaae57f17e11e61cf0519e2004414f5629"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stringify macro. <br /></td></tr>
 <tr class="separator:gaae57f17e11e61cf0519e2004414f5629"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3386bfe03fd5afd92a87dc07f098eb31"><td class="memItemLeft" align="right" valign="top"><a id="ga3386bfe03fd5afd92a87dc07f098eb31"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga3386bfe03fd5afd92a87dc07f098eb31">OFFSETOF</a>(type,  field)&#160;&#160;&#160;((unsigned) &amp;(((type *) 0)-&gt;field))</td></tr>
-<tr class="memdesc:ga3386bfe03fd5afd92a87dc07f098eb31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Byte offset of a field in struct or class. <br /></td></tr>
-<tr class="separator:ga3386bfe03fd5afd92a87dc07f098eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaac75c52d7eaa06dd012100f7970434d9"><td class="memItemLeft" align="right" valign="top"><a id="gaac75c52d7eaa06dd012100f7970434d9"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gaac75c52d7eaa06dd012100f7970434d9">OFFSET</a>(type,  field)&#160;&#160;&#160;((unsigned) &amp;(((type *) 0)-&gt;field))</td></tr>
+<tr class="memdesc:gaac75c52d7eaa06dd012100f7970434d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Byte offset of a field in struct or class. <br /></td></tr>
+<tr class="separator:gaac75c52d7eaa06dd012100f7970434d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabe6f2089e7669254b9fc7c64314c15be"><td class="memItemLeft" align="right" valign="top"><a id="gabe6f2089e7669254b9fc7c64314c15be"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gabe6f2089e7669254b9fc7c64314c15be">ENTRIES</a>(ARRAY)&#160;&#160;&#160;((int) (sizeof (ARRAY) / sizeof (ARRAY[0])))</td></tr>
+<tr class="memdesc:gabe6f2089e7669254b9fc7c64314c15be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of entries of a statically declared constant array. <br /></td></tr>
+<tr class="separator:gabe6f2089e7669254b9fc7c64314c15be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6bffc62a81adfde17e9d845a2fea7ba0"><td class="memItemLeft" align="right" valign="top"><a id="ga6bffc62a81adfde17e9d845a2fea7ba0"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga6bffc62a81adfde17e9d845a2fea7ba0">CLEAR</a>(X)&#160;&#160;&#160;bzero (&amp;(X), sizeof (X))</td></tr>
 <tr class="memdesc:ga6bffc62a81adfde17e9d845a2fea7ba0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable/object 'X' to all-zero. <br /></td></tr>
@@ -119,14 +123,14 @@ Atomic read and write operations ...</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Enhanced file and directory operations ...</h2></td></tr>
 <tr class="memitem:gab9937e3b713c8f2376dce665898c8c24"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gab9937e3b713c8f2376dce665898c8c24">Write</a> (int fd, const void *buf, size_t count)</td></tr>
-<tr class="memdesc:gab9937e3b713c8f2376dce665898c8c24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX write(), but returns all 'count' bytes whenever possible.  <a href="#gab9937e3b713c8f2376dce665898c8c24">More...</a><br /></td></tr>
+<tr class="memdesc:gab9937e3b713c8f2376dce665898c8c24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX write(), but returns all 'count' bytes as possible.  <a href="#gab9937e3b713c8f2376dce665898c8c24">More...</a><br /></td></tr>
 <tr class="separator:gab9937e3b713c8f2376dce665898c8c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4c0a189c3361c7339f836bef5946eca2"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga4c0a189c3361c7339f836bef5946eca2">Read</a> (int fd, void *buf, size_t count)</td></tr>
-<tr class="memdesc:ga4c0a189c3361c7339f836bef5946eca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX read(), but reads all 'count' bytes whenever possible.  <a href="#ga4c0a189c3361c7339f836bef5946eca2">More...</a><br /></td></tr>
+<tr class="memdesc:ga4c0a189c3361c7339f836bef5946eca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX read(), but reads all 'count' bytes as possible.  <a href="#ga4c0a189c3361c7339f836bef5946eca2">More...</a><br /></td></tr>
 <tr class="separator:ga4c0a189c3361c7339f836bef5946eca2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga84cd52deddfdb43a2d49fc074dd0e2fa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga84cd52deddfdb43a2d49fc074dd0e2fa">MakeDir</a> (const char *relOrAbsPath, bool setHome2lGroup)</td></tr>
-<tr class="memdesc:ga84cd52deddfdb43a2d49fc074dd0e2fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a directory (and all its parents as necessary).  <a href="#ga84cd52deddfdb43a2d49fc074dd0e2fa">More...</a><br /></td></tr>
-<tr class="separator:ga84cd52deddfdb43a2d49fc074dd0e2fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf2a53286ce6baf15b82384d6df81be73"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gaf2a53286ce6baf15b82384d6df81be73">MakeDir</a> (const char *relOrAbsPath, bool setHome2lGroup=true)</td></tr>
+<tr class="memdesc:gaf2a53286ce6baf15b82384d6df81be73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a directory (and all its parents as necessary).  <a href="#gaf2a53286ce6baf15b82384d6df81be73">More...</a><br /></td></tr>
+<tr class="separator:gaf2a53286ce6baf15b82384d6df81be73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga909dafc0d7bd02736ecac1946c47c28d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga909dafc0d7bd02736ecac1946c47c28d">UnlinkTree</a> (const char *relOrAbsPath, const char *skipPattern=NULL)</td></tr>
 <tr class="memdesc:ga909dafc0d7bd02736ecac1946c47c28d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unlink (remove) a directory with all its decendants.  <a href="#ga909dafc0d7bd02736ecac1946c47c28d">More...</a><br /></td></tr>
 <tr class="separator:ga909dafc0d7bd02736ecac1946c47c28d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,8 +171,8 @@ Enhanced file and directory operations ...</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Similar to POSIX write(), but returns all 'count' bytes whenever possible. </p>
-<p>This function repeatedly calls write(2) until 'count' bytes have been written. On error, the actual number of bytes written is returned (which is less than 'count'), and 'errno' is set accordingly. </p><dl class="section return"><dt>Returns</dt><dd>the number of bytes written successfully. </dd></dl>
+<p>Similar to POSIX write(), but returns all 'count' bytes as possible. </p>
+<p>This function repeatedly calls write(2) until 'count' bytes have been written. On error, the actual number of bytes written is returned (which is less than 'count'), and 'errno' is set accordingly. If the file is opened in non-blocking mode, the function does not wait, but returns the bytes available immediately and sets/leaves 'errno == EAGAIN'. </p><dl class="section return"><dt>Returns</dt><dd>the number of bytes written successfully. </dd></dl>
 
 </div>
 </div>
@@ -204,13 +208,13 @@ Enhanced file and directory operations ...</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Similar to POSIX read(), but reads all 'count' bytes whenever possible. </p>
-<p>This function repeatedly calls read(2) until 'count' bytes have been read. On error or end-of-file, the actual number of bytes read is returned (which is less than 'count'), and 'errno' is set accordingly. In the case of an end-of-file condition, 'errno' is set to 0. </p><dl class="section return"><dt>Returns</dt><dd>the number of bytes read successfully. </dd></dl>
+<p>Similar to POSIX read(), but reads all 'count' bytes as possible. </p>
+<p>This function repeatedly calls read(2) until 'count' bytes have been read. On error or end-of-file, the actual number of bytes read is returned (which is less than 'count'), and 'errno' is set accordingly. In the case of an end-of-file condition, 'errno' is set to 0. If the file is opened in non-blocking mode, the function does not wait, but returns the bytes available immediately and sets/leaves 'errno == EAGAIN'. </p><dl class="section return"><dt>Returns</dt><dd>the number of bytes read successfully. </dd></dl>
 
 </div>
 </div>
-<a id="ga84cd52deddfdb43a2d49fc074dd0e2fa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga84cd52deddfdb43a2d49fc074dd0e2fa">&#9670;&nbsp;</a></span>MakeDir()</h2>
+<a id="gaf2a53286ce6baf15b82384d6df81be73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaf2a53286ce6baf15b82384d6df81be73">&#9670;&nbsp;</a></span>MakeDir()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -225,7 +229,7 @@ Enhanced file and directory operations ...</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>setHome2lGroup</em>&#160;</td>
+          <td class="paramname"><em>setHome2lGroup</em> = <code>true</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

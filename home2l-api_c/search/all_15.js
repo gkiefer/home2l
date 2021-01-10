@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['version',['Version',['../group__common__version.html',1,'']]],
   ['values_2c_20types_20and_20states',['Values, Types and States',['../group__resources__values.html',1,'']]],
   ['val',['val',['../structSBrRequest.html#a1be60051051f602f2a9e12225001a88a',1,'SBrRequest::val()'],['../structSBrReply.html#ae9cb77e6daa4b8c245b874ead5bc11f8',1,'SBrReply::val()']]],
   ['validbool',['ValidBool',['../classCResource.html#a5bf12a15a1bef17d2f065466f84d86c0',1,'CResource']]],
@@ -17,7 +18,15 @@ var searchData=
   ['validunsignedfromstring',['ValidUnsignedFromString',['../group__common__strings.html#ga215e4aa805691299b7427cc7768e1947',1,'base.H']]],
   ['valign',['vAlign',['../classCTextFormat.html#a6dd0419627a68767367f66a274a07283',1,'CTextFormat']]],
   ['valueequals',['ValueEquals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState']]],
-  ['versionmajor',['versionMajor',['../structSBrFeatureRecord.html#a6028a7fae8b8d19c88c0882b7898c4df',1,'SBrFeatureRecord']]],
+  ['versioncompose',['VersionCompose',['../group__common__version.html#ga19b03c3b434e79798ce7cd2b09501f62',1,'base.H']]],
+  ['versiondirty',['VersionDirty',['../group__common__version.html#ga19155e10bcbbd11bdfd79900bd6900e4',1,'base.H']]],
+  ['versionfromstr',['VersionFromStr',['../group__common__version.html#ga7ac2259a87b82595ca0581d206f51809',1,'base.H']]],
+  ['versiongetown',['VersionGetOwn',['../group__common__version.html#gac34123152c84f96213ee70248b1beb17',1,'base.H']]],
+  ['versiongetownasstr',['VersionGetOwnAsStr',['../group__common__version.html#ga3a680d944cef0baf9a57f373084a9505',1,'base.H']]],
+  ['versionmajor',['versionMajor',['../structSBrFeatureRecord.html#a6028a7fae8b8d19c88c0882b7898c4df',1,'SBrFeatureRecord::versionMajor()'],['../group__common__version.html#gaf11f5bfd281d75e860a7a31b64e26236',1,'VersionMajor():&#160;base.H']]],
+  ['versionminor',['VersionMinor',['../group__common__version.html#ga615e48cb6b3e377b327a814450675df2',1,'base.H']]],
+  ['versionrevision',['VersionRevision',['../group__common__version.html#ga63e5a876dd77669efe82a6be06707dfb',1,'base.H']]],
+  ['versiontostr',['VersionToStr',['../group__common__version.html#ga08649d5b10da998eec9d7c72b7413aa3',1,'base.H']]],
   ['videolockframe',['VideoLockFrame',['../classCPhone.html#a627e407e9522e793392fe53fa4b91878',1,'CPhone']]],
   ['videounlock',['VideoUnlock',['../classCPhone.html#a2eb6d9fb405200625ba72503a1f819a7',1,'CPhone']]]
 ];

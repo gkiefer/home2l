@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -285,18 +285,32 @@ config:
 	@mkdir -p $(HOME2L_BUILD)/$(ARCH); \
 	cd $(HOME2L_BUILD)/$(ARCH); \
 	echo -e "#ifndef _CONFIG_\n#define _CONFIG_\n" \
-	    "\nextern const char *buildVersion;\nextern const char *buildDate;\n" \
-	    "\nextern const char *home2lAuthor;\nextern const char *home2lUrl;\n" \
-	    "\n#define BUILD_OS \"Debian\"\n#define BUILD_ARCH \""$(ARCH)"\"\n" \
-	    "\n#define HOME2L_AUTHOR \""$(HOME2L_AUTHOR)"\"\n#define HOME2L_URL \""$(HOME2L_URL)"\"\n" \
+	    "\n" \
+	    "extern const char *const buildVersion;\n" \
+	    "extern const char *const buildDate;\n" \
+	    "\n" \
+	    "extern const char *const home2lAuthor;\n" \
+	    "extern const char *const home2lUrl;\n" \
+	    "\n" \
+	    "#define BUILD_OS \"Debian\"\n" \
+	    "#define BUILD_ARCH \""$(ARCH)"\"\n" \
+	    "\n" \
+	    "#define HOME2L_AUTHOR \""$(HOME2L_AUTHOR)"\"\n" \
+	    "#define HOME2L_URL \""$(HOME2L_URL)"\"\n" \
 	    $(CFG_H_CONTENT) \
-	    "\n\n#endif" \
-	    | sed 's/[[:space:]]*$$//g' > config-new.H; \
+	    "\n" \
+	    "\n#endif" \
+	    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$$//' > config-new.H; \
 	diff -q config.H config-new.H > /dev/null 2>&1 || mv config-new.H config.H; \
 	rm -f config-new.H; \
-	echo -e "const char *buildVersion = \""$(BUILD_VERSION)"\";\nconst char *buildDate = \""$(BUILD_DATE)"\";" \
-	    "\nconst char *home2lAuthor = \""$(HOME2L_AUTHOR)"\";\nconst char *home2lUrl = \""$(HOME2L_URL)"\";" \
-	    | sed 's/[[:space:]]*$$//g' > config-new.C; \
+	echo -e "#include \"config.H\"\n" \
+	    "\n" \
+			"const char *const buildVersion = \""$(BUILD_VERSION)"\";\n" \
+	    "const char *const buildDate = \""$(BUILD_DATE)"\";\n" \
+	    "\n" \
+	    "const char *const home2lAuthor = \""$(HOME2L_AUTHOR)"\";\n" \
+	    "const char *const home2lUrl = \""$(HOME2L_URL)"\";\n" \
+	    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$$//' > config-new.C; \
 	diff -q config.C config-new.C > /dev/null 2>&1 || mv config-new.C config.C; \
 	rm -f config-new.C
 

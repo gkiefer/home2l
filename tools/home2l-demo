@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ cmd_start () {
   if pidof -q home2l-daemon; then
     echo "(already running)"
   else
-    if home2l daemon; then
+    if home2l daemon 2>&1 > /tmp/home2l-daemon.log; then
       echo "OK"
     else
       echo "Failed!"

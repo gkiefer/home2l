@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,10 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
-#include <pthread.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 #include <errno.h>
 #include <sys/types.h>  // for 'readdir' & friends
 #include <sys/stat.h>
@@ -418,6 +417,47 @@ void LogPrintf (const char *format, ...) {
 
 
 
+// ***************** Version Helpers *******************************************
+
+
+uint32_t VersionFromStr (const char *str) {
+  int major, minor, revision;
+  bool ok, dirty;
+
+  ok = (sscanf (  (str[0] == 'v' || str[0] == 'V') ? str + 1 : str,     // tolerate preceeding 'v'
+                  "%i.%i-%i", &major, &minor, &revision
+               ) == 3);
+  dirty = (strchr (str, '*') != NULL);
+  if (major < 0 || major > 0xff || minor < 0 || minor > 0xff || revision < 0 || revision > 0x7fff)
+    ok = false;
+  if (!ok) {
+    WARNINGF (("Invalid version string: '%s'", str));
+    return 0;
+  }
+  return VersionCompose (major, minor, revision, dirty);
+}
+
+
+const char *VersionToStr (class CString *ret, uint32_t ver) {
+  ret->SetF ("%i.%i-%i%s",
+              (int) VersionMajor (ver), (int) VersionMinor (ver), (int) VersionRevision (ver),
+              VersionDirty (ver) ? "*" : CString::emptyStr
+            );
+  return ret->Get ();
+}
+
+
+uint32_t VersionGetOwn () {
+  static uint32_t ownVersion = 0;
+
+  if (!ownVersion) ownVersion = VersionFromStr (buildVersion);
+  return ownVersion;
+}
+
+
+
+
+
 // ***************** Localization and language *********************************
 
 
@@ -650,7 +690,7 @@ void LangTranslateNumber (char *str) {
 
 #define MAX_TTS_THREADS   32      // Maximum number of threads using the 'GetTTS ()' function
 
-const char CString::emptyStr[] = "";
+const char *const CString::emptyStr = "";
 
 
 
@@ -1682,7 +1722,7 @@ void CDictRaw::Dump () {
 
 
 
-// ********************** Date & Time **********************
+// *************************** Date & Time *************************************
 
 
 //~ static inline TDate GetFirstOfMonth (TDate date) {
@@ -1700,10 +1740,13 @@ TTicks TicksNow () {
 TTicksMonotonic TicksMonotonicNow () {
   static int initSeconds = -1;
   struct timespec ts;
+  TTicksMonotonic ret;
 
   clock_gettime (CLOCK_MONOTONIC, &ts);
   if (initSeconds < 0) initSeconds = ts.tv_sec;
-  return ( (ts.tv_sec - initSeconds) * 1000) + ts.tv_nsec / 1000000;
+  ret = ( (ts.tv_sec - initSeconds) * 1000) + ts.tv_nsec / 1000000;
+  ASSERT (ret > 0);
+  return ret;
 }
 
 
@@ -1716,13 +1759,13 @@ TTicks TicksFromMonotic (TTicksMonotonic tm) {
 TTicksMonotonic TicksToMonotonic (TTicks t) {
   //~ TTicks now = TicksNow ();
   //~ TTicksMonotonic monNow = TicksMonotonicNow ();
-  //~ INFOF (("### TicksToMonotonic: ticksNow = %l, t = %l, monNow = %i", now, t, monNow));
+  //~ INFOF (("### TicksToMonotonic: ticksNow = %li, t = %li, monNow = %i", now, t, monNow));
   if (t <= 0) return (TTicksMonotonic) t;     // '0' represents "as soon as possible", < 0 represents "relative from now in the future"
   return ((TTicksMonotonic) (t - TicksNow ())) + TicksMonotonicNow ();
 }
 
 
-const char *TicksToString (CString *ret, TTicks ticks, int fracDigits, bool precise) {
+const char *TicksAbsToString (CString *ret, TTicks ticks, int fracDigits, bool precise) {
   TDate d;
   TTime t;
 
@@ -1753,8 +1796,41 @@ const char *TicksToString (CString *ret, TTicks ticks, int fracDigits, bool prec
 }
 
 
-const char *TicksToString (TTicks ticks, int fracDigits, bool precise) {
-  return TicksToString (GetTTS (), ticks, fracDigits, precise);
+const char *TicksAbsToString (TTicks ticks, int fracDigits, bool precise) {
+  return TicksAbsToString (GetTTS (), ticks, fracDigits, precise);
+}
+
+
+const char *TicksRelToString (CString *ret, TTicks ticks) {
+  char unit = '\0';
+
+  if (ticks % 1000 == 0) {
+    unit = 's';
+    ticks /= 1000;
+    if (ticks % 60 == 0) {
+      unit = 'm';
+      ticks /= 60;
+      if (ticks % 60 == 0) {
+        unit = 'h';
+        ticks /= 60;
+        if (ticks % 24 == 0) {
+          unit = 'd';
+          ticks /= 24;
+          if (ticks % 7 == 0) {
+            unit = 'w';
+            ticks /= 7;
+          }
+        }
+      }
+    }
+  }
+  ret->SetF ("%lli%c", (long long) ticks, unit);
+  return ret->Get ();
+}
+
+
+const char *TicksRelToString (TTicks ticks) {
+  return TicksRelToString (GetTTS (), ticks);
 }
 
 
@@ -1764,7 +1840,7 @@ bool TicksFromString (const char *str, TTicks *ret, bool absolute) {
   const char *p;
   int n;
 
-  if (str[0] == 't') {
+  if (absolute && str[0] == 't') {
     // Handle absolut time is given: return it ...
     if (sscanf (str + 1, "%llu", &lluRet) == 1) {
       *ret = (TTicks) lluRet;
@@ -1790,8 +1866,11 @@ bool TicksFromString (const char *str, TTicks *ret, bool absolute) {
     n = sscanf (str, "%i-%u-%u-%02u%02u%02u.%03u", &dy, &dm, &dd, &th, &tm, &ts, &millis);
     //~ INFOF (("### TicksFromString ('%s') -> n = %i, dy = %i, dm = %i, dd = %i", str, n, dy, dm, dd));
     if (n >= 3) {
-      // At least full date is given: return it...
-      if (dy < 0) return false;   // negative numbers are only for relative times.
+      // At least full date is given: check and return it...
+      if (!absolute           // only supported as absolute time
+          || dy < 1970 || dm < 1 || dm > 12 || dd < 1 || dd > 31    // date ok?
+          || th > 23 || tm > 59 || ts > 59                          // time ok?
+          || millis > 999) return false;                            // millis ok?
       *ret = DateTimeToTicks (DATE_OF (dy, dm, dd), TIME_OF (th, tm, ts)) + millis;
       return true;
     }
@@ -2048,7 +2127,7 @@ bool CTimer::ClassIterateAL () {
 
       // Get next timer and remove first element...
       t = CTimer::first;
-      //~ INFOF(("TimerIterate at %i: %08x at %i", curTicks, t, t->nextTicks));
+      //~ INFOF(("# TimerIterate at %i: %08x at %i", curTicks, t, t->nextTicks));
       CTimer::first = t->next;   // remove first element
 
       // If repeated event: Re-insert the object for the next occasion...
@@ -2065,6 +2144,7 @@ bool CTimer::ClassIterateAL () {
       //   Important: This must be done after all list operations, since the timer function
       //   itself may reschedule/change this timer!
       timerMutex.Unlock ();   // mutex must be unlocked when 'func' is called!
+      //~ INFOF (("#   OnTime (%lx)", (uint64_t) t));
       t->OnTime ();
       timerMutex.Lock ();
 
@@ -2093,6 +2173,7 @@ TTicksMonotonic CTimer::GetDelayTimeAL () {
 bool TimerIterate () {
   bool ret;
 
+  //~ INFO ("### TimerIterate() ...");
   timerMutex.Lock ();
   ret = CTimer::ClassIterateAL ();
   timerMutex.Unlock ();
@@ -2184,7 +2265,7 @@ void CTimer::Set (FTimerCallback *_func, void *_data, void *_creator) {
 
 
 void CTimer::Set (TTicksMonotonic _time, TTicksMonotonic _interval, FTimerCallback *_func, void *_data, void *_creator) {
-  //~ INFOF (("### CTimer::Set (_time = %i, _interval = %i), now = %i", _time, interval, TicksMonotonicNow ()));
+  //~ INFOF (("### CTimer (%lx)::Set (_time = %i, _interval = %i), now = %i", (uint64_t) this, _time, _interval, TicksMonotonicNow ()));
   func = _func;
   data = _data;
   creator = _creator;
@@ -2210,6 +2291,7 @@ void CTimer::Reschedule (TTicksMonotonic _time, TTicksMonotonic _interval) {
 
 
 void CTimer::Clear () {
+  //~ INFOF (("### CTimer (%lx)::Clear ()", (uint64_t) this));
   timerMutex.Lock ();
   UnlinkAL ();
   timerMutex.Unlock ();
@@ -2505,7 +2587,7 @@ void Sleep (TTicksMonotonic mSecs) {
 
 
 
-// ********************** CShell ***************************
+// *************************** CShell ******************************************
 
 
 ENV_PARA_SPECIAL ("sys.cmd.<name>", const char *, NULL)
@@ -2552,7 +2634,7 @@ int CShell::Run (const char *cmd, const char *input, CString *output) {
 
 
 
-// ********************** CShellBare ***********************
+// *************************** CShellBare **************************************
 
 
 void CShellBare::Done () {
@@ -2803,7 +2885,7 @@ bool CShellBare::ReadLine (CString *str) {
 
 
 
-// ********************** CShellSession *******************
+// *************************** CShellSession ***********************************
 
 
 static const char shellMagicString[] = "---8-----=HOME2L=---=MAGIC=-----8---";
@@ -2889,4 +2971,64 @@ bool CShellSession::ReadLine (CString *str) {
     return false;
   }
   return true;
+}
+
+
+
+
+
+// *************************** Service managing ********************************
+
+
+// ***** CServiceKeeper *****
+
+
+void CServiceKeeper::Refresh () {
+  tLastOpen = TicksMonotonicNow ();
+  tNextAttempt = tLastOpen;
+}
+
+
+void CServiceKeeper::Iterate () {
+  if (shouldBeOpen) {     // should be open ...
+    if (!isOpen) {
+      if (TicksMonotonicNow () >= tNextAttempt) DoOpen ();
+    }
+  }
+  else {                  // should be closed ...
+    if (isOpen) DoClose ();
+  }
+}
+
+
+bool CServiceKeeper::OpenAttemptNow () {
+  return shouldBeOpen && !isOpen && TicksMonotonicNow () >= tNextAttempt;
+}
+
+
+bool CServiceKeeper::CloseNow () {
+  return !shouldBeOpen && isOpen;
+}
+
+
+void CServiceKeeper::ReportLost () {
+  if (isOpen) {
+    isOpen = false;
+    Refresh ();
+  }
+}
+
+
+void CServiceKeeper::ReportOpenAttempt (bool success) {
+  TTicksMonotonic tNow;
+
+  isOpen = success;
+  if (!success && shouldBeOpen) {
+    // Had a failed open attempt: Schedule next try ...
+    if (tShortToLong == NEVER || tNextAttempt - tLastOpen < tShortToLong) tNextAttempt += tDShort;
+    else tNextAttempt += tDLong;
+    tNow = TicksMonotonicNow ();
+    // Check for and handle unexpected delay (intervals shorter than actual time passed) ...
+    if (tNextAttempt < tNow) tNextAttempt = tNow + tDShort;
+  }
 }

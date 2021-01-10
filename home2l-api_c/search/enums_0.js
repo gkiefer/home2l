@@ -12,6 +12,7 @@ var searchData=
   ['erceventtype',['ERcEventType',['../group__resources__subscribe.html#gaa62547de0ce3b58d5f8720ece5c74e09',1,'resources.H']]],
   ['ercstate',['ERcState',['../group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49',1,'resources.H']]],
   ['erctphonestate',['ERctPhoneState',['../group__resources__values.html#ga960dd10c4618f4862b627630cf63aaaa',1,'resources.H']]],
+  ['erctplayerstate',['ERctPlayerState',['../group__resources__values.html#gad608d41474c067af6383a888367a3d88',1,'resources.H']]],
   ['erctusestate',['ERctUseState',['../group__resources__values.html#ga82eaa815a80b187e8a0bb72f3891bc8e',1,'resources.H']]],
   ['erctwindowstate',['ERctWindowState',['../group__resources__values.html#ga9484416b54ea85245b28953b6e850e3e',1,'resources.H']]],
   ['erctype',['ERcType',['../group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda',1,'resources.H']]],

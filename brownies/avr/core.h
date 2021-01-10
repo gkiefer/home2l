@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,8 +22,7 @@
 #ifndef _CORE_
 #define _CORE_
 
-#include "config.h"
-#include "interface.h"
+#include "configure.h"
 
 
 /** @file
@@ -40,7 +39,8 @@
   static inline void NAME##Init () {}                               \
   static inline void NAME##Iterate () {}                            \
   static inline void NAME##OnRegRead (uint8_t reg) {}               \
-  static inline void NAME##OnRegWrite (uint8_t reg, uint8_t val) {}
+  static inline void NAME##OnRegWrite (uint8_t reg, uint8_t val) {} \
+  static inline void NAME##ISR () {}
   ///< @brief Helper to declare an empty / deactivated module (see @ref brownies_firmware).
 
 
@@ -122,7 +122,12 @@ extern struct SBrEeprom brEeprom;
 #if !IS_MAINTENANCE || DOXYGEN
 
 
-void ReportChange (uint8_t mask);
+extern uint8_t chgShadow;      ///< @internal
+
+
+static inline void ReportChange (uint8_t mask) { chgShadow |= mask; }
+  ///< @brief Set (a) bit(s) in the @ref BR_REG_CHANGED register.
+void ReportChangeAndNotify (uint8_t mask);
   ///< @brief Set (a) bit(s) in the @ref BR_REG_CHANGED register and issue a TWI host notification.
 
 
@@ -169,7 +174,8 @@ static inline uint16_t TimerNow () { return 0; }
 /// @name Mini-Timer ...
 ///
 /// 8-bit counter with a cycle time of 8µs to be used locally in modules.
-/// Presently, the mini-timer is exclusively used by the 'temperature' module.
+/// Presently, the mini-timer is used by the ISRs of the UART and the 'temperature' modules.
+/// Minitimers must be used with interrupts disabled.
 ///
 /// **Note:** MinitimerReset() and MinitimerNow() are implemented as macros to ensure
 ///    that they are inlined. Otherwise, ISRs may get a very long prologue saving
@@ -184,19 +190,30 @@ static inline uint16_t TimerNow () { return 0; }
 
 #if DOXYGEN
 
+#define MINI_CLOCK_SCALE_1            ///< @brief Minitimer clock period of 1/BR_CPU_FREQ
+#define MINI_CLOCK_SCALE_8            ///< @brief Minitimer clock period of 8 * 1/BR_CPU_FREQ
+#define MINI_CLOCK_SCALE_64           ///< @brief Minitimer clock period of 64 * 1/BR_CPU_FREQ
+#define MINI_CLOCK_SCALE_256          ///< @brief Minitimer clock period of 256 * 1/BR_CPU_FREQ
+#define MINI_CLOCK_SCALE_1024         ///< @brief Minitimer clock period of 1024 * 1/BR_CPU_FREQ
 
-void MinitimerStart ();     ///< @brief Start the minitimer
-void MinitimerStop ();      ///< @brief Stop the minitimer
-void MinitimerReset();      ///< @brief Reset the minitimer
-uint8_t MinitimerNow();     ///< @brief Get the current minitimer value
+void MinitimerStart (int clockScale); ///< @brief Start the minitimer (pass any MINI_CLOCK_SCALE_* constants)
+void MinitimerStop ();                ///< @brief Stop the minitimer
+void MinitimerReset();                ///< @brief Reset the minitimer
+uint8_t MinitimerNow();               ///< @brief Get the current minitimer value
 
 
-#elif MCU_TYPE == MCU_TYPE_ATTINY85 || MCU_TYPE == MCU_TYPE_ATTINY84
+#elif MCU_TYPE == BR_MCU_ATTINY85 || MCU_TYPE == BR_MCU_ATTINY84
 
 
-static inline void MinitimerStart () {
+#define MINI_CLOCK_SCALE_1    1
+#define MINI_CLOCK_SCALE_8    2
+#define MINI_CLOCK_SCALE_64   3
+#define MINI_CLOCK_SCALE_256  4
+#define MINI_CLOCK_SCALE_1024 5
+
+static inline void MinitimerStart (int CLOCK_SCALE) {
   TCCR0A = 0;   // Normal port operation (OC1A/OC1B disconnected); No waveform generation
-  TCCR0B = 2;   // enable 8-bit timer with clk_io / 8; one tick is 8 µs; one ZACwire bit is 125 µs ~= 16 clock units
+  TCCR0B = CLOCK_SCALE;   // enable 8-bit timer with clk_io / 8; one tick is 8 µs; one ZACwire bit is 125 µs ~= 16 clock units
 }
 
 static inline void MinitimerStop () {
@@ -208,12 +225,18 @@ static inline void MinitimerStop () {
 #define MinitimerNow() ((uint8_t) TCNT0)
 
 
-#elif MCU_TYPE == MCU_TYPE_ATTINY861
+#elif MCU_TYPE == BR_MCU_ATTINY861
 
 
-static inline void MinitimerStart () {
+#define MINI_CLOCK_SCALE_1    1
+#define MINI_CLOCK_SCALE_8    4
+#define MINI_CLOCK_SCALE_64   7
+#define MINI_CLOCK_SCALE_256  9
+#define MINI_CLOCK_SCALE_1024 11
+
+static inline void MinitimerStart (int CLOCK_SCALE) {
   TCCR1A = 0;   // Normal port operation (OC1A/OC1B disconnected); No waveform generation
-  TCCR1B = (1 << PSR1) | 4;   // Prescaler reset, set prescaler to CK/8
+  TCCR1B = (1 << PSR1) | CLOCK_SCALE;
   TC1H = 0;     // Set high byte to 0 (affects TCNT1, OCR1C and any other 10 bit registers)
   OCR1C = 0xff; // "top" value for counter
   PLLCSR = 0;   // disable PLL, ensure synchronous mode
@@ -231,7 +254,7 @@ static inline void MinitimerStop () {
 #define MinitimerNow() ((uint8_t) TCNT1)
 
 
-#endif // MCU_TYPE == MCU_TYPE_ATTINY861
+#endif // MCU_TYPE == BR_MCU_ATTINY861
 
 
 

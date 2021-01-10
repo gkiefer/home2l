@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,9 +43,12 @@
   ///< @brief Logical height of the floorplan.
 #define FP_UPDATE_INTERVAL 64
   ///< @brief Number of milliseconds between updates
-#define COL_FP_MAIN DARK_BLUE
+
+#define COL_FP_MAIN BROWN
   ///< @brief Main color of the floorplan screen
-#define COL_FP_MAIN_DARKER ColorDarker (DARK_BLUE, 0x40)  ///< @internal
+#define COL_FP_MAIN_DARKER ColorScale (COL_FP_MAIN, 0x80)   ///< @internal
+//~ #define COL_FP_MAIN DARK_BLUE
+//~ #define COL_FP_MAIN_DARKER ColorDarker (COL_FP_MAIN, 0x40)  ///< @internal
 
 
 /** Gadget Type

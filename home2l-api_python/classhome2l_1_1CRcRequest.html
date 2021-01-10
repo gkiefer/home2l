@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-9-g0486* (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -184,13 +184,14 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <pre class="fragment">Set(CRcRequest self, CRcRequest req)
-Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis)
-Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat)
-Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1)
-Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority, TTicks _t0)
-Set(CRcRequest self, CRcValueState _value, char const * _gid=None, int _priority)
-Set(CRcRequest self, CRcValueState _value, char const * _gid=None)
-Set(CRcRequest self, CRcValueState _value)
+Set(CRcRequest self, CRcValueState _value=None, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis)
+Set(CRcRequest self, CRcValueState _value=None, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat)
+Set(CRcRequest self, CRcValueState _value=None, char const * _gid=None, int _priority, TTicks _t0, TTicks _t1)
+Set(CRcRequest self, CRcValueState _value=None, char const * _gid=None, int _priority, TTicks _t0)
+Set(CRcRequest self, CRcValueState _value=None, char const * _gid=None, int _priority)
+Set(CRcRequest self, CRcValueState _value=None, char const * _gid=None)
+Set(CRcRequest self, CRcValueState _value=None)
+Set(CRcRequest self)
 </pre> 
 </div>
 </div>
@@ -784,9 +785,9 @@ ToStr(CRcRequest self) -&gt; char const *
 <pre class="fragment">Set value and/or selected request attributes.
 
 This method allows to set any subset of attributes in a flexible way, either by (named) function arguments
-or by a textual description as accepted by the Home2L Shell or CRequest::SetFromStr().
+or by a textual description as accepted by the Home2L Shell or CRcRequest::SetFromStr().
 
-See RcSetRequest() for a detailed explanation of the arguments.
+See RcSetRequest() for a detailed explanation of the arguments and examples.
 </pre> 
 </div>
 </div>

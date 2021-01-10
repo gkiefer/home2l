@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -175,6 +175,14 @@ Version and Feature Record (VROM, Compile-Time) ...</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga120a3af8803892c3b79a19dbf07888db">BR_MAGIC</a>&#160;&#160;&#160;0xb1</td></tr>
 <tr class="memdesc:ga120a3af8803892c3b79a19dbf07888db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Magic byte value to identify this device as a brownie. <br /></td></tr>
 <tr class="separator:ga120a3af8803892c3b79a19dbf07888db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga320d03e1e7194e1cfe5cb3d735805539"><td class="memItemLeft" align="right" valign="top"><a id="ga320d03e1e7194e1cfe5cb3d735805539"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga320d03e1e7194e1cfe5cb3d735805539">brFeatureRecordRcVec0</a>&#160;&#160;&#160;offsetof (<a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a>, features)</td></tr>
+<tr class="memdesc:ga320d03e1e7194e1cfe5cb3d735805539"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset of first byte of the feature code stored in the database (key "features") and relevant for resources. <br /></td></tr>
+<tr class="separator:ga320d03e1e7194e1cfe5cb3d735805539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae0828b996083bb81610cd5556b614346"><td class="memItemLeft" align="right" valign="top"><a id="gae0828b996083bb81610cd5556b614346"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#gae0828b996083bb81610cd5556b614346">brFeatureRecordRcVec1</a>&#160;&#160;&#160;offsetof (<a class="el" href="group__brownies__interface__memory.html#ga74f9c3fff3183b3d17903ebb2ba2a764">TBrFeatureRecord</a>, reserved)</td></tr>
+<tr class="memdesc:gae0828b996083bb81610cd5556b614346"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset of first byte behind the feature code stored in the database (key "features") and relevant for resources. <br /></td></tr>
+<tr class="separator:gae0828b996083bb81610cd5556b614346"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 ... Feature Bits ...</h2></td></tr>
@@ -195,22 +203,22 @@ Version and Feature Record (VROM, Compile-Time) ...</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga59b872c5d3313a2fcc67eb669bfd34b7">BR_FEATURE_TWIHUB</a>&#160;&#160;&#160;0x0008</td></tr>
 <tr class="memdesc:ga59b872c5d3313a2fcc67eb669bfd34b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is TWI hub. <br /></td></tr>
 <tr class="separator:ga59b872c5d3313a2fcc67eb669bfd34b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga8afb5a5b4ce8cf4bd5b07fb0d81e5ac2"><td class="memItemLeft" align="right" valign="top"><a id="ga8afb5a5b4ce8cf4bd5b07fb0d81e5ac2"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga8afb5a5b4ce8cf4bd5b07fb0d81e5ac2">BR_FEATURE_MATRIX</a>&#160;&#160;&#160;0x0010</td></tr>
-<tr class="memdesc:ga8afb5a5b4ce8cf4bd5b07fb0d81e5ac2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has a matrix sensor. <br /></td></tr>
-<tr class="separator:ga8afb5a5b4ce8cf4bd5b07fb0d81e5ac2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gae90a38b56fd4563f41e98b8b2912ac62"><td class="memItemLeft" align="right" valign="top"><a id="gae90a38b56fd4563f41e98b8b2912ac62"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#gae90a38b56fd4563f41e98b8b2912ac62">BR_FEATURE_TEMP</a>&#160;&#160;&#160;0x0020</td></tr>
-<tr class="memdesc:gae90a38b56fd4563f41e98b8b2912ac62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has temperature sensor (TSic 206/306 over ZACwire) <br /></td></tr>
-<tr class="separator:gae90a38b56fd4563f41e98b8b2912ac62"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1542850b7e9458a41fcc4ac55353b07c"><td class="memItemLeft" align="right" valign="top"><a id="ga1542850b7e9458a41fcc4ac55353b07c"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga1542850b7e9458a41fcc4ac55353b07c">BR_FEATURE_ADC_0</a>&#160;&#160;&#160;0x0040</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga1542850b7e9458a41fcc4ac55353b07c">BR_FEATURE_ADC_0</a>&#160;&#160;&#160;0x0010</td></tr>
 <tr class="memdesc:ga1542850b7e9458a41fcc4ac55353b07c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has ADC #0 (e.g. for analog temperatur) <br /></td></tr>
 <tr class="separator:ga1542850b7e9458a41fcc4ac55353b07c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga86d3f82b217330ed016f85f7817994d5"><td class="memItemLeft" align="right" valign="top"><a id="ga86d3f82b217330ed016f85f7817994d5"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga86d3f82b217330ed016f85f7817994d5">BR_FEATURE_ADC_1</a>&#160;&#160;&#160;0x0080</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga86d3f82b217330ed016f85f7817994d5">BR_FEATURE_ADC_1</a>&#160;&#160;&#160;0x0020</td></tr>
 <tr class="memdesc:ga86d3f82b217330ed016f85f7817994d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has ADC #1 (e.g. for analog temperatur) <br /></td></tr>
 <tr class="separator:ga86d3f82b217330ed016f85f7817994d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5a52382d0934d96db1fb5f18a553dbf7"><td class="memItemLeft" align="right" valign="top"><a id="ga5a52382d0934d96db1fb5f18a553dbf7"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga5a52382d0934d96db1fb5f18a553dbf7">BR_FEATURE_UART</a>&#160;&#160;&#160;0x0040</td></tr>
+<tr class="memdesc:ga5a52382d0934d96db1fb5f18a553dbf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has UART (e.g. for RS485) <br /></td></tr>
+<tr class="separator:ga5a52382d0934d96db1fb5f18a553dbf7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae90a38b56fd4563f41e98b8b2912ac62"><td class="memItemLeft" align="right" valign="top"><a id="gae90a38b56fd4563f41e98b8b2912ac62"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#gae90a38b56fd4563f41e98b8b2912ac62">BR_FEATURE_TEMP</a>&#160;&#160;&#160;0x0080</td></tr>
+<tr class="memdesc:gae90a38b56fd4563f41e98b8b2912ac62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has temperature sensor (TSic 206/306 over ZACwire) <br /></td></tr>
+<tr class="separator:gae90a38b56fd4563f41e98b8b2912ac62"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6d92e136cce01521e04d3c01dd0604e6"><td class="memItemLeft" align="right" valign="top"><a id="ga6d92e136cce01521e04d3c01dd0604e6"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga6d92e136cce01521e04d3c01dd0604e6">BR_FEATURE_SHADES_0</a>&#160;&#160;&#160;0x0100</td></tr>
 <tr class="memdesc:ga6d92e136cce01521e04d3c01dd0604e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has shades actuator #0. <br /></td></tr>
@@ -219,36 +227,37 @@ Version and Feature Record (VROM, Compile-Time) ...</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#gab8bc05357c6d9eb36b0e84da1bc6ea21">BR_FEATURE_SHADES_1</a>&#160;&#160;&#160;0x0200</td></tr>
 <tr class="memdesc:gab8bc05357c6d9eb36b0e84da1bc6ea21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has shades actuator #1. <br /></td></tr>
 <tr class="separator:gab8bc05357c6d9eb36b0e84da1bc6ea21"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gab1d08d3da3459aff9f9e2acf786b7c47"><td class="memItemLeft" align="right" valign="top"><a id="gab1d08d3da3459aff9f9e2acf786b7c47"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#gab1d08d3da3459aff9f9e2acf786b7c47">BR_FEATURE_MROWS</a>&#160;&#160;&#160;0x1c00</td></tr>
-<tr class="memdesc:gab1d08d3da3459aff9f9e2acf786b7c47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of matrix rows - 1. <br /></td></tr>
-<tr class="separator:gab1d08d3da3459aff9f9e2acf786b7c47"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga5633570ab165473948e1349590bda6f5"><td class="memItemLeft" align="right" valign="top"><a id="ga5633570ab165473948e1349590bda6f5"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_FEATURE_MROWS_SHIFT</b>&#160;&#160;&#160;(2+8)</td></tr>
-<tr class="separator:ga5633570ab165473948e1349590bda6f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga8c85003d995addbe69f4e4c303acc5a4"><td class="memItemLeft" align="right" valign="top"><a id="ga8c85003d995addbe69f4e4c303acc5a4"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga8c85003d995addbe69f4e4c303acc5a4">BR_FEATURE_MCOLS</a>&#160;&#160;&#160;0xe000</td></tr>
-<tr class="memdesc:ga8c85003d995addbe69f4e4c303acc5a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of matrix columns - 1. <br /></td></tr>
-<tr class="separator:ga8c85003d995addbe69f4e4c303acc5a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga8eaa3aab076519e0bc17bafb77f25097"><td class="memItemLeft" align="right" valign="top"><a id="ga8eaa3aab076519e0bc17bafb77f25097"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_FEATURE_MCOLS_SHIFT</b>&#160;&#160;&#160;(5+8)</td></tr>
-<tr class="separator:ga8eaa3aab076519e0bc17bafb77f25097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
+... Matrix Dimensions ...</h2></td></tr>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp9eb8a8f2a880259043c2630aee219ef3"></a>(for <a class="el" href="structSBrFeatureRecord.html#add07ae00701fa8eba0c486332e722171">SBrFeatureRecord::matDim</a>) </p>
+</td></tr>
+<tr class="memitem:ga0717e1b8c87a3a1cfbb9e6dbaa0a9584"><td class="memItemLeft" align="right" valign="top"><a id="ga0717e1b8c87a3a1cfbb9e6dbaa0a9584"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_MATDIM_ROWS</b>(X)&#160;&#160;&#160;((X) &gt;&gt; 4)</td></tr>
+<tr class="separator:ga0717e1b8c87a3a1cfbb9e6dbaa0a9584"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga95d9824cef40a216b24d57274aa635e3"><td class="memItemLeft" align="right" valign="top"><a id="ga95d9824cef40a216b24d57274aa635e3"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_MATDIM_COLS</b>(X)&#160;&#160;&#160;((X) &amp; 0x0f)</td></tr>
+<tr class="separator:ga95d9824cef40a216b24d57274aa635e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 ... MCU Type IDs ...</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp433b8a5163490b73162771c08f98c12d"></a>(for <a class="el" href="structSBrFeatureRecord.html#a25f45f9fad726760e09ced2fa083b6c2">SBrFeatureRecord::mcuType</a>) </p>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp433b8a5163490b73162771c08f98c12d"></a>(for <a class="el" href="structSBrFeatureRecord.html#a25f45f9fad726760e09ced2fa083b6c2">SBrFeatureRecord::mcuType</a> and for the 'config.h') </p>
 </td></tr>
 <tr class="memitem:gaf11edc384a15fbe32b6f41f62f5757a0"><td class="memItemLeft" align="right" valign="top"><a id="gaf11edc384a15fbe32b6f41f62f5757a0"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_MCU_NONE</b>&#160;&#160;&#160;0</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#gaf11edc384a15fbe32b6f41f62f5757a0">BR_MCU_NONE</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gaf11edc384a15fbe32b6f41f62f5757a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">No or unknown MCU type. <br /></td></tr>
 <tr class="separator:gaf11edc384a15fbe32b6f41f62f5757a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga86e9a2b7ec4d8af59b2a36e08337a303"><td class="memItemLeft" align="right" valign="top"><a id="ga86e9a2b7ec4d8af59b2a36e08337a303"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_MCU_ATTINY85</b>&#160;&#160;&#160;1</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga86e9a2b7ec4d8af59b2a36e08337a303">BR_MCU_ATTINY85</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga86e9a2b7ec4d8af59b2a36e08337a303"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVR ATtiny85 (8 pins) or any software- and pin-compatible model. <br /></td></tr>
 <tr class="separator:ga86e9a2b7ec4d8af59b2a36e08337a303"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga9147972ccff4fb1407046162f7e91742"><td class="memItemLeft" align="right" valign="top"><a id="ga9147972ccff4fb1407046162f7e91742"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_MCU_ATTINY84</b>&#160;&#160;&#160;2</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga9147972ccff4fb1407046162f7e91742">BR_MCU_ATTINY84</a>&#160;&#160;&#160;2</td></tr>
+<tr class="memdesc:ga9147972ccff4fb1407046162f7e91742"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVR ATtiny84 (14 pins) or any software- and pin-compatible model. <br /></td></tr>
 <tr class="separator:ga9147972ccff4fb1407046162f7e91742"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3fce1ebb44dd9269e80ab600dc09cecd"><td class="memItemLeft" align="right" valign="top"><a id="ga3fce1ebb44dd9269e80ab600dc09cecd"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_MCU_ATTINY861</b>&#160;&#160;&#160;3</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga3fce1ebb44dd9269e80ab600dc09cecd">BR_MCU_ATTINY861</a>&#160;&#160;&#160;3</td></tr>
+<tr class="memdesc:ga3fce1ebb44dd9269e80ab600dc09cecd"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVR ATtiny861 (20 pins) or any software- and pin-compatible model. <br /></td></tr>
 <tr class="separator:ga3fce1ebb44dd9269e80ab600dc09cecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
@@ -319,7 +328,7 @@ Configuration Record (EEPROM, Run-Time Changeable) ...</h2></td></tr>
 <p>This is a null-terminated string containing a unique identifier for the brownie. The size of this structure must be a multiple of <a class="el" href="group__brownies__interface__protocol.html#ga5006539b3ba27f8c7616e74fae0aa335">BR_MEM_BLOCKSIZE</a> (presently 0x10).</p>
 <p>Note: The size of this structure must be equal to <a class="el" href="group__brownies__interface__memory.html#gad7fafdd19dfe578b56b6d1c2fda43737">BR_EEPROM_ID_SIZE</a> and a multiple of <a class="el" href="group__brownies__interface__protocol.html#ga5006539b3ba27f8c7616e74fae0aa335">BR_MEM_BLOCKSIZE</a>. This can be checked by compiling and running 'home2l-brownie2l' (see entry of main() there). </p>
 
-<p class="definition">Definition at line <a class="el" href="interface_8h_source.html#l00409">409</a> of file <a class="el" href="interface_8h_source.html">interface.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="interface_8h_source.html#l00429">429</a> of file <a class="el" href="interface_8h_source.html">interface.h</a>.</p>
 
 </div>
 </div>

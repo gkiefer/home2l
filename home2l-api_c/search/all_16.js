@@ -11,14 +11,15 @@ var searchData=
   ['warning',['WARNING',['../group__common__logging.html#gaf785f9a4a6839363be802b59acaba2f5',1,'base.H']]],
   ['warningf',['WARNINGF',['../group__common__logging.html#ga34dc51f348dd282f8a7193548b77a2d8',1,'base.H']]],
   ['whitespace',['WHITESPACE',['../group__common__strings.html#gabfa0d183e035eb9705b5faec98294d0f',1,'base.H']]],
-  ['with_5ftemp_5fzacwire',['WITH_TEMP_ZACWIRE',['../group__brownies__features.html#gadf662d521cb245009d17ec6ad11f6ea0',1,'config.h']]],
-  ['with_5ftimer',['WITH_TIMER',['../group__brownies__features.html#ga2bcce071877004aec4fb365d59036c4f',1,'config.h']]],
-  ['with_5ftwihub',['WITH_TWIHUB',['../group__brownies__features.html#ga25c40014c617b7ea659d613903c063c2',1,'config.h']]],
+  ['with_5ftemp_5fzacwire',['WITH_TEMP_ZACWIRE',['../group__brownies__features.html#gadf662d521cb245009d17ec6ad11f6ea0',1,'configure.h']]],
+  ['with_5ftimer',['WITH_TIMER',['../group__brownies__features.html#ga2bcce071877004aec4fb365d59036c4f',1,'configure.h']]],
+  ['with_5ftwihub',['WITH_TWIHUB',['../group__brownies__features.html#ga25c40014c617b7ea659d613903c063c2',1,'configure.h']]],
+  ['with_5fuart',['WITH_UART',['../group__brownies__features.html#ga9096b850d2d6dc210384231faa3956e8',1,'configure.h']]],
   ['writable',['Writable',['../classCShell.html#a0117480a0aab83ae4620b354115118a9',1,'CShell']]],
   ['write',['Write',['../group__common__basics.html#gab9937e3b713c8f2376dce665898c8c24',1,'base.H']]],
   ['writeclose',['WriteClose',['../classCShell.html#ad6192ecb63fe67018fddbd810766b35d',1,'CShell::WriteClose()'],['../classCShellBare.html#ad8d8641e5a799afedda28fd4cbb90817',1,'CShellBare::WriteClose()'],['../classCShellSession.html#a5a8a6df4f43f1328da9ee3b78db8157c',1,'CShellSession::WriteClose()']]],
   ['writedatabase',['WriteDatabase',['../classCBrownieSet.html#a461c8e6cea2e2b3a96d84948c4e5f8ee',1,'CBrownieSet']]],
   ['writefd',['WriteFd',['../classCShellBare.html#ad11b3f9e4ed89694ef403d058869dd42',1,'CShellBare::WriteFd()'],['../classCShellSession.html#aa6ae32398eea3cf3a8e37a1f0b02bc03',1,'CShellSession::WriteFd()']]],
   ['writeline',['WriteLine',['../classCShell.html#a73a27d23fa52cf22c8f31eb00c8692de',1,'CShell::WriteLine(const char *line)=0'],['../classCShell.html#ae4b638051073b61d4092338565360075',1,'CShell::WriteLine(CString *str)'],['../classCShellBare.html#adf0df92bcb82d7eb76751cd615e1e7ca',1,'CShellBare::WriteLine()'],['../classCShellSession.html#a670206bfcd524ecc28170ec8cac4c1c1',1,'CShellSession::WriteLine()']]],
-  ['writevalue',['WriteValue',['../classCResource.html#a9cf07590120f0331392dd115e78065db',1,'CResource']]]
+  ['writevalue',['WriteValue',['../classCResource.html#a16e1cf42772576f471e014a6009dde8d',1,'CResource']]]
 ];

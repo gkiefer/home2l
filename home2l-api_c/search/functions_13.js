@@ -14,6 +14,15 @@ var searchData=
   ['validunitint',['ValidUnitInt',['../classCResource.html#a79554af5eb73c589359b33b42264684d',1,'CResource']]],
   ['validunsignedfromstring',['ValidUnsignedFromString',['../group__common__strings.html#ga215e4aa805691299b7427cc7768e1947',1,'base.H']]],
   ['valueequals',['ValueEquals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState']]],
+  ['versioncompose',['VersionCompose',['../group__common__version.html#ga19b03c3b434e79798ce7cd2b09501f62',1,'base.H']]],
+  ['versiondirty',['VersionDirty',['../group__common__version.html#ga19155e10bcbbd11bdfd79900bd6900e4',1,'base.H']]],
+  ['versionfromstr',['VersionFromStr',['../group__common__version.html#ga7ac2259a87b82595ca0581d206f51809',1,'base.H']]],
+  ['versiongetown',['VersionGetOwn',['../group__common__version.html#gac34123152c84f96213ee70248b1beb17',1,'base.H']]],
+  ['versiongetownasstr',['VersionGetOwnAsStr',['../group__common__version.html#ga3a680d944cef0baf9a57f373084a9505',1,'base.H']]],
+  ['versionmajor',['VersionMajor',['../group__common__version.html#gaf11f5bfd281d75e860a7a31b64e26236',1,'base.H']]],
+  ['versionminor',['VersionMinor',['../group__common__version.html#ga615e48cb6b3e377b327a814450675df2',1,'base.H']]],
+  ['versionrevision',['VersionRevision',['../group__common__version.html#ga63e5a876dd77669efe82a6be06707dfb',1,'base.H']]],
+  ['versiontostr',['VersionToStr',['../group__common__version.html#ga08649d5b10da998eec9d7c72b7413aa3',1,'base.H']]],
   ['videolockframe',['VideoLockFrame',['../classCPhone.html#a627e407e9522e793392fe53fa4b91878',1,'CPhone']]],
   ['videounlock',['VideoUnlock',['../classCPhone.html#a2eb6d9fb405200625ba72503a1f819a7',1,'CPhone']]]
 ];

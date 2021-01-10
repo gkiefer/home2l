@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -159,8 +159,7 @@ def ActuatorsUpdate ():
     if pos < toValue: _actPos[lid] = min (pos + 5, toValue)
     if pos == toValue: del _actPosToValue[lid]
     # Report value and state ...
-    rcActuators[lid].ReportValue (pos, (rcsBusy, rcsValid) [pos == toValue])
-      # reported state is 'rcsValid' if to-position is reached, else 'rcsBusy'
+    rcActuators[lid].ReportValue (pos, rcsBusy if pos != toValue else rcsValid)
 
   # Set timer if necessary ...
   if len(_actPosToValue) > 0:
@@ -190,12 +189,12 @@ def ActuatorsDrive (lid, value):
 # by a background thread or an event-triggered function.
 
 
-@newDriver ("world", rcsNoReport)
+@driver ("world", rcsNoReport)
 def DriverFunc (rc, vs):
   if rc == rcLight:                 # Drive the front door light ...
     # Here, we would have to physically switch on or off the light, depending on 'vs'.
     # Since we only simulate the light, there is no real code here.
-    rc.ReportValue (vs)             # Report the new valid value (indicating success)
+    rc.ReportValueState (vs)        # Report the new valid value (indicating success)
 
   elif rc.Lid () in rcActuators:    # Drive the actuator of the given LID ...
     ActuatorsDrive (rc.Lid (), vs.Value ())
@@ -351,7 +350,7 @@ rcKitchenShades = rcActuators["kitchen-shades"]
 
 
 @onUpdate (rcDaylight, rcWeatherWarning, rcMotion, rcLight, rcLock, rcKitchenShades)
-def UiDraw ():
+def UiDraw (daylight, rain, motion, light, lock, shades):
 
   # Predefine ASCII art...
   img = [
@@ -367,24 +366,22 @@ def UiDraw ():
     "--------------####---------------" ]
 
   # Draw outside condition ...
-  if not rcWeatherWarning.ValidValue (False):
-    # Weather is good: Draw sun or moon, depending on day time ...
-    vs = rcDaylight.ValueState ()
-    if vs.IsValid ():   # neither sun nor moon if day time is unknown
-      if vs.Value() == True:
-        img[0] = img[0][:26] + "  \ /  "
-        img[1] = img[1][:26] + "-- O --"
-        img[2] = img[2][:26] + "  / \  "
-      else:
-        img[0] = img[0][:27] +    ".    ."
-        img[1] = img[1][:24] + ".     .  "
-        img[2] = img[2][:24] + "     ) . "
-        img[3] = img[3][:24] + "    .    "
+  if rain != True:
+    # Weather is good (no explicit warning): Draw sun or moon, depending on day time ...
+    if daylight == True:
+      img[0] = img[0][:26] + "  \ /  "
+      img[1] = img[1][:26] + "-- O --"
+      img[2] = img[2][:26] + "  / \  "
+    elif daylight == False:
+      img[0] = img[0][:27] +    ".    ."
+      img[1] = img[1][:24] + ".     .  "
+      img[2] = img[2][:24] + "     ) . "
+      img[3] = img[3][:24] + "    .    "
   else:
     # Rainy weather ...
     img[0] = img[0][:26]   + "  / / /"
     img[1] = img[1][:26]   + " /   / "
-    if rcDaylight.ValidValue (True):
+    if daylight != False:
       img[2] = img[2][:26] + "  / / /"
     else:
       img[2] = img[2][:24] + ")   / / /"
@@ -392,23 +389,23 @@ def UiDraw ():
     img[4] = img[4][:26]   + "/ /    "
 
   # Draw person in motion...
-  val = rcMotion.ValidValue (False);
-  img[6] = img[6][:27-val] + " O  "
-  img[7] = img[7][:27-val] + "/I\\ "
-  img[8] = img[8][:27-val] + "/ \\ "
+  x = 26 if motion == True else 27
+  img[6] = img[6][:x] + " O  "
+  img[7] = img[7][:x] + "/I\\ "
+  img[8] = img[8][:x] + "/ \\ "
 
   # Draw light...
-  if rcLight.ValidValue (False) == True:
+  if light == True:
     img[6] = img[6][:19] + "/|\\" + img[6][22:]
 
   # Draw door lock...
-  if rcLock.ValidValue (False) == True:
+  if lock == True:
     img[7] = img[7][:14] + "====" + img[7][18:]
 
   # Draw kitchen shades...
-  val = rcKitchenShades.ValidValue (0)
-  if val >= 25: img[6] = img[6][:9] + "==" + img[6][11:]
-  if val >= 75: img[7] = img[7][:9] + "==" + img[7][11:]
+  if shades:
+    if shades >= 25: img[6] = img[6][:9] + "==" + img[6][11:]
+    if shades >= 75: img[7] = img[7][:9] + "==" + img[7][11:]
 
   # Re-draw the screen...
   print ("\033[2J\033[H")

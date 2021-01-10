@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,13 +38,15 @@ EMPTY_MODULE(Temperature)
 #include <avr/interrupt.h>
 
 
+#define TEMP_MAXAGE BR_TICKS_OF_MS (2000)
+  // time-out value after which an invalid temperature is reported, if no successful readout happened
+
+
 extern volatile uint16_t temperatureValue;
 extern uint16_t temperatureTimeUpdated;
 
 
-static inline void TemperatureInit () {
-  MinitimerStart ();
-}
+static inline void TemperatureInit () {}
 
 
 static inline void TemperatureIterate () {
@@ -54,11 +56,13 @@ static inline void TemperatureIterate () {
   cli ();
   val = temperatureValue;
   if (val) {
-    temperatureValue = 0;           // clear value from ISR
+    temperatureValue = 0;                 // clear value from ISR
     sei ();
+
+    // Have a valid temperature valuev ...
     temperatureTimeUpdated = TimerNow ();
     if (LO(val) != RegGet (BR_REG_TEMP_LO) || HI(val) != RegGet (BR_REG_TEMP_HI)) {   // real change?
-      RegSet (BR_REG_TEMP_LO, LO(val));  // update value in registers
+      RegSet (BR_REG_TEMP_LO, LO(val));   // update value in registers
       RegSet (BR_REG_TEMP_HI, HI(val));
       ReportChange (BR_CHANGED_TEMP);
     }
@@ -66,12 +70,12 @@ static inline void TemperatureIterate () {
   else {
     sei ();
 
-    // Check for time out and delete temperature value in case
-    if (temperatureTimeUpdated) if (TimerNow () - temperatureTimeUpdated > BR_TICKS_OF_MS (2000)) {   // time-out is 2000ms
-      RegSet (BR_REG_TEMP_LO, 0);        // clear/invalidate values in registers
+    // No valid temperature: Check for time out and delete temperature value in case ...
+    if (temperatureTimeUpdated) if (TimerNow () - temperatureTimeUpdated > TEMP_MAXAGE) {
+      RegSet (BR_REG_TEMP_LO, 0);         // clear/invalidate values in registers
       RegSet (BR_REG_TEMP_HI, 0);
-      if (TEMP_NOTIFY) ReportChange (BR_CHANGED_TEMP);
-      temperatureTimeUpdated = 0;     // clear timer to accelerate future checks
+      ReportChange (BR_CHANGED_TEMP);
+      temperatureTimeUpdated = 0;         // clear timer to accelerate future checks
     }
   }
 }
@@ -83,22 +87,26 @@ static inline void TemperatureOnRegRead (uint8_t reg) {}
 static inline void TemperatureOnRegWrite (uint8_t reg, uint8_t val) {}
 
 
-static inline void TemperatureRead ()  {
+static inline void TemperatureISR ()  {
   register uint16_t value;
   register uint8_t n, parity, bit, halfPeriod;
 
-  // One mini-timer tick is 8 µs; one ZACwire bit is 125 µs ~= 16 ticks.
-  if (P_IN(P_TEMP_ZACWIRE)) return;     // exit if pin is high (idle state)
+  // Exit if pin is high (idle state) ...
+  if (P_IN(P_TEMP_ZACWIRE)) return;
+
+  // Start the mini timer
+  MinitimerStart (MINI_CLOCK_SCALE_8);
+    // enable 8-bit timer with clk_io / 8; one tick is 8 µs; one ZACwire bit is 125 µs ~= 16 clock units
 
   // We start sampling with the falling edge of the start bit: Wait for the rising edge ...
   MinitimerReset ();
   while (!P_IN(P_TEMP_ZACWIRE))
-    if (MinitimerNow () > MINITICKS_OF_US(70)) return;   // time-out (low phase should not exceed 62.5µs)
+    if (MinitimerNow () > MINITICKS_OF_US(70)) goto done;   // time-out (low phase should not exceed 62.5µs)
 
   // Wait for first falling edge (end of start bit) and determine the half period time ...
   MinitimerReset ();
   while (P_IN(P_TEMP_ZACWIRE))
-    if (MinitimerNow () > MINITICKS_OF_US(70)) return;   // time-out (high phase should not exceed 62.5µs)
+    if (MinitimerNow () > MINITICKS_OF_US(70)) goto done;   // time-out (high phase should not exceed 62.5µs)
   halfPeriod = MinitimerNow ();
   MinitimerReset ();      // Reset timer to mark falling edge/start of bit
 
@@ -116,7 +124,7 @@ static inline void TemperatureRead ()  {
       case 11:  // parity high byte
       case 1:   // parity low byte
         if (bit) parity ^= 1;
-        if (parity) return;     // wrong parity
+        if (parity) goto done;     // wrong parity
         break;
       case 10:  // start bit low byte: just ignore
         break;
@@ -131,24 +139,23 @@ static inline void TemperatureRead ()  {
 
     // Wait until signal is 1 again ...
     while (!P_IN(P_TEMP_ZACWIRE))
-      if (MinitimerNow () > MINITICKS_OF_US(150)) return;   // time-out (worst legal case: stop bit = 125us)
+      if (MinitimerNow () > MINITICKS_OF_US(150)) goto done;   // time-out (worst legal case: stop bit = 125us)
 
     // Wait for falling edge = start of next bit ...
     if (n > 1) {
       MinitimerReset ();
       while (P_IN(P_TEMP_ZACWIRE))
-        if (MinitimerNow () > MINITICKS_OF_US(150)) return;   // time-out (worst legal case: stop bit = 125us)
+        if (MinitimerNow () > MINITICKS_OF_US(150)) goto done;   // time-out (worst legal case: stop bit = 125us)
       MinitimerReset ();      // Reset timer to mark falling edge/start of bit
     }
   }
 
   // Success: Store value ...
   temperatureValue = (value << 1) | 1;
-}
 
-
-static inline void TemperatureISR () {
-  TemperatureRead ();
+  // Done ...
+done:
+  MinitimerStop ();
 }
 
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,28 +27,13 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/cpufunc.h>
 
 
 
 
 
 // *************************** Configuration ***********************************
-
-
-#define TWI_SL_SEND_ACTIVE 0    ///< @internal
-  // Send actively, without using the USI (NOT IMPLEMENTED, may never be implemented).
-  //
-  // It appears [2019-03-31, ATtiny84] that a transmitting
-  // USI may pull the SDA line up to 1 for a short time when sending a '1' via the USIDR instead of just
-  // keeping SDA in a high-impedance state as expected according to the i2c standard. This appears to
-  // cause problems with long cables and line amplifiers such as the P82B715.
-  // If this TWI_SL_SEND_ACTIVE == 1, data (not ACK/NACK) is sent actively in the foreground without
-  // using the USI to avoid this problem.
-  //
-  // With active sending, TwiSlReplyCommit() returns after sending completed,
-  // otherwise it returns immediately.
-  // With active sending, interrupts may be disabled for the duration of a byte
-  // (TBD: true? - allowing interrupts requires to stretch the clock).
 
 
 #define P_TWI_MA_ON_SCL_STRETCH // TwiSlIterate ()
@@ -312,7 +297,7 @@ bool twiSlNotifyPending;
 #endif
 
 
-static void SlResetCommunication () {
+static inline void SlResetCommunication () {
   SlReqClear ();
   SlRplClear ();
   slRplPtr = 0;        // reset pointer in reply buffer
@@ -340,7 +325,7 @@ static inline void UsiInit () {
   // for USIWM1, USIWM0 = 11).  This inserts a wait state. SCL is released
   // by the ISRs (USI_START_vect and USI_OVERFLOW_vect).
 
-#if MCU_TYPE == MCU_TYPE_ATTINY861
+#if MCU_TYPE == BR_MCU_ATTINY861
   USIPP &= ~(1 << USIPOS);      // Set USIPOS == 0, USI signals to port B
 #endif
   USICR = USICR_DEFAULTS(0);    // Activate USI 2-wire mode
@@ -362,7 +347,7 @@ static inline void UsiDone () {
 
 
 static inline void UsiResetToWaitForStartCondition () {
-  P_DDR_IN (P_USI_SDA);         // set SDA as input
+  P_DDR_IN (P_USI_SDA);       // set SDA as input
 
   USICR = ( 1 << USISIE ) |   // enable start condition interrupt
           ( 0 << USIOIE ) |   // disable overflow interrupt
@@ -377,7 +362,7 @@ static inline void UsiResetToWaitForStartCondition () {
 
 
 static inline void UsiSetOnStartCondInterrupt () {
-  P_DDR_IN (P_USI_SDA);         // set SDA as input
+  P_DDR_IN (P_USI_SDA);       // set SDA as input
   USICR = ( 0 << USISIE ) |   // disable start condition interrupt; do NOT clear USISIF to not release SCL before addressing is started!
           ( 0 << USIOIE ) |   // disable overflow interrupt
           USICR_DEFAULTS(0);  // no USI counter overflow hold
@@ -475,7 +460,16 @@ ISR ( ISR_USI_STARTCOND ) {
 
 ISR ( ISR_USI_OVERFLOW ) {
   // Handles all the communication. Only disabled when waiting for a new Start Condition.
+  static bool inISR = false;
   register uint8_t data, adr;
+
+  // Allow other interrupts nested to this one at defined places ("yield") ...
+  //   Yielding is not possible before the overflow interrupt flag (USIOIF) has been cleared
+  //   in USISR. Otherwise, a nested interrupt would occur. However, clearing the flag has
+  //   side effects (e.g. SCL stretching stopped), so that we cannot clear USIOIF here.
+  if (inISR) return;
+  //~ UART_TX_OUT_1();
+  inISR = true;
 
   switch ( slState ) {
 
@@ -508,13 +502,7 @@ ISR ( ISR_USI_OVERFLOW ) {
         // Master fetches a reply - we send ...
         } else {
           if (slReqStatus == brIncomplete) slReqStatus = brRequestCheckError;   // complete request buffer
-#if !TWI_SL_SEND_ACTIVE
           slState = slsSending;
-#else
-#error TBD
-          // TBD: 1. Switch off USI
-          //      2. Make sure to keep the clock stretched
-#endif
         }
       }
       else {
@@ -537,24 +525,27 @@ ISR ( ISR_USI_OVERFLOW ) {
     case slsReceivingAck:
       // Copy data from USIDR and send ACK ...
       data = USIDR;                     // Read data received
+      UsiSetToSendAck ();
+      sei (); _NOP (); cli ();   // yield
+      //~ UART_TX_OUT_0(); sei (); _NOP (); cli (); UART_TX_OUT_1();  // yield
       if (slReqStatus == brIncomplete && slReqBytes < slReqBufSize) {  // Store new byte and update status...
         slReqBuf[slReqBytes++] = data;
         if (slReqBytes >= BR_REQUEST_SIZE_MIN)
           if (slReqBytes >= BrRequestSize (twiSlRequest.op)) slReqStatus = brUnchecked;
       }
-      UsiSetToSendAck ();
       slState = slsReceiving;
       break;
 
 
     // ***** Sending a reply *****
 
-#if !TWI_SL_SEND_ACTIVE
     case slsSendingCheckAck:
       // Check reply and goto slsSending if OK, else reset USI
       if ( USIDR )  {
         // NACK => the master does not want more data
         UsiResetToWaitForStartCondition ();
+        sei (); _NOP (); cli ();   // yield
+        //~ UART_TX_OUT_0(); sei (); _NOP (); cli (); UART_TX_OUT_1();  // yield
         SlResetCommunication ();
           // Sending is complete => Clear communication buffers
           // For the case that these lines are missed (not executed), a communication reset is also issued
@@ -563,6 +554,7 @@ ISR ( ISR_USI_OVERFLOW ) {
         break;
       }
       // ACK => From here we just drop straight into slsSending if the master sent an ACK
+
     case slsSending:
       if (!slRplComplete && slRplPtr >= slRplBytes) {
         // The reply buffer has not yet been committed, but we have no new byte to send available:
@@ -579,17 +571,12 @@ ISR ( ISR_USI_OVERFLOW ) {
         slState = slsSendingWaitAck;
       }
       break;
+
     case slsSendingWaitAck:
       // Set USI to sample reply from master
       UsiSetToReadAck ();
       slState = slsSendingCheckAck;
       break;
-#else   // !TWI_SL_SEND_ACTIVE
-    case slsSendingCheckAck:
-    case slsSending:
-    case slsSendingWaitAck:
-      break;
-#endif  // !TWI_SL_SEND_ACTIVE
 
 
     // ***** Defaults / states to be handled by TwiSlIterate () *****
@@ -602,6 +589,11 @@ ISR ( ISR_USI_OVERFLOW ) {
 
    }    // switch
 
+  // Done ...
+  sei (); _NOP (); cli ();   // yield
+  //~ UART_TX_OUT_0(); sei (); _NOP (); cli (); UART_TX_OUT_1();  // yield
+  inISR = false;
+  //~ UART_TX_OUT_0();
 }   // ISR (ISR_USI_OVERFLOW)
 
 
@@ -727,7 +719,6 @@ EBrStatus TwiSlIterate () {
 
 
 void TwiSlReplyCommitPartial (uint8_t bytes, bool complete) {
-#if !TWI_SL_SEND_ACTIVE
   cli ();
   slRplBytes = bytes;
   slRplComplete = complete;
@@ -742,9 +733,6 @@ void TwiSlReplyCommitPartial (uint8_t bytes, bool complete) {
     slState = slsSendingWaitAck;
   }
   sei ();
-#else
-#error "TBD"
-#endif
 }
 
 
@@ -1091,7 +1079,7 @@ void TwiHubIterate () {
 
       // Check for host notification and handle it ...
       if (!TwiMaGetSda () && TwiMaGetScl ()) {   // SDA low and SCL high?
-        ReportChange (BR_CHANGED_CHILD);
+        ReportChangeAndNotify (BR_CHANGED_CHILD);
         hubState = hsNotified;
         break;
       }

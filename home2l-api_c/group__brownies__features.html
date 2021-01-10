@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -67,7 +67,7 @@ $(function() {
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <p>Microcontroller firmware feature options. </p>
-<p>This module contains all changable feature settings for <em>Brownie</em> firmwares. New customized firmwares can be added to the <em>Brownie family</em> by changing the file <a href="../brownies/avr/Family.mk">brownies/avr/Family.mk</a>. </p>
+<p>This module documents all changeable feature settings for <em>Brownie</em> firmwares. New customized firmwares can be added to the <em>Brownie family</em> by changing the file <a href="../brownies/avr/Family.mk">brownies/avr/Family.mk</a>. </p>
 <div class="dynheader">
 Collaboration diagram for Microcontroller: Feature Selection:</div>
 <div class="dyncontent">
@@ -92,14 +92,17 @@ General ...</h2></td></tr>
 <tr class="separator:ga0cbc6e304f33f9eb9e77dd0c4493330e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
-GPIO ...</h2></td></tr>
+Timer ...</h2></td></tr>
 <tr class="memitem:ga2bcce071877004aec4fb365d59036c4f"><td class="memItemLeft" align="right" valign="top"><a id="ga2bcce071877004aec4fb365d59036c4f"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga2bcce071877004aec4fb365d59036c4f">WITH_TIMER</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:ga2bcce071877004aec4fb365d59036c4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The timer is enabled if this is 1 <em>or</em> any other feature requires the timer. <br /></td></tr>
 <tr class="separator:ga2bcce071877004aec4fb365d59036c4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
+GPIO ...</h2></td></tr>
 <tr class="memitem:ga60616666edbc3739130afa7361846fa0"><td class="memItemLeft" align="right" valign="top"><a id="ga60616666edbc3739130afa7361846fa0"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga60616666edbc3739130afa7361846fa0">GPIO_IN_PRESENCE</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memdesc:ga60616666edbc3739130afa7361846fa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pins to be used as GP inputs. <br /></td></tr>
+<tr class="memdesc:ga60616666edbc3739130afa7361846fa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pins to be used as general-purpose inputs. <br /></td></tr>
 <tr class="separator:ga60616666edbc3739130afa7361846fa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga152c05683a3dffc8e30bcc994b8e3b32"><td class="memItemLeft" align="right" valign="top"><a id="ga152c05683a3dffc8e30bcc994b8e3b32"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga152c05683a3dffc8e30bcc994b8e3b32">GPIO_IN_PULLUP</a>&#160;&#160;&#160;0</td></tr>
@@ -107,7 +110,7 @@ GPIO ...</h2></td></tr>
 <tr class="separator:ga152c05683a3dffc8e30bcc994b8e3b32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gacacd053fc290fd100526be2d130ef455"><td class="memItemLeft" align="right" valign="top"><a id="gacacd053fc290fd100526be2d130ef455"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gacacd053fc290fd100526be2d130ef455">GPIO_OUT_PRESENCE</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memdesc:gacacd053fc290fd100526be2d130ef455"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pins to be used as GP outputs. <br /></td></tr>
+<tr class="memdesc:gacacd053fc290fd100526be2d130ef455"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pins to be used as general-purpose outputs. <br /></td></tr>
 <tr class="separator:gacacd053fc290fd100526be2d130ef455"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaeff1c01227c88a8de8b4027911cd2e50"><td class="memItemLeft" align="right" valign="top"><a id="gaeff1c01227c88a8de8b4027911cd2e50"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gaeff1c01227c88a8de8b4027911cd2e50">GPIO_OUT_PRESET</a>&#160;&#160;&#160;0</td></tr>
@@ -169,6 +172,60 @@ Matrix ...</h2></td></tr>
 <tr class="separator:ga5bd0faf5db964017108a97a0251da0e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
+ADCs ...</h2></td></tr>
+<tr class="memitem:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memItemLeft" align="right" valign="top"><a id="gad3629f7b30386a42cafbd821d0fdb63e"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gad3629f7b30386a42cafbd821d0fdb63e">ADC_PORTS</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gad3629f7b30386a42cafbd821d0fdb63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET) <br /></td></tr>
+<tr class="separator:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
+UART ...</h2></td></tr>
+<tr class="memitem:ga9096b850d2d6dc210384231faa3956e8"><td class="memItemLeft" align="right" valign="top"><a id="ga9096b850d2d6dc210384231faa3956e8"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga9096b850d2d6dc210384231faa3956e8">WITH_UART</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:ga9096b850d2d6dc210384231faa3956e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable UART. <br /></td></tr>
+<tr class="separator:ga9096b850d2d6dc210384231faa3956e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacc665ad789ecfe524cf8f811959e4887"><td class="memItemLeft" align="right" valign="top"><a id="gacc665ad789ecfe524cf8f811959e4887"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gacc665ad789ecfe524cf8f811959e4887">UART_WITH_DRIVE</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:gacc665ad789ecfe524cf8f811959e4887"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable "driver enable" output (e.g. for RS485) <br /></td></tr>
+<tr class="separator:gacc665ad789ecfe524cf8f811959e4887"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac202d83386a0254e9390906c6a19e8f6"><td class="memItemLeft" align="right" valign="top"><a id="gac202d83386a0254e9390906c6a19e8f6"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gac202d83386a0254e9390906c6a19e8f6">UART_TX_LISTEN</a>&#160;&#160;&#160;10</td></tr>
+<tr class="memdesc:gac202d83386a0254e9390906c6a19e8f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">If "drive enable" is set, this is the number of milliseconds to await silence before sending. <br /></td></tr>
+<tr class="separator:gac202d83386a0254e9390906c6a19e8f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1c40ae7510968027c7aca26c01e10c85"><td class="memItemLeft" align="right" valign="top"><a id="ga1c40ae7510968027c7aca26c01e10c85"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga1c40ae7510968027c7aca26c01e10c85">UART_TX_INV</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga1c40ae7510968027c7aca26c01e10c85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set to invert TX output (e.g. for RS485 via MAX485) <br /></td></tr>
+<tr class="separator:ga1c40ae7510968027c7aca26c01e10c85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab0138e94a1c2b08867d7c2a2e92258e0"><td class="memItemLeft" align="right" valign="top"><a id="gab0138e94a1c2b08867d7c2a2e92258e0"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gab0138e94a1c2b08867d7c2a2e92258e0">UART_RX_INV</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:gab0138e94a1c2b08867d7c2a2e92258e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set to invert RX input (e.g. for RS485 via MAX485) <br /></td></tr>
+<tr class="separator:gab0138e94a1c2b08867d7c2a2e92258e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2c7ed0283bd6f2f9d791860d6254ef4f"><td class="memItemLeft" align="right" valign="top"><a id="ga2c7ed0283bd6f2f9d791860d6254ef4f"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga2c7ed0283bd6f2f9d791860d6254ef4f">UART_BAUDRATE</a>&#160;&#160;&#160;9600</td></tr>
+<tr class="memdesc:ga2c7ed0283bd6f2f9d791860d6254ef4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Baud rate. <br /></td></tr>
+<tr class="separator:ga2c7ed0283bd6f2f9d791860d6254ef4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga207c8b0058641f8ba7fff9c8f9ac6fc5"><td class="memItemLeft" align="right" valign="top"><a id="ga207c8b0058641f8ba7fff9c8f9ac6fc5"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga207c8b0058641f8ba7fff9c8f9ac6fc5">UART_STOPBITS</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga207c8b0058641f8ba7fff9c8f9ac6fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop bits. <br /></td></tr>
+<tr class="separator:ga207c8b0058641f8ba7fff9c8f9ac6fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga40f6d25d96053400829579d41169bb50"><td class="memItemLeft" align="right" valign="top"><a id="ga40f6d25d96053400829579d41169bb50"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga40f6d25d96053400829579d41169bb50">UART_PARITY</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:ga40f6d25d96053400829579d41169bb50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parity (0 = none, 1 = odd, 2 = even) (ONLY 0 IMPLEMENTED YET) <br /></td></tr>
+<tr class="separator:ga40f6d25d96053400829579d41169bb50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7867eff944b6f07517c258c30c6663c4"><td class="memItemLeft" align="right" valign="top"><a id="ga7867eff944b6f07517c258c30c6663c4"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga7867eff944b6f07517c258c30c6663c4">UART_TX_BUFSIZE</a>&#160;&#160;&#160;16</td></tr>
+<tr class="memdesc:ga7867eff944b6f07517c258c30c6663c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Capacity of the TX buffer (in bytes, must be power of 2) <br /></td></tr>
+<tr class="separator:ga7867eff944b6f07517c258c30c6663c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaabcd9a91af00aa8345e68db45f00e512"><td class="memItemLeft" align="right" valign="top"><a id="gaabcd9a91af00aa8345e68db45f00e512"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gaabcd9a91af00aa8345e68db45f00e512">UART_RX_BUFSIZE</a>&#160;&#160;&#160;16</td></tr>
+<tr class="memdesc:gaabcd9a91af00aa8345e68db45f00e512"><td class="mdescLeft">&#160;</td><td class="mdescRight">Capacity of the RX buffer (in bytes, must be power of 2) <br /></td></tr>
+<tr class="separator:gaabcd9a91af00aa8345e68db45f00e512"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga21dade509b3ccc94b34e2da53df1c582"><td class="memItemLeft" align="right" valign="top"><a id="ga21dade509b3ccc94b34e2da53df1c582"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga21dade509b3ccc94b34e2da53df1c582">UART_MULTI_BYTE_ISR</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga21dade509b3ccc94b34e2da53df1c582"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allow to receive multiple bytes (at most UART_RX_BUFSIZE) within one ISR call. <br /></td></tr>
+<tr class="separator:ga21dade509b3ccc94b34e2da53df1c582"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Temperature ...</h2></td></tr>
 <tr class="memitem:gadf662d521cb245009d17ec6ad11f6ea0"><td class="memItemLeft" align="right" valign="top"><a id="gadf662d521cb245009d17ec6ad11f6ea0"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gadf662d521cb245009d17ec6ad11f6ea0">WITH_TEMP_ZACWIRE</a>&#160;&#160;&#160;0</td></tr>
@@ -180,15 +237,8 @@ Temperature ...</h2></td></tr>
 <tr class="separator:ga8aeff9b8e31d5a3ea07f219ac7a09132"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
-ADCs ...</h2></td></tr>
-<tr class="memitem:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memItemLeft" align="right" valign="top"><a id="gad3629f7b30386a42cafbd821d0fdb63e"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gad3629f7b30386a42cafbd821d0fdb63e">ADC_PORTS</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memdesc:gad3629f7b30386a42cafbd821d0fdb63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET) <br /></td></tr>
-<tr class="separator:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Shades ...</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrpdd4dfbb5eba7021665b2fe5da911f2ca"></a>The 'shades' module allows to control up to two window shades or actuators in a wider sense (e.g. including actuators to open/close windows or gates). Each actuator is associated with two output pins to active its engine in the "up" or "down" direction and two input pins connected to two push buttons for the two directions.</p>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrpdd4dfbb5eba7021665b2fe5da911f2ca"></a>The 'shades' module allows to control up to two window shades (blinds) or actuators in a wider sense (e.g. including actuators to open/close windows or gates). Each actuator is associated with two output pins to active its engine in the "up" or "down" direction and two input pins connected to two push buttons for the two directions.</p>
 <p>Note on the shades ports:</p>
 <ol type="1">
 <li>For the buttons ('P_SHADES_n_BTN_*'), the internal pullup is activated, and the pin must be pulled to GND (logical 0) by the button.</li>
@@ -237,7 +287,7 @@ Shades ...</h2></td></tr>
 <p>Device may perform notifications via its slave interface? </p>
 <p>If the device must comply to the i2c standard, this option must be switched off (e.g. if the master is the Linux host). </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00084">84</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00098">98</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>
@@ -256,7 +306,7 @@ Shades ...</h2></td></tr>
 <p>Duration of a notification in microseconds. </p>
 <p>This time must be at least the transmission time of approx. 2 bytes, so that in case of a collision the observed address becomes all-0. 10 ms is sufficient for an effective bit rate of 2 kbit/s including processing times and clock stretching (20 bits in 10 ms). </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00092">92</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00106">106</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>
@@ -275,7 +325,7 @@ Shades ...</h2></td></tr>
 <p>Index of the first GPIO pin to be assigned to column lines. </p>
 <p>By default, the last MATRIX_COLS pins just before the row lines are the sensing (column) lines. </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00202">202</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00216">216</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>
@@ -298,7 +348,7 @@ Shades ...</h2></td></tr>
 </ul>
 <p>A value of 0 means "no timeout". </p>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00270">270</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00337">337</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>
@@ -324,7 +374,7 @@ Shades ...</h2></td></tr>
 <li>after the first successful read or write access to any of the shades registers or the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register: if no further such access happens within the time period specified by <a class="el" href="group__brownies__features.html#ga4b97db4b3505a0d76f982067b16c87f0">SHADES_TIMEOUT</a>. </li>
 </ul>
 
-<p class="definition">Definition at line <a class="el" href="config_8h_source.html#l00289">289</a> of file <a class="el" href="config_8h_source.html">config.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00356">356</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>

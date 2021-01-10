@@ -1,6 +1,6 @@
 ; This file is part of the Home2L project.
 ;
-; (C) 2019-2020 Gundolf Kiefer
+; (C) 2015-2021 Gundolf Kiefer
 ;
 ; Home2L is free software: you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -14,11 +14,6 @@
 ;
 ; You should have received a copy of the GNU General Public License
 ; along with Home2L. If not, see <https://www.gnu.org/licenses/>.
-
-
-#define AVR_ASM 1
-
-#include "config.h"
 
 
 

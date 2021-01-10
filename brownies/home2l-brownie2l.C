@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,23 +64,25 @@ ENV_PARA_INT ("brownie2l.historyLines", envBrownie2lHistLines, 64);
 static const struct {
   const char *name, *help;
 } brRegDesc[0x40] = {
-  /* BR_REG_CHANGED       0x00 */ { "changed",  "Change indicator register"
-                                    " (Bit 0: child, 1: GPIO, 2: matrix, 3: temp, 4: shades)" },
+  /* BR_REG_CHANGED       0x00 */ { "changed",        "Change indicator register"
+                                                      "  (Bit 0: Child; 1: GPIO; 2: Matrix; 3: UART; 4: Shades; 5: temp)" },
                                   { NULL, NULL },
-  /* BR_REG_GPIO_0        0x02 */ { "gpio-0",   "GPIOs (0..7), one bit per GPIO" },
-  /* BR_REG_GPIO_1        0x03 */ { "gpio-1",   "GPIOs (8..15, if present), one bit per GPIO" },
-  /* BR_REG_TICKS_LO      0x04 */ { "ticks-lo", "Ticks timer ..." },
-  /* BR_REG_TICKS_HI      0x05 */ { "ticks-hi", "  ... reading low latches high" },
-  /* BR_REG_TEMP_LO       0x06 */ { "temp-lo",  "Temperature (bits 12..1: raw temperature value, 0: valid bit) ..." },
-  /* BR_REG_TEMP_HI       0x07 */ { "temp-hi",  "  ... reading low latches high" },
-  /* BR_REG_ADC_0_LO      0x08 */ { "adc-0-lo", "ADC #0 ..." },
-  /* BR_REG_ADC_0_HI      0x09 */ { "adc-0-hi", "  ... reading low latches high" },
-  /* BR_REG_ADC_1_LO      0x0a */ { "adc-1-lo", "ADC #1 ..." },
-  /* BR_REG_ADC_1_HI      0x0b */ { "adc-1-hi", "  ... reading low latches high" },
-                                  { NULL, NULL },
-                                  { NULL, NULL },
-                                  { NULL, NULL },
-                                  { NULL, NULL },
+  /* BR_REG_GPIO_0        0x02 */ { "gpio_0",         "GPIOs (0..7), one bit per GPIO" },
+  /* BR_REG_GPIO_1        0x03 */ { "gpio_1",         "GPIOs (8..15, if present), one bit per GPIO" },
+  /* BR_REG_TICKS_LO      0x04 */ { "ticks_lo",       "Ticks timer ..." },
+  /* BR_REG_TICKS_HI      0x05 */ { "ticks_hi",       "  ... reading low latches high" },
+  /* BR_REG_TEMP_LO       0x06 */ { "temp_lo",        "Temperature (Bits 12..1: raw temperature value, 0: valid bit) ..." },
+  /* BR_REG_TEMP_HI       0x07 */ { "temp_hi",        "  ... reading low latches high" },
+  /* BR_REG_ADC_0_LO      0x08 */ { "adc_0_lo",       "ADC #0 ..." },
+  /* BR_REG_ADC_0_HI      0x09 */ { "adc_0_hi",       "  ... reading low latches high" },
+  /* BR_REG_ADC_1_LO      0x0a */ { "adc_1_lo",       "ADC #1 ..." },
+  /* BR_REG_ADC_1_HI      0x0b */ { "adc_1_hi",       "  ... reading low latches high" },
+  /* BR_REG_UART_CTRL     0x0c */ { "uart_ctrl",      "UART control register"
+                                                      "  (Bit 0: Reset RX buffer; 1: Reset TX buffer)" },
+  /* BR_REG_UART_STATUS   0x0d */ { "uart_status",    "UART status register"
+                                                      "  (Bit 7: Error, Bit 6: RX Overflow, Bits 5..3: TX buffer free; 2..0: RX buffer occupied)" },
+  /* BR_REG_UART_RX       0x0e */ { "uart_rx",        "UART receive register" },
+  /* BR_REG_UART_TX       0x0f */ { "uart_tx",        "UART transfer register" },
 
   /* BR_REG_MATRIX_0      0x10 */ { "matrix-0",       "Raw sensor matrix data ..." },
   /* BR_REG_MATRIX_1      0x11 */ { "matrix-1",       "  ... one byte per row, up to 8x8 = 64 bits ..." },
@@ -125,10 +127,11 @@ static const struct {
                                   { NULL, NULL },
                                   { NULL, NULL },
                                   { NULL, NULL },
-                                  { NULL, NULL },
-                                  { NULL, NULL },
-                                  { NULL, NULL },
-                                  { NULL, NULL },
+  /* BR_REG_DEBUG_0       0x38 */ { "debug-0", "Debug register 0 (for debugging purposes only)" },
+  /* BR_REG_DEBUG_1       0x39 */ { "debug-1", "Debug register 1 (for debugging purposes only)" },
+  /* BR_REG_DEBUG_2       0x3a */ { "debug-2", "Debug register 2 (for debugging purposes only)" },
+  /* BR_REG_DEBUG_3       0x3b */ { "debug-3", "Debug register 3 (for debugging purposes only)" },
+
                                   { NULL, NULL },
   /* BR_REG_FWBASE        0x3d */ { "fwbase", "Base address of the active firmware in units of BR_FLASH_PAGESIZE (0x40) bytes" },
   /* BR_REG_CTRL          0x3e */ { "ctrl",   "Control register"
@@ -244,35 +247,22 @@ static bool PrintOnError (EBrStatus status) {
 }
 
 
-static const char *McuTypeStr (int mcuType) {
-  const char *mcuTypeNameStr[] = {
-    "(none)",
-    "ATTiny85",
-    "ATTiny84",
-    "ATTiny861"
-  };
-  if (mcuType < 0 || mcuType >= (int) (sizeof (mcuTypeNameStr) / sizeof (mcuTypeNameStr[0])))
-    return "(unknown)";
-  return mcuTypeNameStr[mcuType];
+static const char *McuFriendlyStr (int mcuType) {
+  switch (mcuType) {
+    case BR_MCU_ATTINY84:   return "ATtiny84 (t84)";
+    case BR_MCU_ATTINY85:   return "ATtiny85 (t85)";
+    case BR_MCU_ATTINY861:  return "ATtiny861 (t861)";
+    case BR_MCU_NONE:       return "(none)";
+    default:                return "(unknown)";
+  }
 }
 
 
 static void PrintDeviceInfo (CBrownie *brownie, bool withFirmware = true) {
-  const char *featureStr[10] = {
-    "maintenance",
-    "timer",
-    "notify",
-    "twihub",
-    NULL, // matrix, handled specially
-    "temperature",
-    "adc_0",
-    "adc_1",
-    "shades_0",
-    "shades_1"
-  };
   TBrFeatureRecord *ver = brownie->FeatureRecord ();
   CString s;
-  int features;
+  const char *key;
+  uint16_t features, mask;
   int n;
 
   // Print VROM info ...
@@ -282,35 +272,47 @@ static void PrintDeviceInfo (CBrownie *brownie, bool withFirmware = true) {
     if (withFirmware)
       printf ("        Device:   %s\n"
               "        Firmware: %s v%s\n",
-              McuTypeStr (ver->mcuType),
-              ver->fwName, BrVersionNumberToStr (&s, ver));
+              McuFriendlyStr (ver->mcuType),
+              ver->fwName, BrVersionGetAsStr (&s, ver));
     else
       printf ("        Device:   %s\n",
-              McuTypeStr (ver->mcuType));
+              McuFriendlyStr (ver->mcuType));
 
     // Print features...
     printf ("        Features:");
     features = ver->features;
-    for (n = 0; n < 10; n++) {
-      if (features & (1 << n))
-        if (featureStr[n]) printf (" %s", featureStr[n]);
+    for (mask = 1; mask; mask <<= 1) if (features & mask) {
+      key = NULL;
+      switch (mask) {
+        case BR_FEATURE_MAINTENANCE:  key = "maintenance";  break;
+        case BR_FEATURE_TIMER:        key = "timer";        break;
+        case BR_FEATURE_NOTIFY:       key = "notify";       break;
+        case BR_FEATURE_TWIHUB:       key = "twihub";       break;
+        case BR_FEATURE_ADC_0:        key = "adc_0";        break;
+        case BR_FEATURE_ADC_1:        key = "adc_1";        break;
+        case BR_FEATURE_UART:         key = "uart";         break;
+        case BR_FEATURE_TEMP:         key = "temperature";  break;
+        case BR_FEATURE_SHADES_0:     key = "shades_0";     break;
+        case BR_FEATURE_SHADES_1:     key = "shades_1";     break;
+        default: key = "?";
+      }
+      printf (" %s", key);
     }
 
     // Print matrix configuration (if applicable) ...
-    if (features & BR_FEATURE_MATRIX)
-      printf (" matrix(%ix%i)",
-              ((features & BR_FEATURE_MROWS) >> BR_FEATURE_MROWS_SHIFT) + 1,
-              ((features & BR_FEATURE_MCOLS) >> BR_FEATURE_MCOLS_SHIFT) + 1);
+    if (ver->matDim)
+      printf (" matrix(%ix%i)", BR_MATDIM_ROWS (ver->matDim), BR_MATDIM_COLS (ver->matDim));
     putchar ('\n');
 
     // Print GPIO configuration (if applicable) ...
     if (ver->gpiPresence || ver->gpoPresence) {
       printf ("        GPIOs:    ");
-      for (n = 0; n < 16; n++) {
+      for (n = 0; n < 16 && ((ver->gpiPresence | ver->gpoPresence) >> n); n++) {
         if (ver->gpiPresence & (1 << n))
           putchar (ver->gpiPullup & (1 << n) ? 'p' : 'i');
         else if (ver->gpoPresence & (1 << n))
           putchar (ver->gpoPreset & (1 << n) ? '1' : '0');
+        else putchar ('-');
       }
       putchar ('\n');
     }
@@ -579,7 +581,9 @@ static bool CmdFor (int argc, const char **argv) {
   // Run sub-commands ...
   lastShellAdr = shellAdr;
   ok = true;
-  for (n = 1; n < 128 && ok; n++) if (selection[n]) {
+  for (n = 1; n < 128 /* && ok */; n++) if (selection[n]) {
+    printf ("%03i: ", n);
+    fflush (stdout);
     shellAdr = n;
     ok = ExecuteCmd (argc - 2, argv + 2);
   }
@@ -652,7 +656,7 @@ static bool CmdScan (int argc, const char **argv) {
   if (outFile) {
     if (outFileName)
       printf ("Writing scan results as a database template to '%s'...\n", outFileName);
-    else {
+    else if (verbose || withCheck) {
       printf ("Scan results are in database syntax, options '-c' and '-v' are ignored.\n\n");
       verbose = withCheck = false;
     }
@@ -686,14 +690,18 @@ static bool CmdScan (int argc, const char **argv) {
     // Print ID and info ...
     if (status == brOk) {
       if (!outFile || outFileName) {      // conventional output only if not dumping for database to <stdout>
-        if (brownie.HasDeviceFeatures ())
-          printf ("%-16s %16s v%s\n", BrownieIdStr (&brownie),
-                  brownie.FeatureRecord ()->fwName, BrVersionNumberToStr (&s, brownie.FeatureRecord ()));
+        if (brownie.HasDeviceFeatures ()) {
+          printf ("%-16s %12s v%-12s (%s)\n",
+                  BrownieIdStr (&brownie),
+                  brownie.FeatureRecord ()->fwName,
+                  BrVersionGetAsStr (&s, brownie.FeatureRecord ()),
+                  BrMcuStr (brownie.FeatureRecord ()->mcuType));
+        }
         else
           printf ("%s\n", BrownieIdStr (&brownie));
         if (verbose) PrintDeviceInfo (&brownie, false);
       }
-      if (outFile) fprintf (outFile, "%s\n", brownie.ToStr ());
+      if (outFile) fprintf (outFile, "id=%-12s %s\n", brownie.Id (), brownie.ToStr (false));
     }
     else if (status != brNoDevice) {
       printf ("? %s\n", BrStatusStr (status));
@@ -765,7 +773,7 @@ static bool CmdRegRead (int argc, const char **argv) {
   // Read register(s)...
   for (n = reg0; n <= reg1; n++) {
     status = brOk;
-    val = shellLink.RegReadNext (shellAdr, (uint8_t) n, &status);
+    val = shellLink.RegReadNext (&status, shellAdr, (uint8_t) n);
     if (status == brOk) printf ("reg(0x%02x) = 0x%02x\n", n, val);
     else printf ("Failed to read reg(0x%02x): %s\n", n, BrStatusStr (status));
   }
@@ -1187,7 +1195,7 @@ static bool CmdProgram (int argc, const char **argv) {
   CString s, elfFileName;
   CBrownie brownie, *dbBrownie;
   uint8_t *buf;
-  const char *msg, *mcuType;
+  const char *msg, *mcuModel;
   int adrHi, adrLo, size, n, k;
   bool verbose, yesSure;
 
@@ -1198,12 +1206,15 @@ static bool CmdProgram (int argc, const char **argv) {
   for (n = 1; n < argc; n++) {
     if (argv[n][0] == '-') {
       switch (argv[n][1]) {
+
         case 'v':
           verbose = true;
           break;
+
         case 'y':
           yesSure = true;
           break;
+
         case 'd':
           dbBrownie = shellDatabase.Get (shellAdr);
           if (n < argc-1) if (argv[n+1][0] != '-') {
@@ -1216,13 +1227,15 @@ static bool CmdProgram (int argc, const char **argv) {
             // Use current address ...
             dbBrownie = shellDatabase.Get (shellAdr);
           if (!dbBrownie) return ArgError (argv, "No Brownie defined");
+          mcuModel = BrMcuStr (dbBrownie->FeatureRecord ()->mcuType);
+          if (!mcuModel) return ArgError (argv, "No MCU model defined for Brownie");
 
-          // Search for appropriate ELF file ...
-          //   TBD: With '/' in name: Search locally, else search in $HOME2L/share/brownies.
-          elfFileName.SetF ("./%s.elf", dbBrownie->FeatureRecord ()->fwName);   // try local dir first
+          // Search for appropriate ELF file in local dir ("./"), then revert to standard search path ...
+          elfFileName.SetF ("./%s.%s.elf", dbBrownie->FeatureRecord ()->fwName, mcuModel); // try local dir first
           if (access (elfFileName.Get (), R_OK) != 0)
-            elfFileName.SetF ("%s.elf", dbBrownie->FeatureRecord ()->fwName);   // assume Home2L installation
+            elfFileName.Del (0, 2);   // assume Home2L installation: Remove leading "./"
           break;
+
         default:
           return ArgError (argv);
       }
@@ -1272,13 +1285,13 @@ static bool CmdProgram (int argc, const char **argv) {
   if (PrintOnError (
     shellLink.CheckDevice (shellAdr, &brownie)
   )) return false;
-  s.SetF (".%s.", mcuType = BrMcuStr (brownie.FeatureRecord ()->mcuType));
+  s.SetF (".%s.", mcuModel = BrMcuStr (brownie.FeatureRecord ()->mcuType));
   if (strstr (elfFileName.Get (), s.Get ()) == NULL) {
     printf ("WARNING: According to its name, the ELF file '%s'\n"
             "         is not compatible with the current MCU type (%s).\n"
             "\n"
             "         Think twice before you proceed!\n\n",
-            elfFileName.Get (), mcuType);
+            elfFileName.Get (), mcuModel);
     yesSure = false;
   }
 
@@ -1423,8 +1436,10 @@ static bool CmdHub (int argc, const char **argv) {
   if (PrintOnError (
     shellLink.CheckDevice (shellAdr, &brownie)
   )) return false;
-  if (!strstr (brownie.FeatureRecord ()->fwName, "hub.") ||
-      (brownie.FeatureRecord ()->gpoPresence & 1) == 0) {
+  if (!(brownie.FeatureRecord ()->features & BR_FEATURE_TWIHUB) ||
+      !(brownie.FeatureRecord ()->gpoPresence & 1) ) {
+  //~ if (!strstr (brownie.FeatureRecord ()->fwName, "hub.") ||
+      //~ (brownie.FeatureRecord ()->gpoPresence & 1) == 0) {
     puts ("Error: This device does not appear to be a suitable hub.");
     return false;
   }
@@ -1546,7 +1561,8 @@ static bool CmdTimer (int argc, const char **argv) {
   }
 
   // Read ticks from brownie ...
-  printf ("Testing timer (delay = %i ms):\n", delay);
+  printf ("Testing timer (delay = %i ms)... ", delay);
+  fflush (stdout);
   t0before = TicksMonotonicNow ();
   if (PrintOnError (shellLink.RegRead (shellAdr, BR_REG_TICKS_LO, &byte))) return false;
   brT0 = byte;
@@ -1570,7 +1586,7 @@ static bool CmdTimer (int argc, const char **argv) {
   msLocal = 0.5 * (t1before - t0before + t1after - t0after);
   msCom0 = t0after - t0before;
   msCom1 = t1after - t1before;
-  printf ("  local delay = %.1f ms, brownie delay = %.1f ms (%.1f%%)\n"
+  printf ("  local delay = %.1f ms, brownie delay = %.1f ms (*** %.1f%% ***); "
           "  communication time: %.1f ms (%.1f%%) and %.1f ms (%.1f%%)\n",
           msLocal, msBrownie, 100.0 * msBrownie / msLocal,
           msCom0, 100.0 * msCom0 / msLocal, msCom1, 100.0 * msCom1 / msLocal);
@@ -1681,11 +1697,11 @@ static bool CmdResources (int argc, const char **argv) {
   printf (s2.Get ());
   fflush (stdout);
   rcSubscriber = &subscriber;   // let signal handler interrupt us
-  shellLink.SocketServerStart ();
+  shellLink.ServerStart ();
   linkFailure = false;
   while (!interrupted) {
     RcIterate ();
-    haveSocketClient = shellLink.SocketServerIterate (64);
+    haveSocketClient = shellLink.ServerIterate (64);
     rcDatabase.ResourcesIterate (haveSocketClient);
     while (subscriber.PollEvent (&ev)) {
       printf (": %s\n", ev.ToStr ());
@@ -1701,7 +1717,7 @@ static bool CmdResources (int argc, const char **argv) {
       }
     }
   }
-  shellLink.SocketServerStop ();
+  shellLink.ServerStop ();
   rcSubscriber = NULL;          // disable signal handler interrupt
   subscriber.Clear ();
 

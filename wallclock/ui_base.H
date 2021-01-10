@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -297,7 +297,7 @@ TColor ColorBlend (TColor color0, TColor color1, int weight1);
 #define DARK_BLUE     ToColor (0x00, 0x00, 0x80)
 #define DARK_CYAN     ToColor (0x00, 0x80, 0x80)
 #define DARK_MAGENTA  ToColor (0x80, 0x00, 0x80)
-#define DARK_YELLOW   ToColor (0xc0, 0x80, 0x00)
+#define DARK_YELLOW   ToColor (0x80, 0x80, 0x00)
 
 #define LIGHT_RED     ToColor (0xff, 0x80, 0x80)
 #define LIGHT_GREEN   ToColor (0x80, 0xff, 0x80)
@@ -307,6 +307,8 @@ TColor ColorBlend (TColor color0, TColor color1, int weight1);
 #define LIGHT_YELLOW  ToColor (0xff, 0xff, 0x80)
 
 #define BROWN         ToColor (0x80, 0x40, 0x00)
+#define LIGHT_BROWN   ToColor (0xc0, 0x80, 0x40)
+
 #define ORANGE        ToColor (0xc0, 0x40, 0x00)
 
 #define TRANSPARENT   ToColor (0x00, 0x00, 0x00, 0x00)

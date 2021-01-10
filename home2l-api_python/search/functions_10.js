@@ -1,14 +1,15 @@
 var searchData=
 [
   ['ticksabsof',['TicksAbsOf',['../group__home2l__time.html#ga54b2517593fa32ec4e52be8c60b6b061',1,'home2l']]],
+  ['ticksabsstr',['TicksAbsStr',['../group__home2l__time.html#ga11cbb85e851a01d8cbffc3ba718448c7',1,'home2l']]],
   ['ticksfromutc',['TicksFromUTC',['../group__home2l__time.html#ga680876416e15821dd6b4ff0b04f1e3ed',1,'home2l']]],
   ['ticksnow',['TicksNow',['../group__home2l__time.html#ga8dc38cbcbc5aca1580ec5f7119c5b067',1,'home2l']]],
-  ['ticksof',['TicksOf',['../group__home2l__time.html#ga7482f4f7de153f03149628ec183cbb75',1,'home2l']]],
   ['ticksofdate',['TicksOfDate',['../group__home2l__time.html#ga48d06f7b42eabc29884ef60ae178c445',1,'home2l']]],
   ['ticksofmillis',['TicksOfMillis',['../group__home2l__time.html#ga1aa2b55f8c057abd04c904af390b6763',1,'home2l']]],
   ['ticksofseconds',['TicksOfSeconds',['../group__home2l__time.html#ga0ec06f73bf300db4c1bab0e1651454ca',1,'home2l']]],
   ['ticksoftime',['TicksOfTime',['../group__home2l__time.html#gab7f2807dc2b9514e2f47ff63f92dfbd6',1,'home2l']]],
-  ['ticksstr',['TicksStr',['../group__home2l__time.html#ga2572c06e78e15a59692a0224e29a7137',1,'home2l']]],
+  ['ticksrelof',['TicksRelOf',['../group__home2l__time.html#gada32331993896bd7485b5b923350e327',1,'home2l']]],
+  ['ticksrelstr',['TicksRelStr',['../group__home2l__time.html#gaaab9be96ae2c3986b7898f83702aa53f',1,'home2l']]],
   ['tickstoday',['TicksToday',['../group__home2l__time.html#gacfe96854c4a2a77544beecf526124848',1,'home2l']]],
   ['tickstopydatetime',['TicksToPyDateTime',['../group__home2l__time.html#ga66b549393393f7a610c578089aec04c4',1,'home2l']]],
   ['tickstopytimedelta',['TicksToPyTimeDelta',['../group__home2l__time.html#ga7c237867a77e26343ed659f8f98ad4db',1,'home2l']]],

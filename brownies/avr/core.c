@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,10 +34,6 @@
 #error "BR_FLASH_PAGESIZE must not be smaller than SPM_PAGESIZE"
 #endif
 
-#if BR_MCU_NONE != MCU_TYPE_NONE || BR_MCU_ATTINY84 != MCU_TYPE_ATTINY84 || BR_MCU_ATTINY85 != MCU_TYPE_ATTINY85 || BR_MCU_ATTINY861 != MCU_TYPE_ATTINY861
-#error "BR_MCU_* constants and MCU_TYPE_* constants are incompatible"
-#endif
-
 
 
 
@@ -59,26 +55,23 @@ const __flash TBrFeatureRecord brFeatureRecord = {
       BR_FEATURE_TIMER    * WITH_TIMER +
       BR_FEATURE_NOTIFY   * TWI_SL_NOTIFY +
       BR_FEATURE_TWIHUB   * WITH_TWIHUB +
-      BR_FEATURE_MATRIX   * WITH_MATRIX +
-      BR_FEATURE_TEMP     * WITH_TEMP_ZACWIRE +
       BR_FEATURE_ADC_0    * WITH_ADC +
       BR_FEATURE_ADC_1    * ((WITH_ADC && ADC_PORTS >= 2) ? 1 : 0) +
+      BR_FEATURE_UART     * WITH_UART +
+      BR_FEATURE_TEMP     * WITH_TEMP_ZACWIRE +
       BR_FEATURE_SHADES_0 * WITH_SHADES +
-      BR_FEATURE_SHADES_1 * ((WITH_SHADES && SHADES_PORTS >= 2) ? 1 : 0) +
-      ( WITH_MATRIX ?
-        (
-          ((MATRIX_ROWS - 1) << BR_FEATURE_MROWS_SHIFT) |
-          ((MATRIX_COLS - 1) << BR_FEATURE_MCOLS_SHIFT)
-        ) : 0
-      ),
+      BR_FEATURE_SHADES_1 * ((WITH_SHADES && SHADES_PORTS >= 2) ? 1 : 0),
+
   .gpiPresence  = GPIO_IN_PRESENCE,
   .gpiPullup    = GPIO_IN_PULLUP & GPIO_IN_PRESENCE,
   .gpoPresence  = GPIO_OUT_PRESENCE,
   .gpoPreset    = GPIO_OUT_PRESET & GPIO_OUT_PRESENCE,
 
-  .mcuType      = MCU_TYPE,
+  .matDim       = (MATRIX_ROWS << 4) | (MATRIX_COLS),
 
   .fwName       = BROWNIE_FWNAME,
+
+  .mcuType      = MCU_TYPE,
 
   .magic        = BR_MAGIC
 };
@@ -147,11 +140,10 @@ uint8_t _regFile[BR_REGISTERS];
 uint8_t chgShadow;      // shadow register copied and reset on register read
 
 
-void ReportChange (uint8_t mask) {
+void ReportChangeAndNotify (uint8_t mask) {
   if (mask & ~chgShadow) {      // change is new? (we do not notify twice for a similar change)
     chgShadow |= mask;
-    if (TEMP_NOTIFY || (mask & ~BR_CHANGED_TEMP)) TwiSlNotify ();
-      // notify, but not for temperature values unless explicitly enabled
+    TwiSlNotify ();
   }
 }
 
@@ -171,7 +163,7 @@ void ReportChange (uint8_t mask) {
 static inline void TimerInit () {
 
   // Inititialize the 16-bit timer ...
-#if MCU_TYPE == MCU_TYPE_ATTINY85 || MCU_TYPE == MCU_TYPE_ATTINY84
+#if MCU_TYPE == BR_MCU_ATTINY85 || MCU_TYPE == BR_MCU_ATTINY84
 
   //    On ATtiny85 and ATtiny84, the Timer/Counter1 is used.
   TIMSK1 = 0;   // Disable all interrupt sources
@@ -180,7 +172,7 @@ static inline void TimerInit () {
   GTCCR = 1;    // Reset prescaler
   TCNT1 = 0;    // Reset timer register
 
-#elif MCU_TYPE == MCU_TYPE_ATTINY861
+#elif MCU_TYPE == BR_MCU_ATTINY861
 
   //    On ATtiny861, the Timer/Counter0 is the appropriate 16 bit counter.
   TIMSK = 0;                  // Disable all interrupt sources
@@ -196,9 +188,9 @@ static inline void TimerInit () {
 
 
 uint16_t TimerNow () {
-#if MCU_TYPE == MCU_TYPE_ATTINY85 || MCU_TYPE == MCU_TYPE_ATTINY84
+#if MCU_TYPE == BR_MCU_ATTINY85 || MCU_TYPE == BR_MCU_ATTINY84
   register uint16_t t = TCNT1;
-#elif MCU_TYPE == MCU_TYPE_ATTINY861
+#elif MCU_TYPE == BR_MCU_ATTINY861
   register uint16_t t = TCNT0L;
   t |= ((uint16_t) TCNT0H << 8);
 #else

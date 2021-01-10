@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -76,16 +76,15 @@ $(function() {
 <div class="textblock"><p>This file contains core functionality of the <em>Brownie</em> firmware. </p>
 
 <p class="definition">Definition in file <a class="el" href="core_8h_source.html">core.h</a>.</p>
-</div><div class="textblock"><code>#include &quot;<a class="el" href="config_8h_source.html">config.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="interface_8h_source.html">interface.h</a>&quot;</code><br />
+</div><div class="textblock"><code>#include &quot;<a class="el" href="configure_8h_source.html">configure.h</a>&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for core.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="core_8h__incl.png" border="0" usemap="#brownies_2avr_2core_8h" alt=""/></div>
 <map name="brownies_2avr_2core_8h" id="brownies_2avr_2core_8h">
-<area shape="rect" id="node2" href="config_8h.html" title="config.h" alt="" coords="5,80,73,107"/>
-<area shape="rect" id="node5" href="interface_8h.html" title="interface.h" alt="" coords="98,80,181,107"/>
-<area shape="rect" id="node3" href="base_8h.html" title="base.h" alt="" coords="9,155,70,181"/>
+<area shape="rect" id="node2" href="configure_8h.html" title="configure.h" alt="" coords="44,80,131,107"/>
+<area shape="rect" id="node3" href="base_8h.html" title="base.h" alt="" coords="57,155,118,181"/>
+<area shape="rect" id="node5" href="interface_8h.html" title="interface.h" alt="" coords="95,229,178,256"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -114,11 +113,6 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr><td colspan="2"><div class="groupHeader">Change Reporting ...</div></td></tr>
-<tr class="memitem:gacfac4d1d4759e1fd9b4f7ee4132e4ceb"><td class="memItemLeft" align="right" valign="top">
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gacfac4d1d4759e1fd9b4f7ee4132e4ceb">ReportChange</a> (uint8_t mask)</td></tr>
-<tr class="memdesc:gacfac4d1d4759e1fd9b4f7ee4132e4ceb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set (a) bit(s) in the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register and issue a TWI host notification. <br /></td></tr>
-<tr class="separator:gacfac4d1d4759e1fd9b4f7ee4132e4ceb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Timer ...</div></td></tr>
 <tr class="memitem:ga4f5acc67ca7e44b717bb69c295056ac9"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga4f5acc67ca7e44b717bb69c295056ac9">TimerNow</a> ()</td></tr>
 <tr class="memdesc:ga4f5acc67ca7e44b717bb69c295056ac9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get current time in ticks.  <a href="group__brownies__firmware.html#ga4f5acc67ca7e44b717bb69c295056ac9">More...</a><br /></td></tr>
@@ -168,18 +162,52 @@ const __flash <a class="el" href="group__brownies__interface__memory.html#ga74f9
 <tr class="separator:ga2b0aa964f0eaf75195f30ab79ec41dff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
+Change Reporting ...</h2></td></tr>
+<tr class="memitem:ga3e1f75232ab66735516f3f38fcd79b67"><td class="memItemLeft" align="right" valign="top">
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>chgShadow</b></td></tr>
+<tr class="separator:ga3e1f75232ab66735516f3f38fcd79b67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga418a277db3a7fe04f3788062d524ce4a"><td class="memItemLeft" align="right" valign="top">
+static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga418a277db3a7fe04f3788062d524ce4a">ReportChange</a> (uint8_t mask)</td></tr>
+<tr class="memdesc:ga418a277db3a7fe04f3788062d524ce4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set (a) bit(s) in the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register. <br /></td></tr>
+<tr class="separator:ga418a277db3a7fe04f3788062d524ce4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga60cf880522ef436e7df05668763d40f5"><td class="memItemLeft" align="right" valign="top">
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga60cf880522ef436e7df05668763d40f5">ReportChangeAndNotify</a> (uint8_t mask)</td></tr>
+<tr class="memdesc:ga60cf880522ef436e7df05668763d40f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set (a) bit(s) in the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register and issue a TWI host notification. <br /></td></tr>
+<tr class="separator:ga60cf880522ef436e7df05668763d40f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Mini-Timer ...</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp4f2dba23506ff04c207959004415aa5f"></a>8-bit counter with a cycle time of 8µs to be used locally in modules. Presently, the mini-timer is exclusively used by the 'temperature' module.</p>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp4f2dba23506ff04c207959004415aa5f"></a>8-bit counter with a cycle time of 8µs to be used locally in modules. Presently, the mini-timer is used by the ISRs of the UART and the 'temperature' modules. Minitimers must be used with interrupts disabled.</p>
 <p><b>Note:</b> <a class="el" href="group__brownies__firmware.html#ga699bb69e238b5d2fde56eabc7e577eff" title="Reset the minitimer. ">MinitimerReset()</a> and <a class="el" href="group__brownies__firmware.html#gaaf95335026523a1587e1140025ab621c" title="Get the current minitimer value. ">MinitimerNow()</a> are implemented as macros to ensure that they are inlined. Otherwise, ISRs may get a very long prologue saving many registers. This causes problems in 'TemperatureISR()' on the ATtiny861. </p>
 </td></tr>
 <tr class="memitem:ga45576c4ca410327494bf2fd615bbff5e"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga45576c4ca410327494bf2fd615bbff5e">MINITICKS_OF_US</a>(X)&#160;&#160;&#160;(X * (<a class="el" href="group__brownies__interface.html#gabb68f93c17dddd14f7e22b5ac6b4d05f">BR_CPU_FREQ</a> / 1000000) / 8)</td></tr>
 <tr class="memdesc:ga45576c4ca410327494bf2fd615bbff5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of 8-bit timer ticks of a microsecond value for a clock selection of clk_io/8. <br /></td></tr>
 <tr class="separator:ga45576c4ca410327494bf2fd615bbff5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4785ba391c2f18d1cf2ff6092a7f6032"><td class="memItemLeft" align="right" valign="top">
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga4785ba391c2f18d1cf2ff6092a7f6032">MinitimerStart</a> ()</td></tr>
-<tr class="memdesc:ga4785ba391c2f18d1cf2ff6092a7f6032"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the minitimer. <br /></td></tr>
-<tr class="separator:ga4785ba391c2f18d1cf2ff6092a7f6032"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga28009a55b9805ab8ce2fc7e2bf1792ab"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga28009a55b9805ab8ce2fc7e2bf1792ab">MINI_CLOCK_SCALE_1</a></td></tr>
+<tr class="memdesc:ga28009a55b9805ab8ce2fc7e2bf1792ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minitimer clock period of 1/BR_CPU_FREQ. <br /></td></tr>
+<tr class="separator:ga28009a55b9805ab8ce2fc7e2bf1792ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf09cb4faba0e0068d0cd331c0cbda01b"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gaf09cb4faba0e0068d0cd331c0cbda01b">MINI_CLOCK_SCALE_8</a></td></tr>
+<tr class="memdesc:gaf09cb4faba0e0068d0cd331c0cbda01b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minitimer clock period of 8 * 1/BR_CPU_FREQ. <br /></td></tr>
+<tr class="separator:gaf09cb4faba0e0068d0cd331c0cbda01b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga39eaaf6f938935749f492b14d113bfb2"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga39eaaf6f938935749f492b14d113bfb2">MINI_CLOCK_SCALE_64</a></td></tr>
+<tr class="memdesc:ga39eaaf6f938935749f492b14d113bfb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minitimer clock period of 64 * 1/BR_CPU_FREQ. <br /></td></tr>
+<tr class="separator:ga39eaaf6f938935749f492b14d113bfb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae69679e654a41ebb4a3d16e707aaa972"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gae69679e654a41ebb4a3d16e707aaa972">MINI_CLOCK_SCALE_256</a></td></tr>
+<tr class="memdesc:gae69679e654a41ebb4a3d16e707aaa972"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minitimer clock period of 256 * 1/BR_CPU_FREQ. <br /></td></tr>
+<tr class="separator:gae69679e654a41ebb4a3d16e707aaa972"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae2da54abaf1bb08df518235770946992"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gae2da54abaf1bb08df518235770946992">MINI_CLOCK_SCALE_1024</a></td></tr>
+<tr class="memdesc:gae2da54abaf1bb08df518235770946992"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minitimer clock period of 1024 * 1/BR_CPU_FREQ. <br /></td></tr>
+<tr class="separator:gae2da54abaf1bb08df518235770946992"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab1b0d50c287c9adc8c84de2ff620e58d"><td class="memItemLeft" align="right" valign="top">
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gab1b0d50c287c9adc8c84de2ff620e58d">MinitimerStart</a> (int clockScale)</td></tr>
+<tr class="memdesc:gab1b0d50c287c9adc8c84de2ff620e58d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the minitimer (pass any MINI_CLOCK_SCALE_* constants) <br /></td></tr>
+<tr class="separator:gab1b0d50c287c9adc8c84de2ff620e58d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0558f04dd0e1ae57acf3afcd0662c66d"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga0558f04dd0e1ae57acf3afcd0662c66d">MinitimerStop</a> ()</td></tr>
 <tr class="memdesc:ga0558f04dd0e1ae57acf3afcd0662c66d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the minitimer. <br /></td></tr>

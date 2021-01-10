@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -64,7 +64,8 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">Requests<div class="ingroups"><a class="el" href="group__resources.html">Resources</a></div></div>  </div>
 </div><!--header-->
@@ -93,6 +94,10 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaf5bac1e06a431449622bc732ee0c0675">RCREQ_NONE</a>&#160;&#160;&#160;INT_MAX</td></tr>
 <tr class="memdesc:gaf5bac1e06a431449622bc732ee0c0675"><td class="mdescLeft">&#160;</td><td class="mdescRight">Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis. <br /></td></tr>
 <tr class="separator:gaf5bac1e06a431449622bc732ee0c0675"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga70520ac05bb374e845871222ce99f39f"><td class="memItemLeft" align="right" valign="top"><a id="ga70520ac05bb374e845871222ce99f39f"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga70520ac05bb374e845871222ce99f39f">RCREQ_NOVALUE</a>&#160;&#160;&#160;((<a class="el" href="classCRcRequest.html">CRcRequest</a> *) NULL)</td></tr>
+<tr class="memdesc:ga70520ac05bb374e845871222ce99f39f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Special value meaning "none" for the request value. <br /></td></tr>
+<tr class="separator:ga70520ac05bb374e845871222ce99f39f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -102,6 +107,13 @@ Functions</h2></td></tr>
 <tr class="memitem:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga9eb603b175cfe65fb89154d0bb96c75f">RcGetUserRequestAttrs</a> ()</td></tr>
 <tr class="memdesc:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the default request attributes for user interactions (see 'rc.userReqAttrs').  <a href="#ga9eb603b175cfe65fb89154d0bb96c75f">More...</a><br /></td></tr>
 <tr class="separator:ga9eb603b175cfe65fb89154d0bb96c75f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:ga75cbdfbc4a3edee8177692f93659eb90"><td class="memItemLeft" align="right" valign="top"><a id="ga75cbdfbc4a3edee8177692f93659eb90"></a>
+const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga75cbdfbc4a3edee8177692f93659eb90">rcDefaultRequestId</a></td></tr>
+<tr class="memdesc:ga75cbdfbc4a3edee8177692f93659eb90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request ID for default requests ("default") <br /></td></tr>
+<tr class="separator:ga75cbdfbc4a3edee8177692f93659eb90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Request Priorities</h2></td></tr>

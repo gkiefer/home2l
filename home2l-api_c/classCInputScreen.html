@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -71,7 +71,7 @@ $(function() {
 <div class="textblock"><p>Screen with an input line widget. </p>
 <p>Since the on-screen keyboard requires some space, it is useful to use <a class="el" href="classCInputLine.html">CInputLine</a> indirectly with this screen. It shows an input line on top and a button bar below. The button bar shows a back/escape button on the left, an "OK" and standard editing buttons on the right and may contain optional user buttons in the center. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00886">886</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00888">888</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -86,8 +86,8 @@ Inheritance diagram for CInputScreen:</div>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Setup ...</div></td></tr>
-<tr class="memitem:a1008565486f9f4045cd204cd8e3f3752"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCInputScreen.html#a1008565486f9f4045cd204cd8e3f3752">Setup</a> (const char *inputPreset, TColor color=GREY, int userBtns=0, <a class="el" href="classCButton.html">CButton</a> **userBtnList=NULL, const int *userBtnWidth=NULL)</td></tr>
-<tr class="separator:a1008565486f9f4045cd204cd8e3f3752"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51224eda822b3571e032f9cc8f1975cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCInputScreen.html#a51224eda822b3571e032f9cc8f1975cb">Setup</a> (const char *label, const char *inputPreset, TColor color=GREY, int userBtns=0, <a class="el" href="classCButton.html">CButton</a> **userBtnList=NULL, const int *userBtnWidth=NULL)</td></tr>
+<tr class="separator:a51224eda822b3571e032f9cc8f1975cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Accessing the input line ...</div></td></tr>
 <tr class="memitem:a2e1eec9c2cede45c7cd1ea75259c6806"><td class="memItemLeft" align="right" valign="top"><a id="a2e1eec9c2cede45c7cd1ea75259c6806"></a>
 <a class="el" href="classCInputLine.html">CInputLine</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>InputLine</b> ()</td></tr>
@@ -177,8 +177,8 @@ static class <a class="el" href="classCScreen.html">CScreen</a> *&#160;</td><td 
 <tr class="separator:a8b11c9a806b4d5be9b248cd2ba7e19d5 inherit pub_static_methods_classCScreen"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a1008565486f9f4045cd204cd8e3f3752"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1008565486f9f4045cd204cd8e3f3752">&#9670;&nbsp;</a></span>Setup()</h2>
+<a id="a51224eda822b3571e032f9cc8f1975cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51224eda822b3571e032f9cc8f1975cb">&#9670;&nbsp;</a></span>Setup()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -186,6 +186,12 @@ static class <a class="el" href="classCScreen.html">CScreen</a> *&#160;</td><td 
         <tr>
           <td class="memname">void CInputScreen::Setup </td>
           <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>label</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">const char *&#160;</td>
           <td class="paramname"><em>inputPreset</em>, </td>
         </tr>
@@ -222,8 +228,9 @@ static class <a class="el" href="classCScreen.html">CScreen</a> *&#160;</td><td 
 </div><div class="memdoc">
 <p>Set up the screen. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">label</td><td>is an optional label printed before the input line (may be NULL for no label). </td></tr>
     <tr><td class="paramname">inputPreset</td><td>is the preset for the input string. </td></tr>
-    <tr><td class="paramname">color</td><td>is the user button color. </td></tr>
+    <tr><td class="paramname">color</td><td>is the button color, individual colors may be set afterwards. </td></tr>
     <tr><td class="paramname">userBtns</td><td>is the number of user buttons. </td></tr>
     <tr><td class="paramname">userBtnList</td><td>is a list of pointers to the user button (may be NULL if userBtns == 0). </td></tr>
     <tr><td class="paramname">userBtnWidth</td><td>is a list of width arguments for the user button (see <a class="el" href="group__ui__screen.html#gab2d954b02a2b989ca261ed23438f7a34">LayoutRow()</a>; may be NULL if userBtns == 0). For the user buttons, the area and color are set according to the parameters. The label must be set by the caller. </td></tr>
@@ -257,7 +264,7 @@ static class <a class="el" href="classCScreen.html">CScreen</a> *&#160;</td><td 
 </div><div class="memdoc">
 <p>Called on push of the "back" button and after an eventual "are you sure?" confirmation. Must call <a class="el" href="classCScreen.html#adfe3cca9900080276988eb3dbc7cb6e2">Return()</a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00923">923</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00927">927</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 
 </div>
 </div>

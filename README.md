@@ -33,9 +33,13 @@ The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for autom
 What is New?
 ============
 
-* **EnOcean driver** for native support of energy harvesting sensor devices.
+* Improved **Python API** to simplify rules writing
 
-* **MQTT gateway driver** to import devices and export *Home2L* resources to external MQTT clients.
+* **Shell:** Call aliases and 'get'/'wait' commands for scripted use
+
+* Brownies: **UART** module to communicate with remote RS485 devices
+
+* **WallClock:** UI improvements
 
 
 
@@ -64,6 +68,19 @@ What is Special About the *Home2Ls*?
 ====================================
 
 
+## Versatile *Resources* Library
+
+The central component of the *Home2L* suite is the *Resources* library. It connects physical sensors and actors, software services, computers and more. Everything that can act or sense in the widest sense, can be modelled as a *resource* in the *Home2L* suite.
+
+All *resources* are arranged in a common namespace, but driven and accessed in a completely distribited way from any computer. They can be manipulated or read out using the library, which provides full network transparency and supports arbitrary concurrent accesses from any process on any machine anytime.
+
+Resources are manipulated by means of independent *requests* with individual attributes like priorities and time intervals. The user pushes a button to open the window blinds. One second later, a timer-triggered automatic rule tells the blinds to close. What should happen now? The *request* model allows to clearly specify priorities (e.g. user interaction in favor of automation rules) and to handle concurrency properly.
+
+The *Home2L Shell* is a powerful administration tool and allows to access resources and submit requests on the command line or by shell scripts.
+
+Both automation rules and resource drivers can also be part of a larger program. Any software linking against the *Resources* library can access resources or publish own run-time information as resources.
+
+
 ## Efficient and Lightweight Design
 
 All core components are written in C/C++, with a very minimum set of external dependencies beyond *libc* - ideally suited for small embedded devices and microcontrollers. There is no need for a Java runtime environment or a heavy web framework. Starting up a server and a command shell and shutting both down again takes less than a second altogether - on an ARM-based minicomputer running at 144 MHz!
@@ -78,12 +95,14 @@ Central servers are single points of failure. *Home2L* follows a completely dist
 
 ## Automation Rules Written in Python - But Not Limited to That
 
-There is no new language or tool to learn to formulate automation rules. *Home2L* rules are typically formulated in Python, they profit from the simplicity and power of the Python language. There can be multiple rules scripts, they may run on any machine, and they may be combined with other software routines or be part of a larger application.
+There is no new language or tool to learn to formulate automation rules. *Home2L* rules written in Python profit from the simplicity and power of the Python language. There can be multiple rules scripts, they can run on any machine, and they may be combined with other software routines or be part of larger applications.
 
-Other ways to interact with *Home2L* resources is via the C/C++ API from any application or by shell scripts using the *Home2L Shell* in non-interactive mode.
+Other ways to interact with *Home2L* resources is via the C/C++ API from any application or by shell scripts using the *Home2L Shell*.
 
 
-## Easy Driver Development in C/C++, Python or Any Other Language
+## Integrating Sensors/Actor Hardware and Services: MQTT, Python, Shell Scripts, ...
+
+MQTT-enabled devices can be imported directly using the MQTT gateway driver.
 
 An API for *resource* drivers allows to easily add support for new hardware or services. A driver can be implemented
 
@@ -93,8 +112,6 @@ An API for *resource* drivers allows to easily add support for new hardware or s
 
 For all three cases, documented examples are available in the source tree.
 
-MQTT-enabled devices can be imported directly using the MQTT gateway driver.
-
 
 ## Easy Integration of Do-It-Yourself Hardware
 
@@ -103,19 +120,6 @@ MQTT-enabled devices can be imported directly using the MQTT gateway driver.
 *Home2L Brownies* can drive, for example, window/door/light sensors (GPIOs), temperature sensors, or window shades/actuators.
 
 The *Home2L* suite includes a software stack for the Linux (host) and for the microcontroller (device) side. The protocol includes various mechanisms for error correction/avoidance, host notification, as well as a variety of maintenance tools for remote configuration, diagnosis, collection of statistics, remote software updates, and device resurrection for the case that a software update failed and the device is difficult to reach physically.
-
-
-## Versatile *Resources* Library
-
-The central component of the *Home2L* suite is the *Resources* library. It manages physical sensors and actors, software services, computers and more. Everything that can act or sense in the widest sense, can be modelled as a *resources* in the *Home2L* suite.
-
-All *resources* are arranged in a common namespace, but driven and accessed in a completely distribited way from any computer. They can be manipulated or read out using the library, which provides full network transparency and supports arbitrary concurrent accesses from any process on any machine anytime.
-
-Resources are manipulated by means of independent *requests* with individual attributes like priorities and time intervals. The user pushes a button to open the window shades. One second later, a timer-triggered automatic rule tells the shades to close. What should happen now? The *request* model allows to clearly specify the priority for the user (or against him, if desired) and to handle concurrency between automation rules and user interaction properly.
-
-Both automation rules and resource drivers can also be part of a larger program. Any software linking against the *Resources* library can access resources or publish own run-time information as resources.
-
-The *Home2L Shell* is a powerful administration tool and allows to access resources and submit requests on the command line or by shell scripts.
 
 
 ## Privacy

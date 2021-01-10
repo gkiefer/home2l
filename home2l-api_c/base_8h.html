@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -74,11 +74,13 @@ $(function() {
 
 <p class="definition">Definition in file <a class="el" href="base_8h_source.html">base.h</a>.</p>
 </div><div class="textblock"><code>#include &lt;avr/io.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="interface_8h_source.html">interface.h</a>&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for base.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="base_8h__incl.png" border="0" usemap="#brownies_2avr_2base_8h" alt=""/></div>
 <map name="brownies_2avr_2base_8h" id="brownies_2avr_2base_8h">
+<area shape="rect" id="node3" href="interface_8h.html" title="interface.h" alt="" coords="95,80,178,107"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -86,9 +88,9 @@ This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="base_8h__dep__incl.png" border="0" usemap="#brownies_2avr_2base_8hdep" alt=""/></div>
 <map name="brownies_2avr_2base_8hdep" id="brownies_2avr_2base_8hdep">
-<area shape="rect" id="node2" href="config_8h.html" title="brownies/avr/config.h" alt="" coords="5,80,152,107"/>
-<area shape="rect" id="node3" href="core_8h.html" title="brownies/avr/core.h" alt="" coords="11,155,147,181"/>
-<area shape="rect" id="node4" href="twi_8h.html" title="brownies/avr/twi.h" alt="" coords="15,229,143,256"/>
+<area shape="rect" id="node2" href="configure_8h.html" title="brownies/avr/configure.h" alt="" coords="5,80,169,107"/>
+<area shape="rect" id="node3" href="core_8h.html" title="brownies/avr/core.h" alt="" coords="19,155,155,181"/>
+<area shape="rect" id="node4" href="twi_8h.html" title="brownies/avr/twi.h" alt="" coords="23,229,151,256"/>
 </map>
 </div>
 </div>
@@ -195,24 +197,8 @@ Macros</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">MCU Types ...</div></td></tr>
 <tr class="memitem:ga6058531504a8da37ab1cf9fd4464793d"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga6058531504a8da37ab1cf9fd4464793d">MCU_TYPE</a></td></tr>
-<tr class="memdesc:ga6058531504a8da37ab1cf9fd4464793d"><td class="mdescLeft">&#160;</td><td class="mdescRight">MCU type compiled for; is set to any of the following values except <a class="el" href="group__brownies__firmware.html#gaaee1ba1c637cab69e05605adcee6efcc">MCU_TYPE_NONE</a>. <br /></td></tr>
+<tr class="memdesc:ga6058531504a8da37ab1cf9fd4464793d"><td class="mdescLeft">&#160;</td><td class="mdescRight">MCU type compiled for; is set to any 'BR_MCU_*' value (see <a class="el" href="group__brownies__interface__memory.html#gaf11edc384a15fbe32b6f41f62f5757a0">BR_MCU_NONE</a> and friends). <br /></td></tr>
 <tr class="separator:ga6058531504a8da37ab1cf9fd4464793d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaaee1ba1c637cab69e05605adcee6efcc"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gaaee1ba1c637cab69e05605adcee6efcc">MCU_TYPE_NONE</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memdesc:gaaee1ba1c637cab69e05605adcee6efcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">No/unknown MCU type. <br /></td></tr>
-<tr class="separator:gaaee1ba1c637cab69e05605adcee6efcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gac86e1fb60dc01c6a2b1905e4e133160b"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gac86e1fb60dc01c6a2b1905e4e133160b">MCU_TYPE_ATTINY85</a>&#160;&#160;&#160;1</td></tr>
-<tr class="memdesc:gac86e1fb60dc01c6a2b1905e4e133160b"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVR ATtiny85 (8 pins) or any software- and pin-compatible model. <br /></td></tr>
-<tr class="separator:gac86e1fb60dc01c6a2b1905e4e133160b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gacf17453b8383dabfd654fbe260120773"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gacf17453b8383dabfd654fbe260120773">MCU_TYPE_ATTINY84</a>&#160;&#160;&#160;2</td></tr>
-<tr class="memdesc:gacf17453b8383dabfd654fbe260120773"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVR ATtiny84 (14 pins) or any software- and pin-compatible model. <br /></td></tr>
-<tr class="separator:gacf17453b8383dabfd654fbe260120773"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaff00bc53f67126a47699a11e577b48ad"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#gaff00bc53f67126a47699a11e577b48ad">MCU_TYPE_ATTINY861</a>&#160;&#160;&#160;3</td></tr>
-<tr class="memdesc:gaff00bc53f67126a47699a11e577b48ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">AVR ATtiny861 (20 pins) or any software- and pin-compatible model. <br /></td></tr>
-<tr class="separator:gaff00bc53f67126a47699a11e577b48ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 <!-- start footer part -->

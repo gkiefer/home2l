@@ -1,5 +1,15 @@
 var searchData=
 [
+  ['uart_5fbaudrate',['UART_BAUDRATE',['../group__brownies__features.html#ga2c7ed0283bd6f2f9d791860d6254ef4f',1,'configure.h']]],
+  ['uart_5fmulti_5fbyte_5fisr',['UART_MULTI_BYTE_ISR',['../group__brownies__features.html#ga21dade509b3ccc94b34e2da53df1c582',1,'configure.h']]],
+  ['uart_5fparity',['UART_PARITY',['../group__brownies__features.html#ga40f6d25d96053400829579d41169bb50',1,'configure.h']]],
+  ['uart_5frx_5fbufsize',['UART_RX_BUFSIZE',['../group__brownies__features.html#gaabcd9a91af00aa8345e68db45f00e512',1,'configure.h']]],
+  ['uart_5frx_5finv',['UART_RX_INV',['../group__brownies__features.html#gab0138e94a1c2b08867d7c2a2e92258e0',1,'configure.h']]],
+  ['uart_5fstopbits',['UART_STOPBITS',['../group__brownies__features.html#ga207c8b0058641f8ba7fff9c8f9ac6fc5',1,'configure.h']]],
+  ['uart_5ftx_5fbufsize',['UART_TX_BUFSIZE',['../group__brownies__features.html#ga7867eff944b6f07517c258c30c6663c4',1,'configure.h']]],
+  ['uart_5ftx_5finv',['UART_TX_INV',['../group__brownies__features.html#ga1c40ae7510968027c7aca26c01e10c85',1,'configure.h']]],
+  ['uart_5ftx_5flisten',['UART_TX_LISTEN',['../group__brownies__features.html#gac202d83386a0254e9390906c6a19e8f6',1,'configure.h']]],
+  ['uart_5fwith_5fdrive',['UART_WITH_DRIVE',['../group__brownies__features.html#gacc665ad789ecfe524cf8f811959e4887',1,'configure.h']]],
   ['ui_20toolkit',['UI Toolkit',['../group__ui.html',1,'']]],
   ['ui_5fbase_2eh',['ui_base.H',['../ui__base_8H.html',1,'']]],
   ['ui_5fbuttons_5fbackwidth',['UI_BUTTONS_BACKWIDTH',['../group__ui__screen.html#ga025edf031a81356386683b256a5955ce',1,'ui_screen.H']]],

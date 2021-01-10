@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ static inline void GpioInit () {
 static inline void GpioIterate () {
   register TGpioWord gpioIn = GPIO_FROM_PMASK (P_IN_MULTI (GPIO_TO_PMASK (GPIO_IN_PRESENCE)));
   if (gpioIn != gpioLastIn) {
-    ReportChange (BR_CHANGED_GPIO);
+    ReportChangeAndNotify (BR_CHANGED_GPIO);
     gpioLastIn = gpioIn;
   }
 }

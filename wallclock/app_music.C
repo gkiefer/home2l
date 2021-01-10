@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include "apps.H"
 #include "app_music.H"
 
+#include "resources.H"
 #include "streamer.H"
 
 #include <mpd/client.h>
@@ -174,13 +175,6 @@ enum EDirEntryType {
 };
 
 
-enum EPlayerState {
-  plStopped = 0,
-  plPlaying,
-  plPaused
-};
-
-
 class CDirEntry {
 public:
   CDirEntry () { type = detNone; duration = 0; }
@@ -305,10 +299,10 @@ public:
   int SongDuration () { return songDuration; }
 
   // Player state...
-  EPlayerState PlayerState () { return playerState; }
+  ERctPlayerState PlayerState () { return playerState; }
 
-  bool IsPlaying () { return playerState == plPlaying; }
-  bool IsPlayingOrShouldBe () { return playerState == plPlaying || playerIsMuted; }
+  bool IsPlaying () { return playerState == rcvPlayerPlaying; }
+  bool IsPlayingOrShouldBe () { return playerState == rcvPlayerPlaying || playerIsMuted; }
     // Returns 'true', if the player is either actually playing or should be playing, but is
     // not for a reason not intended by the user.
     // Use this variant to decide if background mode can be quit.
@@ -317,8 +311,8 @@ public:
     // (At least this is the goal - there may be some more holes to fix, for example, the case that a readio
     // stream contains silence.)
     // Use this variant for an alarm clock to check if the user gets woken up or if some other measure has to be taken.
-  bool IsPaused () { return playerState == plPaused; }
-  bool IsStopped () { return playerState == plStopped; }
+  bool IsPaused () { return playerState == rcvPlayerPaused; }
+  bool IsStopped () { return playerState == rcvPlayerStopped; }
   bool Play ();
   bool Pause ();
   bool Stop ();
@@ -393,7 +387,7 @@ protected:
   bool songIsStream;
 
   // Player state (inner song)...
-  EPlayerState playerState;
+  ERctPlayerState playerState;
   bool playerIsMuted;    // If true, playing will continue if unmuted and player in pause state
   int playerSongPos;
   int playerBitrate, playerFreq, playerChannels;
@@ -446,6 +440,7 @@ class CScreenMusicMain: public CScreen, public CTimer {
     virtual void Activate (bool on = true);   // from 'CScreen'
     virtual void OnTime ();                   // from 'CTimer'
 
+    // Actions ...
     void PlayerOn () { isStarting = true; ConnectServer (); player.Play (); UpdateActiveState (); }
     void PlayerOff () { player.Stop (); UpdateActiveState (); }  // for 'appOpLongPush' or long-push on "back" button
       // This should pause or stop the player in a way that it is a) silent and b) it can remain in
@@ -462,9 +457,9 @@ class CScreenMusicMain: public CScreen, public CTimer {
     void OnStreamerStateChanged (EStreamerState state);
     void OnVolumeChanged (int volume);
     void OnDirChanged (int idx0, int idx1);   // The browser directory changed (size and/or any entries between the indices)
-    void OnSongChanged (EPlayerState state, int songs, int idx, int duration);
-    void OnPlayerStateChanged (EPlayerState state);
-    void OnSongPosChanged (EPlayerState state, int songPos, int bitrate, int freq, int channels);
+    void OnSongChanged (ERctPlayerState state, int songs, int idx, int duration);
+    void OnPlayerStateChanged (ERctPlayerState state);
+    void OnSongPosChanged (ERctPlayerState state, int songPos, int bitrate, int freq, int channels);
 
   protected:
     void ConnectServer ();
@@ -472,10 +467,10 @@ class CScreenMusicMain: public CScreen, public CTimer {
     void UpdateBluetooth ();
 
     void DisplaySetup ();
-    void DisplayClearAndDrawSong (EPlayerState state, int songs, int idx, int duration);
-    void DisplayDrawSongPos (EPlayerState state, int songPos);
-    void DisplayDrawPlayerState (EPlayerState state);
-    void DisplayDrawInfoLine (EPlayerState state, int bitrate = 0, int freq = 0, int channels = 0);
+    void DisplayClearAndDrawSong (ERctPlayerState state, int songs, int idx, int duration);
+    void DisplayDrawSongPos (ERctPlayerState state, int songPos);
+    void DisplayDrawPlayerState (ERctPlayerState state);
+    void DisplayDrawInfoLine (ERctPlayerState state, int bitrate = 0, int freq = 0, int channels = 0);
 
     void RunServerMenu (int xPos, bool transfer);
     void RunOutputMenu (int xPos);
@@ -717,7 +712,7 @@ void CMusicPlayer::Update () {
   const struct mpd_status *mpdStatus;
   const struct mpd_audio_format *mpdAudioFormat;
   const struct mpd_song *mpdSong;
-  EPlayerState _playerState;
+  ERctPlayerState _playerState;
   EStreamerState _streamerState;
   const char *songArtist, *songDate, *streamTitle;
   int _volumeRaw, _queueSongs, _songIdx, _songPos;
@@ -734,14 +729,14 @@ void CMusicPlayer::Update () {
 
   // Handle (un)muting...
   if (SystemIsMuted ()) {
-    if (!playerIsMuted && playerState == plPlaying) {
+    if (!playerIsMuted && playerState == rcvPlayerPlaying) {
       //~ INFO ("### Muting...");
       Pause ();
       playerIsMuted = true;
   }
   }
   else {
-    if (playerIsMuted && playerState != plStopped) {
+    if (playerIsMuted && playerState != rcvPlayerStopped) {
       //~ INFO ("### Unmuting...");
       if (envAutoUnmute) Play ();
       playerIsMuted = false;
@@ -795,7 +790,7 @@ void CMusicPlayer::Update () {
 
   // Song (or queue) change...
   _songIdx = mpd_status_get_song_pos (mpdStatus);
-  if (_songIdx < 0 && playerState == plStopped) {
+  if (_songIdx < 0 && playerState == rcvPlayerStopped) {
     // This is a dirty hack to get a nicer display: If the player is stopped,
     // report the first song as being active. This will be the one played anyway
     // if the "Play" buttion will be pushed.
@@ -865,9 +860,9 @@ void CMusicPlayer::Update () {
 
   // Player state ...
   switch (mpd_status_get_state (mpdStatus)) {
-    case MPD_STATE_PLAY: _playerState = plPlaying; break;
-    case MPD_STATE_PAUSE: _playerState = plPaused; break;
-    case MPD_STATE_STOP: default: _playerState = plStopped; break;
+    case MPD_STATE_PLAY: _playerState = rcvPlayerPlaying; break;
+    case MPD_STATE_PAUSE: _playerState = rcvPlayerPaused; break;
+    case MPD_STATE_STOP: default: _playerState = rcvPlayerStopped; break;
   }
   if (_playerState != playerState) {
     playerState = _playerState;
@@ -964,7 +959,7 @@ void CMusicPlayer::SetServer (int idx) {
   songIsStream = false;
 
   playerSongPos = 0;
-  playerState = plStopped;
+  playerState = rcvPlayerStopped;
 
   playerBitrate = playerFreq = playerChannels = 0;
   playerIsMuted = false;
@@ -1086,10 +1081,10 @@ bool CMusicPlayer::SetState (const char *state) {
 
   // Resume playing...
   if (!SetSongAndPos (_songQueueIdx, _playerSongPos)) return false;
-  switch ((EPlayerState) _playerState) {
-    case plStopped:   Stop ();    break;
-    case plPaused:    Pause ();   break;
-    case plPlaying:   Play ();    break;
+  switch ((ERctPlayerState) _playerState) {
+    case rcvPlayerStopped:   Stop ();    break;
+    case rcvPlayerPaused:    Pause ();   break;
+    case rcvPlayerPlaying:   Play ();    break;
     default:          Stop ();    return false;
   }
 
@@ -1727,7 +1722,7 @@ bool CMusicPlayer::IsPlayingForSure (int minDb) {
   int curDb;
 
   if (playerIsMuted) return true;
-  if (errorRecovery || errorPermanent || playerState != plPlaying) return false;
+  if (errorRecovery || errorPermanent || playerState != rcvPlayerPlaying) return false;
   if (minDb == -INT_MAX) {
     //~ INFO("### CMusicPlayer::IsPlayingForSure (): DB check disabled - reporting success");
     return true;
@@ -2205,7 +2200,7 @@ void CScreenMusicMain::RunServerMenu (int xPos, bool transfer) {
   // Change the server...
   if (transfer) {
     ok = player.GetState (&playerState);
-    if (player.PlayerState () == plPlaying) player.Pause ();
+    if (player.PlayerState () == rcvPlayerPlaying) player.Pause ();
   }
 
   player.SetServer (idx);
@@ -2373,7 +2368,7 @@ void CScreenMusicMain::OnServerChanged (int idx, bool errorRecovery, bool errorP
   dispHaveServer = player.ServerConnected ();
   if (!dispHaveServer) {
     dispHaveSong = false;
-    OnSongChanged (plStopped, 0, 0, 0);
+    OnSongChanged (rcvPlayerStopped, 0, 0, 0);
   }
   OnPlayerStateChanged (player.PlayerState ());
 }
@@ -2449,7 +2444,7 @@ void CScreenMusicMain::OnDirChanged (int idx0, int idx1) {
 }
 
 
-void CScreenMusicMain::OnSongChanged (EPlayerState state, int songs, int idx, int duration) {
+void CScreenMusicMain::OnSongChanged (ERctPlayerState state, int songs, int idx, int duration) {
   int dirIdx;
 
   //~ INFOF (("### CScreenMusicMain::OnSongChanged (%i/%i, dur = %i)", idx, songs, duration));
@@ -2481,14 +2476,14 @@ void CScreenMusicMain::OnSongChanged (EPlayerState state, int songs, int idx, in
 }
 
 
-void CScreenMusicMain::OnPlayerStateChanged (EPlayerState state) {
+void CScreenMusicMain::OnPlayerStateChanged (ERctPlayerState state) {
   //~ INFOF (("### CScreenMusicMain::OnPlayerStateChanged (%i)", state));
 
   // Lock screen if playing/pausing...
   UpdateActiveState ();
 
   // Set play/pause button label...
-  btnPlayPause.SetLabel (WHITE, state == plPlaying ? "ic-pause-96" : "ic-play-96");
+  btnPlayPause.SetLabel (WHITE, state == rcvPlayerPlaying ? "ic-pause-96" : "ic-play-96");
 
   // Update display...
   if (dispHaveServer) {     // display is not off?
@@ -2498,7 +2493,7 @@ void CScreenMusicMain::OnPlayerStateChanged (EPlayerState state) {
 }
 
 
-void CScreenMusicMain::OnSongPosChanged (EPlayerState state, int songPos, int bitrate, int freq, int channels) {
+void CScreenMusicMain::OnSongPosChanged (ERctPlayerState state, int songPos, int bitrate, int freq, int channels) {
 
   //~ INFOF (("### CScreenMusicMain::OnSongPosChanged (%i)", songPos));
 
@@ -2543,7 +2538,7 @@ void CScreenMusicMain::DisplaySetup () {
 }
 
 
-void CScreenMusicMain::DisplayClearAndDrawSong (EPlayerState state, int songs, int idx, int duration) {
+void CScreenMusicMain::DisplayClearAndDrawSong (ERctPlayerState state, int songs, int idx, int duration) {
   SDL_Surface *surfDisp, *surf;
   SDL_Rect r, rTitle, rSepLine;
   TTF_Font *font;
@@ -2609,7 +2604,7 @@ void CScreenMusicMain::DisplayClearAndDrawSong (EPlayerState state, int songs, i
 }
 
 
-void CScreenMusicMain::DisplayDrawSongPos (EPlayerState state, int songPos) {
+void CScreenMusicMain::DisplayDrawSongPos (ERctPlayerState state, int songPos) {
   SDL_Surface *surfDisp, *surf;
   char buf[32];
 
@@ -2633,7 +2628,7 @@ void CScreenMusicMain::DisplayDrawSongPos (EPlayerState state, int songPos) {
 }
 
 
-void CScreenMusicMain::DisplayDrawPlayerState (EPlayerState state) {
+void CScreenMusicMain::DisplayDrawPlayerState (ERctPlayerState state) {
   SDL_Surface *surfDisp;
 
   if (!dispHaveServer) return;
@@ -2641,10 +2636,10 @@ void CScreenMusicMain::DisplayDrawPlayerState (EPlayerState state) {
   // Draw play/pause symbol...
   surfDisp = wdgDisplay.GetSurface ();
   switch (state) {
-    case plPlaying:
-    case plPaused:
+    case rcvPlayerPlaying:
+    case rcvPlayerPaused:
       SurfaceBlit (
-        IconGet (state == plPlaying ? "ic-play-48" : "ic-pause-48", BLACK, COL_DISPLAY), NULL,
+        IconGet (state == rcvPlayerPlaying ? "ic-play-48" : "ic-pause-48", BLACK, COL_DISPLAY), NULL,
         surfDisp, &dispRectPlayerState
       );
       break;
@@ -2658,7 +2653,7 @@ void CScreenMusicMain::DisplayDrawPlayerState (EPlayerState state) {
 }
 
 
-void CScreenMusicMain::DisplayDrawInfoLine (EPlayerState state, int bitrate, int freq, int channels) {
+void CScreenMusicMain::DisplayDrawInfoLine (ERctPlayerState state, int bitrate, int freq, int channels) {
   SDL_Surface *surfDisp, *surf;
   SDL_Rect clipR;
   char buf[64];
@@ -2669,7 +2664,7 @@ void CScreenMusicMain::DisplayDrawInfoLine (EPlayerState state, int bitrate, int
   surfDisp = wdgDisplay.GetSurface ();
   SurfaceFillRect (surfDisp, dispRectInfo, COL_DISPLAY);
   surf = NULL;
-  if (state == plPlaying && channels > 0) {
+  if (state == rcvPlayerPlaying && channels > 0) {
     snprintf (buf, sizeof (buf), "%i kbps, %.1f kHz, %s", bitrate, ((float) freq) / 1000.0, channels == 2 ? "Stereo" : "Mono");
     surf = FontRenderText (dispFontSmall, buf, BLACK, COL_DISPLAY);
     SurfaceBlit (surf, NULL, surfDisp, &dispRectInfo, 1, 1);
@@ -2746,6 +2741,18 @@ void AppMusicPlayerOn () {
 
 void AppMusicPlayerOff () {
   if (scrMusicMain) scrMusicMain->PlayerOff ();
+}
+
+
+bool AppMusicSetServer (const char *id) {
+  int idx = -1;
+
+  if (scrMusicMain) {
+    idx = scrMusicMain->Player ()->ServerIdx (id);
+    if (idx >= 0) scrMusicMain->Player ()->SetServer (idx);
+    else WARNINGF (("Unknown MPD server: '%s'", id));
+  }
+  return idx >= 0;
 }
 
 

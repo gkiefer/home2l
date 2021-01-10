@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,13 @@
 #endif
 
 
+#define SHELL_NAME "shell"
+  // This constant should reflect the tool executable name (without "home2l-" prefix).
+  // It is use (amoung others):
+  // - as the instance name for special invocations
+  // - the subscriber ID
+  // - request IDs
+
 
 
 
@@ -46,6 +53,18 @@ ENV_PARA_INT ("shell.stringChars", envStringChars, 64);
    *
    * If set to 0, strings are never abbreviated.
    */
+
+
+
+
+
+// *************************** Forward declarations ****************************
+
+
+// Implemented in section "Command interpreter" ...
+static bool ExecuteCmd (const char *cmd, bool interactive);
+
+static bool CmdHelp (int argc, const char **argv, bool interactive);
 
 
 
@@ -119,6 +138,24 @@ static const CDictRaw *RcGetDirectory (ERcPathDomain dom, CRcHost *rcHost, CRcDr
 }
 
 
+static void HelpOnCmd (const char *cmdName) {
+  const char *helpArgs[] = { "h", cmdName };
+
+  putchar ('\n');
+  EnvPrintBanner ();
+  CmdHelp (2, helpArgs, true);
+}
+
+
+static bool HandleHelpOption (int argc, const char **argv) {
+  if (argc >= 2) if (argv[1][0] == '-' && argv[1][1] == 'h') {
+    HelpOnCmd (argv[0]);
+    return true;
+  }
+  return false;
+}
+
+
 
 
 
@@ -154,23 +191,14 @@ static void PollSubscriber () {
 static bool doQuit = false;
 
 
-// Forward declarations (implemented in section "Command interpreter") ...
-static void ExecuteCmd (const char *cmd);
-static void CmdHelp (int argc, const char **argv);
-
-
-static void CmdQuit (int argc, const char **argv) {
+static bool CmdQuit (int argc, const char **argv, bool interactive) {
   doQuit = true;
+  return true;
 }
 
 
-//~ static void CmdWait (int argc, const char **argv) {
-//~ }
-
-
-static void CmdTypesInfo (int argc, const char **argv) {
-  int n;
-  int k;
+static bool CmdTypesInfo (int argc, const char **argv, bool interactive) {
+  int n, k;
 
   puts ("Basic types:");
   for (n = rctBasicTypesBase; n <= rctBasicTypesLast; n++)
@@ -188,10 +216,11 @@ static void CmdTypesInfo (int argc, const char **argv) {
       printf (", %s", RcTypeGetEnumValue ((ERcType) n, k));
     printf (" }\n");
   }
+  return true;
 }
 
 
-static void CmdNetworkInfo (int argc, const char **argv) {
+static bool CmdNetworkInfo (int argc, const char **argv, bool interactive) {
   int n, k, verbosity;
   bool optWithSubscribers, optWithAgents, optWithResources;
 
@@ -206,10 +235,13 @@ static void CmdNetworkInfo (int argc, const char **argv) {
   verbosity = optWithResources ? 2 : optWithSubscribers ? 1 : 0;
   CRcHost::PrintInfoAll (stdout, verbosity);
   CRcServer::PrintInfoAll (stdout, verbosity);
+
+  // Done...
+  return true;
 }
 
 
-static void CmdList (int argc, const char **argv) {
+static bool CmdList (int argc, const char **argv, bool interactive) {
   CString s;
   ERcPathDomain dom;
   CRcHost *rcHost;
@@ -227,7 +259,15 @@ static void CmdList (int argc, const char **argv) {
   for (n = 1; n < argc; n++) {
     if (argv[n][0] == '-') {
       for (k = 1; argv[n][k]; k++) switch (argv[n][k]) {
-        case 'l': optAllowNet = false;
+        case 'h':
+          HelpOnCmd (argv[0]);
+          return true;
+        case 'l':
+          optAllowNet = false;
+          break;
+        default:
+          printf ("Invalid argument: '%s'\n", argv[n]);
+          return false;
       }
     }
     else if (!localPath) localPath = argv[n];
@@ -293,57 +333,205 @@ static void CmdList (int argc, const char **argv) {
     }
   }
 
+  // Done...
   //~ INFOF (("dom = %i, rcHost = %i, rcDriver = %i, resource = %i, map = %i", dom, rcHost ? 1 : 0, rcDriver ? 1 : 0, resource ? 1 : 0, map ? map->Entries () : 0));
+  return true;
 }
 
 
-static void CmdChDir (int argc, const char **argv) {
+static bool CmdChDir (int argc, const char **argv, bool interactive) {
   //~ printf ("CmdChDir\n");
   if (argc >= 2) uriPwd.Set (RcGetAbsPath (argv[1]));
   if (uriPwd.IsEmpty ()) uriPwd = "/";
   if (RcPathIsDir (RcAnalysePath (uriPwd.Get (), NULL, NULL, NULL, NULL))) uriPwd.Append ('/');
   uriPwd.PathNormalize ();
   printf ("%s\n", uriPwd.Get ());
+  return true;
 }
 
 
-static void CmdSubscribe (int argc, const char **argv) {
+static bool CmdSubscribe (int argc, const char **argv, bool interactive) {
   for (int n = 1; n < argc; n++) subscriber->AddResources (RcGetAbsPath (argv[n]));
   subscriber->PrintInfo ();
+  return true;
 }
 
 
-static void CmdUnsubscribe (int argc, const char **argv) {
+static bool CmdUnsubscribe (int argc, const char **argv, bool interactive) {
   for (int n = 1; n < argc; n++) {
     if (argv[n][0] == '*' && argv[n][1] == '\0') subscriber->Clear ();    // Wildcard "*" deletes all.
     subscriber->DelResources (RcGetAbsPath (argv[n]));
   }
   subscriber->PrintInfo ();
+  return true;
 }
 
 
-static void CmdFollow (int argc, const char **argv) {
-  char *endPtr;
-  int timeLeft = 1;
+static bool CmdFollow (int argc, const char **argv, bool interactive) {
+  int n, timeLeft = 1;
+  bool haveTime, newSubs;
 
-  if (argc >= 2) {
-    timeLeft = strtol (argv[1], &endPtr, 0);
-    if (*endPtr != '\0' || argc > 2) {
-      printf ("Syntax error.\n");
-      return;
+  // Parse args ...
+  haveTime = newSubs = false;
+  for (n = 1; n < argc; n++) {
+    if (argv[n][0] == '-') switch (argv[n][1]) {
+      case 'h':
+        HelpOnCmd (argv[0]);
+        return true;
+      case 't':
+        n++;
+        if (n < argc) {
+          if (!IntFromString (argv[n], &timeLeft)) {
+            printf ("Invalid time value (must be an integer number of milliseconds).\n");
+            return false;
+          }
+          haveTime = true;
+          break;
+        }
+        // fall through on error
+      default:
+        printf ("Invalid arguments.\n");
+        return false;
+      }
+    else {
+      subscriber->AddResources (RcGetAbsPath (argv[n]));
+      newSubs = true;
     }
   }
+
+  // Print new suscribers ...
+  if (newSubs) {
+    subscriber->PrintInfo ();
+    putchar ('\n');
+  }
+
+  // Go ahead ...
   while (!interrupted && timeLeft > 0) {
-    subscriber->WaitEvent (NULL, argc >= 2 ? &timeLeft : NULL);
+    subscriber->WaitEvent (NULL, haveTime ? &timeLeft : NULL);
     PollSubscriber ();
     fflush (stdout);
   }
   putchar ('\n');
   //~ write (STDOUT_FILENO, "\n", 1);
+  return !interrupted;
 }
 
 
-static void CmdSetRequest (int argc, const char **argv) {
+static bool CmdGet (int argc, const char **argv, bool interactive) {
+  CRcSubscriber subscr, *savedSubscriber;
+  CRcEvent ev;
+  CResource *rc;
+  CRcValueState *vs, vsRef;
+  int n, timeLeft = 1;
+  bool haveTime, notEqual, mindBusy, haveVsRef, success;
+
+  // Parse options ...
+  rc = NULL;
+  haveTime = notEqual = mindBusy = haveVsRef = false;
+  for (n = 1; n < argc; n++) {
+    if (argv[n][0] == '-') switch (argv[n][1]) {
+
+      // Options ...
+      case 'h':
+        HelpOnCmd (argv[0]);
+        return true;
+      case 't':
+        n++;
+        if (n >= argc) {
+          printf ("Missing time value.\n");
+          return false;
+        }
+        else {
+          if (!IntFromString (argv[n], &timeLeft)) {
+            printf ("Invalid time value (must be an integer number of milliseconds).\n");
+            return false;
+          }
+          haveTime = true;
+          break;
+        }
+        break;
+      case 'n':
+        notEqual = true;
+        break;
+      case 'b':
+        mindBusy = true;
+        break;
+      default:
+        printf ("Invalid option: '%s'\n", argv[n]);
+        return false;
+
+    }   // if ... switch (argv[n][1])
+    else {
+      if (!rc) {
+
+        // Expect & parse resource ...
+        rc = RcGet (argv[n]);
+        if (!rc) {
+          printf ("Invalid resource: '%s'.\n", argv[n]);
+          return false;
+        }
+      }
+      else if (!haveVsRef) {
+
+        // Expect & parse value/state ...
+        if (!vsRef.SetFromStr (argv[n])) {
+          printf ("Invalid resource value: '%s'.\n", argv[n]);
+          return false;
+        }
+        haveVsRef = true;
+      }
+      else {
+        printf ("Invalid argument: '%s'\n", argv[n]);
+        return false;
+      }
+    }
+  }   // for
+  if (!rc) {
+    printf ("Missing resource argument.\n");
+    HelpOnCmd (argv[0]);
+    return false;
+  }
+
+  // Init local subscriber ...
+  subscr.Register (SHELL_NAME ".get");
+  subscr.AddResource (rc);
+  savedSubscriber = subscriber;
+  subscriber = &subscr;     // replace reference to receive keyboard interrupts
+
+  // Go ahead ...
+  success = false;
+  vs = NULL;
+  while (!interrupted && !success && timeLeft > 0) {
+    subscr.WaitEvent (&ev, haveTime ? &timeLeft : NULL);
+    if (ev.Type () == rceValueStateChanged) {
+      vs = ev.ValueState ();
+      if (!haveVsRef) {
+        if (vs->IsKnown ()) success = true;
+      }
+      else {
+        if (vsRef.Convert (vs->Type ())) {
+          if (mindBusy) success = vsRef.Equals (vs);
+          else success = vsRef.ValueEquals (vs);
+          if (notEqual) success = !success;
+        }
+      }
+    }
+  }
+
+  // Print value on success ...
+  if (success) {
+    if (!mindBusy) if (vs->IsKnown ()) vs->SetState (rcsValid);
+    printf ("%s\n", vs->ToStr ());
+  }
+  //~ write (STDOUT_FILENO, "\n", 1);
+
+  // Done ...
+  subscriber = savedSubscriber;
+  return success;
+}
+
+
+static bool CmdSetRequest (int argc, const char **argv, bool interactive) {
   // argv[1]: resource name (rel. path)
   // argv[2] .. argv[argc-1]: concatenate, then call 'CRcResource::SetFromStr ()
   CResource *rc = NULL;
@@ -353,8 +541,12 @@ static void CmdSetRequest (int argc, const char **argv) {
   int n;
   bool ok;
 
+  if (HandleHelpOption (argc, argv)) return true;
   ok = (argc >= 3);
-  if (!ok) printf ("Too few arguments.\n");
+  if (!ok) {
+    printf ("Too few arguments.\n");
+    HelpOnCmd (argv[0]);
+  }
 
   if (ok) {
 
@@ -380,23 +572,29 @@ static void CmdSetRequest (int argc, const char **argv) {
     rc->WaitForRegistration ();
     //~ INFOF (("### reqDef = '%s'", reqDef.Get ()));
     req = new CRcRequest ();
-    req->SetPriority (rcPrioShell);
+    req->SetPriority (interactive ? rcPrioShell : rcPrioRule);
     req->SetFromStr (reqDef);
     rc->SetRequest (req);
-    rc->PrintInfo ();
+    if (interactive) rc->PrintInfo ();
   }
+
+  return ok;
 }
 
 
-static void CmdDelRequest (int argc, const char **argv) {
+static bool CmdDelRequest (int argc, const char **argv, bool interactive) {
   // argv[1]: resource name (rel. path)
   // argv[2]: request ID (optional)
   CResource *rc = NULL;
   const char *rcUri;
   bool ok;
 
+  if (HandleHelpOption (argc, argv)) return true;
   ok = (argc == 2 || argc == 3);
-  if (!ok) printf ("Wrong number of arguments!\n");
+  if (!ok) {
+    printf ("Wrong number of arguments!\n");
+    HelpOnCmd (argv[0]);
+  }
 
   if (ok) {
 
@@ -414,12 +612,14 @@ static void CmdDelRequest (int argc, const char **argv) {
     // Delete request & print info...
     rc->WaitForRegistration ();
     rc->DelRequest ((argc == 3) ? argv[2] : NULL);
-    rc->PrintInfo ();
+    if (interactive) rc->PrintInfo ();
   }
+
+  return ok;
 }
 
 
-static void CmdRequestShortcut (int argc, const char **argv) {
+static bool CmdRequestShortcut (int argc, const char **argv, bool interactive) {
   CString cmd;
   int n, ropt0;
 
@@ -433,7 +633,7 @@ static void CmdRequestShortcut (int argc, const char **argv) {
     case '!':
       if (argc < 2) {
         printf ("Missing value argument!\n");
-        return;
+        return false;
       }
       cmd.SetF ("r+ . %s", argv[1]);
       ropt0 = 2;
@@ -451,7 +651,7 @@ static void CmdRequestShortcut (int argc, const char **argv) {
   //~ printf ("### CMD = '%s'\n", cmd.Get ());
 
   // Execute command...
-  ExecuteCmd (cmd.Get ());
+  return ExecuteCmd (cmd.Get (), interactive);
 }
 
 
@@ -461,7 +661,7 @@ static void CmdRequestShortcut (int argc, const char **argv) {
 // ************************* Main command interpreter **************************
 
 
-typedef void (*TCmdFunc) (int argc, const char **argv);
+typedef bool (*TCmdFunc) (int argc, const char **argv, bool interactive);
 
 
 struct TCmd {
@@ -493,25 +693,26 @@ TCmd commandArr[] = {
   { "q", CmdQuit, "", "Quit", NULL },
   { "quit", CmdQuit, NULL, NULL, NULL },
 
-  //~ { "w", CmdWait, "<ms>", "Wait for <ms> milliseconds", NULL },
-  //~ { "wait", CmdWait, NULL, NULL, NULL },
-
   { "t", CmdTypesInfo, "", "List supported value types" },
   { "types", CmdTypesInfo, NULL, NULL, NULL },
 
   { "n", CmdNetworkInfo, "[<options>]", "Print network info",
           "Options:\n"
-          "-s : Print subscribers\n"
-          "-r : Also print resources for each subscriber\n" },
+          "\n"
+          "  -s : Print subscribers\n"
+          "\n"
+          "  -r : Also print resources for each subscriber\n" },
   { "network", CmdNetworkInfo, NULL, NULL, NULL },
 
   { "l", CmdList, "[<options>] [<path>]", "List object(s) [in <path>]",
           "Options:\n"
-          "-l: Print local info on a resource\n"
+          "\n"
+          "  -l : Print local info on a resource\n"
           "\n"
           "The string of a string-typed resource is additionally printed unescaped,\n"
           "but only if the resource is local or subscribed to.\n" },
   { "list", CmdList, NULL, NULL },
+  { "show", CmdList, NULL, NULL },
 
   { "c", CmdChDir, "[<path>]", "Change or show working path", NULL },
   { "change", CmdChDir, NULL, NULL, NULL },
@@ -524,28 +725,62 @@ TCmd commandArr[] = {
   { "s", CmdSubscribe, "", "List subscriptions", NULL },
   { "subscriptions", CmdSubscribe, NULL, NULL, NULL },
 
-  { "f", CmdFollow, "[<ms>]", "Follow subscriptions until Ctrl-C is pressed.",
-            "Optionally, the commands stops automatically after <ms> milliseconds.\n"
-            "This command can also be used to just wait for a certain time.\n" },
+  { "f", CmdFollow, "[-t <ms>] [<rc>]", "Follow subscriptions until Ctrl-C is pressed.",
+          "If the '-t' option is set, the commands stops automatically after <ms> milliseconds.\n"
+          "If resources are passed as <rc>, they are subscribed to first\n"
+          "This command can also be used to just wait for a certain time.\n" },
   { "follow", CmdFollow, NULL, NULL, NULL },
 
+  { "get", CmdGet, "[<options>] <rc> [<vs>]", "Get a resource value and state, eventually after waiting for it",
+          "Options:\n"
+          "\n"
+          "  -t <ms> : wait for up to <ms> milliseconds [default: wait indefinitely]\n"
+          "\n"
+          "  -n      : wait until the current resource value is NOT equal to <vs>\n"
+          "\n"
+          "  -b      : mind the busy state - \n"
+          "            By default, no distinction is made between the states 'valid' and 'busy',\n"
+          "            and any known value is printed without a '!' prefix. This flag changes this\n"
+          "            behavior, and a comparison yields equality only if the states are equal, too.\n"
+          "\n"
+          "This command is designed for shell scripts to obtain resource values in different ways.\n"
+          "\n"
+          "If <vs> is not given, the command waits until a known value (state 'valid' or 'busy')\n"
+          "is available (or at most <ms> milliseconds, if the -t option is given) and returns the value.\n"
+          "\n"
+          "If <vs> is given, the command waits until the resource assumes the given value.\n"
+          "This can be used to wait until, for example, a certain sensor becomes active ('1').\n"
+          "\n"
+          "To wait for a more complex condition (e.g. a value beeing in a certain range) in a\n"
+          "shell script, this command may be executed in a loop in such a way that '-n' is set\n"
+          "and the last received value is passed as <vs>. After each iteration, the returned value\n"
+          "can be checked by the calling script in an arbitrary way, and the wait condition ensures\n"
+          "that no busy waiting happens. Please note, however, that quick value/state changes between\n"
+          "different home2l-shell invocations may get lost. To make sure that all value/state change\n"
+          "events are caught, the 'follow' command may be used.\n"
+           },
+  { "wait", CmdGet, NULL, NULL, NULL },
+
   { "r+", CmdSetRequest, "<rc> <value> [<ropts>]", "Add or change a request",
-            "Request options <attributes> :\n"
-            "  <rc>    : Resource identifier\n"
-            "  <value> : Requested value\n"
-            "  <ropts> : Additional request arguments as supported by 'CRcRequest::SetFromStr ()':\n"
-            "             #<id>   : Request ID [default: 'shell']\n"
-            "             *<prio> : Priority (0..9) [Default: 7 (rcPrioShell)]\n"
-            "             +<time> : Start time\n"
-            "             -<time> : End time\n"
-            "             ~<hyst> : Hysteresis in milliseconds\n"
-            "\n"
-            "The start/end times <time> may be given as absolute date/times in the format\n"
-            "YYYY-MM-DD-HHMM[SS[.frac]] or a relative time <n>, where <n> is the number of\n"
-            "milliseconds in the future.\n" },
+          "Request options <attributes> :\n\n"
+          "\n"
+          "  <rc>    : Resource identifier\n\n"
+          "\n"
+          "  <value> : Requested value\n\n"
+          "\n"
+          "  <ropts> : Additional request arguments as supported by 'CRcRequest::SetFromStr ()':\n"
+          "             #<id>   : Request ID [default: '" SHELL_NAME "']\n"
+          "             *<prio> : Priority (0..9) [Default: 7 (rcPrioShell)]\n"
+          "             +<time> : Start time\n"
+          "             -<time> : End time\n"
+          "             ~<hyst> : Hysteresis in milliseconds\n"
+          "\n"
+          "The start/end times <time> may be given as absolute date/times in the format\n"
+          "YYYY-MM-DD-HHMM[SS[.frac]] or a relative time <n>, where <n> is the number of\n"
+          "milliseconds in the future.\n" },
   { "request", CmdSetRequest, NULL, NULL, NULL },
-  { "r-", CmdDelRequest, "<rc> [#<reqGid>]", "Delete a request ('shell' if no <reqGid> is given)", NULL },
-  { "unrequest", CmdDelRequest, NULL, NULL },
+  { "r-", CmdDelRequest, "<rc> [#<reqGid>]", "Delete a request ('" SHELL_NAME "' if no <reqGid> is given)", NULL },
+  { "delrequest", CmdDelRequest, NULL, NULL },
 
   { "0", CmdRequestShortcut, "[<ropts>]", "Shortcut for: r+ . 0 [<ropts>]", extraRequestShortcuts },
   { "1", CmdRequestShortcut, "[<ropts>]", "Shortcut for: r+ . 1 [<ropts>]", extraRequestShortcuts },
@@ -557,7 +792,7 @@ TCmd commandArr[] = {
 #define commands ((int) (sizeof (commandArr) / sizeof (TCmd)))
 
 
-static void CmdHelp (int args, const char **argv) {
+static bool CmdHelp (int args, const char **argv, bool interactive) {
   CString part;
   const char *cmd, *altCmd, *helpArgs, *helpText, *extraText;
   int n, k;
@@ -595,25 +830,34 @@ static void CmdHelp (int args, const char **argv) {
       }
     }
   }
+  return true;
 }
 
 
-static void ExecuteCmd (const char *cmd) {
-  char **cmdArgv;
-  int n, cmdNo, cmdArgc;
+static int FindCmd (const char *key) {
+  for (int n = 0; n < commands; n++)
+    if (strcmp (key, commandArr[n].name) == 0) return n;
+  return -1;
+}
 
+
+static bool ExecuteCmd (const char *cmd, bool interactive) {
+  char **cmdArgv;
+  int cmdNo, cmdArgc;
+  bool ok;
+
+  ok = false;
   //~ INFOF (("### ExecuteCmd ('%s')", cmd));
   StringSplit (cmd, &cmdArgc, &cmdArgv);
-  cmdNo = -1;
-  for (n = 0; n < commands; n++)
-    if (strcmp (cmdArgv[0], commandArr[n].name) == 0) { cmdNo = n; break; }
+  cmdNo = FindCmd (cmdArgv[0]);
   //~ INFOF(("cmdNo = %i '%s'", cmdNo, cmdArgv[0]));
   if (cmdNo < 0) printf ("Error: Unknown command '%s'\n", cmdArgv[0]);
-  else commandArr[cmdNo].func (cmdArgc, (const char **) cmdArgv);
+  else ok = commandArr[cmdNo].func (cmdArgc, (const char **) cmdArgv, interactive);
   if (cmdArgv) {
     free (cmdArgv[0]);
     free (cmdArgv);
   }
+  return ok;
 }
 
 
@@ -758,31 +1002,66 @@ int main (int argc, char **argv) {
   CSplitString argCmds;
   CString line, histFile;
   char *p;
-  int n;
-  bool interactive, withServer;
+  int n, cmdNo;
+  bool interactive, withServer, singleSpecial, ok;
 
-  // Startup...
-  EnvInit (argc, argv,
-           "  -n                : disable local server (default: use 'rc.enableServer' setting)\n"
-           "  -e '<command(s)>' : execute the command(s) and quit\n"
-           "  -i '<command(s)>' : execute the command(s), then continue interactively\n");
-
-  // Read arguments...
-  interactive = true;
-  withServer = true;
-  p = NULL;
-  for (n = 1; n < argc; n++) if (argv[n][0] == '-')
-    switch (argv[n][1]) {
-      case 'n':
-        withServer = false;
-        break;
-      case 'e':
-        interactive = false;
-      case 'i':
-        p = argv[n+1];
-        break;
+  // Check how we were called & handle special short invocations ...
+  //~ INFOF (("argv[0] == '%s'", argv[0]));
+  singleSpecial = false;
+  p = strchr (argv[0], '-');
+  if (p) if (strcmp (p + 1, SHELL_NAME) != 0) {      // quick pre-check with "shell"
+    cmdNo = FindCmd (p + 1);
+    //~ INFOF (("### cmdNo = %i", cmdNo));
+    if (cmdNo >= 0) {
+      singleSpecial = true;
+      line.SetC (p + 1);
+      for (n = 1; n < argc; n++) {
+        line.Append (' ');
+        line.Append (argv[n]);
+      }
     }
-  if (p) argCmds.Set (p, INT_MAX, ";");
+  }
+
+  // Parse arguments & startup ...
+  if (singleSpecial) {                      // Special case: Invocation for single command ...
+    interactive = withServer = false;
+    EnvInit (1, argv, NULL, SHELL_NAME, true);
+      // Special initialization:
+      // - discard all arguments (argv[0] must be passed!)
+      // - set instance name to SHELL_NAME ("shell")
+      // - suppress banner
+  }
+  else {                                    // General case ...
+    interactive = true;
+    withServer = true;
+    p = NULL;
+    for (n = 1; n < argc; n++) if (argv[n][0] == '-')
+      switch (argv[n][1]) {
+        case 'n':
+          withServer = false;
+          break;
+        case 'e':
+          interactive = false;
+        case 'i':
+          n++;
+          while (n < argc) {      // add all remaining arguments to the command(s)
+            line.Append (argv[n]);
+            line.Append (' ');
+            n++;
+          }
+
+          break;
+      }
+    EnvInit (argc, argv,
+             "  -n              : disable local server (default: use 'rc.enableServer' setting)\n"
+             "  -e <command(s)> : execute the command(s) and quit\n"
+             "  -i <command(s)> : execute the command(s), then continue interactively\n"
+             "\n"
+             "Options -e or -i must be specified last. All remaining arguments are interpreted\n"
+             "as <command(s)>.\n",
+             NULL, !interactive);     // no banner in non-interactive mode
+  }
+  if (!line.IsEmpty ()) argCmds.Set (line.Get (), INT_MAX, ";");
 
   // Init resources...
   RcInit (withServer, true);    // starts main timer loop in the background...
@@ -790,7 +1069,7 @@ int main (int argc, char **argv) {
 
   // Initialize subscriber...
   subscriber = new CRcSubscriber ();
-  subscriber->Register ("shell");
+  subscriber->Register (SHELL_NAME);
 
   if (interactive) {
 
@@ -812,7 +1091,8 @@ int main (int argc, char **argv) {
 
   // Run non-interactive commands...
   interrupted = false;
-  for (n = 0; n < argCmds.Entries () && !interrupted; n++) {
+  ok = true;
+  for (n = 0; n < argCmds.Entries () && ok; n++) {
     line.Set (argCmds.Get (n));
     line.Strip ();
     if (line[0]) {
@@ -823,7 +1103,8 @@ int main (int argc, char **argv) {
 #if WITH_READLINE
       if (interactive) add_history (line.Get ());
 #endif
-      ExecuteCmd (line.Get ());
+      ok = ExecuteCmd (line.Get (), false);
+      if (interrupted) ok = false;
     }
   }
   //~ INFO ("### Non-interactive commands completed.");
@@ -866,7 +1147,14 @@ int main (int argc, char **argv) {
         add_history (line.Get ());
 #endif
         interrupted = false;
-        ExecuteCmd (line.Get ());
+        ok = true;
+        argCmds.Set (line.Get (), INT_MAX, ";");
+        for (n = 0; n < argCmds.Entries () && ok; n++) {
+          line.Set (argCmds.Get (n));
+          line.Strip ();
+          ok = ExecuteCmd (line.Get (), true);
+          if (interrupted) ok = false;
+        }
       }
     }
 
@@ -880,12 +1168,14 @@ int main (int argc, char **argv) {
 
     // Restore signal handler for keyboard interrupt (Ctrl-C)...
     sigaction (SIGINT, &sigActionSaved, NULL);
-  }
+
+  }    // if (interactive)
+
   //~ INFO ("### Interactive commands completed.");
 
   // Done...
   FREEO (subscriber);
   RcDone ();
   EnvDone ();
-  return 0;
+  return ok ? 0 : 1;
 }

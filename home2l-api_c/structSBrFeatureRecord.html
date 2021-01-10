@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -103,14 +103,22 @@ uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
 uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#a0903aa09d7f6a445f5414dfd6789e0d4">gpoPreset</a></td></tr>
 <tr class="memdesc:a0903aa09d7f6a445f5414dfd6789e0d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">GPIO output default state (will be set on init before Z-state is left) <br /></td></tr>
 <tr class="separator:a0903aa09d7f6a445f5414dfd6789e0d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add07ae00701fa8eba0c486332e722171"><td class="memItemLeft" align="right" valign="top"><a id="add07ae00701fa8eba0c486332e722171"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#add07ae00701fa8eba0c486332e722171">matDim</a></td></tr>
+<tr class="memdesc:add07ae00701fa8eba0c486332e722171"><td class="mdescLeft">&#160;</td><td class="mdescRight">Matrix dimensions (Bits 7:4: rows, bits 3:0 = cols) <br /></td></tr>
+<tr class="separator:add07ae00701fa8eba0c486332e722171"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacef0a8bba3b89ced8ab64c7dabe207b"><td class="memItemLeft" align="right" valign="top"><a id="aacef0a8bba3b89ced8ab64c7dabe207b"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#aacef0a8bba3b89ced8ab64c7dabe207b">reserved</a> [3]</td></tr>
+<tr class="memdesc:aacef0a8bba3b89ced8ab64c7dabe207b"><td class="mdescLeft">&#160;</td><td class="mdescRight">(reserved for future features) <br /></td></tr>
+<tr class="separator:aacef0a8bba3b89ced8ab64c7dabe207b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1698d818cb3b1c97d021c8f58a4465f"><td class="memItemLeft" align="right" valign="top"><a id="ad1698d818cb3b1c97d021c8f58a4465f"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#ad1698d818cb3b1c97d021c8f58a4465f">fwName</a> [12]</td></tr>
+<tr class="memdesc:ad1698d818cb3b1c97d021c8f58a4465f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Written name of the firmware variant (base name of the .elf file without MCU part) <br /></td></tr>
+<tr class="separator:ad1698d818cb3b1c97d021c8f58a4465f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25f45f9fad726760e09ced2fa083b6c2"><td class="memItemLeft" align="right" valign="top"><a id="a25f45f9fad726760e09ced2fa083b6c2"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#a25f45f9fad726760e09ced2fa083b6c2">mcuType</a></td></tr>
 <tr class="memdesc:a25f45f9fad726760e09ced2fa083b6c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">MCU type (see BR_MCU_... constants) <br /></td></tr>
 <tr class="separator:a25f45f9fad726760e09ced2fa083b6c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fa2bdc64afc4980b6c19fa73511bf52"><td class="memItemLeft" align="right" valign="top"><a id="a6fa2bdc64afc4980b6c19fa73511bf52"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#a6fa2bdc64afc4980b6c19fa73511bf52">fwName</a> [16]</td></tr>
-<tr class="memdesc:a6fa2bdc64afc4980b6c19fa73511bf52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Written name of the firmware variant (base name of the .elf file) <br /></td></tr>
-<tr class="separator:a6fa2bdc64afc4980b6c19fa73511bf52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2021c49827579f5db8806a223999676d"><td class="memItemLeft" align="right" valign="top"><a id="a2021c49827579f5db8806a223999676d"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structSBrFeatureRecord.html#a2021c49827579f5db8806a223999676d">magic</a></td></tr>
 <tr class="memdesc:a2021c49827579f5db8806a223999676d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Brownie identification (always = BR_MAGIC) <br /></td></tr>

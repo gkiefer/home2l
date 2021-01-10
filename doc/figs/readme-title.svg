@@ -28,13 +28,13 @@
    inkscape:window-height="1020"
    id="namedview88"
    showgrid="true"
-   inkscape:zoom="0.93358455"
-   inkscape:cx="515.01264"
-   inkscape:cy="726.5622"
+   inkscape:zoom="0.8683138"
+   inkscape:cx="370.8332"
+   inkscape:cy="307.16755"
    inkscape:window-x="64"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
-   inkscape:current-layer="svg2"
+   inkscape:current-layer="g4133"
    units="cm"
    showguides="true"
    inkscape:snap-object-midpoints="false"
@@ -299,6 +299,7 @@
 
 
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:96px;line-height:100%;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;baseline-shift:baseline;text-anchor:middle;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -314,6 +315,7 @@
 
 
 
+
 <text
    xml:space="preserve"
    style="color:#000000;font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:96px;line-height:100%;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;baseline-shift:baseline;text-anchor:middle;display:inline;overflow:visible;visibility:visible;opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
@@ -325,6 +327,7 @@
      x="457.69717"
      y="575.37512"
      style="font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans Oblique'">by Gundolf Kiefer</tspan></text>
+
 
 
 
@@ -347,33 +350,34 @@
    id="text4954"
    y="822.72882"
    x="63.705151"
-   style="color:#000000;font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:31.17223349px;line-height:100%;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Oblique';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#d40000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.66668773;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
+   style="color:#000000;font-style:oblique;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:31.17223358px;line-height:100%;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Oblique';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;display:inline;overflow:visible;visibility:visible;opacity:1;vector-effect:none;fill:#0000ff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2.66668773;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate;"
    xml:space="preserve"><tspan
      id="tspan4972"
-     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570431px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#ff8080;stroke-width:2.66668773"
+     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570343px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#8080ff;stroke-width:2.66668773"
      y="822.72882"
      x="63.705151"
      sodipodi:role="line"># Turn on light for 5 secs. on motion</tspan><tspan
      id="tspan8667"
-     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570431px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#d40000;stroke-width:2.66668773"
-     y="859.82196"
+     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570343px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#0000ff;stroke-width:2.66668773;"
+     y="854.91327"
      x="63.705151"
      sodipodi:role="line">@onUpdate (&quot;door/motion&quot;)</tspan><tspan
-     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570431px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#d40000;stroke-width:2.66668773"
+     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570343px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#0000ff;stroke-width:2.66668773;"
      id="tspan4956"
-     y="896.9151"
+     y="887.09766"
      x="63.705151"
      sodipodi:role="line">def LightOnMotion ():</tspan><tspan
-     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570431px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#d40000;stroke-width:2.66668773"
+     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570343px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#0000ff;stroke-width:2.66668773;"
      id="tspan4962"
-     y="934.00824"
+     y="919.2821"
      x="63.705151"
-     sodipodi:role="line">  RcSetRequest (&quot;door/light&quot;, &quot;1 -5000&quot;)</tspan><tspan
-     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570431px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#d40000;stroke-width:2.66668773"
+     sodipodi:role="line">  RcSetRequest (&quot;door/light&quot;, &quot;1 -5s&quot;)</tspan><tspan
+     style="font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:27.27570343px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold Oblique';fill:#0000ff;stroke-width:2.66668773;"
      id="tspan4964"
-     y="971.10138"
+     y="951.46649"
      x="63.705151"
      sodipodi:role="line" /></text>
+
 
 
 <g
@@ -389,13 +393,13 @@
      ry="22.677177" /><image
      sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-home-3.png"
      xlink:href="wallclock-home-3.png"
-     y="340.1575"
-     x="340.1575"
-     id="image5088"
-     style="image-rendering:optimizeQuality"
-     preserveAspectRatio="none"
+     width="453.54333"
      height="265.74802"
-     width="453.54333" /></g><g
+     preserveAspectRatio="none"
+     style="image-rendering:optimizeQuality"
+     id="image5088"
+     x="340.1575"
+     y="340.1575" /></g><g
    transform="matrix(1.1162373,0,0,1.1162373,67.773326,31.664004)"
    id="g5232"
    style=""><rect
@@ -408,13 +412,13 @@
      ry="22.677168" /><image
      sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-floorplan-3.png"
      xlink:href="wallclock-floorplan-3.png"
-     y="-5.2865103e-06"
-     x="115.40158"
-     id="image5099"
-     style="image-rendering:optimizeQuality"
-     preserveAspectRatio="none"
+     width="451.52759"
      height="264.56696"
-     width="451.52759" /></g><g
+     preserveAspectRatio="none"
+     style="image-rendering:optimizeQuality"
+     id="image5099"
+     x="115.40158"
+     y="-5.2865103e-06" /></g><g
    transform="matrix(1.1021026,0,0,1.1021026,66.650301,19.402125)"
    id="g5216"
    style=""><rect
@@ -427,13 +431,13 @@
      ry="15.118128" /><image
      sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-doorman-2.png"
      xlink:href="wallclock-doorman-2.png"
-     y="340.15747"
-     x="831.49609"
-     id="image5121"
-     style="image-rendering:optimizeQuality"
-     preserveAspectRatio="none"
+     width="302.36221"
      height="181.41736"
-     width="302.36221" /></g><g
+     preserveAspectRatio="none"
+     style="image-rendering:optimizeQuality"
+     id="image5121"
+     x="831.49609"
+     y="340.15747" /></g><g
    transform="matrix(1.2853162,0,0,1.2853162,-61.793608,-75.693327)"
    id="g5224"
    style=""><rect
@@ -446,13 +450,13 @@
      ry="15.118127" /><image
      sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-music.png"
      xlink:href="wallclock-music.png"
-     y="642.51971"
-     x="680.315"
-     id="image5132"
-     style="image-rendering:optimizeQuality"
-     preserveAspectRatio="none"
+     width="302.36221"
      height="181.41734"
-     width="302.36221" /></g><g
+     preserveAspectRatio="none"
+     style="image-rendering:optimizeQuality"
+     id="image5132"
+     x="680.315"
+     y="642.51971" /></g><g
    transform="matrix(1.1494914,0,0,1.1494914,53.606356,30.505288)"
    id="g5236"
    style=""><rect
@@ -465,13 +469,13 @@
      ry="15.118128" /><image
      sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-calendar.png"
      xlink:href="wallclock-calendar.png"
-     y="370.39371"
-     x="-15.118112"
-     id="image5143"
-     style="stroke:#000000;image-rendering:optimizeQuality"
-     preserveAspectRatio="none"
+     width="302.36221"
      height="181.41734"
-     width="302.36221" /></g><g
+     preserveAspectRatio="none"
+     style="stroke:#000000;image-rendering:optimizeQuality"
+     id="image5143"
+     x="-15.118112"
+     y="370.39371" /></g><g
    transform="matrix(1.1943843,0,0,1.1943843,-12.554791,-10.073295)"
    id="g5228"
    style=""><rect
@@ -484,13 +488,13 @@
      ry="15.118129" /><image
      sodipodi:absref="/home/gundolf/prog/home2l/src/doc/figs/wallclock-doorman-1.png"
      xlink:href="wallclock-doorman-1.png"
-     y="105.82677"
-     x="740.78748"
-     id="image5110"
-     style="image-rendering:optimizeQuality"
-     preserveAspectRatio="none"
+     width="302.36221"
      height="181.41734"
-     width="302.36221" /></g><text
+     preserveAspectRatio="none"
+     style="image-rendering:optimizeQuality"
+     id="image5110"
+     x="740.78748"
+     y="105.82677" /></g><text
    xml:space="preserve"
    style="font-style:normal;font-weight:normal;font-size:19.48264593px;line-height:1.25;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.46119845px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
    x="1293.8235"
@@ -501,5 +505,6 @@
      x="1293.8235"
      y="638.9538"
      style="stroke-width:1.46119845px;font-size:19.48264593px;">[1]</tspan></text>
+
 
 </g></svg>

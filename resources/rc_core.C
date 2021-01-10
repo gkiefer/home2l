@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -281,6 +281,21 @@ const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir, i
   // Done...
   //~ INFOF(("### RcGetRealPath ('%s') -> '%s'", uri, ret->Get ()));
   return ret->Get ();
+}
+
+
+bool RcUriMatches (const char *uri, const char *pattern) {
+  CSplitString patternSet;
+  const char *pat;
+  int n;
+
+  if (!pattern) return false;
+  patternSet.Set (pattern, INT_MAX, "," WHITESPACE);
+  for (n = 0; n < patternSet.Entries (); n++) {
+    pat = patternSet.Get (n);
+    if (pat[0]) if (fnmatch (pat, uri, URI_FNMATCH_OPTIONS) == 0) return true;
+  }
+  return false;
 }
 
 
@@ -1047,7 +1062,7 @@ void CRcServer::OnFdReadable () {
               error = false;
             }
             else if (argc >= 4) if (argv[3][0] == '-')      // time attribute given ...
-              if (TicksFromString (argv[3] + 1, &t1, true)) {
+              if (TicksAbsFromString (argv[3] + 1, &t1)) {
                 rc->DelRequest (argv[2], t1);
                 error = false;
               }
@@ -1529,7 +1544,7 @@ void CRcHost::RemoteSetRequest (CResource *rc, CRcRequest *req) {
 
 void CRcHost::RemoteDelRequest (CResource *rc, const char *reqGid, TTicks t1) {
   CString s1, s2;
-  if (t1) s2.SetF ("%s -%s", reqGid, TicksToString (&s1, t1, INT_MAX, true));
+  if (t1) s2.SetF ("%s -%s", reqGid, TicksAbsToString (&s1, t1, INT_MAX, true));
   else s2.SetC (reqGid);
   Send (RequestCommand (&s1, rc, s2.Get (), '-'));
 }
@@ -1992,7 +2007,7 @@ void CRcHost::GetInfo (CString *ret, int verbosity) {
     // Since no valid timestamp and no error string is available, we replace
     // the format string and do not show misleading time/error strings.
     stateFormat = "New, trying...\n";
-  ret->AppendF (stateFormat, TicksToString (conThread->LastAttempt (), 0), conThread->ErrorString ());
+  ret->AppendF (stateFormat, TicksAbsToString (conThread->LastAttempt (), 0), conThread->ErrorString ());
   conThread->Unlock ();
   Unlock ();
 

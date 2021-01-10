@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -79,32 +79,95 @@ Collaboration diagram for General:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Init/Done ...</h2></td></tr>
-<tr class="memitem:ga272854309dc5580b722a2b75b1e458b9"><td class="memItemLeft" align="right" valign="top"><a id="ga272854309dc5580b722a2b75b1e458b9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>EnvInit</b> (int argc, char **argv, const char *specOptionsUsage=NULL, const char *instanceName=NULL)</td></tr>
-<tr class="separator:ga272854309dc5580b722a2b75b1e458b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaad46a8c033ef8264cf2d69f093c2be84"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__general.html#gaad46a8c033ef8264cf2d69f093c2be84">EnvInit</a> (int argc, char **argv, const char *specOptionsUsage=NULL, const char *instanceName=NULL, bool noBanner=false)</td></tr>
+<tr class="memdesc:gaad46a8c033ef8264cf2d69f093c2be84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the environment module.  <a href="#gaad46a8c033ef8264cf2d69f093c2be84">More...</a><br /></td></tr>
+<tr class="separator:gaad46a8c033ef8264cf2d69f093c2be84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga06b3dc5b57918f8c901123f669473f82"><td class="memItemLeft" align="right" valign="top"><a id="ga06b3dc5b57918f8c901123f669473f82"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__general.html#ga06b3dc5b57918f8c901123f669473f82">EnvPrintBanner</a> ()</td></tr>
+<tr class="memdesc:ga06b3dc5b57918f8c901123f669473f82"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the tool banner (only useful if banner was suppressed in the <a class="el" href="group__env__general.html#gaad46a8c033ef8264cf2d69f093c2be84">EnvInit()</a> call). <br /></td></tr>
+<tr class="separator:ga06b3dc5b57918f8c901123f669473f82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7d9912c1ee4b123dc3d9141f76b7746b"><td class="memItemLeft" align="right" valign="top"><a id="ga7d9912c1ee4b123dc3d9141f76b7746b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>EnvDone</b> ()</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__general.html#ga7d9912c1ee4b123dc3d9141f76b7746b">EnvDone</a> ()</td></tr>
+<tr class="memdesc:ga7d9912c1ee4b123dc3d9141f76b7746b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shutdown the environment module. <br /></td></tr>
 <tr class="separator:ga7d9912c1ee4b123dc3d9141f76b7746b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Persistence ...</h2></td></tr>
-<tr class="memitem:gaa5128864933fd561b278dace4a84476a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__general.html#gaa5128864933fd561b278dace4a84476a">EnvInitPersistence</a> (bool writeThrough=false, const char *_varFileName=NULL)</td></tr>
-<tr class="memdesc:gaa5128864933fd561b278dace4a84476a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable the persistence of all environment variables starting with "var.*".  <a href="#gaa5128864933fd561b278dace4a84476a">More...</a><br /></td></tr>
-<tr class="separator:gaa5128864933fd561b278dace4a84476a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5d5956835fab667d3b354bb65c8ae521"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__general.html#ga5d5956835fab667d3b354bb65c8ae521">EnvEnablePersistence</a> (bool writeThrough=false, const char *_varFileName=NULL)</td></tr>
+<tr class="memdesc:ga5d5956835fab667d3b354bb65c8ae521"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable the persistence of all environment variables starting with "var.*".  <a href="#ga5d5956835fab667d3b354bb65c8ae521">More...</a><br /></td></tr>
+<tr class="separator:ga5d5956835fab667d3b354bb65c8ae521"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga188ee0bde0361e17c2e7cda74a290da3"><td class="memItemLeft" align="right" valign="top"><a id="ga188ee0bde0361e17c2e7cda74a290da3"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__general.html#ga188ee0bde0361e17c2e7cda74a290da3">EnvFlush</a> ()</td></tr>
 <tr class="memdesc:ga188ee0bde0361e17c2e7cda74a290da3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write back any persistent variables now. <br /></td></tr>
 <tr class="separator:ga188ee0bde0361e17c2e7cda74a290da3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="gaa5128864933fd561b278dace4a84476a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaa5128864933fd561b278dace4a84476a">&#9670;&nbsp;</a></span>EnvInitPersistence()</h2>
+<a id="gaad46a8c033ef8264cf2d69f093c2be84"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaad46a8c033ef8264cf2d69f093c2be84">&#9670;&nbsp;</a></span>EnvInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void EnvInitPersistence </td>
+          <td class="memname">void EnvInit </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>argc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char **&#160;</td>
+          <td class="paramname"><em>argv</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>specOptionsUsage</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>instanceName</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>noBanner</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the environment module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">argc</td><td>is the main funcion's 'argc' parameter. </td></tr>
+    <tr><td class="paramname">argv</td><td>is the main funcion's 'argv' parameter. </td></tr>
+    <tr><td class="paramname">specOptionsUsage</td><td>allows to add extra usage information on specific tool options. </td></tr>
+    <tr><td class="paramname">instanceName</td><td>defines the instance name, which otherwise is derived from the executable name (argv[0]). </td></tr>
+    <tr><td class="paramname">noBanner</td><td>suppresses the output of the tool banner (for command line tools with minimal output). </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ga5d5956835fab667d3b354bb65c8ae521"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5d5956835fab667d3b354bb65c8ae521">&#9670;&nbsp;</a></span>EnvEnablePersistence()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void EnvEnablePersistence </td>
           <td>(</td>
           <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>writeThrough</em> = <code>false</code>, </td>
@@ -124,9 +187,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 </div><div class="memdoc">
 
 <p>Enable the persistence of all environment variables starting with "var.*". </p>
-<p>They will be stored to a file passed as '_varFileName', which should be pathname relative to the "var" directory. By default, "home2l-&lt;instance name&gt;.conf" is used. It is discouraged to pass an absolute path there.</p>
-<p>If 'writeThrough == true', the file is written back with each <a class="el" href="group__env__dictionary.html#gaf9e8ebb6a594d07fbfe568d9ff4de58b" title="Generically put a string into the dictionary; Passing &#39;value == NULL&#39; removes the entry...">EnvPut()</a> call changing any "var.*" variable. If 'writeThrough == false', the file is only written back on shutdown ( EnvDone() ) or on a explicit flush ( <a class="el" href="group__env__general.html#ga188ee0bde0361e17c2e7cda74a290da3" title="Write back any persistent variables now. ">EnvFlush()</a> ).</p>
-<p>Persistent variables are (tried to be) read from the filesystem on this call, and they may override any settings in the main configuration file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">writeThrough</td><td>decides whether the file is written back automatically with each <a class="el" href="group__env__dictionary.html#gaf9e8ebb6a594d07fbfe568d9ff4de58b">EnvPut()</a> call changing any "var.*" variable. If set to 'false', the file is only written back on shutdown ( <a class="el" href="group__env__general.html#ga7d9912c1ee4b123dc3d9141f76b7746b">EnvDone()</a> ) or on a explicit flush ( <a class="el" href="group__env__general.html#ga188ee0bde0361e17c2e7cda74a290da3">EnvFlush()</a> ).</td></tr>
+    <tr><td class="paramname">_varFileName</td><td>is the filename to store the variables, which should be pathname relative to the "var" directory. By default, "home2l-&lt;instance name&gt;.conf" is used. It is discouraged to pass an absolute path there.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Persistent variables are (tried to be) read from the filesystem on this call, and they may override any settings in the main configuration file.</p>
+<p>This function may be called multiple times, for example, on tool initialization and then later again inside <a class="el" href="group__resources__general.html#ga94a199787d552360dbe916e1825557f0">RcInit()</a>, if the user has declared persistent resources. On the second invocation, '_varFileName' <em>must</em> be NULL. If 'writeThrough' is set differently, a logical OR of all passed values will become effective. </p>
 
 </div>
 </div>

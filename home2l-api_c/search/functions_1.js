@@ -2,6 +2,7 @@ var searchData=
 [
   ['brfeaturesfromstr',['BrFeaturesFromStr',['../group__brownies__linux.html#ga6b7f420ba372d02121add8cf139ec257',1,'brownies.H']]],
   ['brfeaturestostr',['BrFeaturesToStr',['../group__brownies__linux.html#gaacbae25ff534ed2291cf474e0da17a3a',1,'brownies.H']]],
+  ['brmcufromstr',['BrMcuFromStr',['../group__brownies__linux.html#ga7b441daca5556ade1953a760ad850111',1,'brownies.H']]],
   ['brmcustr',['BrMcuStr',['../group__brownies__linux.html#ga6ce55ef742afe006b88df079da2fbb30',1,'brownies.H']]],
   ['broadcast',['Broadcast',['../classCCond.html#ac829db58c2e9d464e74d271de81d98fa',1,'CCond']]],
   ['brreplycheck',['BrReplyCheck',['../group__brownies__interface__protocol.html#ga0e3711bfbd7bb7886913095b1be00dd5',1,'interface.h']]],
@@ -11,6 +12,7 @@ var searchData=
   ['brrequestpackage',['BrRequestPackage',['../group__brownies__interface__protocol.html#gacc1b387098e01ecf33c3baf7b39340a1',1,'interface.h']]],
   ['brrequestsize',['BrRequestSize',['../group__brownies__interface__protocol.html#gab602a0128bbb48ec5efa524d8b6b59c3',1,'interface.h']]],
   ['brstatusstr',['BrStatusStr',['../group__brownies__linux.html#gaeeec73fd028a88cc8572be394097f5de',1,'brownies.H']]],
-  ['brversionnumberfromstr',['BrVersionNumberFromStr',['../group__brownies__linux.html#ga68add1db41117add1e9498eb82bb4cac',1,'brownies.H']]],
-  ['brversionnumbertostr',['BrVersionNumberToStr',['../group__brownies__linux.html#ga07884bc9273f1646bfbbf7a98eb2a4fb',1,'brownies.H']]]
+  ['brversionfromstr',['BrVersionFromStr',['../group__brownies__linux.html#gad64c3205a498366ad1ac41c0593a92c9',1,'brownies.H']]],
+  ['brversionget',['BrVersionGet',['../group__brownies__linux.html#ga518d0626c48632447c72ada03994451c',1,'brownies.H']]],
+  ['brversiongetasstr',['BrVersionGetAsStr',['../group__brownies__linux.html#ga65235e093215144835937b9321d6a290',1,'brownies.H']]]
 ];

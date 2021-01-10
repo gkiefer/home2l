@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -146,7 +146,7 @@ int main (int argc, char **argv) {
 
   // Initialization ...
   EnvInit (argc, argv);
-  EnvInitPersistence ();    // This is presently needed by: APP_MUSIC, ALARMCLOCK
+  EnvEnablePersistence ();    // This is presently needed by: APP_MUSIC, ALARMCLOCK
   RcInit (true);
   UiInit ("Home2L - " WALLCLOCK_NAME);
   ScreenInit ();

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -240,26 +240,42 @@ float EnvLocationLongitudeE ();
 
 /// @name Init/Done ...
 /// @{
-void EnvInit (int argc, char **argv, const char *specOptionsUsage = NULL, const char *instanceName = NULL);
+void EnvInit (int argc, char **argv, const char *specOptionsUsage = NULL, const char *instanceName = NULL, bool noBanner = false);
+  ///< @brief Initialize the environment module.
+  /// @param argc is the main funcion's 'argc' parameter.
+  /// @param argv is the main funcion's 'argv' parameter.
+  /// @param specOptionsUsage allows to add extra usage information on specific tool options.
+  /// @param instanceName defines the instance name, which otherwise is derived from the executable name (argv[0]).
+  /// @param noBanner suppresses the output of the tool banner (for command line tools with minimal output).
+void EnvPrintBanner ();
+  ///< @brief Print the tool banner (only useful if banner was suppressed in the @ref EnvInit() call).
 void EnvDone ();
+  ///< @brief Shutdown the environment module.
 /// @}
 
 
 /// @name Persistence ...
 /// @{
-void EnvInitPersistence (bool writeThrough = false, const char *_varFileName = NULL);
+void EnvEnablePersistence (bool writeThrough = false, const char *_varFileName = NULL);
   ///< @brief Enable the persistence of all environment variables starting with "var.*".
   ///
-  /// They will be stored to a file passed as '_varFileName', which should be
+  /// @param writeThrough decides whether the file is written back automatically with
+  /// each @ref EnvPut() call changing any "var.*" variable. If set to 'false',
+  /// the file is only written back on shutdown ( @ref EnvDone() ) or on a explicit
+  /// flush ( @ref EnvFlush() ).
+  ///
+  /// @param _varFileName is the filename to store the variables, which should be
   /// pathname relative to the "var" directory. By default, "home2l-<instance name>.conf"
   /// is used. It is discouraged to pass an absolute path there.
   ///
-  /// If 'writeThrough == true', the file is written back with each EnvPut() call changing
-  /// any "var.*" variable. If 'writeThrough == false', the file is only written back
-  /// on shutdown ( EnvDone() ) or on a explicit flush ( EnvFlush() ).
-  ///
   /// Persistent variables are (tried to be) read from the filesystem on this call,
   /// and they may override any settings in the main configuration file.
+  ///
+  /// This function may be called multiple times, for example, on tool initialization
+  /// and then later again inside @ref RcInit(), if the user has declared persistent
+  /// resources. On the second invocation, '_varFileName' *must* be NULL. If
+  /// 'writeThrough' is set differently, a logical OR of all passed values will
+  /// become effective.
 
 void EnvFlush ();   ///< @brief Write back any persistent variables now.
 /// @}
@@ -294,6 +310,8 @@ const char *EnvPut (const char *key, const char *value);
 const char *EnvPut (const char *key, int value);
   ///< @brief Put an integer or boolean variable into the dictionary.
   /// @return Pointer the copy of the value as stored in the database.
+static inline void EnvDel (const char *key) { EnvPut (key, (const char *) NULL); }
+  ///< @brief Remove an entry from the environment dictionary.
 
 /// @}
 

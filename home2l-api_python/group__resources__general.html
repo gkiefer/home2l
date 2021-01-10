@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-9-g0486* (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -104,12 +104,12 @@ Subscriptions (from C/C++ API) ...</h2></td></tr>
 Placing requests ...</h2></td></tr>
 <tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp15d7cc8d8a61e6dd6c03f42aef9b2fe2"></a>Details on the request arguments can be found in the <a href="../home2l-api_c/classCRcRequest.html"><em>C/C++ API documentation</em></a> and the <a href="../home2l-book.pdf"><em>Home2L Book</em></a>. </p>
 </td></tr>
-<tr class="memitem:ga6ab8130f6e789fae5b2af4a62da906ca"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga6ab8130f6e789fae5b2af4a62da906ca">RcSetRequest</a> (rc, reqDef=None, attrs=None, value=None, id=None, priority=None, t0=None, t1=None, repeat=None, hysteresis=None)</td></tr>
-<tr class="separator:ga6ab8130f6e789fae5b2af4a62da906ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7940b99f7335e626099b68572a479917"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga7940b99f7335e626099b68572a479917">RcSetRequest</a> (rc, reqDef=None, attrs=None, value=None, id=None, priority=None, t0=None, t1=None, repeat=None, hysteresis=None, delDelay=None)</td></tr>
+<tr class="separator:ga7940b99f7335e626099b68572a479917"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7bdd56fd80fe561b0a632d50505ea032"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga7bdd56fd80fe561b0a632d50505ea032">RcSetTrigger</a> (rc, attrs=None, id=None, priority=None, t0=None, t1=None, repeat=None, hysteresis=None)</td></tr>
 <tr class="separator:ga7bdd56fd80fe561b0a632d50505ea032"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2dc00dcf0d6911eeada6f01e7c5a2ce8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga2dc00dcf0d6911eeada6f01e7c5a2ce8">RcDelRequest</a> (args)</td></tr>
-<tr class="separator:ga2dc00dcf0d6911eeada6f01e7c5a2ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad5a47e16a6336dd90801c72df50e5f32"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gad5a47e16a6336dd90801c72df50e5f32">RcDelRequest</a> (rc, id=None, t1=None)</td></tr>
+<tr class="separator:gad5a47e16a6336dd90801c72df50e5f32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Drivers (from C/C++ API) ...</h2></td></tr>
@@ -289,8 +289,8 @@ Unsubscribe to all resources managed by the subscriber.
 </pre> 
 </div>
 </div>
-<a id="ga6ab8130f6e789fae5b2af4a62da906ca"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga6ab8130f6e789fae5b2af4a62da906ca">&#9670;&nbsp;</a></span>RcSetRequest()</h2>
+<a id="ga7940b99f7335e626099b68572a479917"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga7940b99f7335e626099b68572a479917">&#9670;&nbsp;</a></span>RcSetRequest()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -353,7 +353,13 @@ Unsubscribe to all resources managed by the subscriber.
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>hysteresis</em> = <code>None</code>&#160;</td>
+          <td class="paramname"><em>hysteresis</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>delDelay</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -365,48 +371,67 @@ Unsubscribe to all resources managed by the subscriber.
 <pre class="fragment">Set a request to a resource with selected attributes.
 
 The attributes can be set in a flexible way, either by (named) function arguments
-or by a textual description as accepted by the Home2L Shell or CRequest::SetFromStr().
+or by a textual description as accepted by the Home2L Shell or CRcRequest::SetFromStr().
 
 The parameters have the following meanings:
 
-- reqDef = full definition as a single string ("&lt;val&gt; [&lt;attrs&gt;]");
-           Note: Values of type string should never be passed by this, but
-                 by the 'val' and 'attrs' arguments.
+- reqDef = full definition as a single string '&lt;val&gt; [&lt;attrs&gt;]' or just the value
+           Note: To avoid ambiguities, values of type string should never be passed by this,
+                 but by the 'value' and 'attrs' arguments instead.
            If 'reqDef' is not a string instance, it is used as a value ('val').
 - attrs  = attribute string (similar to 'reqDef', but without the first field interpreted as value)
+
 - value      = value (any type or string)
-- id         = request ID (default = instance name)
-- priority   = request priority (0..9; default = do not set)
+- id         = request ID [default = instance name]
+- priority   = request priority (0..9) [default = 3 (= rcPrioNormal)]
 - t0         = on time
 - t1         = off time
 - repeat     = repetition interval
 - hysteresis = hysteresis time
+- delDelay   = deletion delay (if no value is passed and the call is used to delete the request)
 
 Information on the syntax of textual request definition can be found in the Home2L Book and
-in the C/C++ API documentation for CRcRequest::SetFromStr().
+in the C/C++ API documentation for CRcRequest::SetFromStr(). Arguments representing absolute times
+(e.g. 't0', 't1') can have any type and format as accepted by 'TicksAbsOf()'.
+Arguments representing relative times (e.g. 'repeat', 'hysteresis', 'delDelay') can have any type
+and format as accepted by 'TicksRelOf()'.
+
+If an attribute is set both by means of a string ('reqDef' or 'attrs') or a named parameter,
+the named parameter is taken. If no attributes are specified, their defaults as specified in [...]
+above are used.
+
+If the effective value is 'None' (no value is passed), the call will delete the request with
+the specified ID passing 'delDelay' as the the 't1' argument of RcDelRequest().
 
 Examples:
 
 - Request integer value 7 with default attributes:
     RcSetRequest (rc, 7);
-    RcSetRequest (rc, "7");
-    RcSetRequest (rc, value = "7");
-    RcSetRequest (rc, reqDef = "7");
+    RcSetRequest (rc, '7');
+    RcSetRequest (rc, value = '7');
+    RcSetRequest (rc, reqDef = '7');
 
-- Request integer value 7 with priority 3:
-    RcSetRequest (rc, 7, priority = 3);
-    RcSetRequest (rc, 7, "*3");
-    RcSetRequest (rc, "7 *3");
+- Request integer value 7 with ID '#user' and priority 3:
+    RcSetRequest (rc, 7, id = 'user', priority = 3);
+    RcSetRequest (rc, 7, '#user *3');
+    RcSetRequest (rc, '7 #user *3');
 
-- Request string value "Hello *3" with priority 5 and an off time at 6pm today:
-    RcSetRequest (rc, value = "Hello *3", attrs = "*5 -18:00");
-    RcSetRequest (rc, value = "Hello *3", prio = 5, t1 = "-18:00");
+- Delete this request again:
+    RcSetRequest (rc, value = None, id = 'user');
+    RcSetRequest (rc, '? #user');
+
+- Delete this request in 5 seconds:
+    RcSetRequest (rc, value = None, id = 'user', delDelay = '5s');
+
+- Request string value 'Hello *3' with priority 5 and an off time at 6pm today:
+    RcSetRequest (rc, value = 'Hello *3', attrs = '*5 -18:00');
+    RcSetRequest (rc, value = 'Hello *3', prio = 5, t1 = '-18:00');
 
 - Set request with user-supplied attributes, some of which must not be changed by user
-    RcSetRequest (rc, 7, userAttrs, t1 = "-23:00")    # t1 overrides an eventual off time in userAttrs
+    RcSetRequest (rc, 7, userAttrs, t1 = '-23:00')    # t1 overrides an eventual off time in userAttrs
 
 - Set request with user-supplied attributes and defaults
-    req = CRcRequest (val = 7, t1 = "-23:00")       # Set value and default attributes
+    req = CRcRequest (val = 7, t1 = '-23:00')       # Set value and default attributes
     req-&gt;Set (attrs = userAttrs)     # userAttrs may override t1</pre> 
 </div>
 </div>
@@ -474,8 +499,8 @@ Examples:
 <pre class="fragment">Set a request to a trigger resource with selected attributes.</pre> 
 </div>
 </div>
-<a id="ga2dc00dcf0d6911eeada6f01e7c5a2ce8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga2dc00dcf0d6911eeada6f01e7c5a2ce8">&#9670;&nbsp;</a></span>RcDelRequest()</h2>
+<a id="gad5a47e16a6336dd90801c72df50e5f32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad5a47e16a6336dd90801c72df50e5f32">&#9670;&nbsp;</a></span>RcDelRequest()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -484,19 +509,28 @@ Examples:
           <td class="memname">def home2l.RcDelRequest </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>args</em></td><td>)</td>
+          <td class="paramname"><em>rc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>id</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>t1</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">RcDelRequest(CResource rc, char const * reqGid=None)
-RcDelRequest(CResource rc)
-RcDelRequest(char const * rcUri, char const * reqGid=None, TTicks t1=0)
-RcDelRequest(char const * rcUri, char const * reqGid=None)
-RcDelRequest(char const * rcUri)
-
-Delete a request from a resource.
-</pre> 
+<pre class="fragment">Delete a request.</pre> 
 </div>
 </div>
 <a id="ga8c4071d0db33fb53a428eb7adeba8539"></a>

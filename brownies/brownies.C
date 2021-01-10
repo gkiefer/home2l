@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 #include <sys/socket.h>   // for socket server ...
 #include <sys/un.h>
 #include <linux/i2c-dev.h>
@@ -45,7 +46,7 @@ extern "C" {
 // *************************** Settings ****************************************
 
 
-ENV_PARA_STRING("br.database", envBrDatabaseFile, "brownies.conf");
+ENV_PARA_STRING("br.config", envBrDatabaseFile, "brownies.conf");
   /* Name of the Brownie database file (relative to the 'etc' domain)
    */
 
@@ -96,7 +97,7 @@ ENV_PARA_INT("br.featureTimeout", envBrFeatureTimeout, 5000);
   /* Time after which an unreachable feature resource is marked invalid
    */
 
-ENV_PARA_INT("br.temperatureInterval", envBrTempInterval, 5000);
+ENV_PARA_INT("br.temp.interval", envBrTempInterval, 5000);
   /* Approximate polling interval for temperature values
    */
 
@@ -193,13 +194,29 @@ const char *BrStatusStr (EBrStatus s) {
 }
 
 
+static struct { int id; const char *const name; } brMcuNameMap[] = {
+  { BR_MCU_ATTINY84, "t84" },
+  { BR_MCU_ATTINY85, "t85" },
+  { BR_MCU_ATTINY861, "t861" },
+};
+
+
 const char *BrMcuStr (int mcuType) {
-  switch (mcuType) {
-    case BR_MCU_ATTINY84:  return "t84";
-    case BR_MCU_ATTINY85:  return "t85";
-    case BR_MCU_ATTINY861: return "t861";
-    default: return NULL;
-  }
+  int i;
+
+  for (i = 0; i < ENTRIES(brMcuNameMap); i++)
+    if (brMcuNameMap[i].id == mcuType) return brMcuNameMap[i].name;
+  return NULL;
+}
+
+
+int BrMcuFromStr (const char *mcuStr) {
+  int i;
+
+  if (mcuStr)    // sanity
+    for (i = 0; i < ENTRIES(brMcuNameMap); i++)
+      if (strcasecmp (mcuStr, brMcuNameMap[i].name) == 0) return brMcuNameMap[i].id;
+  return BR_MCU_NONE;
 }
 
 
@@ -213,9 +230,13 @@ const char *BrMcuStr (int mcuType) {
 
 
 const TBrCfgDescriptor brCfgDescList[] = {
-  { "adr",        "%03i", ctUint8,  -1,               CFG_OFS(adr),           "Own TWI address" },
-  { "id",         "%12s", ctId,     -1,               -1,                     "Brownie ID" },
-  { "fw",         "%12s", ctFw,     -1,               -1,                     "Firmware name (read-only)" },
+  { "adr",        "%03i", ctUint8,    -1,  CFG_OFS(adr),  "Own TWI address" },
+  { "id",        "%-12s", ctId,       -1,            -1,  "Brownie ID" },
+
+  { "fw",        "%-12s", ctFw,       -1,            -1,  "Firmware name (read-only)" },
+  { "mcu",        "%-4s", ctMcu,      -1,            -1,  "MCU model (read-only)" },
+  { "version",      NULL, ctVersion,  -1,            -1,  "Version number (read-only)" },
+  { "features",     NULL, ctFeatures, -1,            -1,  "Feature code (read-only)" },
 
   { "osccal",       "%i", ctUint8,  BR_FEATURE_TIMER,    CFG_OFS(oscCal),     "Timer calibration: OSCCAL register" },
 
@@ -229,10 +250,8 @@ const TBrCfgDescriptor brCfgDescList[] = {
   { "sha1_du",    "%.3f", ctShadesDelay,  BR_FEATURE_SHADES_1, CFG_OFS(shadesDelayUp[1]),    "(shades) Shades #1 calibration: up delay [s]" },
   { "sha1_dd",    "%.3f", ctShadesDelay,  BR_FEATURE_SHADES_1, CFG_OFS(shadesDelayDown[1]),  "(shades) Shades #1 calibration: down delay [s]" },
   { "sha1_tu",    "%.2f", ctShadesSpeed,  BR_FEATURE_SHADES_1, CFG_OFS(shadesSpeedUp[1]),    "(shades) Shades #1 calibration: total time to move up [s]" },
-  { "sha1_td",    "%.2f", ctShadesSpeed,  BR_FEATURE_SHADES_1, CFG_OFS(shadesSpeedDown[1]),  "(shades) Shades #1 calibration: total time to move down [s]" },
+  { "sha1_td",    "%.2f", ctShadesSpeed,  BR_FEATURE_SHADES_1, CFG_OFS(shadesSpeedDown[1]),  "(shades) Shades #1 calibration: total time to move down [s]" }
 
-  { "version",      "%s", ctVersion,  -1,             -1,                     "Version number (read-only)" },
-  { "features",     "%s", ctFeatures, -1,             -1,                     "Feature code (read-only)" }
 };
 
 
@@ -252,24 +271,34 @@ class CBrFeature {
   public:
 
     // Subclass interface ...
-    CBrFeature (CBrownie *_brownie /* , CRcDriver *drv */);
-      // subclass constructor must:
-      //   a) register all resources with driver, Set 'driverData' to '*this'
-      //   b) set 'expRcList'/'expRcs'
+    CBrFeature (CBrownie *_brownie);
+      ///< Subclass constructor. It must:
+      ///   a) register all resources with driver, Set 'driverData' to '*this',
+      ///   b) set 'expRcList'/'expRcs'.
     virtual ~CBrFeature () {}
 
     virtual unsigned Sensitivity () { return 0; }
-      // combined mask (logical OR) of BR_POLL* and BR_CHANGED_* values indicating when
-      // this feature has to be updated
-    virtual void Update (CBrownieLink *link, bool initial) = 0;
-      // must read out feature-related registers from device and eventually report changes to the resources;
-      // This method is called a) if a change was detected in the "changed" register or b) if the expiration
-      // time is less than 'envBrFeatureTimeout' in the future. Features without a "changed" bit can influence
-      // the polling interval by setting the expiration time to <next polling time> + 'envBrFeatureTimeout'.
+      ///< Combined mask (logical OR) of @ref BR_POLL and 'BR_CHANGED_*' values indicating when
+      /// this feature has to be updated.
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) = 0;
+      /// Must read out feature-related registers from device and eventually report changes to the resources.
+      /// This method is called
+      ///    a) if a change was detected in the "changed" register or
+      ///    b) if the expiration time is less than @ref envBrFeatureTimeout in the future.
+      /// Features without a "changed" bit can influence the polling interval by setting the expiration time
+      /// to <next polling time> + 'envBrFeatureTimeout'.
+      /// @param link is the hardware link.
+      /// @param changed is an indication of reason why this was called. Only bits set by Sensitivity() can
+      ///     be set here, and the BR_POLL bit is never set.
+      /// @param initial indicates that this is the first call to this method or the first call after some
+      ///     recovered failure. If this is set, all resource values should be reported freshly.
+
     virtual void DriveValue (class CBrownieLink *link, CResource *rc, CRcValueState *vs) { ASSERT (false); }
-      // not required for read-only resources; must
-      //   a) drive the value to the device
-      //   b) report the new (hopefully 'valid') value and state
+      ///< This must
+      ///   a) drive the value to the device,
+      ///   b) report the new (hopefully 'valid') value and state.
+      /// Read-only features do not need to implement this.
 
     // Helpers ...
     void RefreshExpiration (TTicksMonotonic waitTime = 0);
@@ -351,6 +380,7 @@ class CBrFeatureGpio: public CBrFeature {
 
   public:
 
+
     CBrFeatureGpio (CBrownie *_brownie, CRcDriver *drv): CBrFeature (_brownie) {
       CResource *rc;
       const char *lid;
@@ -397,9 +427,11 @@ class CBrFeatureGpio: public CBrFeature {
       while (expRcs && expRcList[expRcs-1] == NULL) expRcs--;             // ... optimization
     }
 
+
     virtual unsigned Sensitivity () { return BR_CHANGED_GPIO; }
 
-    virtual void Update (CBrownieLink *link, bool initial) {
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
       CResource *rc;
       EBrStatus status;
       unsigned gpioMask;
@@ -410,11 +442,11 @@ class CBrFeatureGpio: public CBrFeature {
       gpioMask = brownie->FeatureRecord ()->gpiPresence | brownie->FeatureRecord ()->gpoPresence;
       status = brOk;
       if (status == brOk && (gpioMask & 0x00ff)) {
-        status = link->RegRead (brownie->Adr (), BR_REG_GPIO_0, &regVal);
+        status = link->RegRead (brownie, BR_REG_GPIO_0, &regVal);
         gpioState = regVal;
       }
       if (status == brOk && (gpioMask & 0xff00)) {
-        status = link->RegRead (brownie->Adr (), BR_REG_GPIO_1, &regVal);
+        status = link->RegRead (brownie, BR_REG_GPIO_1, &regVal);
         gpioState |= ((unsigned) regVal) << 8;
       }
 
@@ -429,6 +461,7 @@ class CBrFeatureGpio: public CBrFeature {
       else
         gpioStateValid = false;
     }
+
 
     virtual void DriveValue (class CBrownieLink *link, CResource *rc, CRcValueState *vs) {
       EBrStatus status;
@@ -447,13 +480,13 @@ class CBrFeatureGpio: public CBrFeature {
       mask = 1 << (n & 7);
 
       // Get current and new register value ...
-      if (!gpioStateValid) Update (link, false);
+      if (!gpioStateValid) Update (link, 0, false);
       devState = (uint8_t) ((reg == BR_REG_GPIO_0) ? gpioState : (gpioState >> 8));
       newState = vs->Bool () ? (devState | mask) : (devState & ~mask);
 
       // Write and verify register ...
       status = link->RegWrite (brownie->Adr (), reg, newState);
-      if (status == brOk) status = link->RegRead (brownie->Adr (), reg, &devState);
+      if (status == brOk) status = link->RegRead (brownie, reg, &devState);
 
       // Report resource value/state ...
       if (status == brOk) {
@@ -466,65 +499,8 @@ class CBrFeatureGpio: public CBrFeature {
         gpioStateValid = false;
       }
     }
-};
 
 
-
-
-
-// ***** CBrFeatureTemperature *****
-
-
-class CBrFeatureTemperature: public CBrFeature {
-  protected:
-    CResource *rcTemp;
-
-  public:
-
-    CBrFeatureTemperature (CBrownie *_brownie, CRcDriver *drv): CBrFeature (_brownie) {
-      //~ INFOF(("### Registering temperature resource(s) for %03i", _brownie->Adr ()));
-
-      // Register resource ...
-      rcTemp = RcRegisterResource (drv, MakeRcLid ("temp"), rctTemp, false);
-        /* [RC:brownies:<brownieID>/temp] Brownie temperature sensor value
-         */
-
-      rcTemp->SetDriverData (this);
-
-      // Set expiration list ...
-      expRcList = &rcTemp;
-      expRcs = 1;
-    }
-
-    virtual ~CBrFeatureTemperature () {}
-
-    virtual unsigned Sensitivity () { return BR_POLL /* BR_CHANGED_TEMP */; }
-
-    virtual void Update (CBrownieLink *link, bool) {
-      EBrStatus status;
-      unsigned tempRaw;
-      float tempFloat;
-      uint8_t regVal;
-
-      //~ INFOF(("### CBrFeatureTemperature::Update (%03i)", brownie->Adr ()));
-
-      // Read registers ...
-      status = link->RegRead (brownie->Adr (), BR_REG_TEMP_LO, &regVal);
-      tempRaw = regVal;
-      if (status == brOk) status = link->RegRead (brownie->Adr (), BR_REG_TEMP_HI, &regVal);
-      tempRaw |= ((unsigned) regVal) << 8;
-
-      // Report result ...
-      if (status == brOk) {
-        //~ INFOF (("###   tempRaw = %04x\n", (unsigned) tempRaw));
-        if (tempRaw & 1) {
-          tempFloat = -50.0 + (tempRaw >> 1) * (200.0 / 2047.0);
-          rcTemp->ReportValue (tempFloat);
-          RefreshExpiration (envBrTempInterval);
-        }
-        else rcTemp->ReportUnknown ();
-      }
-    }
 };
 
 
@@ -571,7 +547,10 @@ class CBrMatrixWindow {
     friend class CBrFeatureMatrix;
 
   public:
+
+
     CBrMatrixWindow () { type = mwtInvalid; }
+
 
     void Set (const char *def, int matRows, int matCols, CRcDriver *rcDrv, const char *rcLid) {
 
@@ -634,6 +613,7 @@ class CBrMatrixWindow {
          */
     };
 
+
     void Update (int _row, int _col, bool val) {
       //~ INFOF (("### CBrMatrixWindow::Update (row = %i, col = %i, val = %i)", _row, _col, (int) val));
       if (invert) val = !val;
@@ -669,6 +649,8 @@ class CBrMatrixWindow {
       }
       rc->ReportValue (state);
     }
+
+
 };
 
 
@@ -685,10 +667,12 @@ class CBrFeatureMatrix: public CBrFeature {
 
   public:
 
+
     CBrFeatureMatrix (CBrownie *_brownie, CRcDriver *drv): CBrFeature (_brownie) {
       CString envPrefix;
       CResource *rc;
-      uint16_t featureSet;
+      //~ uint16_t featureSet;
+      uint8_t matDim;
       int n, k, row, col, idx0, idx1, matSize;
 
       //~ INFOF(("### Registering matrix resource(s) for %03i", _brownie->Adr ()));
@@ -697,9 +681,12 @@ class CBrFeatureMatrix: public CBrFeature {
       matValid = false;
 
       // Determine dimensions ...
-      featureSet = _brownie->FeatureRecord ()->features;
-      matRows = ((featureSet & BR_FEATURE_MROWS) >> BR_FEATURE_MROWS_SHIFT) + 1;
-      matCols = ((featureSet & BR_FEATURE_MCOLS) >> BR_FEATURE_MCOLS_SHIFT) + 1;
+      matDim = _brownie->FeatureRecord ()->matDim;
+      matRows = BR_MATDIM_ROWS (matDim);
+      matCols = BR_MATDIM_COLS (matDim);
+      //~ featureSet = _brownie->FeatureRecord ()->features;
+      //~ matRows = ((featureSet & BR_FEATURE_MROWS) >> BR_FEATURE_MROWS_SHIFT) + 1;
+      //~ matCols = ((featureSet & BR_FEATURE_MCOLS) >> BR_FEATURE_MCOLS_SHIFT) + 1;
       matSize = matRows * matCols;
 
       // Register resources ...
@@ -745,14 +732,17 @@ class CBrFeatureMatrix: public CBrFeature {
       expRcs = matSize + wins;
     }
 
+
     virtual ~CBrFeatureMatrix () {
       if (wins) delete [] winList;
       delete [] expRcList;
     }
 
+
     virtual unsigned Sensitivity () { return BR_CHANGED_MATRIX; }
 
-    virtual void Update (CBrownieLink *link, bool initial) {
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
       EBrStatus status;
       int row, col, idx;
       uint8_t ev;
@@ -771,7 +761,7 @@ class CBrFeatureMatrix: public CBrFeature {
         status = link->RegWrite (brownie->Adr (), BR_REG_MATRIX_EVENT, BR_MATRIX_EV_EMPTY);
         // Read out full matrix ...
         for (row = 0; row < matRows; row++)
-          mat[row] = link->RegReadNext (brownie->Adr (), BR_REG_MATRIX_0 + row, &status);
+          mat[row] = link->RegReadNext (&status, brownie->Adr (), BR_REG_MATRIX_0 + row);
         // We set 'matValid = true' later after processing the queue.
         // This way, we can check 'matValid' inside the queue loop to check if
         // we can rely on the order.
@@ -787,7 +777,7 @@ class CBrFeatureMatrix: public CBrFeature {
 
       // Process all pending events ...
       do {
-        status = link->RegRead (brownie->Adr (), BR_REG_MATRIX_EVENT, &ev, true);
+        status = link->RegRead (brownie, BR_REG_MATRIX_EVENT, &ev, true);
         if (status == brOk) {
           if (ev == BR_MATRIX_EV_EMPTY) {    // Done: Leave the loop and mark matrix clean
             //~ INFO ("#   queue: empty");
@@ -815,6 +805,371 @@ class CBrFeatureMatrix: public CBrFeature {
         //~ else INFOF (("#   queue: error: %s", BrStatusStr (status)));
       } while (status == brOk);
     }
+
+
+};
+
+
+
+
+
+// ***** CBrFeatureUart *****
+
+
+static void SocketServerStop (int *listenFd, const char *pathName) {
+  if (*listenFd >= 0) {
+    close (*listenFd);
+    *listenFd = -1;
+    unlink (pathName);   // remove socket special file
+    DEBUGF (1, ("Stopped socket server: %s", pathName));
+  }
+}
+
+
+static int SocketServerStart (const char *pathName, int backlog = 1) {
+  ///< Create, bind and listen to a new socket.
+  /// @param pathName is the absolute path name of the socket, usually in the 'tmp' domain.
+  ///   The socket and its containing directory is created as necessary.
+  /// @param backlock is the maximum length to which the queue of pending connections may grow (see listen(3)).
+  /// @return file handle or -1 on error. On error, a warning is emitted.
+  struct sockaddr_un sockAdr;
+  CString s;
+  int sockListenFd;
+
+  // Prepare owning directory ...
+  s.SetC (pathName);
+  s.PathGoUp ();
+  MakeDir (s.Get ());
+  unlink (pathName);   // remove socket special file
+
+  // Sanity ...
+  if ((size_t) strlen (pathName) > (sizeof (sockAdr.sun_path) - 1)) {
+    WARNINGF (("Socket pathname is too long: %s", pathName));
+    sockListenFd = -1;
+  }
+
+  // Create and bind socket ...
+  else {
+    sockListenFd = socket (AF_UNIX, SOCK_STREAM, 0);
+    sockAdr.sun_family = AF_UNIX;
+    strcpy (sockAdr.sun_path, pathName);    // length has been checked above
+  }
+  if (sockListenFd > 0) if (bind (sockListenFd, (struct sockaddr *) &sockAdr, sizeof (sockAdr)) != 0) {
+    WARNINGF (("Failed to create socket %s: %s", pathName, strerror (errno)));
+    SocketServerStop (&sockListenFd, pathName);
+  }
+  if (sockListenFd > 0) if (chmod (sockAdr.sun_path, S_IRWXU | S_IRWXG) != 0) {
+    WARNINGF (("Failed set permission of socket %s: %s", pathName, strerror (errno)));
+    SocketServerStop (&sockListenFd, pathName);
+  }
+
+  // Listen ...
+  if (sockListenFd > 0) if (fcntl (sockListenFd, F_SETFL, fcntl (sockListenFd, F_GETFL, 0) | O_NONBLOCK) != 0) {
+    WARNINGF (("Failed to make socket %s non-blocking: %s", pathName, strerror (errno)));
+    SocketServerStop (&sockListenFd, pathName);
+  }
+  if (sockListenFd > 0) if (listen (sockListenFd, backlog) != 0) {
+    WARNINGF (("Failed to listen on socket %s: %s", pathName, strerror (errno)));
+    SocketServerStop (&sockListenFd, pathName);
+  }
+
+  // Done ...
+  DEBUGF (1, ("Stopped socket server: %s", pathName));
+  return sockListenFd;
+}
+
+
+static int SocketServerAccept (int listenFd, const char *name, bool nonBlocking) {
+  ///< Accept an incoming connection.
+  /// @param listenFd is the file descriptor of the listening socket.
+  /// @param name is the name of the socket for logging an estanblished connection (or NULL to not log).
+  /// @param nonBlocking lets the client connection to switch to non-blocking mode.
+  /// @return file descriptor of the new connection or -1 if none was accepted.
+  struct ucred ucred;
+  socklen_t len;
+  int clientFd;
+
+  // Sanity ...
+  if (listenFd < 0) return -1;
+
+  // Try to accept new connection ...
+  clientFd = accept (listenFd, NULL, NULL);
+
+  // Make client connection non-blocking...
+  if (clientFd >= 0 && nonBlocking) {
+    if (fcntl (clientFd, F_SETFL, fcntl (clientFd, F_GETFL, 0) | O_NONBLOCK) < 0) {
+      WARNINGF (("%s: Failed to make socket connection non-blocking (fd = %i): %s", name ? name : "?", clientFd, strerror (errno)));
+      close (clientFd);
+      clientFd = -1;
+    }
+  }
+
+  // On success: Try to get peer credentials and log connection ...
+  if (clientFd >= 0 && name) {
+    len = sizeof (struct ucred);
+    if (getsockopt (clientFd, SOL_SOCKET, SO_PEERCRED, &ucred, &len) != 0)
+      INFOF (("%s: Connection established from unkown client (failed to get peer credentials)", name));
+    else
+      INFOF (("%s: Connection established from (PID=%i, UID=%i, GID=%i)", name, ucred.pid, ucred.uid, ucred.gid));
+  }
+
+  // Done ...
+  return clientFd;
+}
+
+
+static void SocketServerClose (int *clientFd, const char *name, const char *reason) {
+  ///< Close a client connection based on the 'errno' value after a Read() or Write() operation.
+  close (*clientFd);
+  *clientFd = -1;
+  INFOF (("%s: Connection closed: %s", name, reason));
+}
+
+
+static void SocketServerCloseLostClient (int *clientFd, const char *name) {
+  ///< Close a client connection based on the 'errno' value after a Read() or Write() operation.
+  if (errno != 0 && errno != EAGAIN && errno != EWOULDBLOCK)
+    SocketServerClose (clientFd, name, strerror (errno));
+}
+
+
+class CBrFeatureUart: public CBrFeature {
+
+  protected:
+    CString sockName;
+    int sockListenFd, sockClientFd;
+    int uartStatus, bytes;   // cached UART status register (BR_REG_UART_STATUS)
+
+  public:
+
+
+    // Subclass interface ...
+    CBrFeatureUart (CBrownie *_brownie, CRcDriver *): CBrFeature (_brownie) {
+
+      // No resources ...
+      expRcList = NULL;
+      expRcs = 0;
+
+      // Create, bind and listen to socket ...
+      sockName.SetF ("%s/brownies/%s.uart", EnvHome2lTmp (), brownie->Id ());
+      sockListenFd = SocketServerStart (sockName.Get ());
+      sockClientFd = -1;
+
+      // Clear UART status ...
+      uartStatus = -1;
+    }
+
+
+    virtual ~CBrFeatureUart () {
+      SocketServerStop (&sockListenFd, sockName.Get ());
+    }
+
+
+    virtual unsigned Sensitivity () { return BR_CHANGED_UART | BR_POLL; }
+      // polling mainly to check for new socket connections and data from socket
+
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
+      EBrStatus status = brOk;
+      TTicksMonotonic tBreak;
+      uint8_t buf[16];
+      int i, bytes, newSockClientFd;
+
+      // Reset variables ...
+      status = brOk;
+      tBreak = 0;
+
+      // Note on the handling of link errors:
+      //
+      // a) In general, Brownie link errors effectively lead to a cancellation of the whole Update() method.
+      //    This is reasonable, since these are usually permanent errors persistent after some retries.
+      //
+      // b) Receiving and transmitting must be done with the 'noResend' flag set, since
+      //    reading the UART RX register or writing to the UART TX register has side effects.
+      //    In these cases, we just skip the respective bytes and continue.
+      //    (The bytes are lost then as during a normal transfer error.)
+
+      // Check for new connection ...
+      newSockClientFd = SocketServerAccept (sockListenFd, sockName.Get (), true);
+      if (newSockClientFd >= 0) {
+
+        // Close (preempt) old connection ...
+        //
+        //   NOTE: This is an unusual convention:
+        //     a) Access is mutually exclusive (only one client possible at a time),
+        //     b) BUT a new connection attempt causes the existing one to be closed (preempted).
+        //   The reason for this is that the server cannot reliably detect whether the previous
+        //   client is gone if the client does not properly close the socket.
+        //   New connections would be blocked out forever.
+        //
+        //   => The user must take special care that the socket is used exclusively!
+        //
+        // TBD: Implement a time-out, so that preemption only happens if there was no communication
+        //   for this amount of time?
+        //
+        if (sockClientFd >= 0) {
+          INFOF (("%s: Preempting previous connection", sockName.Get ()));
+          close (sockClientFd);
+        }
+        sockClientFd = newSockClientFd;
+
+        // New connection: Reset UART ...
+        link->RegWriteNext (&status, brownie, BR_REG_UART_CTRL, BR_UART_CTRL_RESET_RX | BR_UART_CTRL_RESET_TX | BR_UART_CTRL_RESET_FLAGS);
+        uartStatus = -1;
+      }
+
+      // If some client connected: Read status, report errors, prepare for transfers ...
+      if (sockClientFd >= 0) {
+        if (uartStatus < 0 || initial || (changed & BR_CHANGED_UART)) {
+          uartStatus = link->RegReadNext (&status, brownie, BR_REG_UART_STATUS);
+          if (status != brOk) uartStatus = -1;
+          else {
+            if (uartStatus & BR_UART_STATUS_OVERFLOW)
+              WARNINGF (("Brownie %03i (%s) reports a UART buffer overflow.", brownie->Adr (), brownie->Id ()));
+            if (uartStatus & BR_UART_STATUS_ERROR)
+              WARNINGF (("Brownie %03i (%s) reports a UART parity or frame error.", brownie->Adr (), brownie->Id ()));
+            if (uartStatus & (BR_UART_STATUS_OVERFLOW | BR_UART_STATUS_ERROR)) {
+              link->RegWriteNext (&status, brownie, BR_REG_UART_CTRL, BR_UART_CTRL_RESET_FLAGS);
+              if (status != brOk) uartStatus = -1;
+            }
+          }
+        }
+
+        // Init time-out time ...
+        tBreak = TicksMonotonicNow () + envBrMinScanInterval * 2;
+      }
+
+      // Receive from UART as many bytes as possible ...
+      if (status == brOk && sockClientFd >= 0) do {
+
+        // Get bytes to read ...
+        ASSERT (uartStatus >= 0);
+        bytes = (uartStatus & BR_UART_STATUS_RX_MASK) >> BR_UART_STATUS_RX_SHIFT;
+
+        // Transfer bytes (read from Brownie, push to socket) ...
+        for (i = 0; i < bytes; i++) {
+          status = link->RegRead (brownie, BR_REG_UART_RX, &buf[0], false);    // no resend
+          if (status != brOk)
+            WARNINGF (("Brownie %03i (%s): Dropped a byte from UART: %s",
+                      brownie->Adr (), brownie->Id (), BrStatusStr (status)));
+          else if (Write (sockClientFd, &buf[0], 1) != 1) {
+            // Note: We rely on OS to buffer her. If the byte could not be transferred, it is dropped
+            //   silently. However, more bytes are not read this time to avoid more loss.
+            // TBD: Check, what happened if the client has disconnected.
+            SocketServerCloseLostClient (&sockClientFd, sockName.Get ());
+            break;
+          }
+        }
+
+        // Read status register again for next iteration ...
+        uartStatus = link->RegReadNext (&status, brownie, BR_REG_UART_STATUS);
+        if (status != brOk) uartStatus = -1;
+      }
+      while (status == brOk && sockClientFd >= 0 && (uartStatus & BR_UART_STATUS_RX_MASK) && TicksMonotonicNow () < tBreak);
+        // Repeat as long as:
+        //   a) link and socket are up and OK
+        //   b) Brownie UART buffer still contains unread bytes
+        //   c) no time-out occured
+
+      // Transfer to UART as many bytes as possible ...
+      if (status == brOk && sockClientFd >= 0) do {
+
+        // Get transferrable bytes ...
+        ASSERT (uartStatus >= 0);
+        bytes = (uartStatus & BR_UART_STATUS_TX_MASK) >> BR_UART_STATUS_TX_SHIFT;   // max. #bytes accepted by Brownie
+        if (bytes > (int) sizeof (buf)) bytes = sizeof (buf);                       // max. #bytes accepted by buffer
+
+        // Transfer bytes (read socket, push to Brownie) ...
+        bytes = Read (sockClientFd, buf, bytes);        // max. #bytes read from socket
+        if (bytes == 0 && errno == 0)
+          SocketServerClose (&sockClientFd, sockName.Get (), "Connection closed by client");
+        SocketServerCloseLostClient (&sockClientFd, sockName.Get ());
+        //~ INFOF (("### Transferring %i bytes...", bytes));
+        for (i = 0; i < bytes; i++) {
+          status = link->RegWrite (brownie, BR_REG_UART_TX, buf[i], false);   // no resend
+            // Errors here may effectively cause all bytes from socket to be dropped silently
+          if (status != brOk)
+            WARNINGF (("Brownie %03i (%s): Dropped a byte (0x%02x) to send for UART: %s",
+                      brownie->Adr (), brownie->Id (), (int) buf[i], BrStatusStr (status)));
+        }
+
+        // Read status register again for next iteration ...
+        uartStatus = link->RegReadNext (&status, brownie, BR_REG_UART_STATUS);
+        if (status != brOk) uartStatus = -1;
+      }
+      while (status == brOk && sockClientFd >= 0 && bytes > 0 && (uartStatus & BR_UART_STATUS_TX_MASK) && TicksMonotonicNow () < tBreak);
+        // Repeat as long as:
+        //   a) link and socket are up and OK
+        //   b) socket has delivered >0 bytes and may thus deliver more bytes
+        //   c) Brownie UART buffer still has space for TX bytes
+        //   d) no time-out occured
+
+      // Trigger next poll ...
+      if (status == brOk) RefreshExpiration (0);
+    }
+};
+
+
+
+
+
+// ***** CBrFeatureTemperature *****
+
+
+class CBrFeatureTemperature: public CBrFeature {
+  protected:
+    CResource *rcTemp;
+
+  public:
+
+
+    CBrFeatureTemperature (CBrownie *_brownie, CRcDriver *drv): CBrFeature (_brownie) {
+      //~ INFOF(("### Registering temperature resource(s) for %03i", _brownie->Adr ()));
+
+      // Register resource ...
+      rcTemp = RcRegisterResource (drv, MakeRcLid ("temp"), rctTemp, false);
+        /* [RC:brownies:<brownieID>/temp] Brownie temperature sensor value
+         */
+
+      rcTemp->SetDriverData (this);
+
+      // Set expiration list ...
+      expRcList = &rcTemp;
+      expRcs = 1;
+    }
+
+
+    virtual ~CBrFeatureTemperature () {}
+
+
+    virtual unsigned Sensitivity () { return BR_POLL /* BR_CHANGED_TEMP */; }
+
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
+      EBrStatus status;
+      unsigned tempRaw;
+      float tempFloat;
+      uint8_t regVal;
+
+      //~ INFOF(("### CBrFeatureTemperature::Update (%03i)", brownie->Adr ()));
+
+      // Read registers ...
+      status = link->RegRead (brownie, BR_REG_TEMP_LO, &regVal);
+      tempRaw = regVal;
+      if (status == brOk) status = link->RegRead (brownie, BR_REG_TEMP_HI, &regVal);
+      tempRaw |= ((unsigned) regVal) << 8;
+
+      // Report result ...
+      if (status == brOk) {
+        //~ INFOF (("###   tempRaw = %04x\n", (unsigned) tempRaw));
+        if (tempRaw & 1) {
+          tempFloat = -50.0 + (tempRaw >> 1) * (200.0 / 2047.0);
+          rcTemp->ReportValue (tempFloat);
+          RefreshExpiration (envBrTempInterval);
+        }
+        else rcTemp->ReportUnknown ();
+      }
+    }
 };
 
 
@@ -840,6 +1195,7 @@ class CBrFeatureShades: public CBrFeature {
     uint8_t rIntLocked;   // last RINT value if the button is still down (-> user request is locked with no end time)
     bool polling;         // shades are moving (frequent updates desired)
 
+
     static CRcRequest *NewUserRequest (int pos) {
       CRcRequest *req = new CRcRequest ((float) pos, NULL, rcPrioUser);
         // init with current position and default attributes
@@ -850,7 +1206,9 @@ class CBrFeatureShades: public CBrFeature {
       return req;
     }
 
+
   public:
+
 
     CBrFeatureShades (CBrownie *_brownie, CRcDriver *drv, const char *idStr = CString::emptyStr, CBrFeatureShades *_primary = NULL): CBrFeature (_brownie) {
       int n;
@@ -918,12 +1276,15 @@ class CBrFeatureShades: public CBrFeature {
       expRcs = 5;
     }
 
+
     virtual ~CBrFeatureShades () {}
+
 
     virtual unsigned Sensitivity () { return polling ? (BR_POLL | BR_CHANGED_SHADES) : BR_CHANGED_SHADES; }
       // enable polling when the shades need polling
 
-    virtual void Update (CBrownieLink *link, bool initial) {
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
       static const uint8_t actMask = BR_SHADES_0_ACT_UP | BR_SHADES_0_ACT_DN | BR_SHADES_1_ACT_UP | BR_SHADES_1_ACT_DN;
       CRcRequest *req;
       EBrStatus status;
@@ -934,7 +1295,7 @@ class CBrFeatureShades: public CBrFeature {
 
       // Read out all relevant registers: button/actuator status, current position and RINT ...
       if (!primary) {
-        status = link->RegRead (brownie->Adr (), BR_REG_SHADES_STATUS, &_state);
+        status = link->RegRead (brownie, BR_REG_SHADES_STATUS, &_state);
         _state ^= ((((_state & actMask) >> 1) & _state) | (((_state & actMask) << 1) & _state)) & actMask;
           // Change all actUp = actDn = 1 combinations (= reverse wait) to actUp = actDn = 0
 
@@ -951,8 +1312,8 @@ class CBrFeatureShades: public CBrFeature {
         regRExt = BR_REG_SHADES_1_REXT;
       }
       //~ INFOF (("### _state = 0x%1x, polling = %i", _state, (int) polling));
-      pos = link->RegReadNext (brownie->Adr (), regPos, &status);
-      rInt = link->RegReadNext (brownie->Adr (), regRInt, &status);
+      pos = link->RegReadNext (&status, brownie->Adr (), regPos);
+      rInt = link->RegReadNext (&status, brownie->Adr (), regRInt);
       polling = (status != brOk)
                 || ((_state & (BR_SHADES_0_ACT_UP | BR_SHADES_0_ACT_DN)) != 0)
                 || (pos > 100);
@@ -1015,6 +1376,7 @@ class CBrFeatureShades: public CBrFeature {
       state = _state;
     }
 
+
     virtual void DriveValue (class CBrownieLink *link, CResource *rc, CRcValueState *vs) {
       float rExtFloat;
       uint8_t regRExt, regRInt;
@@ -1045,6 +1407,8 @@ class CBrFeatureShades: public CBrFeature {
         rc->ReportState (rcsValid);   // Report the current position as no longer busy.
       }
     }
+
+
 };
 
 
@@ -1057,26 +1421,23 @@ class CBrFeatureShades: public CBrFeature {
 // ***** Helpers *****
 
 
-const char *BrVersionNumberToStr (CString *ret, TBrFeatureRecord *featureRecord) {
-  ret->SetF ("%i.%i.%i%s",
-              (int) featureRecord->versionMajor, (int) featureRecord->versionMinor,
-              (int) featureRecord->versionRevision >> 1, (featureRecord->versionRevision & 1) ? "*" : ""
-            );
-  return ret->Get ();
+uint32_t BrVersionGet (TBrFeatureRecord *featureRecord) {
+  return VersionCompose (
+            featureRecord->versionMajor, featureRecord->versionMinor,
+            featureRecord->versionRevision >> 1, (featureRecord->versionRevision & 1) ? true : false
+          );
 }
 
 
 bool BrVersionNumberFromStr (TBrFeatureRecord *featureRecord, const char *str) {
-  int major, minor, revision;
+  uint32_t ver;
 
-  if (str[0] == 'v' || str[0] == 'V') str++;    // tolerate preceeding 'v'
-  if (sscanf (str, "%i.%i.%i", &major, &minor, &revision) != 3) return false;
-  if (major < 0 || major > 255 || minor < 0 || minor > 255 || revision < 0 || revision > 32767) return false;
-  revision <<= 1;
-  if (strchr (str, '*')) revision++;
-  featureRecord->versionMajor = (uint8_t) major;
-  featureRecord->versionMinor = (uint8_t) minor;
-  featureRecord->versionRevision = (uint16_t) revision;
+  ver = VersionFromStr (str);
+  if (!ver) return false;
+
+  featureRecord->versionMajor = (uint8_t) VersionMajor (ver);
+  featureRecord->versionMinor = (uint8_t) VersionMinor (ver);
+  featureRecord->versionRevision = (uint16_t) (VersionMinor (ver) << 1) + (VersionDirty (ver) ? 1 : 0);
   return true;
 }
 
@@ -1085,7 +1446,8 @@ const char *BrFeaturesToStr (CString *ret, TBrFeatureRecord *featureRecord) {
   uint8_t *p;
 
   ret->Clear ();
-  for (p = (uint8_t *) &featureRecord->features; p < (uint8_t *) &featureRecord->fwName; p++)
+  //~ for (p = (uint8_t *) &featureRecord->features; p < (uint8_t *) &featureRecord->fwName; p++)
+  for (p = ((uint8_t *) &featureRecord) + brFeatureRecordRcVec0; p < ((uint8_t *) &featureRecord) + brFeatureRecordRcVec1; p++)
     ret->AppendF ("%02x", (int) *p);
   return ret->Get ();
 }
@@ -1097,7 +1459,8 @@ bool BrFeaturesFromStr (TBrFeatureRecord *featureRecord, const char *str) {
   uint8_t *p;
 
   buf[2] = '\0';
-  for (p = (uint8_t *) &featureRecord->features; p < (uint8_t *) &featureRecord->fwName; p++) {
+  //~ for (p = (uint8_t *) &featureRecord->features; p < (uint8_t *) &featureRecord->fwName; p++) {
+  for (p = ((uint8_t *) &featureRecord) + brFeatureRecordRcVec0; p < ((uint8_t *) &featureRecord) + brFeatureRecordRcVec1; p++) {
     if (!(buf[0] = *(str++))) return false;
     if (!(buf[1] = *(str++))) return false;
     val = strtol (buf, &endPtr, 16);
@@ -1108,36 +1471,48 @@ bool BrFeaturesFromStr (TBrFeatureRecord *featureRecord, const char *str) {
 }
 
 
+
+// ***** Class helpers *****
+
+
 const char *CBrownie::GetOptValue (int optIdx, CString *ret) {
   const TBrCfgDescriptor *opt = &brCfgDescList[optIdx];
 
   if (!ret) ret = GetTTS ();
   switch (opt->type) {
     case ctUint8:
-      ret->SetF ( opt->fmt, (int) (* ((uint8_t *) &configRecord + opt->ofs)) );
+      ret->SetF (opt->fmt, (int) (* ((uint8_t *) &configRecord + opt->ofs)) );
       break;
     case ctInt8:
-      ret->SetF ( opt->fmt, (int) (* ((int8_t *) &configRecord + opt->ofs)) );
+      ret->SetF (opt->fmt, (int) (* ((int8_t *) &configRecord + opt->ofs)) );
       break;
     case ctUint16:
-      ret->SetF ( opt->fmt, (int) (* (uint16_t *) ((int8_t *) &configRecord + opt->ofs)) );
+      ret->SetF (opt->fmt, (int) (* (uint16_t *) ((int8_t *) &configRecord + opt->ofs)) );
       break;
-    case ctId:
-      return idRecord;
-    case ctFw:
-      return featureRecord.fwName;
+
     case ctVersion:
-      BrVersionNumberToStr (ret, &featureRecord);
+      BrVersionGetAsStr (ret, &featureRecord);
       break;
     case ctFeatures:
       BrFeaturesToStr (ret, &featureRecord);
       break;
+    case ctMcu:
+      ret->SetF (opt->fmt, BrMcuStr (featureRecord.mcuType));
+      break;
+    case ctFw:
+      ret->SetF (opt->fmt, featureRecord.fwName);
+      break;
+    case ctId:
+      ret->SetF (opt->fmt, idRecord);
+      break;
+
     case ctShadesDelay:
-      ret->SetF ( opt->fmt, ShadesDelayFromByte (* ((uint8_t *) &configRecord + opt->ofs)) );
+      ret->SetF (opt->fmt, ShadesDelayFromByte (* ((uint8_t *) &configRecord + opt->ofs)) );
       break;
     case ctShadesSpeed:
-      ret->SetF ( opt->fmt, ShadesSpeedFromByte (* ((uint8_t *) &configRecord + opt->ofs)) );
+      ret->SetF (opt->fmt, ShadesSpeedFromByte (* ((uint8_t *) &configRecord + opt->ofs)) );
       break;
+
     default:
       ASSERT(false);
   }
@@ -1167,22 +1542,29 @@ bool CBrownie::SetOptValue (int optIdx, const char *str) {
       if (valInt < 0 || valInt > 65535) return false;
       * (uint16_t *) ((uint8_t *) &configRecord + opt->ofs) = (uint16_t) valInt;
       break;
-    case ctId:
-      bzero (idRecord, sizeof (idRecord));
-      if (strlen (str) >= sizeof (idRecord))
-        WARNINGF (("ID exceeds the maximum of %i characters: '%s'", sizeof (idRecord) - 1, str));
-      strncpy (idRecord, str, sizeof (idRecord) - 1);
-      break;
-    case ctFw:
-      bzero (&featureRecord.fwName, sizeof (featureRecord.fwName));
-      strncpy (featureRecord.fwName, str, sizeof (featureRecord.fwName) - 1);
-      break;
+
     case ctVersion:
       if (!BrVersionNumberFromStr (&featureRecord, str)) return false;
       break;
     case ctFeatures:
       if (!BrFeaturesFromStr (&featureRecord, str)) return false;
       break;
+    case ctMcu:
+      valInt = BrMcuFromStr (str);
+      if (valInt == BR_MCU_NONE) return false;
+      featureRecord.mcuType = (uint8_t) valInt;
+      break;
+    case ctFw:
+      bzero (&featureRecord.fwName, sizeof (featureRecord.fwName));
+      strncpy (featureRecord.fwName, str, sizeof (featureRecord.fwName) - 1);
+      break;
+    case ctId:
+      if (strlen (str) >= sizeof (idRecord))
+        WARNINGF (("ID exceeds the maximum of %i characters: '%s'", sizeof (idRecord) - 1, str));
+      bzero (idRecord, sizeof (idRecord));
+      strncpy (idRecord, str, sizeof (idRecord) - 1);
+      break;
+
     case ctShadesDelay:
       valFloat = ValidFloatFromString (str, -1.0);
       //~ INFOF(("### valFloat = %f", valFloat));
@@ -1281,8 +1663,9 @@ const char *CBrownie::ToStr (CString *ret, bool withIdentification, bool withVer
   for (n = 0; n < brCfgDescs; n++) {
     opt = &brCfgDescList[n];
     if  ( (withIdentification || (opt->type != ctId && opt->ofs != CFG_OFS(adr))) &&  // identification?
-          (withVersionInfo || (opt->type == ctId || opt->ofs >= 0)) &&                // read-only?
-          (!featureRecord.magic || (opt->features & featureRecord.features) != 0)  // relevant (features available)?
+          (withVersionInfo || (opt->type == ctId || opt->ofs >= 0)) &&                // read-only (= version info)?
+          (!featureRecord.magic || (opt->features & featureRecord.features) != 0) &&  // relevant (= feature present)?
+          (opt->type != ctVersion || BrVersionGet (&featureRecord))                   // if version: valid?
         )
       ret->AppendF ("%s=%s ", brCfgDescList[n].key, GetOptValue (n, &s));
     //~ INFOF (("### %s (%04x/%04x) -> %s", brCfgDescList[n].key, featureRecord.features, opt->features, ret->Get ()));
@@ -1377,8 +1760,10 @@ void CBrownie::RegisterAllResources (class CRcDriver *rcDriver, class CBrownieLi
   //~ INFOF (("### Registering resources for %03i: %04x", Adr (), featureVector));
   if (FeatureRecord ()->gpiPresence | FeatureRecord ()->gpoPresence)
     featureList[features++] = new CBrFeatureGpio (this, rcDriver);
-  if (featureVector & BR_FEATURE_MATRIX)
+  if (FeatureRecord ()->matDim)
     featureList[features++] = new CBrFeatureMatrix (this, rcDriver);
+  if (featureVector & BR_FEATURE_UART)
+    featureList[features++] = new CBrFeatureUart (this, rcDriver);
   if (featureVector & BR_FEATURE_TEMP)
     featureList[features++] = new CBrFeatureTemperature (this, rcDriver);
   if (featureVector & (BR_FEATURE_SHADES_0)) {
@@ -1394,7 +1779,7 @@ void CBrownie::RegisterAllResources (class CRcDriver *rcDriver, class CBrownieLi
   ASSERT (features <= (int) (sizeof (featureList) / sizeof (featureList[0])));      // check buffer overflow
 
   // If the device has been checked above, call the initial update for the features ...
-  for (n = 0; n < features; n++) featureList[n]->Update (link, true);
+  for (n = 0; n < features; n++) featureList[n]->Update (link, 0, true);
 }
 
 
@@ -1406,7 +1791,7 @@ void CBrownie::CheckDeviceForResources (CBrownieLink *link) {
     if (UpdateFromDevice (link)) {
       deviceChecked = true;
       // Call initial updates for the features ...
-      for (n = 0; n < features; n++) featureList[n]->Update (link, true);
+      for (n = 0; n < features; n++) featureList[n]->Update (link, 0, true);
     }
     else
       if (link->Status () == brOk) {
@@ -1441,7 +1826,7 @@ unsigned CBrownie::Iterate (CBrownieLink *link, bool fast) {
     else {
       // Some other error occured, the device is probably not accessible: Do not try to access feature registers.
       // => Report "nothing changed", since the return value is used to decide wether to dig into a
-      //    subnet, which may be a bad idea if the hub is defective.
+      //    subnet, which may be a bad idea if this is a defective hub.
       CheckExpiration ();
       return 0;
     }
@@ -1459,23 +1844,24 @@ unsigned CBrownie::Iterate (CBrownieLink *link, bool fast) {
 
   // Iterate over features ...
   now = TicksMonotonicNow ();
-  for (n = 0; n < features; n++) {      // Note: Positive order is required for the shades!
+  for (n = 0; n < features; n++) {            // Note: Positive order is required for the shades!
     feature = featureList[n];
     sensitivity = feature->Sensitivity ();
-    update = ((sensitivity & changed) != 0);   // condition for fast mode
-    if (sensitivity & BR_POLL || feature->expTime == NEVER) {
-      // Feature needs polling or has expired:
-      //   Update if the expiration time gets close, but not in "fast" mode ...
+    update = ((sensitivity & changed) != 0);  // Always update if a sensitive "changed" bit is set
+    if ((sensitivity & BR_POLL) || feature->expTime == NEVER) {
+      // Feature requests polling or has expired:
+      //   If the expiration time gets close, but not in "fast" mode: Update ...
       if (!fast && (feature->expTime == NEVER || (feature->expTime - now < envBrFeatureTimeout))) update = true;
     }
     else {
-      // "changed" register was read successfully, neither the "changed" bit(s) nor any "poll" bit are set:
+      // Feature does not request polling and has not expired:
+      //   If the "changed" register was read successfully and no "changed" bit(s) are set:
       //   Refresh expiration time, no update necessary ...
       if (!update) feature->expTime = now + envBrFeatureTimeout;
     }
     //~ if ((sensitivity & BR_CHANGED_SHADES) && (changed & BR_CHANGED_SHADES))
       //~ INFOF (("###   changed shades: fast = %i, update = %i", (int) fast, (int) update));
-    if (update) feature->Update (link, false);
+    if (update) feature->Update (link, (changed & sensitivity), false);
     feature->CheckExpiration ();
   }
 
@@ -1798,7 +2184,7 @@ static inline int IfSocketInit (const char *ifName) {
 
   // Try to connect ...
   if (connect (fd, (struct sockaddr *) &adr, sizeof (adr)) != 0) {
-    DEBUGF (1, ("%s: No socket: %s .", ifName, adr.sun_path));
+    DEBUGF (1, ("%s: Not a socket: %s .", ifName, adr.sun_path));
     close (fd);
     return -1;      // failure
   }
@@ -1806,6 +2192,7 @@ static inline int IfSocketInit (const char *ifName) {
   // Ignore 'SIGPIPE' signals...
   //   Such signals may occur on writes if the socket connection is lost and by
   //   default, the program would exit then.
+  // TBD: Move this to a more global place, e.g. EnvInit()?
   signal (SIGPIPE, SIG_IGN);
 
   // Success ...
@@ -2007,7 +2394,7 @@ static inline bool IfElvI2cInit (int fd, const char *ifName) {
     if (ok) if (tcsetattr (fd, TCSANOW, &ts) < 0) ok = false;
   }
   if (!ok) {
-    DEBUGF (1, ("%s: No ELV interface (no TTY).", ifName));
+    DEBUGF (1, ("%s: Not an ELV interface (no TTY).", ifName));
     return false;
   }
 
@@ -2053,7 +2440,7 @@ static inline bool IfElvI2cInit (int fd, const char *ifName) {
     }
   }
   if (!ok) {
-    DEBUGF (1, ("%s: No ELV interface (invalid reply or unsupported firmware version).", ifName));
+    DEBUGF (1, ("%s: Not an ELV interface (invalid reply or unsupported firmware version).", ifName));
     return false;
   }
 
@@ -2515,7 +2902,7 @@ const char *CBrownieLink::StatisticsStr (CString *ret, bool local) {
     // Write source and time stamp ...
     ret->AppendF ("\nStatistics on '%s@%s<%i>' since %s.\n",
                   EnvInstanceName (), EnvMachineName (), EnvPid (),
-                  TicksToString (&s, tLastStatisticsReset));
+                  TicksAbsToString (&s, tLastStatisticsReset));
   }
 
   // Done ...
@@ -2543,47 +2930,17 @@ void CBrownieLink::StatisticsAddIterateTimes (TTicksMonotonic tCycle, TTicksMono
 // ***** Socket Server *****
 
 
-bool CBrownieLink::SocketServerStart () {
+bool CBrownieLink::ServerStart () {
   CString s;
-  struct sockaddr_un sockAdr;
 
   // Sanity ...
-  SocketServerStop ();
+  ServerStop ();
   if (!envBrSocketName) return false;
+
+  // Start socket ...
   EnvGetHome2lTmpPath (&s, envBrSocketName);
-  if ((size_t) s.Len () > (sizeof (sockAdr.sun_path) - 1)) {
-    ERRORF (("Socket pathname is too long: %s", s.Get ()));
-    return false;
-  }
-  unlink (s.Get ());   // remove socket special file
-
-  // Create and bind socket ...
-  EnvMkTmpDir (".");
-  sockListenFd = socket (AF_UNIX, SOCK_STREAM, 0);
-  sockAdr.sun_family = AF_UNIX;
-  strcpy (sockAdr.sun_path, s.Get ());    // length has been checked above
-  if (bind (sockListenFd, (struct sockaddr *) &sockAdr, sizeof (sockAdr)) != 0) {
-    WARNINGF (("Failed to create socket %s: %s", s.Get (), strerror (errno)));
-    SocketServerStop ();
-    return false;
-  }
-  if (chmod (sockAdr.sun_path, S_IRWXU | S_IRWXG) != 0) {
-    WARNINGF (("Failed set permission of socket %s: %s", s.Get (), strerror (errno)));
-    SocketServerStop ();
-    return false;
-  }
-
-  // Listen to socket ...
-  if (fcntl (sockListenFd, F_SETFL, fcntl (sockListenFd, F_GETFL, 0) | O_NONBLOCK) != 0) {
-    WARNINGF (("Failed to make socket %s non-blocking: %s", s.Get (), strerror (errno)));
-    SocketServerStop ();
-    return false;
-  }
-  if (listen (sockListenFd, 1) != 0) {
-    WARNINGF (("Failed to listen on socket %s: %s", s.Get (), strerror (errno)));
-    SocketServerStop ();
-    return false;
-  }
+  sockListenFd = SocketServerStart (s.Get ());
+  if (sockListenFd < 0) return false;
 
   // Success ...
   INFOF (("Starting socket server: %s", s.Get ()));
@@ -2591,51 +2948,28 @@ bool CBrownieLink::SocketServerStart () {
 }
 
 
-void CBrownieLink::SocketServerStop () {
+void CBrownieLink::ServerStop () {
   CString s;
 
   FREEP(sockData);
 
   if (sockListenFd >= 0) {
-    close (sockListenFd);
-    sockListenFd = -1;
-    unlink (EnvGetHome2lTmpPath (&s, envBrSocketName));   // remove socket special file
+    EnvGetHome2lTmpPath (&s, envBrSocketName);
+    SocketServerStop (&sockListenFd, s.Get ());
     INFOF (("Stopped socket server: %s", s.Get ()));
   }
 }
 
 
-bool CBrownieLink::SocketServerIterate (TTicksMonotonic maxSleepTime) {
+bool CBrownieLink::ServerIterate (TTicksMonotonic maxSleepTime) {
   CString s;
-  struct ucred ucred;
-  socklen_t len;
 
   // Accept new client ...
   if (sockClientFd < 0) {
-    if (sockListenFd >= 0) {
-      sockClientFd = accept (sockListenFd, NULL, NULL);
-
-      // Make client connection non-blocking...
-      if (sockClientFd >= 0) {
-        if (fcntl (sockClientFd, F_SETFL, fcntl (sockClientFd, F_GETFL, 0) | O_NONBLOCK) < 0) {
-          WARNINGF (("Failed to make socket non-blocking (fd = %i): %s", sockClientFd, strerror (errno)));
-          close (sockClientFd);
-          sockClientFd = -1;
-        }
-      }
-
-      // On success: Try to get peer credentials and log connection ...
-      if (sockClientFd >= 0) {
-        len = sizeof (struct ucred);
-        if (getsockopt (sockClientFd, SOL_SOCKET, SO_PEERCRED, &ucred, &len) != 0)
-          INFOF (("%s: Maintenance connection from unkown client established (failed to get peer credentials)", twiIfName.Get ()));
-        else
-          INFOF (("%s: Maintenance connection established from (PID=%i, UID=%i, GID=%i)",
-                  EnvGetHome2lTmpPath (&s, envBrSocketName), ucred.pid, ucred.uid, ucred.gid));
-
-        // Reset RX buffer ...
-        sockRxBytes = 0;
-      }
+    sockClientFd = SocketServerAccept (sockListenFd, envBrSocketName, true);
+    if (sockClientFd >= 0) {
+      // Success: Reset RX buffer ...
+      sockRxBytes = 0;
     }
   }
 
@@ -2866,6 +3200,8 @@ EBrStatus CBrownieLink::Communicate (int adr, bool noResend) {
 
 
 EBrStatus CBrownieLink::CheckDevice (int adr, CBrownie *brownie) {
+  uint32_t verBrownie, verHost;
+  TBrFeatureRecord *fr;
   uint8_t val;
 
   if (!brownie) {
@@ -2886,6 +3222,36 @@ EBrStatus CBrownieLink::CheckDevice (int adr, CBrownie *brownie) {
     if (status == brOk)
       if (brownie->FeatureRecord ()->magic != BR_MAGIC) status = brNoBrownie;
     if (status != brOk) bzero (brownie->FeatureRecord (), sizeof (TBrFeatureRecord));
+
+    // Check version and handle compatibility issues if the firmware version differs from the host software version ...
+    if (status == brOk) {
+      verBrownie = BrVersionGet (brownie->FeatureRecord ());
+      if (verBrownie) {     // Test compilations have no / all-zero version (v0.0-0): Allow everything
+        verHost = VersionGetOwn ();
+
+        // Discard Brownies with firmware from the future ...
+        if (verBrownie > verHost) {
+          WARNINGF (("Firmware of brownie %03i is newer (%s) than that of the host (%s): Discarding device. Please upgrade your host software!",
+                     adr, VersionToStr (GetTTS (), verBrownie), VersionGetOwnAsStr ()));
+          status = brNoBrownie;
+        }
+
+        // Handle Brownies with older firmwares ...
+        else if (verBrownie < VersionCompose (1, 1, 102)) {
+
+          // Version 1.1.102 introduced major changes in the feature record:
+          //   Restrict features and adapt record to allow firmware upgrades (but not more) ...
+          WARNINGF (("Brownie %03i runs an incompatible firmware (%s): Disabling some features. Please upgrade the firmware!",
+                    adr, VersionToStr (GetTTS (), verBrownie)));
+          fr = brownie->FeatureRecord ();
+          fr->features &= (BR_FEATURE_MAINTENANCE | BR_FEATURE_TIMER | BR_FEATURE_NOTIFY | BR_FEATURE_TWIHUB);
+            // allow only core features
+          fr->mcuType = fr->matDim;     // save 'mcuType', which was located in the place of 'matDim' in < v1.1.102
+          bzero (&fr->gpiPresence, offsetof (TBrFeatureRecord, mcuType) - offsetof (TBrFeatureRecord, gpiPresence));
+            // zero out everything else
+        }
+      }
+    }
 
     // Read out brownie ID (EEPROM) ...
     if (status == brOk) {
@@ -2918,18 +3284,23 @@ EBrStatus CBrownieLink::RegRead (int adr, uint8_t reg, uint8_t *retVal, bool noR
 }
 
 
-uint8_t CBrownieLink::RegReadNext (int adr, uint8_t reg, EBrStatus *status) {
+uint8_t CBrownieLink::RegReadNext (EBrStatus *status, int adr, uint8_t reg, bool noResend) {
   uint8_t retVal = 0;
 
-  if (*status == brOk) *status = RegRead (adr, reg, &retVal);
+  if (*status == brOk) *status = RegRead (adr, reg, &retVal, noResend);
   return retVal;
 }
 
 
-EBrStatus CBrownieLink::RegWrite (int adr, uint8_t reg, uint8_t val) {
+EBrStatus CBrownieLink::RegWrite (int adr, uint8_t reg, uint8_t val, bool noResend) {
   request.op = BR_OP_REG_WRITE (reg);
   request.regWrite.val = val;
-  return Communicate (adr);
+  return Communicate (adr, noResend);
+}
+
+
+void CBrownieLink::RegWriteNext (EBrStatus *status, int adr, uint8_t reg, uint8_t val, bool noResend) {
+  if (*status == brOk) *status = RegWrite (adr, reg, val, noResend);
 }
 
 

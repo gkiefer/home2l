@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -331,7 +331,14 @@ static CKeySet sectionSet;
 static inline bool IsSpace (char c) { return c == ' ' || c == '\t'; }
 static inline bool IsQuote (char c) { return c == '\'' || c == '"'; }
 static inline bool IsComment (char c) { return c == ';' || c == '#'; }
-static inline bool IsKeyChar (char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || strchr ("_-./:", c) != NULL; }
+static inline bool IsKeyChar (char c) {
+  // Allowed key characters include all characters for resource IDs
+  // - see resources.C:IsValidIdentifier() - and simple brackets ('(', ')').
+  return  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+          (c >= '0' && c <= '9') ||
+          strchr ("_-./()", c) != NULL;
+}
+
 
 
 void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
@@ -537,7 +544,7 @@ static void EnvInitDefaults (const char *argv0, const char *instanceName) {
 static char *paraAdditionalSections = NULL;
 
 
-static void PrintBanner () {
+void EnvPrintBanner () {
   CString s;
   const char *title;
 
@@ -631,7 +638,7 @@ static void ReadConfAssignmentsFromEnv () {
 }
 
 
-void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *instanceName) {
+void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *instanceName, bool noBanner) {
   static CString home2lVarDef, home2lTmpDef;
   CString s;
   const char *key, *val;
@@ -642,7 +649,7 @@ void EnvInit (int argc, char **argv, const char *specOptionsUsage, const char *i
   EnvInitDefaults (argv[0], instanceName);
 
   // Print banner, init map with internal defaults and command line options...
-  if (EnvHaveTerminal ()) PrintBanner ();
+  if (!noBanner && EnvHaveTerminal ()) EnvPrintBanner ();
   if (!ParseGeneralOptions (argc, argv, specOptionsUsage)) {
     PrintUsage (specOptionsUsage);
     exit (3);
@@ -733,23 +740,32 @@ static CString varFileName;
 static bool varWriteThrough, varDirty;
 
 
-void EnvInitPersistence (bool writeThrough, const char *_varFileName) {
+void EnvEnablePersistence (bool writeThrough, const char *_varFileName) {
   struct stat statBuf;
 
-  // Init variables...
-  varWriteThrough = writeThrough;
-  if (_varFileName) EnvGetHome2lVarPath (&varFileName, _varFileName);
-  else varFileName.SetF ("%s/home2l-%s.conf", envVarDir, EnvInstanceName ());
-  varDirty = false;
-  varPersistent = true;
+  if (!varPersistent) {
 
-  // Check for existince of a var file and eventually load it...
-  if (stat (varFileName.Get (), &statBuf) == 0) {
-    EnvReadIniFile (varFileName.Get (), &envMap);
-    CEnvPara::GetAll (true);
+    // Init variables...
+    varWriteThrough = writeThrough;
+    if (_varFileName) EnvGetHome2lVarPath (&varFileName, _varFileName);
+    else varFileName.SetF ("%s/home2l-%s.conf", envVarDir, EnvInstanceName ());
+    varDirty = false;
+    varPersistent = true;
+
+    // Check for existince of a var file and eventually load it...
+    if (stat (varFileName.Get (), &statBuf) == 0) {
+      EnvReadIniFile (varFileName.Get (), &envMap);
+      CEnvPara::GetAll (true);
+    }
+    else
+      EnvMkVarDir (NULL);     // Create the 'var' dir (TBD: create subdirs, if '_varFileName' is given and deep)
   }
-  else
-    EnvMkVarDir (NULL);     // Create the 'var' dir (TBD: create subdirs, if '_varFileName' is given and deep)
+  else {
+
+    // Secondary call ...
+    ASSERT (_varFileName == NULL);    // no new path allowed!
+    varWriteThrough |= writeThrough;
+  }
 }
 
 
@@ -771,7 +787,7 @@ void EnvFlush () {
     return;
   }
   for (n = idx0; n < idx1; n++) {
-    // TBD: Properly escape special characters and quotes in the the vaule string
+    // TBD: Properly escape special characters and quotes in the value string
     if (fprintf (f, "%s = \"%s\"\n", envMap.GetKey (n), envMap.Get (n)->Get ()) < 0) {
       WARNINGF (("Unable to write to '%s': %s", strerror (errno)));
       fclose (f);

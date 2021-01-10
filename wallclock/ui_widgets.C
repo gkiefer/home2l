@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1305,7 +1305,7 @@ void CInputLine::Setup (int fontSize) {
     //    no longer worked as a reference character. This is strange, since a) SDL2 is
     //    still used pre-compiled and statically linked from 'external/sdl' and b)
     //    the TTF fonts were not changed either.
-  wdgMain.SetCursorFormat (RED, SDL_BLENDMODE_MOD);
+  wdgMain.SetCursorFormat (ORANGE, SDL_BLENDMODE_MOD);
   SetInput (NULL);    // clear input line
   AddWidget (&wdgMain);
   ClearHistory ();
@@ -1750,16 +1750,35 @@ bool CInputLine::HandleEvent (SDL_Event *ev) {
 BUTTON_TRAMPOLINE (CbInputScreenOnButtonPushed, CInputScreen, OnButtonPushed)
 
 
-void CInputScreen::Setup (const char *inputPreset, TColor color, int userBtns, CButton **userBtnList, const int *userBtnWidth) {
-  SDL_Rect *layout;
+CInputScreen::~CInputScreen () {
+  SDL_Surface *surf = wdgLabel.GetSurface ();
+
+  wdgLabel.SetSurface (NULL);
+  SurfaceFree (&surf);
+}
+
+
+void CInputScreen::Setup (const char *label, const char *inputPreset, TColor color, int userBtns, CButton **userBtnList, const int *userBtnWidth) {
+  SDL_Rect *r, *layout;
   CButton *btn;
   int *format;
   int n;
 
+  // Label (if present) ...
+  if (label) {
+    wdgLabel.Set (FontRenderText (FontGet (fntBold, INPUTLINE_FONTSIZE), label, WHITE, BLACK), INPUT_SPACE_X, (INPUT_HEIGHT / 4) - (INPUTLINE_FONTSIZE / 2) - 4);
+    AddWidget (&wdgLabel);
+  }
+
   // Input line...
   SetKeyboard (true);   // enable on-screen keyboard
   wdgInput.Setup ();
-  wdgInput.SetArea (Rect (0, 0, UI_RES_X, INPUT_HEIGHT));
+  if (!label)
+    wdgInput.SetArea (Rect (0, 0, UI_RES_X, INPUT_HEIGHT));
+  else {
+    r = wdgLabel.GetArea ();
+    wdgInput.SetArea (Rect (r->x + r->w + UI_BUTTONS_SPACE, 0, UI_RES_X - (r->x + r->w + UI_BUTTONS_SPACE), INPUT_HEIGHT));
+  }
   if (inputPreset) wdgInput.SetInput (inputPreset);
   AddWidget (&wdgInput);
 
@@ -1772,7 +1791,7 @@ void CInputScreen::Setup (const char *inputPreset, TColor color, int userBtns, C
   FREEP (format);
 
   n = 0;
-  btnBack.Set (layout[n++], GREY, IconGet ("ic-back-48"));
+  btnBack.Set (layout[n++], color, IconGet ("ic-back-48"));
   btnBack.SetHotkey (SDLK_ESCAPE);
   btnBack.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnBack);
@@ -1786,27 +1805,27 @@ void CInputScreen::Setup (const char *inputPreset, TColor color, int userBtns, C
     n++;
   }
 
-  btnUndo.Set (layout[n++], GREY, IconGet ("ic-undo-48"));
+  btnUndo.Set (layout[n++], color, IconGet ("ic-undo-48"));
   btnUndo.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnUndo);
 
-  btnRedo.Set (layout[n++], GREY, IconGet ("ic-redo-48"));
+  btnRedo.Set (layout[n++], color, IconGet ("ic-redo-48"));
   btnRedo.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnRedo);
 
-  btnCut.Set (layout[n++], GREY, IconGet ("ic-cut-48"));
+  btnCut.Set (layout[n++], color, IconGet ("ic-cut-48"));
   btnCut.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnCut);
 
-  btnCopy.Set (layout[n++], GREY, IconGet ("ic-copy-48"));
+  btnCopy.Set (layout[n++], color, IconGet ("ic-copy-48"));
   btnCopy.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnCopy);
 
-  btnPaste.Set (layout[n++], GREY, IconGet ("ic-paste-48"));
+  btnPaste.Set (layout[n++], color, IconGet ("ic-paste-48"));
   btnPaste.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnPaste);
 
-  btnOk.Set (layout[n++], GREY, "OK");
+  btnOk.Set (layout[n++], color, "OK");
   btnOk.SetHotkey (SDLK_RETURN);
   btnOk.SetCbPushed (CbInputScreenOnButtonPushed, this);
   AddWidget (&btnOk);

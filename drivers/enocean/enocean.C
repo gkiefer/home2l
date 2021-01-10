@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -267,12 +267,11 @@ const char *EnoLinkDevice () {
 }
 
 
-EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicksMonotonic maxTime) {
+static inline EEnoStatus EnoReadFromLink (TTicksMonotonic maxTime) {
   TTicksMonotonic dRetry;
-  EEnoStatus status;
   int i, bytes, cmd;
 
-  // Try to open ...
+  // Ensure link is open ...
   //~ INFOF (("# EnoReceive: Open... (enoFd = %i)", enoFd));
   EnoOpen ();
   if (enoFd < 0) {
@@ -312,14 +311,41 @@ EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicksMonotonic maxTime) {
   }
   rcvBytes += bytes;
 
+  //~ if (bytes > 0) {
+    //~ CString s;
+    //~ s.SetF ("### Received %i bytes: buf[%i] =", bytes, rcvBytes);
+    //~ for (i = 0; i < rcvBytes; i++) s.AppendF (" %02x", rcvBuf[i]);
+    //~ INFO (s.Get ());
+  //~ }
+
+  return enoOk;
+}
+
+
+EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicksMonotonic maxTime) {
+  EEnoStatus status;
+  int i, bytes;
+
+  // Check for already buffered message ...
+  status = telegram->Parse (rcvBuf, rcvBytes, &bytes);
+
+  // If message incomplete: Read from link and check again ...
+  if (status == enoIncomplete) {
+    status = EnoReadFromLink (maxTime);
+    if (status != enoOk) return status;   // interrupt or failure
+    status = telegram->Parse (rcvBuf, rcvBytes, &bytes);
+  }
+
   // Try to interpret and complete ...
   //~ INFOF (("# EnoReceive: Parse ... (enoFd = %i)", enoFd));
-  status = telegram->Parse (rcvBuf, rcvBytes, &bytes);
   if (bytes) {    // remove consumed bytes ...
+    //~ INFOF (("### Consumed %i bytes: %s", bytes, EnoStatusStr (status)));
     if (status != enoOk) WARNINGF(("EnOcean: Skipping %i unmatched bytes: %s", bytes, EnoStatusStr (status)));
     rcvBytes -= bytes;
     for (i = 0; i < rcvBytes; i++) rcvBuf[i] = rcvBuf[bytes + i];
   }
+
+  // Done ...
   return status;
 }
 

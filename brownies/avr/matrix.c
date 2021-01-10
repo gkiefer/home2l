@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 
-#include "config.h"
+#include "configure.h"
 
 #if WITH_MATRIX
 
@@ -173,7 +173,7 @@ void MatrixIterate () {
         }
 
         // Report change ...
-        ReportChange (BR_CHANGED_MATRIX);
+        ReportChangeAndNotify (BR_CHANGED_MATRIX);
       }
 
       // Stop row stimulation ...

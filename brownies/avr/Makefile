@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2019-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ endif
 
 
 # Common definitions...
-DEFS = -DF_CPU=$(BROWNIE_CPU_FREQ) -DBROWNIE_BASE=$(BROWNIE_BASE) -DBROWNIE_FWNAME=\"$(BROWNIE)\" $(patsubst %,-D%, $(BROWNIE_CFG))
+DEFS = -DF_CPU=$(BROWNIE_CPU_FREQ) -DBROWNIE_BASE=$(BROWNIE_BASE) -DBROWNIE_FWNAME=\"$(BROWNIE_VARIANT)\" $(patsubst %,-D%, $(BROWNIE_CFG))
 
 
 # Configure GCC C compiler, Assembler and Linker...
@@ -113,7 +113,7 @@ AVRDUDE_PROGRAMMER = avrisp2
 
 
 # Sources
-SRC = interface.c twi.c boot.S core.c gpio.c matrix.c temperature.c shades.c main.c
+SRC = boot.S interface.c core.c twi.c gpio.c matrix.c adc.c uart.c temperature.c shades.c main.c
 
 # For TWI testing...
 #~ SRC = twi.c interface.c
@@ -138,7 +138,7 @@ elf: $(BUILD_DIR)/$(BROWNIE).elf
 all: $(BUILD_DIR)/version.h $(patsubst %,$(BUILD_DIR)/%.elf,$(BROWNIE_FAMILY))
 
 
-$(BUILD_DIR)/%.elf: $(BUILD_DIR)/version.h $(SRC)
+$(BUILD_DIR)/%.elf: $(BUILD_DIR)/version.h configure.h $(SRC)
 	@$(MAKE) --no-print-directory BUILD_VERSION=$(BUILD_VERSION) BUILD_DIR=$(BUILD_DIR) BROWNIE=$* $@
 
 

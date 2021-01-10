@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -309,8 +309,10 @@ CCalViewData::CCalViewData () {
   firstEntry = NULL;
   errorFile = -1;
   firstDate = refDate = 0;
-  EnvNetResolve (envCalendarHost, &s);
-  shellRemote.SetHost (s.Get ());
+  if (envCalendarHost) {
+    EnvNetResolve (envCalendarHost, &s);
+    shellRemote.SetHost (s.Get ());
+  }
   if (!envCalendarNearbyHost) shellNearby = NULL;
   else if (!envCalendarNearbyHost[0]) shellNearby = NULL;
   else {
@@ -533,19 +535,21 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
 #define CAL_X 0
 #define CAL_Y (UI_RES_Y - UI_BUTTONS_HEIGHT - UI_BUTTONS_SPACE - CAL_H)
 
-#define COL_BUTTONS DARK_CYAN
+#define COL_BUTTONS BROWN
 
 #define COL_CALGRID GREY              // line grid and calendar weeks
 #define COL_CALBACK DARK_GREY         // calendar background
 #define COL_CALMON  BLACK             // background of current month
 #define COL_CALTEXT WHITE             // month days and headers
-#define COL_CALCURSOR ToColor (0, 0xFF, 0xFF, 0x60)
+#define COL_CALCURSOR ToColor (0xff, 0xff, 0x00, 0x60)
+//~ #define COL_CALCURSOR ToColor (0xe0, 0x80, 0x30, 0x60)
 
 #define COL_EVGRID DARK_GREY
 #define COL_EVHEAD LIGHT_GREY
 #define COL_EVBACK WHITE
 #define COL_EVTEXT BLACK
-#define COL_EVSELECTED CYAN
+#define COL_EVSELECTED YELLOW
+//~ #define COL_EVSELECTED ToColor (0xc0, 0x70, 0x20)
 
 
 static inline SDL_Rect CellRect (int x, int y) {
@@ -754,25 +758,25 @@ bool CScreenCalEdit::Setup (CCalViewData *_viewData, int _fileNo, int _lineNo) {
   for (n = 0; n < (int) (sizeof (extraLines) / sizeof (CString)); n++) extraLines[n].Clear ();
 
   // Buttons & layout ...
-  CInputScreen::Setup (
+  CInputScreen::Setup (NULL,
       (fileNo >= 0 && lineNo >= 0) ? viewData->GetFile (fileNo)->GetLine (lineNo) : NULL,
-      COL_BUTTONS, sizeof (userBtnList) / sizeof (userBtnList[0]), userBtnList, userBtnWidth
+      GREY, sizeof (userBtnList) / sizeof (userBtnList[0]), userBtnList, userBtnWidth
     );
 
   btnTrash.SetLabel (WHITE, "ic-delete_forever-48");
 
   //~ btnSplitRepeated.SetColor (DARK_GREY);
-  btnSplitRepeated.SetLabel (GREY, "ic-repeat_one-48");   // not implemented yet (TBD)
+  btnSplitRepeated.SetLabel (LIGHT_GREY, "ic-repeat_one-48");   // not implemented yet (TBD)
 
   calFile = viewData->GetFile (fileNo);
   btnCalNo.SetColor (ColorScale (calFile->GetColor (), 0xc0));
   btnCalNo.SetLabel (calFile->GetName ());
 
   //~ btnDatePrev.SetColor (DARK_GREY);
-  btnDatePrev.SetLabel ("-", GREY);   // not implemented yet (TBD)
+  btnDatePrev.SetLabel (LIGHT_GREY, "ic-remove-48");   // not implemented yet (TBD)
 
   //~ btnDateNext.SetColor (DARK_GREY);
-  btnDateNext.SetLabel ("+", GREY);   // not implemented yet (TBD)
+  btnDateNext.SetLabel (LIGHT_GREY, "ic-add-48");   // not implemented yet (TBD)
 
   // Done ...
   return true;
@@ -804,7 +808,7 @@ void CScreenCalEdit::OnUserButtonPushed (CButton *btn, bool longPush) {
     r.y = btnCalNo.GetArea ()->y + btnCalNo.GetArea ()->h;
     r.w = UI_RES_X - r.x;
     r.h = UI_RES_Y - r.y;
-    menu.Setup (r, -1, -1, COL_BUTTONS);
+    menu.Setup (r, -1, -1, GREY);
     menu.SetItems (cals);
     for (n = 0; n < cals; n++) menu.SetItem (n, viewData->GetFile (calArr[n])->GetName ());
 
@@ -1208,7 +1212,7 @@ void CScreenCalMain::EventListUpdate () {
       items++;    // header line
       lastDate = ce->GetDate ();
     }
-    //~ INFOF (("### items = %3i, %s %s", items, TicksToString (DateTimeToTicks (ce->GetDate (), ce->GetTime ())), ce->GetMessage ()));
+    //~ INFOF (("### items = %3i, %s %s", items, TicksAbsToString (DateTimeToTicks (ce->GetDate (), ce->GetTime ())), ce->GetMessage ()));
   }
 
   // Pass 2: Build listbox items...
@@ -1221,7 +1225,7 @@ void CScreenCalMain::EventListUpdate () {
       lastDate = ce->GetDate ();
     }
     wdgEvents.SetItem (idx++, NULL, (const char *) NULL, false, ce);     // add as normal item
-    //~ INFOF (("### idx++ = %3i, %s %s", idx, TicksToString (DateTimeToTicks (ce->GetDate (), ce->GetTime ())), ce->GetMessage ()));
+    //~ INFOF (("### idx++ = %3i, %s %s", idx, TicksAbsToString (DateTimeToTicks (ce->GetDate (), ce->GetTime ())), ce->GetMessage ()));
   }
 }
 
@@ -1339,13 +1343,13 @@ void CScreenCalMain::RunMonthMenu () {
   int n, choiceMon, choiceYear, newYear, baseYear;
   bool buildYears, showYears, done;
 
-  menuMon.Setup (Rect (0, UI_BUTTONS_HEIGHT, UI_RES_X, UI_RES_Y-UI_BUTTONS_HEIGHT), -1, -1, DARK_CYAN);
+  menuMon.Setup (Rect (0, UI_BUTTONS_HEIGHT, UI_RES_X, UI_RES_Y-UI_BUTTONS_HEIGHT), -1, -1, COL_BUTTONS);
   menuMon.SetItems (12);
   for (n = 0; n < 12; n++) menuMon.SetItem (n, MonthName (n + 1));
   menuMon.Start (this);
 
   monFrame = menuMon.GetArea ();
-  menuYear.Setup (Rect (monFrame->w, UI_BUTTONS_HEIGHT, UI_RES_X-monFrame->w, UI_RES_Y-UI_BUTTONS_HEIGHT), -1, -1, DARK_CYAN);
+  menuYear.Setup (Rect (monFrame->w, UI_BUTTONS_HEIGHT, UI_RES_X-monFrame->w, UI_RES_Y-UI_BUTTONS_HEIGHT), -1, -1, COL_BUTTONS);
   menuYear.SetItems (12);
 
   newYear = YEAR_OF (viewData.GetRefDate ());   // default for the selected year

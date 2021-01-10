@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -225,6 +225,10 @@ ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 	@echo EXCODE $@
 	@./excode.py r : $^ > $@ || (rm $@; exit 7)
 
+ref_env_drv_mpd.tex: ../drivers/mpd/home2l-drv-mpd.C
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
 
 
 
@@ -235,7 +239,7 @@ ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 REFS_ENV := ref_env_common.tex ref_env_resources.tex ref_env_daemon.tex \
 						ref_env_brownies.tex \
 	          ref_env_wallclock.tex ref_env_doorman.tex \
-	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_enocean.tex ref_env_drv_weather.tex
+	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_enocean.tex ref_env_drv_weather.tex ref_env_drv_mpd.tex
 
 REFS_RC  := ref_rc_resources.tex  \
 						ref_rc_brownies.tex \
@@ -273,7 +277,7 @@ draft:
 API_C_SRC = $(wildcard api_c.H \
 							../common/*.H \
 							../resources/resources.H \
-							../brownies/brownies.H ../brownies/avr/interface.h  ../brownies/avr/config.h ../brownies/avr/base.h ../brownies/avr/core.h ../brownies/avr/twi.h \
+							../brownies/brownies.H ../brownies/avr/interface.h  ../brownies/avr/configure.h ../brownies/avr/base.h ../brownies/avr/core.h ../brownies/avr/twi.h \
 							../wallclock/*.H \
 						)
 

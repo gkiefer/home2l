@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -73,7 +73,7 @@ $(function() {
 <p>A subscriber monitors any number of resources. The resources can be specified by their real URIs or alias names. Wildcards as well as presently unkown resources are allowed. Events can be fetched using the <a class="el" href="classCRcEventProcessor.html">CRcEventProcessor</a> mechanisms, typically <a class="el" href="classCRcEventProcessor.html#af5265a0434478dd692cfb6e334ef2074" title="Wait until any of the existing &#39;CRcEventProcessor&#39; object has an event available. ...">Select()</a> and <a class="el" href="classCRcEventProcessor.html#a35434c707e69949c342a9e0bfccdbdb7" title="Check for an event (non-blocking) and return it at &#39;*ev&#39;. ">PollEvent()</a>.</p>
 <p><b>Note:</b> All public methods must be called from the same thread. Subscribers are generally managed by the user/owner object. Internally, each remote host object owns one subscriber to serve subscriptions from the remote host to local resources. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01799">1799</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l01834">1834</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -93,10 +93,10 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>CResource</b></td></
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Registration ...</h2></td></tr>
-<tr class="memitem:acb2138b706b421160499dbabec3ab999"><td class="memItemLeft" align="right" valign="top"><a id="acb2138b706b421160499dbabec3ab999"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcSubscriber.html#acb2138b706b421160499dbabec3ab999">Register</a> (const char *_lid)</td></tr>
-<tr class="memdesc:acb2138b706b421160499dbabec3ab999"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable the subscriber, set its LID and GID. Caller remains owner of object. <br /></td></tr>
-<tr class="separator:acb2138b706b421160499dbabec3ab999"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3c6031ea9f44be85df72aae3f0ae552"><td class="memItemLeft" align="right" valign="top"><a id="ae3c6031ea9f44be85df72aae3f0ae552"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcSubscriber.html#ae3c6031ea9f44be85df72aae3f0ae552">Register</a> (const char *_lid)</td></tr>
+<tr class="memdesc:ae3c6031ea9f44be85df72aae3f0ae552"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable the subscriber, set its LID and GID. Caller remains owner of object. If '_lid' refers to an invalid string, 'false' is returned and a warning is emitted. <br /></td></tr>
+<tr class="separator:ae3c6031ea9f44be85df72aae3f0ae552"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a398920617c0faa140f03e69c1f571105"><td class="memItemLeft" align="right" valign="top"><a id="a398920617c0faa140f03e69c1f571105"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcSubscriber.html#a398920617c0faa140f03e69c1f571105">Unregister</a> ()</td></tr>
 <tr class="memdesc:a398920617c0faa140f03e69c1f571105"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear and unregister the subscriber. <br /></td></tr>

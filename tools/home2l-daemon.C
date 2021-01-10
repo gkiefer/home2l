@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <sys/select.h>
 #include <grp.h>      // for 'initgroups(3)'
+#include <stdarg.h>
 
 
 ENV_PARA_INT ("daemon.minRunTime", envMinRunTime, 3000);
@@ -115,7 +116,7 @@ static void LogF (int priority, const char *format, ...) {
       case LOG_ERR:     c = 'E'; break;
       default: c = 'D';
     }
-    printf ("%s [%c] ", TicksToString (TicksNow ()), c);
+    printf ("%s [%c] ", TicksAbsToString (TicksNow ()), c);
     vprintf (format, ap);
     putchar ('\n');
   }

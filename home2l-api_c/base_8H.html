@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -80,12 +80,11 @@ $(function() {
 <code>#include &lt;string.h&gt;</code><br />
 <code>#include &lt;stdint.h&gt;</code><br />
 <code>#include &lt;limits.h&gt;</code><br />
-<code>#include &lt;stdarg.h&gt;</code><br />
-<code>#include &lt;pthread.h&gt;</code><br />
-<code>#include &lt;signal.h&gt;</code><br />
-<code>#include &lt;sys/select.h&gt;</code><br />
 <code>#include &lt;unistd.h&gt;</code><br />
+<code>#include &lt;signal.h&gt;</code><br />
+<code>#include &lt;pthread.h&gt;</code><br />
 <code>#include &lt;regex.h&gt;</code><br />
+<code>#include &lt;stdarg.h&gt;</code><br />
 <code>#include &lt;config.H&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for base.H:</div>
@@ -167,6 +166,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCShellSession.html">CShellSession</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Session shell: Multiple commands are executed through one shell.  <a href="classCShellSession.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCServiceKeeper.html">CServiceKeeper</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Service keeper: Helper class to keep an unreliable service running.  <a href="classCServiceKeeper.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
@@ -182,10 +184,14 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gaae57f17e11e61cf0519e2004414f5629">STR</a>(X)&#160;&#160;&#160;#X</td></tr>
 <tr class="memdesc:gaae57f17e11e61cf0519e2004414f5629"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stringify macro. <br /></td></tr>
 <tr class="separator:gaae57f17e11e61cf0519e2004414f5629"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3386bfe03fd5afd92a87dc07f098eb31"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga3386bfe03fd5afd92a87dc07f098eb31">OFFSETOF</a>(type,  field)&#160;&#160;&#160;((unsigned) &amp;(((type *) 0)-&gt;field))</td></tr>
-<tr class="memdesc:ga3386bfe03fd5afd92a87dc07f098eb31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Byte offset of a field in struct or class. <br /></td></tr>
-<tr class="separator:ga3386bfe03fd5afd92a87dc07f098eb31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaac75c52d7eaa06dd012100f7970434d9"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gaac75c52d7eaa06dd012100f7970434d9">OFFSET</a>(type,  field)&#160;&#160;&#160;((unsigned) &amp;(((type *) 0)-&gt;field))</td></tr>
+<tr class="memdesc:gaac75c52d7eaa06dd012100f7970434d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Byte offset of a field in struct or class. <br /></td></tr>
+<tr class="separator:gaac75c52d7eaa06dd012100f7970434d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabe6f2089e7669254b9fc7c64314c15be"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gabe6f2089e7669254b9fc7c64314c15be">ENTRIES</a>(ARRAY)&#160;&#160;&#160;((int) (sizeof (ARRAY) / sizeof (ARRAY[0])))</td></tr>
+<tr class="memdesc:gabe6f2089e7669254b9fc7c64314c15be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of entries of a statically declared constant array. <br /></td></tr>
+<tr class="separator:gabe6f2089e7669254b9fc7c64314c15be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6bffc62a81adfde17e9d845a2fea7ba0"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga6bffc62a81adfde17e9d845a2fea7ba0">CLEAR</a>(X)&#160;&#160;&#160;bzero (&amp;(X), sizeof (X))</td></tr>
 <tr class="memdesc:ga6bffc62a81adfde17e9d845a2fea7ba0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable/object 'X' to all-zero. <br /></td></tr>
@@ -333,12 +339,46 @@ typedef void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 Functions</h2></td></tr>
 <tr class="memitem:ga70c4601b20beabd915106681f46900fd"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga70c4601b20beabd915106681f46900fd">LogToSyslog</a> (const char *instanceName=NULL)</td></tr>
-<tr class="memdesc:ga70c4601b20beabd915106681f46900fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Redirect logging to syslog from now; instance name must be passed if this is called before EnvInit() <br /></td></tr>
+<tr class="memdesc:ga70c4601b20beabd915106681f46900fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Redirect logging to syslog from now; instance name must be passed if this is called before <a class="el" href="group__env__general.html#gaad46a8c033ef8264cf2d69f093c2be84" title="Initialize the environment module. ">EnvInit()</a> <br /></td></tr>
 <tr class="separator:ga70c4601b20beabd915106681f46900fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab0f1ea671d51c7c52f8b79af9988cdaa"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#gab0f1ea671d51c7c52f8b79af9988cdaa">LogStack</a> ()</td></tr>
 <tr class="memdesc:gab0f1ea671d51c7c52f8b79af9988cdaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Log a stack trace (requires linker flag '-rdynamic' to print function names) <br /></td></tr>
 <tr class="separator:gab0f1ea671d51c7c52f8b79af9988cdaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga19b03c3b434e79798ce7cd2b09501f62"><td class="memItemLeft" align="right" valign="top">static uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga19b03c3b434e79798ce7cd2b09501f62">VersionCompose</a> (uint8_t major, uint8_t minor, uint16_t revision, bool dirty=false)</td></tr>
+<tr class="separator:ga19b03c3b434e79798ce7cd2b09501f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf11f5bfd281d75e860a7a31b64e26236"><td class="memItemLeft" align="right" valign="top">
+static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#gaf11f5bfd281d75e860a7a31b64e26236">VersionMajor</a> (uint32_t ver)</td></tr>
+<tr class="memdesc:gaf11f5bfd281d75e860a7a31b64e26236"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the major component of the version. <br /></td></tr>
+<tr class="separator:gaf11f5bfd281d75e860a7a31b64e26236"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga615e48cb6b3e377b327a814450675df2"><td class="memItemLeft" align="right" valign="top">
+static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga615e48cb6b3e377b327a814450675df2">VersionMinor</a> (uint32_t ver)</td></tr>
+<tr class="memdesc:ga615e48cb6b3e377b327a814450675df2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the minor component of the version. <br /></td></tr>
+<tr class="separator:ga615e48cb6b3e377b327a814450675df2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga63e5a876dd77669efe82a6be06707dfb"><td class="memItemLeft" align="right" valign="top">
+static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga63e5a876dd77669efe82a6be06707dfb">VersionRevision</a> (uint32_t ver)</td></tr>
+<tr class="memdesc:ga63e5a876dd77669efe82a6be06707dfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the revision component of the version. <br /></td></tr>
+<tr class="separator:ga63e5a876dd77669efe82a6be06707dfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga19155e10bcbbd11bdfd79900bd6900e4"><td class="memItemLeft" align="right" valign="top">
+static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga19155e10bcbbd11bdfd79900bd6900e4">VersionDirty</a> (uint32_t ver)</td></tr>
+<tr class="memdesc:ga19155e10bcbbd11bdfd79900bd6900e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the "dirty" component of the version. <br /></td></tr>
+<tr class="separator:ga19155e10bcbbd11bdfd79900bd6900e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7ac2259a87b82595ca0581d206f51809"><td class="memItemLeft" align="right" valign="top">
+uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga7ac2259a87b82595ca0581d206f51809">VersionFromStr</a> (const char *str)</td></tr>
+<tr class="memdesc:ga7ac2259a87b82595ca0581d206f51809"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a numeric representation of the version string. On syntax error, a warning is logged and 0 is returned. <br /></td></tr>
+<tr class="separator:ga7ac2259a87b82595ca0581d206f51809"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga08649d5b10da998eec9d7c72b7413aa3"><td class="memItemLeft" align="right" valign="top">
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga08649d5b10da998eec9d7c72b7413aa3">VersionToStr</a> (class <a class="el" href="classCString.html">CString</a> *ret, uint32_t ver)</td></tr>
+<tr class="memdesc:ga08649d5b10da998eec9d7c72b7413aa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a string representation of the version. This may be shorter than an eventual original string passed to <a class="el" href="group__common__version.html#ga7ac2259a87b82595ca0581d206f51809">VersionFromStr()</a>, i.e. an eventual git ID is missing. <br /></td></tr>
+<tr class="separator:ga08649d5b10da998eec9d7c72b7413aa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3a680d944cef0baf9a57f373084a9505"><td class="memItemLeft" align="right" valign="top">
+static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#ga3a680d944cef0baf9a57f373084a9505">VersionGetOwnAsStr</a> ()</td></tr>
+<tr class="memdesc:ga3a680d944cef0baf9a57f373084a9505"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get my own build version as a string. <br /></td></tr>
+<tr class="separator:ga3a680d944cef0baf9a57f373084a9505"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac34123152c84f96213ee70248b1beb17"><td class="memItemLeft" align="right" valign="top">
+uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__version.html#gac34123152c84f96213ee70248b1beb17">VersionGetOwn</a> ()</td></tr>
+<tr class="memdesc:gac34123152c84f96213ee70248b1beb17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get my own build version. <br /></td></tr>
+<tr class="separator:gac34123152c84f96213ee70248b1beb17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga40c6fe35195df03aed35ebaab4570325"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__language.html#ga40c6fe35195df03aed35ebaab4570325">LangTranslateNumber</a> (char *str)</td></tr>
 <tr class="memdesc:ga40c6fe35195df03aed35ebaab4570325"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adapt numeric string by replacing all '.' by the locale's decimal point. <br /></td></tr>
@@ -349,7 +389,7 @@ class <a class="el" href="classCString.html">CString</a> *&#160;</td><td class="
 <tr class="separator:gade55d2090b57812d3a0609fc0ccea1f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5d0f409fd4c9d95f3b6aff34cc12b7b9"><td class="memItemLeft" align="right" valign="top">
 static class <a class="el" href="classCString.html">CString</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga5d0f409fd4c9d95f3b6aff34cc12b7b9">GetTTS</a> ()</td></tr>
-<tr class="memdesc:ga5d0f409fd4c9d95f3b6aff34cc12b7b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the TTS (same as above, but shorter) <br /></td></tr>
+<tr class="memdesc:ga5d0f409fd4c9d95f3b6aff34cc12b7b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the TTS (same as above, but shorter). <br /></td></tr>
 <tr class="separator:ga5d0f409fd4c9d95f3b6aff34cc12b7b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaac2b89eba76a51d9dea28ab5f040fd85"><td class="memItemLeft" align="right" valign="top">
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaac2b89eba76a51d9dea28ab5f040fd85">StringF</a> (class <a class="el" href="classCString.html">CString</a> *ret, const char *fmt,...)</td></tr>
@@ -400,14 +440,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="separator:gadba04633a638d2d683a61d874f8e2b84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Enhanced file and directory operations ...</div></td></tr>
 <tr class="memitem:gab9937e3b713c8f2376dce665898c8c24"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gab9937e3b713c8f2376dce665898c8c24">Write</a> (int fd, const void *buf, size_t count)</td></tr>
-<tr class="memdesc:gab9937e3b713c8f2376dce665898c8c24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX write(), but returns all 'count' bytes whenever possible.  <a href="group__common__basics.html#gab9937e3b713c8f2376dce665898c8c24">More...</a><br /></td></tr>
+<tr class="memdesc:gab9937e3b713c8f2376dce665898c8c24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX write(), but returns all 'count' bytes as possible.  <a href="group__common__basics.html#gab9937e3b713c8f2376dce665898c8c24">More...</a><br /></td></tr>
 <tr class="separator:gab9937e3b713c8f2376dce665898c8c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4c0a189c3361c7339f836bef5946eca2"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga4c0a189c3361c7339f836bef5946eca2">Read</a> (int fd, void *buf, size_t count)</td></tr>
-<tr class="memdesc:ga4c0a189c3361c7339f836bef5946eca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX read(), but reads all 'count' bytes whenever possible.  <a href="group__common__basics.html#ga4c0a189c3361c7339f836bef5946eca2">More...</a><br /></td></tr>
+<tr class="memdesc:ga4c0a189c3361c7339f836bef5946eca2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Similar to POSIX read(), but reads all 'count' bytes as possible.  <a href="group__common__basics.html#ga4c0a189c3361c7339f836bef5946eca2">More...</a><br /></td></tr>
 <tr class="separator:ga4c0a189c3361c7339f836bef5946eca2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga84cd52deddfdb43a2d49fc074dd0e2fa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga84cd52deddfdb43a2d49fc074dd0e2fa">MakeDir</a> (const char *relOrAbsPath, bool setHome2lGroup)</td></tr>
-<tr class="memdesc:ga84cd52deddfdb43a2d49fc074dd0e2fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a directory (and all its parents as necessary).  <a href="group__common__basics.html#ga84cd52deddfdb43a2d49fc074dd0e2fa">More...</a><br /></td></tr>
-<tr class="separator:ga84cd52deddfdb43a2d49fc074dd0e2fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf2a53286ce6baf15b82384d6df81be73"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#gaf2a53286ce6baf15b82384d6df81be73">MakeDir</a> (const char *relOrAbsPath, bool setHome2lGroup=true)</td></tr>
+<tr class="memdesc:gaf2a53286ce6baf15b82384d6df81be73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a directory (and all its parents as necessary).  <a href="group__common__basics.html#gaf2a53286ce6baf15b82384d6df81be73">More...</a><br /></td></tr>
+<tr class="separator:gaf2a53286ce6baf15b82384d6df81be73"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga909dafc0d7bd02736ecac1946c47c28d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga909dafc0d7bd02736ecac1946c47c28d">UnlinkTree</a> (const char *relOrAbsPath, const char *skipPattern=NULL)</td></tr>
 <tr class="memdesc:ga909dafc0d7bd02736ecac1946c47c28d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unlink (remove) a directory with all its decendants.  <a href="group__common__basics.html#ga909dafc0d7bd02736ecac1946c47c28d">More...</a><br /></td></tr>
 <tr class="separator:ga909dafc0d7bd02736ecac1946c47c28d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -597,16 +637,31 @@ static bool&#160;</td><td class="memItemRight" valign="bottom"><b>TicksMonotonic
 <a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga0b508d97231d511be48bb2af8c1a90a9">TicksToMonotonic</a> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> t)</td></tr>
 <tr class="memdesc:ga0b508d97231d511be48bb2af8c1a90a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Conversion function. <br /></td></tr>
 <tr class="separator:ga0b508d97231d511be48bb2af8c1a90a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gac5c738c74e95d77d72fee04e96be5c3f"><td class="memItemLeft" align="right" valign="top">
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#gac5c738c74e95d77d72fee04e96be5c3f">TicksToString</a> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> ticks, int fracDigits=INT_MAX, bool precise=false)</td></tr>
-<tr class="memdesc:gac5c738c74e95d77d72fee04e96be5c3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">(TTS) Get a string of the form "YYYY-MM-DD-hhmmss[.&lt;millis&gt;]" in local time. <br /></td></tr>
-<tr class="separator:gac5c738c74e95d77d72fee04e96be5c3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga0ba2a2fd4695c51d95f56c5b57caf150"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga0ba2a2fd4695c51d95f56c5b57caf150">TicksToString</a> (<a class="el" href="classCString.html">CString</a> *ret, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> ticks, int fracDigits=INT_MAX, bool precise=false)</td></tr>
-<tr class="memdesc:ga0ba2a2fd4695c51d95f56c5b57caf150"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a string of the form "YYYY-MM-DD-hhmmss[.&lt;millis&gt;]" in local time.  <a href="group__common__datetime.html#ga0ba2a2fd4695c51d95f56c5b57caf150">More...</a><br /></td></tr>
-<tr class="separator:ga0ba2a2fd4695c51d95f56c5b57caf150"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga48cfa0ea2db98357120e96ea471c7aad"><td class="memItemLeft" align="right" valign="top">
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga48cfa0ea2db98357120e96ea471c7aad">TicksAbsToString</a> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> ticks, int fracDigits=INT_MAX, bool precise=false)</td></tr>
+<tr class="memdesc:ga48cfa0ea2db98357120e96ea471c7aad"><td class="mdescLeft">&#160;</td><td class="mdescRight">(TTS) Get a string of the form "YYYY-MM-DD-hhmmss[.&lt;millis&gt;]" in local time. <br /></td></tr>
+<tr class="separator:ga48cfa0ea2db98357120e96ea471c7aad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga137fa320afde4a5a8d7a4bb9b061803a"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga137fa320afde4a5a8d7a4bb9b061803a">TicksAbsToString</a> (<a class="el" href="classCString.html">CString</a> *ret, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> ticks, int fracDigits=INT_MAX, bool precise=false)</td></tr>
+<tr class="memdesc:ga137fa320afde4a5a8d7a4bb9b061803a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a string of the form "YYYY-MM-DD-hhmmss[.&lt;millis&gt;]" in local time.  <a href="group__common__datetime.html#ga137fa320afde4a5a8d7a4bb9b061803a">More...</a><br /></td></tr>
+<tr class="separator:ga137fa320afde4a5a8d7a4bb9b061803a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga305fd2a6b9d5cbd275e01ef53e706a63"><td class="memItemLeft" align="right" valign="top">
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga305fd2a6b9d5cbd275e01ef53e706a63">TicksRelToString</a> (<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> ticks)</td></tr>
+<tr class="memdesc:ga305fd2a6b9d5cbd275e01ef53e706a63"><td class="mdescLeft">&#160;</td><td class="mdescRight">(TTS) Get a string of the form "&lt;integer&gt;[&lt;unit&gt;]" for a relative time. <br /></td></tr>
+<tr class="separator:ga305fd2a6b9d5cbd275e01ef53e706a63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac265f4555dc7729919b30ff2e69e835d"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#gac265f4555dc7729919b30ff2e69e835d">TicksRelToString</a> (<a class="el" href="classCString.html">CString</a> *ret, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> ticks)</td></tr>
+<tr class="memdesc:gac265f4555dc7729919b30ff2e69e835d"><td class="mdescLeft">&#160;</td><td class="mdescRight">(TTS) Get a string of the form "&lt;integer&gt;[&lt;unit&gt;]" for a relative time.  <a href="group__common__datetime.html#gac265f4555dc7729919b30ff2e69e835d">More...</a><br /></td></tr>
+<tr class="separator:gac265f4555dc7729919b30ff2e69e835d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga20c795c71a6d242af414a359b78ad30c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga20c795c71a6d242af414a359b78ad30c">TicksFromString</a> (const char *str, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> *ret, bool absolute)</td></tr>
-<tr class="memdesc:ga20c795c71a6d242af414a359b78ad30c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an (absolute) ticks value.  <a href="group__common__datetime.html#ga20c795c71a6d242af414a359b78ad30c">More...</a><br /></td></tr>
+<tr class="memdesc:ga20c795c71a6d242af414a359b78ad30c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a relative or absolute ticks value.  <a href="group__common__datetime.html#ga20c795c71a6d242af414a359b78ad30c">More...</a><br /></td></tr>
 <tr class="separator:ga20c795c71a6d242af414a359b78ad30c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga258f94d9f9402acc38c5c1768bddbc8a"><td class="memItemLeft" align="right" valign="top">
+static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga258f94d9f9402acc38c5c1768bddbc8a">TicksAbsFromString</a> (const char *str, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> *ret)</td></tr>
+<tr class="memdesc:ga258f94d9f9402acc38c5c1768bddbc8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an absolute ticks value. See <a class="el" href="group__common__datetime.html#ga20c795c71a6d242af414a359b78ad30c" title="Convert a string to a relative or absolute ticks value. ">TicksFromString()</a> for supported string formats. <br /></td></tr>
+<tr class="separator:ga258f94d9f9402acc38c5c1768bddbc8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga75a492a07d4bc6d74e0584ffd0d29e56"><td class="memItemLeft" align="right" valign="top">
+static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga75a492a07d4bc6d74e0584ffd0d29e56">TicksRelFromString</a> (const char *str, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> *ret)</td></tr>
+<tr class="memdesc:ga75a492a07d4bc6d74e0584ffd0d29e56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a relative ticks value. See <a class="el" href="group__common__datetime.html#ga20c795c71a6d242af414a359b78ad30c" title="Convert a string to a relative or absolute ticks value. ">TicksFromString()</a> for supported string formats. <br /></td></tr>
+<tr class="separator:ga75a492a07d4bc6d74e0584ffd0d29e56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga6a1a59eea44a33009413b9eab125d8f5"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>TicksMonotonicToStructTimeval</b> (<a class="el" href="group__common__datetime.html#ga127a7d58c6b7b5c79f2e1217c8a00e89">TTicksMonotonic</a> t, struct timeval *retTv)</td></tr>
 <tr class="separator:ga6a1a59eea44a33009413b9eab125d8f5"><td class="memSeparator" colspan="2">&#160;</td></tr>

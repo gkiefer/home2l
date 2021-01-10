@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -154,8 +154,11 @@ install-indep:
 install-arch:
 	BIN=$(HOME2L_INSTALL)/bin/$(ARCH);   \
 	LIB=$(HOME2L_INSTALL)/lib/$(ARCH);   \
-	install -Dp $(STRIP) -m 755 -t $(HOME2L_INSTALL)/bin/$(ARCH) $(RCSHELL_BIN) $(SERVER_BIN); \
+	install -Dp $(STRIP) -m 755 -t $$BIN $(RCSHELL_BIN) $(SERVER_BIN); \
+	for CMD in list show follow get wait r+ request r- delrequest; do \
+	  ln -sf $(RCSHELL) $$BIN/home2l-$$CMD; \
+	done; \
 	if [[ "$(WITH_PYTHON)" == "1" ]]; then \
-	  install -Dp $(STRIP) -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(PYLIB_BIN);  \
-	  install -Dp          -m 644 -t $(HOME2L_INSTALL)/lib/$(ARCH) $(DIR_OBJ)/$(PYLIB).py;  \
+	  install -Dp $(STRIP) -m 644 -t $$LIB $(PYLIB_BIN);  \
+	  install -Dp          -m 644 -t $$LIB $(DIR_OBJ)/$(PYLIB).py;  \
 	fi

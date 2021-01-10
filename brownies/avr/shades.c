@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 
-#include "config.h"
+#include "configure.h"
 
 #if WITH_SHADES
 
@@ -441,7 +441,7 @@ void ShadesIterate () {
   statNew = shades[0].actBtnState | (shades[1].actBtnState << 4);
 #endif
   RegSet (BR_REG_SHADES_STATUS, statNew);
-  if (statNew != statCur) ReportChange (BR_CHANGED_SHADES);
+  if (statNew != statCur) ReportChangeAndNotify (BR_CHANGED_SHADES);
 }
 
 

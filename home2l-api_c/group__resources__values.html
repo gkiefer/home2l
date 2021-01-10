@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -107,6 +107,7 @@ Enumerations</h2></td></tr>
 <br />
 &#160;&#160;<a class="el" href="group__resources__values.html#ggab4a0b86af465f13ff92a1c70107ecddaa5d57119d8742a3dec6a3ace9d2582e9e">rctWindowState</a>, 
 <a class="el" href="group__resources__values.html#ggab4a0b86af465f13ff92a1c70107ecddaa8689d7dffb5883bc2df8f7e665a44add">rctPhoneState</a>, 
+<a class="el" href="group__resources__values.html#ggab4a0b86af465f13ff92a1c70107ecddaa8b32775cd798331263b714adf277dcd7">rctPlayerState</a>, 
 <b>rctEnumTypesEND</b>
 <br />
  }<tr class="memdesc:gab4a0b86af465f13ff92a1c70107ecdda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resource major type.  <a href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">More...</a><br /></td></tr>
@@ -129,6 +130,11 @@ Enumerations</h2></td></tr>
  }<tr class="memdesc:ga960dd10c4618f4862b627630cf63aaaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phone state (for 'rctPhoneState')  <a href="group__resources__values.html#ga960dd10c4618f4862b627630cf63aaaa">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:ga960dd10c4618f4862b627630cf63aaaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad608d41474c067af6383a888367a3d88"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#gad608d41474c067af6383a888367a3d88">ERctPlayerState</a> { , <a class="el" href="group__resources__values.html#ggad608d41474c067af6383a888367a3d88a360dc82eecfb0964c9d7be9134d956eb">rcvPlayerPaused</a>, 
+<a class="el" href="group__resources__values.html#ggad608d41474c067af6383a888367a3d88a0a9542d1c9a5bc6c9158344372942967">rcvPlayerPlaying</a>
+ }<tr class="memdesc:gad608d41474c067af6383a888367a3d88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Music player state (for 'rctPlayerState')  <a href="group__resources__values.html#gad608d41474c067af6383a888367a3d88">More...</a><br /></td></tr>
+</td></tr>
+<tr class="separator:gad608d41474c067af6383a888367a3d88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga10c26c9bdf00ec792f87d5f84d462d49"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> { <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a> = 0, 
 <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a>, 
 <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>, 
@@ -223,9 +229,11 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 </td></tr>
 <tr><td class="fieldname"><a id="ggab4a0b86af465f13ff92a1c70107ecddaa8689d7dffb5883bc2df8f7e665a44add"></a>rctPhoneState&#160;</td><td class="fielddoc"><p>Phone state ("idle", "ringing", "inCall") </p>
 </td></tr>
+<tr><td class="fieldname"><a id="ggab4a0b86af465f13ff92a1c70107ecddaa8b32775cd798331263b714adf277dcd7"></a>rctPlayerState&#160;</td><td class="fielddoc"><p>Music player state ("stop", "pause", "play") </p>
+</td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00260">260</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00263">263</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -252,7 +260,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00367">367</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00372">372</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -279,7 +287,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00376">376</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00381">381</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -304,7 +312,32 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00385">385</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00390">390</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+
+</div>
+</div>
+<a id="gad608d41474c067af6383a888367a3d88"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad608d41474c067af6383a888367a3d88">&#9670;&nbsp;</a></span>ERctPlayerState</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="group__resources__values.html#gad608d41474c067af6383a888367a3d88">ERctPlayerState</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Music player state (for 'rctPlayerState') </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ggad608d41474c067af6383a888367a3d88a360dc82eecfb0964c9d7be9134d956eb"></a>rcvPlayerPaused&#160;</td><td class="fielddoc"><p>stopped </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ggad608d41474c067af6383a888367a3d88a0a9542d1c9a5bc6c9158344372942967"></a>rcvPlayerPlaying&#160;</td><td class="fielddoc"><p>paused </p>
+<p>playing </p>
+</td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00398">398</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>
@@ -332,7 +365,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
 </td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00428">428</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l00441">441</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 
 </div>
 </div>

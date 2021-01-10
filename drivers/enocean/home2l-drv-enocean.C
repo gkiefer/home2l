@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,6 +72,21 @@ ENV_PARA_INT ("enocean.maxAge", envEnoLinkMaxAge, 15);
    * actively. However, to avoid potentially annoying invalidations if, for example,
    * the USB stick is replugged, it is reasonable to enter a longer
    * time period (longer than \refenv{rc.maxAge}) here.
+   */
+
+
+ENV_PARA_STRING ("enocean.windowHandle.init", envEnoWindowHandleInit, NULL);
+  /* Initialization state for window handles
+   *
+   * This defines the initialization state of window handle devices when the
+   * driver is initialized. Possible values are those of the 'rctWindowState'
+   * resource type ("closed", "tilted", "open"). By default, the resource is
+   * initialized as "unkown". If this option is set, the respective value is set.
+   *
+   * By construction, energy harvesting devices submit their state only when
+   * they are moved/used. Since they cannot be queried for their states, so that
+   * their resources must be initialized as "unkown" on initialitation to be correct.
+   * This option allows to set them to a specific value instead.
    */
 
 
@@ -328,6 +343,11 @@ ENO_DEVICE_CLASS_BEGIN (CEnoDeviceWindowHandle, 0xf61000)
 
     virtual void Init (const char *arg = NULL) {
       rc = RcRegisterResource (RcDriver (), id, rctWindowState, false);
+      if (envEnoWindowHandleInit) {
+        CRcValueState vs (rctWindowState, envEnoWindowHandleInit);
+        if (vs.IsValid ()) rc->ReportValueState (&vs);
+        else WARNINGF (("Invalid window state value passed for '%': '%s'", envEnoWindowHandleInitKey, envEnoWindowHandleInit));
+      }
       //~ INFOF (("### Registered resource '%s'", rc->Uri ()));
     }
 

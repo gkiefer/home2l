@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -70,7 +70,8 @@ $(function() {
 <a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">resources.H File Reference</div>  </div>
 </div><!--header-->
@@ -82,7 +83,7 @@ Include dependency graph for resources.H:</div>
 <div class="center"><img src="resources_8H__incl.png" border="0" usemap="#resources_2resources_8H" alt=""/></div>
 <map name="resources_2resources_8H" id="resources_2resources_8H">
 <area shape="rect" id="node2" href="env_8H.html" title="env.H" alt="" coords="230,80,287,107"/>
-<area shape="rect" id="node3" href="base_8H.html" title="base.H" alt="" coords="449,155,513,181"/>
+<area shape="rect" id="node3" href="base_8H.html" title="base.H" alt="" coords="404,155,468,181"/>
 </map>
 </div>
 </div><div class="textblock"><div class="dynheader">
@@ -123,7 +124,7 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Driver for local resources.  <a href="classCRcDriver.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcEventDriver.html">CRcEventDriver</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Local driver using the event processor mechanism for the '<a class="el" href="classCRcEventDriver.html#a20a39acbd142e14a0c0a36dfe3227ab1" title="Drive a new value; Will be called from CResource::DriveValue(). ">DriveValue()</a>' functionality.  <a href="classCRcEventDriver.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Local driver using the event processor mechanism for the '<a class="el" href="classCRcEventDriver.html#a20a39acbd142e14a0c0a36dfe3227ab1" title="Callback to drive a new value, will be called from CResource::DriveValue(). ">DriveValue()</a>' functionality.  <a href="classCRcEventDriver.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
@@ -132,6 +133,10 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#gaf5bac1e06a431449622bc732ee0c0675">RCREQ_NONE</a>&#160;&#160;&#160;INT_MAX</td></tr>
 <tr class="memdesc:gaf5bac1e06a431449622bc732ee0c0675"><td class="mdescLeft">&#160;</td><td class="mdescRight">Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis. <br /></td></tr>
 <tr class="separator:gaf5bac1e06a431449622bc732ee0c0675"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga70520ac05bb374e845871222ce99f39f"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga70520ac05bb374e845871222ce99f39f">RCREQ_NOVALUE</a>&#160;&#160;&#160;((<a class="el" href="classCRcRequest.html">CRcRequest</a> *) NULL)</td></tr>
+<tr class="memdesc:ga70520ac05bb374e845871222ce99f39f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Special value meaning "none" for the request value. <br /></td></tr>
+<tr class="separator:ga70520ac05bb374e845871222ce99f39f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga498604fdad8b490859189457f1c1a0a6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__drivers.html#ga498604fdad8b490859189457f1c1a0a6">HOME2L_DRIVER</a>(NAME)</td></tr>
 <tr class="memdesc:ga498604fdad8b490859189457f1c1a0a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define the entry point of a binary driver.  <a href="group__resources__drivers.html#ga498604fdad8b490859189457f1c1a0a6">More...</a><br /></td></tr>
 <tr class="separator:ga498604fdad8b490859189457f1c1a0a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,6 +219,7 @@ Enumerations</h2></td></tr>
 <br />
 &#160;&#160;<a class="el" href="group__resources__values.html#ggab4a0b86af465f13ff92a1c70107ecddaa5d57119d8742a3dec6a3ace9d2582e9e">rctWindowState</a>, 
 <a class="el" href="group__resources__values.html#ggab4a0b86af465f13ff92a1c70107ecddaa8689d7dffb5883bc2df8f7e665a44add">rctPhoneState</a>, 
+<a class="el" href="group__resources__values.html#ggab4a0b86af465f13ff92a1c70107ecddaa8b32775cd798331263b714adf277dcd7">rctPlayerState</a>, 
 <b>rctEnumTypesEND</b>
 <br />
  }<tr class="memdesc:gab4a0b86af465f13ff92a1c70107ecdda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resource major type.  <a href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">More...</a><br /></td></tr>
@@ -236,6 +242,11 @@ Enumerations</h2></td></tr>
  }<tr class="memdesc:ga960dd10c4618f4862b627630cf63aaaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phone state (for 'rctPhoneState')  <a href="group__resources__values.html#ga960dd10c4618f4862b627630cf63aaaa">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:ga960dd10c4618f4862b627630cf63aaaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad608d41474c067af6383a888367a3d88"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#gad608d41474c067af6383a888367a3d88">ERctPlayerState</a> { , <a class="el" href="group__resources__values.html#ggad608d41474c067af6383a888367a3d88a360dc82eecfb0964c9d7be9134d956eb">rcvPlayerPaused</a>, 
+<a class="el" href="group__resources__values.html#ggad608d41474c067af6383a888367a3d88a0a9542d1c9a5bc6c9158344372942967">rcvPlayerPlaying</a>
+ }<tr class="memdesc:gad608d41474c067af6383a888367a3d88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Music player state (for 'rctPlayerState')  <a href="group__resources__values.html#gad608d41474c067af6383a888367a3d88">More...</a><br /></td></tr>
+</td></tr>
+<tr class="separator:gad608d41474c067af6383a888367a3d88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga10c26c9bdf00ec792f87d5f84d462d49"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__values.html#ga10c26c9bdf00ec792f87d5f84d462d49">ERcState</a> { <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49a6dcb0b23fbe08f8c9c28663a2720e749">rcsUnknown</a> = 0, 
 <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49ac926772d4c8a4ca171eae2e229f8bf98">rcsBusy</a>, 
 <a class="el" href="group__resources__values.html#gga10c26c9bdf00ec792f87d5f84d462d49aad7e220f9e44ce4f3440db9c807cbdee">rcsValid</a>, 
@@ -468,9 +479,9 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>RcSetTriggerFr
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gabae9ca4a7ffe6ffe75c28da5afe3fbc5">RcSetTriggerFromStr</a> (const char *rcUri, const char *reqDef)</td></tr>
 <tr class="memdesc:gabae9ca4a7ffe6ffe75c28da5afe3fbc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set trigger request by textual definition. <br /></td></tr>
 <tr class="separator:gabae9ca4a7ffe6ffe75c28da5afe3fbc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga1634c97bb26d0bc91b6da73faa84a62e"><td class="memItemLeft" align="right" valign="top">
-static void&#160;</td><td class="memItemRight" valign="bottom"><b>RcDelRequest</b> (<a class="el" href="classCResource.html">CResource</a> *rc, const char *reqGid=NULL)</td></tr>
-<tr class="separator:ga1634c97bb26d0bc91b6da73faa84a62e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5207a10ea5bec3bb602f0919b8859d06"><td class="memItemLeft" align="right" valign="top">
+static void&#160;</td><td class="memItemRight" valign="bottom"><b>RcDelRequest</b> (<a class="el" href="classCResource.html">CResource</a> *rc, const char *reqGid=NULL, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> t1=0)</td></tr>
+<tr class="separator:ga5207a10ea5bec3bb602f0919b8859d06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaff1f9406c08557985e9433af08a0ec60"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gaff1f9406c08557985e9433af08a0ec60">RcDelRequest</a> (const char *rcUri, const char *reqGid=NULL, <a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a> t1=0)</td></tr>
 <tr class="memdesc:gaff1f9406c08557985e9433af08a0ec60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete a request.  <a href="group__resources__general.html#gaff1f9406c08557985e9433af08a0ec60">More...</a><br /></td></tr>
 <tr class="separator:gaff1f9406c08557985e9433af08a0ec60"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -509,6 +520,13 @@ static <a class="el" href="classCResource.html">CResource</a> *&#160;</td><td cl
 <a class="el" href="classCResource.html">CResource</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gaa0fdf646d3012118de840a006fd33b04">RcRegisterSignal</a> (const char *name, <a class="el" href="classCRcValueState.html">CRcValueState</a> *vs)</td></tr>
 <tr class="memdesc:gaa0fdf646d3012118de840a006fd33b04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a new resource for the built-in 'signal' driver and optionally set a default request. The type is taken from 'vs', and if 'vs' is valid, a default request is set. <br /></td></tr>
 <tr class="separator:gaa0fdf646d3012118de840a006fd33b04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:ga75cbdfbc4a3edee8177692f93659eb90"><td class="memItemLeft" align="right" valign="top">
+const char *const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__requests.html#ga75cbdfbc4a3edee8177692f93659eb90">rcDefaultRequestId</a></td></tr>
+<tr class="memdesc:ga75cbdfbc4a3edee8177692f93659eb90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request ID for default requests ("default") <br /></td></tr>
+<tr class="separator:ga75cbdfbc4a3edee8177692f93659eb90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Hosts ...</h2></td></tr>

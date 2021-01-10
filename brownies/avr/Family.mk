@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2019-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,10 +35,10 @@
 BROWNIE_FAMILY = init.t85 init.t84 init.t861 \
                  ahub.t85 bhub.t85 \
                  win.t84 win2.t84 wins.t84 \
+                 gpio4.t84 \
                  mat4x8.t861 mat1x7.t861 mat2x6.t861 \
                  mat4x8t.t861 mat1x7t.t861 mat2x6t.t861 \
-                 gpio4.t84
-
+                 gpio5uart.t84
 
 
 
@@ -83,6 +83,37 @@ endif
 # gpio4: (Testing) Generic GPIO node ...
 ifeq ($(BROWNIE_VARIANT),gpio4)
 	BROWNIE_CFG ?= GPIO_OUT_PRESENCE=0x03 GPIO_OUT_PRESET=0x02 GPIO_IN_PRESENCE=0x0c GPIO_IN_PULLUP=0x0f
+endif
+
+
+
+
+
+#################### Window and Shades/Blinds ##################################
+
+
+# win: Window brownie; supports temperature sensor and single shades ...
+#   - circuit: 'window'
+ifeq ($(BROWNIE_VARIANT),win)
+	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=1
+	  # SHADES_TIMEOUT=0 TWI_SL_NOTIFY=0
+endif
+
+
+# win2: Dual window brownie; supports temperature sensor and two shades ...
+#   - circuit: 'window_dual'
+ifeq ($(BROWNIE_VARIANT),win2)
+	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2
+	  # SHADES_TIMEOUT=0
+endif
+
+
+# wins: Safe window brownie; for single window with shades (#0) and opener (#1);
+#       opener auto-closes on network failure; supports temperature sensor ...
+#   - circuit: 'window_dual'
+ifeq ($(BROWNIE_VARIANT),wins)
+	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2 SHADES_1_RINT_FAILSAFE=0
+	  # SHADES_TIMEOUT=0
 endif
 
 
@@ -142,33 +173,21 @@ endif
 
 
 
+#################### Multi-Purpose #############################################
 
-#################### Window/Shades #############################################
 
-
-# win: Window brownie; supports temperature sensor and single shades ...
-#   - circuit: 'window'
-ifeq ($(BROWNIE_VARIANT),win)
-	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=1
-	  # SHADES_TIMEOUT=0 TWI_SL_NOTIFY=0
+# gpio5uart: 5 GPIOs and UART for RS485 ...
+#   - used in circuit: 'relais_rs485'
+ifeq ($(BROWNIE_VARIANT),gpio5uart)
+	BROWNIE_CFG ?= GPIO_OUT_PRESENCE=0x0f GPIO_OUT_PRESET=0x00 GPIO_IN_PRESENCE=0x80 GPIO_IN_PULLUP=0x00 \
+	               WITH_UART=1 UART_BAUDRATE=9600
+# (debug) For sample timing calibration: Set GPIO7 as output ...
+#~ 	BROWNIE_CFG ?= GPIO_OUT_PRESENCE=0x8f GPIO_OUT_PRESET=0x00 GPIO_IN_PRESENCE=0x00 GPIO_IN_PULLUP=0x00 \
+#~ 	               WITH_UART=1 UART_BAUDRATE=9600
 endif
 
 
-# win2: Dual window brownie; supports temperature sensor and two shades ...
-#   - circuit: 'window_dual'
-ifeq ($(BROWNIE_VARIANT),win2)
-	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2
-	  # SHADES_TIMEOUT=0
-endif
 
-
-# wins: Safe window brownie; for single window with shades (#0) and opener (#1);
-#       opener auto-closes on network failure; supports temperature sensor ...
-#   - circuit: 'window_dual'
-ifeq ($(BROWNIE_VARIANT),wins)
-	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2 SHADES_1_RINT_FAILSAFE=0
-	  # SHADES_TIMEOUT=0
-endif
 
 
 
@@ -183,7 +202,8 @@ ifeq ($(BROWNIE),test.t85)
 endif
 
 ifeq ($(BROWNIE),test.t84)
-	BROWNIE_CFG ?= WITH_TWIHUB=0 TWI_SL_NOTIFY=0 GPIO_OUT_PRESENCE=0x00 GPIO_OUT_PRESET=0x00 WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2 SHADES_TIMEOUT=0 SHADES_PERSISTENCE=0
+	BROWNIE_CFG ?= TWI_SL_NOTIFY=0 GPIO_OUT_PRESENCE=0x02 GPIO_OUT_PRESET=0x00 WITH_TEMP_ZACWIRE=0 WITH_UART=1
+#~ 	BROWNIE_CFG ?= WITH_TWIHUB=0 TWI_SL_NOTIFY=0 GPIO_OUT_PRESENCE=0x00 GPIO_OUT_PRESET=0x00 WITH_TEMP_ZACWIRE=1 SHADES_PORTS=2 SHADES_TIMEOUT=0 SHADES_PERSISTENCE=0
 	BROWNIE_BASE = 0x0000
 endif
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,18 @@
  */
 
 
-/* This file is arranged in the following sections:
+/* The purpose of this file is configure the compilation of the remaining source
+ * by setting a bunch of preprocessor definitions and make plausibility checks.
+ *
+ * It depends on the individual Brownie configuration as set in 'Family.mk'.
+ * Options that can be set there are documented below in section 1.
+ *
+ * This file may be edited and extend for the following purposes:
+ * - adding support for a new MCU model (-> section 3),
+ * - adding a new feature module (-> all sections),
+ * - changing pin assignments for some features on some MCU model(s).
+ *
+ * This file is arranged in the following sections:
  *
  * 1. Features: User Parameters
  *    - any user parameters settable in 'Family.mk' are predefined and documented here.
@@ -30,16 +41,19 @@
  *
  * 3. MCU: Pin Assignments
  *    - pin assignments of supported MCU types
- *    -> Edit this section to add a new MCU!
  *
- * 4. Ports: Auto-Completion
+ *    -> EDIT this section to add a new MCU model.
+ *
+ * 4. Pins: Auto-Completion and Interrupt Configuration
  *    - auto-generate pin-related macros (P_*, RESET_DDR_IN_*, RESET_DDR_OUT_*, RESET_DDR_STATE_*)
+ *    - feature-specific interrupt settings (PCINT_*)
  *
- * 5. Ports: Checks
+ * 5. Pins: Checks
  *    - sanity checks
  *
- * 6. MCU: Reset Pin Configuration
+ * 6. MCU: Main Macros
  *    - define INIT_PINS() macro
+ *    - define macros for ping change interrupts: PCINT_ALL_PINS, PCINT_CALL_SUBISRS(P)
  */
 
 
@@ -51,7 +65,7 @@
  *
  * @addtogroup brownies_features
  *
- * This module contains all changable feature settings for *Brownie* firmwares.
+ * This module documents all changeable feature settings for *Brownie* firmwares.
  * New customized firmwares can be added to the *Brownie family* by changing
  * the file [brownies/avr/Family.mk](../brownies/avr/Family.mk).
  *
@@ -65,7 +79,7 @@
 
 
 
-// *************************** Features: User Parameters ***********************
+// ************************ 1. Features: User Parameters ***********************
 
 
 // This section lists and documents the user-definable feature settings and
@@ -101,7 +115,7 @@
 
 
 /// @}
-/// @name GPIO ...
+/// @name Timer ...
 /// @{
 
 #ifndef WITH_TIMER
@@ -115,7 +129,7 @@
 /// @{
 
 #ifndef GPIO_IN_PRESENCE
-#define GPIO_IN_PRESENCE  0       ///< Pins to be used as GP inputs
+#define GPIO_IN_PRESENCE  0       ///< Pins to be used as general-purpose inputs
 #endif
 
 #ifndef GPIO_IN_PULLUP
@@ -123,7 +137,7 @@
 #endif
 
 #ifndef GPIO_OUT_PRESENCE
-#define GPIO_OUT_PRESENCE 0       ///< Pins to be used as GP outputs
+#define GPIO_OUT_PRESENCE 0       ///< Pins to be used as general-purpose outputs
 #endif
 
 #ifndef GPIO_OUT_PRESET
@@ -220,6 +234,69 @@
 
 
 /// @}
+/// @name ADCs ...
+/// @{
+
+#ifndef ADC_PORTS
+#define ADC_PORTS      0     ///< Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET)
+#endif
+
+
+
+/// @}
+/// @name UART ...
+/// @{
+
+#ifndef WITH_UART
+#define WITH_UART           0     ///< Enable UART
+#endif
+
+#ifndef UART_WITH_DRIVE
+#define UART_WITH_DRIVE     1     ///< Enable "driver enable" output (e.g. for RS485)
+#endif
+
+#ifndef UART_TX_LISTEN
+#define UART_TX_LISTEN     10     ///< If "drive enable" is set, this is the number of milliseconds to await silence before sending
+#endif
+
+#ifndef UART_TX_INV
+#define UART_TX_INV         1     ///< Set to invert TX output (e.g. for RS485 via MAX485)
+#endif
+
+#ifndef UART_RX_INV
+#define UART_RX_INV         1     ///< Set to invert RX input (e.g. for RS485 via MAX485)
+#endif
+
+#ifndef UART_BAUDRATE
+#define UART_BAUDRATE    9600     ///< Baud rate
+#endif
+
+#ifndef UART_STOPBITS
+#define UART_STOPBITS       1     ///< Stop bits
+#endif
+
+#ifndef UART_PARITY
+#define UART_PARITY         0     ///< Parity (0 = none, 1 = odd, 2 = even) (ONLY 0 IMPLEMENTED YET)
+#endif
+
+#ifndef UART_TX_BUFSIZE
+#define UART_TX_BUFSIZE    16     ///< Capacity of the TX buffer (in bytes, must be power of 2)
+#endif
+
+#ifndef UART_RX_BUFSIZE
+#define UART_RX_BUFSIZE    16     ///< Capacity of the RX buffer (in bytes, must be power of 2)
+#endif
+
+#ifndef UART_MULTI_BYTE_ISR
+#define UART_MULTI_BYTE_ISR 1     ///< @brief Allow to receive multiple bytes (at most UART_RX_BUFSIZE) within one ISR call.
+                                  ///
+                                  /// During the receipt of all bytes, interrupts are disabled. This is sometimes
+                                  /// necessary to avoid timing problems. Recommended for baud rates of 2400 or more.
+#endif
+
+
+
+/// @}
 /// @name Temperature ...
 /// @{
 
@@ -234,19 +311,9 @@
 
 
 /// @}
-/// @name ADCs ...
-/// @{
-
-#ifndef ADC_PORTS
-#define ADC_PORTS      0     ///< Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET)
-#endif
-
-
-
-/// @}
 /// @name Shades ...
 ///
-/// The 'shades' module allows to control up to two window shades or actuators
+/// The 'shades' module allows to control up to two window shades (blinds) or actuators
 /// in a wider sense (e.g. including actuators to open/close windows or gates).
 /// Each actuator is associated with two output pins to active its engine in
 /// the "up" or "down" direction and two input pins connected to two push buttons
@@ -320,10 +387,7 @@
 
 
 
-
-
-
-// *************************** Features: Auto-Completion ***********************
+// ************************ 2. Features: Auto-Completion ***********************
 
 
 #if !DOXYGEN
@@ -340,9 +404,23 @@
 // Matrix...
 #define WITH_MATRIX ((MATRIX_ROWS) * (MATRIX_COLS) != 0)
 
+#if !WITH_MATRIX    // Make sure that 'matDim' becomes 0 if there is no matrix ...
+#undef MATRIX_COLS
+#undef MATRIX_ROWS
+#define MATRIX_COLS 0
+#define MATRIX_ROWS 0
+#endif
 
-// Analog ...
+
+// Analog (ADC) ...
 #define WITH_ADC ((ADC_PORTS) > 0)
+
+
+// UART ...
+#if !UART_WITH_DRIVE
+#undef UART_TX_LISTEN
+#define UART_TX_LISTEN 0
+#endif
 
 
 // Shades ...
@@ -350,7 +428,7 @@
 
 
 // Timer ...
-#if WITH_MATRIX || WITH_SHADES || WITH_TEMP_ZACWIRE
+#if WITH_MATRIX || WITH_UART || WITH_SHADES || WITH_TEMP_ZACWIRE
   // The above features require the timer: Auto-enable it
 #undef WITH_TIMER
 #define WITH_TIMER 1
@@ -372,7 +450,7 @@
 
 
 
-// ********************** MCU: Pin Assignments *********************************
+// ******************* 3. MCU: Pin Assignments *********************************
 
 
 #if DOXYGEN
@@ -422,6 +500,15 @@
 #define P_TWI_MA_0_SCL      ///< TWI master: SCL pin
 #define P_TWI_MA_0_SDA      ///< TWI master: SDA pin
 
+// ADC(s) ...
+#define P_ADC_0             ///< ADC (0) pin
+#define P_ADC_1             ///< ADC 1 pin
+
+// UART ...
+#define P_UART_RX           ///< UART receive pin
+#define P_UART_TX           ///< UART transmit pin
+#define P_UART_DRIVE        ///< UART driver enable (set to 1 during transmission)
+
 // Temperature ...
 #define P_TEMP_ZACWIRE      ///< Temperature: ZACwire data pin
 
@@ -435,10 +522,6 @@
 #define P_SHADES_1_ACT_UP   ///< Shades 1: actuator "up" pin
 #define P_SHADES_1_ACT_DN   ///< Shades 1: actuator "down" pin
 
-// ADC(s) ...
-#define P_ADC_0             ///< ADC (0) pin
-#define P_ADC_1             ///< ADC 1 pin
-
   /// @}      // addtogroup brownies_pins
 #else // DOXYGEN
 
@@ -449,7 +532,7 @@
 // ***** ATtiny85 *****
 
 
-#if MCU_TYPE == MCU_TYPE_ATTINY85
+#if MCU_TYPE == BR_MCU_ATTINY85
 
 
 // Interrupts ...
@@ -477,6 +560,11 @@
 #define P_TWI_MA_0_SCL      P_B3
 #define P_TWI_MA_0_SDA      P_B4
 
+// UART ...
+#define P_UART_RX           P_B1
+#define P_UART_TX           P_B3
+#define P_UART_DRIVE        P_B4
+
 
 
 
@@ -484,7 +572,7 @@
 // ***** ATtiny84 *****
 
 
-#elif MCU_TYPE == MCU_TYPE_ATTINY84
+#elif MCU_TYPE == BR_MCU_ATTINY84
 
 
 // Interrupts ...
@@ -513,6 +601,15 @@
 #define P_TWI_MA_0_SCL      P_B0
 #define P_TWI_MA_0_SDA      P_B1
 
+// ADC(s) ...
+#define P_ADC_0             P_A5
+#define P_ADC_1             P_A7
+
+// UART ...
+#define P_UART_RX           P_B0
+#define P_UART_TX           P_B1
+#define P_UART_DRIVE        P_B2
+
 // Temperature ...
 #define P_TEMP_ZACWIRE      P_A0
 
@@ -527,10 +624,6 @@
 #define P_SHADES_1_ACT_UP   P_B2
 #define P_SHADES_1_ACT_DN   P_A7
 
-// ADC(s) ...
-#define P_ADC_0             P_A5
-#define P_ADC_1             P_A7
-
 
 
 
@@ -538,7 +631,7 @@
 // ***** ATtiny861 *****
 
 
-#elif MCU_TYPE == MCU_TYPE_ATTINY861
+#elif MCU_TYPE == BR_MCU_ATTINY861
 
 
 // Interrupts ...
@@ -578,7 +671,7 @@
 
 
 
-// *************************** Ports: Auto-Completion **************************
+// ************ 4. Pins: Auto-Completion and Interrupt Configuration ***********
 
 
 #if !DOXYGEN
@@ -650,17 +743,6 @@
 #define RESET_STATE_MATRIX    0     // drive '0' on row lines, keep column lines at high-impedance state
 
 
-// Temperature ...
-#if !WITH_TEMP_ZACWIRE || !defined(P_TEMP_ZACWIRE)
-#undef P_TEMP_ZACWIRE
-#define P_TEMP_ZACWIRE      0
-#endif
-
-#define RESET_DDR_IN_TEMP   P_TEMP_ZACWIRE
-#define RESET_DDR_OUT_TEMP  0
-#define RESET_STATE_TEMP    0
-
-
 // ADC(s) ...
 #if !WITH_ADC || ADC_PORTS < 1 || !defined(P_ADC_0)
 #undef P_ADC_0
@@ -675,6 +757,45 @@
 #define RESET_DDR_IN_ADC    (P_ADC_0 | P_ADC_1)
 #define RESET_DDR_OUT_ADC   0
 #define RESET_STATE_ADC     0
+
+
+// UART ...
+#if !WITH_UART
+#undef P_UART_RX
+#undef P_UART_TX
+#undef P_UART_DRIVE
+#define P_UART_RX           0
+#define P_UART_TX           0
+#define P_UART_DRIVE        0
+#else
+#if !UART_WITH_DRIVE
+#undef P_UART_DRIVE
+#define P_UART_DRIVE        0
+#endif
+#endif // !WITH_UART
+
+#define RESET_DDR_IN_UART   (P_UART_RX)
+#define RESET_DDR_OUT_UART  (P_UART_TX | P_UART_DRIVE)
+#define RESET_STATE_UART    (P_UART_TX)
+
+#define PCINT_PIN_UART      P_UART_RX
+#define PCINT_ISR_UART      UartISR
+
+
+
+// Temperature ...
+#if !WITH_TEMP_ZACWIRE || !defined(P_TEMP_ZACWIRE)
+#undef P_TEMP_ZACWIRE
+#define P_TEMP_ZACWIRE      0
+#endif
+
+#define RESET_DDR_IN_TEMP   P_TEMP_ZACWIRE
+#define RESET_DDR_OUT_TEMP  0
+#define RESET_STATE_TEMP    0
+
+#define PCINT_PIN_TEMP      P_TEMP_ZACWIRE
+#define PCINT_ISR_TEMP      TemperatureISR
+
 
 
 // Shades ...
@@ -713,46 +834,72 @@
 
 
 
-// *************************** Ports: Checks ***********************************
+// ************************ 5. Pins: Checks ************************************
 
 
 #if !DOXYGEN    // The doxygen preprocessor may have some problems with the following macros.
 
 
-// Check for pin conflicts ...
-#define USEMASK_TWI_MA  (RESET_DDR_IN_TWI_MA | RESET_DDR_OUT_TWI_MA)
-#define USEMASK_GPIO    (RESET_DDR_IN_GPIO | RESET_DDR_OUT_GPIO)
-#define USEMASK_MATRIX  (RESET_DDR_IN_MATRIX | RESET_DDR_OUT_MATRIX)
-#define USEMASK_TEMP    (RESET_DDR_IN_TEMP | RESET_DDR_OUT_TEMP)
-#define USEMASK_ADC     (RESET_DDR_IN_ADC | RESET_DDR_OUT_ADC)
-#define USEMASK_SHADES  (RESET_DDR_IN_SHADES | RESET_DDR_OUT_SHADES)
+// ***** Check for pin conflicts *****
 
-#if (TWI_SL_SCL | TWI_SL_SDA) & (USEMASK_TWI_MA | USEMASK_GPIO | USEMASK_MATRIX | USEMASK_TEMP | USEMASK_ADC | USEMASK_SHADES)
-#error "TWI slave pins conflict with others!"
+// Use masks per feature ...
+#define USEMASK_TWI_SL  (TWI_SL_SCL | TWI_SL_SDA)
+#define USEMASK_GPIO    (RESET_DDR_IN_GPIO    | RESET_DDR_OUT_GPIO    )
+#define USEMASK_TWI_MA  (RESET_DDR_IN_TWI_MA  | RESET_DDR_OUT_TWI_MA  )
+#define USEMASK_ADC     (RESET_DDR_IN_ADC     | RESET_DDR_OUT_ADC     )
+#define USEMASK_UART    (RESET_DDR_IN_UART    | RESET_DDR_OUT_UART    )
+#define USEMASK_MATRIX  (RESET_DDR_IN_MATRIX  | RESET_DDR_OUT_MATRIX  )
+#define USEMASK_TEMP    (RESET_DDR_IN_TEMP    | RESET_DDR_OUT_TEMP    )
+#define USEMASK_SHADES  (RESET_DDR_IN_SHADES  | RESET_DDR_OUT_SHADES  )
+
+// Combined use mask and arithmetic sum of all use masks ...
+//   If and only if two or more feature use masks have same bits set, these two numbers differ.
+#define USEMASK (USEMASK_TWI_SL | USEMASK_GPIO | USEMASK_TWI_MA | USEMASK_MATRIX | USEMASK_ADC | USEMASK_UART | USEMASK_TEMP | USEMASK_SHADES)
+#define USESUM  (USEMASK_TWI_SL + USEMASK_GPIO + USEMASK_TWI_MA + USEMASK_MATRIX + USEMASK_ADC + USEMASK_UART | USEMASK_TEMP | USEMASK_SHADES)
+
+// Check for errors ...
+#if USEMASK != USESUM
+
+// We have a conflict: Try to print the cause(s) as warnings ...
+#if (USEMASK & ~USEMASK_TWI_SL) == (USESUM - USEMASK_TWI_SL)
+#warning "TWI slave pins conflict with others!"
 #endif
 
-#if USEMASK_TWI_MA & (USEMASK_GPIO | USEMASK_MATRIX | USEMASK_TEMP | USEMASK_ADC | USEMASK_SHADES)
-#error "TWI master pins conflict with defined GPIOs or other pins!"
+#if (USEMASK & ~USEMASK_GPIO) == (USESUM - USEMASK_GPIO)
+#warning "GPIO pins conflict with others!"
 #endif
 
-#if USEMASK_MATRIX & (USEMASK_GPIO | USEMASK_TWI_MA | USEMASK_TEMP | USEMASK_ADC | USEMASK_SHADES)
-#error "Matrix pins conflict with defined GPIOs or other pins!"
+#if (USEMASK & ~USEMASK_TWI_MA) == (USESUM - USEMASK_TWI_MA)
+#warning "TWI master pins conflict with others!"
 #endif
 
-#if USEMASK_TEMP & (USEMASK_GPIO | USEMASK_TWI_MA | USEMASK_MATRIX | USEMASK_ADC | USEMASK_SHADES)
-//~ #define STR(x) XSTR(x)
-//~ #define XSTR(x) #x
-//~ #pragma message(STR(USEMASK_TEMP) "; " STR(USEMASK_ADC))
-#error "Temperature pin conflicts with defined GPIOs or other pins!"
+#if (USEMASK & ~USEMASK_MATRIX) == (USESUM - USEMASK_MATRIX)
+#warning "Matrix pins conflict with others!"
 #endif
 
-#if USEMASK_ADC & (USEMASK_GPIO | USEMASK_TWI_MA | USEMASK_MATRIX | USEMASK_TEMP | USEMASK_SHADES)
-#error "ADC pin(s) conflict with defined GPIOs or other pins!"
+#if (USEMASK & ~USEMASK_ADC) == (USESUM - USEMASK_ADC)
+#warning "ADC pin(s) conflict with others!"
 #endif
 
-#if USEMASK_SHADES & (USEMASK_GPIO | USEMASK_TWI_MA | USEMASK_MATRIX | USEMASK_TEMP | USEMASK_ADC)
-#error "Shades pin(s) conflict with defined GPIOs or other pins!"
+#if (USEMASK & ~USEMASK_UART) == (USESUM - USEMASK_UART)
+#warning "UART pin(s) conflict with others!"
 #endif
+
+#if (USEMASK & ~USEMASK_TEMP) == (USESUM - USEMASK_TEMP)
+#warning "Temperature pin conflicts with others!"
+#endif
+
+#if (USEMASK & ~USEMASK_SHADES) == (USESUM - USEMASK_SHADES)
+#warning "Shades pin(s) conflict with others!"
+#endif
+
+#error "There are pin conflicts!"
+
+#endif // USEMASK != USESUM
+
+
+
+// ***** Feature-specific checks *****
 
 
 // GPIO ...
@@ -760,12 +907,6 @@
     || (GPIO_IN_PRESENCE) >= (1 << GPIO_PINS_MAX) \
     || (GPIO_OUT_PRESENCE) >= (1 << GPIO_PINS_MAX)
 #error "GPIOs misconfigured: Too many or concliction GPIOs defined!"
-#endif
-
-
-// TWI  Hub...
-#if TWIHUB_PORT > TWI_MA_PORTS
-#error "TWI hub: non-existing master port selected"
 #endif
 
 
@@ -784,6 +925,12 @@
 #endif
 #if TWI_MA_PORTS > 4
 #error "At most 4 TWI master ports supported!"
+#endif
+
+
+// TWI Hub...
+#if TWIHUB_PORT > TWI_MA_PORTS
+#error "TWI hub: non-existing master port selected"
 #endif
 
 
@@ -807,8 +954,6 @@
 #error "Matrix: row and column pins overlap!"
 #endif
 
-// Temperature ...
-
 
 // ADCs ...
 #if ADC_PORTS > 0 && !P_ADC_0
@@ -819,6 +964,18 @@
 #endif
 #if ADC_PORTS > 2
 #error "At most 2 ADC ports supported!"
+#endif
+
+
+// UART ...
+#if WITH_UART && (!P_UART_RX || !P_UART_TX)
+#error "UART enabled by configuration, but no MCU pins available!"
+#endif
+
+
+// Temperature ...
+#if WITH_TEMP_ZACWIRE && (!P_TEMP_ZACWIRE)
+#error "Temperature ZACwire port enabled by configuration, but no MCU pin available!"
 #endif
 
 
@@ -840,13 +997,23 @@
 
 
 
-// *************************** MCU: Reset Pin Configuration ********************
+// *************************** 6. MCU: Main Macros *****************************
 
 
 // Reset configuration for all used pins ...
-#define RESET_DDR_IN_USED (RESET_DDR_IN_TWI_SL | RESET_DDR_IN_GPIO | RESET_DDR_IN_TWI_MA | RESET_DDR_IN_MATRIX | RESET_DDR_IN_TEMP | RESET_DDR_IN_ADC | RESET_DDR_IN_SHADES)
-#define RESET_DDR_OUT_USED (RESET_DDR_OUT_TWI_SL | RESET_DDR_OUT_GPIO | RESET_DDR_OUT_TWI_MA | RESET_DDR_OUT_MATRIX | RESET_DDR_OUT_TEMP | RESET_DDR_OUT_ADC | RESET_DDR_OUT_SHADES)
-#define RESET_STATE_USED (RESET_STATE_TWI_SL | RESET_STATE_GPIO | RESET_STATE_TWI_MA | RESET_STATE_MATRIX | RESET_STATE_TEMP | RESET_STATE_ADC | RESET_STATE_SHADES)
+#define RESET_DDR_IN_USED (RESET_DDR_IN_TWI_SL | RESET_DDR_IN_GPIO | RESET_DDR_IN_TWI_MA | RESET_DDR_IN_MATRIX | RESET_DDR_IN_ADC | RESET_DDR_IN_UART | RESET_DDR_IN_TEMP | RESET_DDR_IN_SHADES)
+#define RESET_DDR_OUT_USED (RESET_DDR_OUT_TWI_SL | RESET_DDR_OUT_GPIO | RESET_DDR_OUT_TWI_MA | RESET_DDR_OUT_MATRIX | RESET_DDR_OUT_ADC | RESET_DDR_OUT_UART | RESET_DDR_OUT_TEMP | RESET_DDR_OUT_SHADES)
+#define RESET_STATE_USED (RESET_STATE_TWI_SL | RESET_STATE_GPIO | RESET_STATE_TWI_MA | RESET_STATE_MATRIX | RESET_STATE_ADC | RESET_STATE_UART | RESET_STATE_TEMP | RESET_STATE_SHADES)
+
+// Interrupts: All PCINT pins ...
+#define PCINT_ALL_PINS (PCINT_PIN_UART | PCINT_PIN_TEMP)
+
+// Interrupts: PCINT ISR template ...
+#define PCINT_CALL_SUBISRS(P)                   \
+  if ((P) & PCINT_PIN_UART) PCINT_ISR_UART();   \
+  if ((P) & PCINT_PIN_TEMP) PCINT_ISR_TEMP();
+
+
 
 // Explicitly define the mask for all unused pins ...
 //    The TWI slave pins, Reset, VCC and GND are excluded here.

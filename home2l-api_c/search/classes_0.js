@@ -36,6 +36,7 @@ var searchData=
   ['cregex',['CRegex',['../classCRegex.html',1,'']]],
   ['cresource',['CResource',['../classCResource.html',1,'']]],
   ['cscreen',['CScreen',['../classCScreen.html',1,'']]],
+  ['cservicekeeper',['CServiceKeeper',['../classCServiceKeeper.html',1,'']]],
   ['cshell',['CShell',['../classCShell.html',1,'']]],
   ['cshellbare',['CShellBare',['../classCShellBare.html',1,'']]],
   ['cshellsession',['CShellSession',['../classCShellSession.html',1,'']]],

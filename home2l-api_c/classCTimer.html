@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-9-g0486 (2020-09-06)</span>
+   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -73,7 +73,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Timer class. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01275">1275</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01359">1359</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="base_8H_source.html">base.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -185,11 +185,11 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Setup and (re-)schedule timer. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">_time</td><td>Absolute time of the next invocation. A value of 0 means "now". A value &lt; 0 means "in `-_time` milliseconds from now". </td></tr>
+    <tr><td class="paramname">_interval</td><td>Repeat interval. A value of 0 inserts a one-shot timer. This number should be a power of 2 (see note above). </td></tr>
     <tr><td class="paramname">_func</td><td>Callback function to be executed at the given times. </td></tr>
     <tr><td class="paramname">_data</td><td>Data to be passed as the <code>data</code> argument to the callback function. </td></tr>
     <tr><td class="paramname">_creator</td><td>A reference to the creator. If set (<code>!= NULL</code>), the class takes over the ownership. of this object. In consequence, the caller does not need to keep a reference to this object, but can eventually remove all of them using <code><a class="el" href="classCTimer.html#a196fcc4b9e6b2c799d6815277486089b" title="Remove all timers created by _creator from the event list. ">DelByCreator()</a></code>. </td></tr>
-    <tr><td class="paramname">_time</td><td>Absolute time of the next invocation. A value of 0 means "now". A value &lt; 0 means "in `-_time` milliseconds from now". </td></tr>
-    <tr><td class="paramname">_interval</td><td>Repeat interval. A value of 0 inserts a one-shot timer. This number should be a power of 2 (see note above). </td></tr>
   </table>
   </dd>
 </dl>
@@ -222,7 +222,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <p>Indicate whether the timer is pending and may be executed in the future. </p>
 <p><b>Note:</b> Be careful with potential race conditions. A value of 'false' can be safely be used to draw conclusions, given that only the calling thread may call 'Set' &amp; friends. A value of 'true' may change to 'false' at any time. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01304">1304</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01388">1388</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 
 </div>
 </div>

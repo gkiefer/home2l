@@ -1,8 +1,8 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% This file is part of the Home2L project.
 %%
-%% (C) 2015-2020 Gundolf Kiefer
+%% (C) 2015-2021 Gundolf Kiefer
 %%
 %% Home2L is free software: you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -385,6 +385,19 @@
 The \textit{Home2L} \texttt{[houmtu:l]} suite is a collection of tools and libraries for automation in private homes. Its main features and design goals are:
 
 
+\subsection*{Versatile \textit{Resources} Library}
+
+The central component of the \textit{Home2L} suite is the \textit{Resources} library. It connects physical sensors and actors, software services, computers and more. Everything that can act or sense in the widest sense, can be modelled as a \textit{resource} in the \textit{Home2L} suite.
+
+All \textit{resources} are arranged in a common namespace, but driven and accessed in a completely distribited way from any computer. They can be manipulated or read out using the library, which provides full network transparency and supports arbitrary concurrent accesses from any process on any machine anytime.
+
+Resources are manipulated by means of independent \textit{requests} with individual attributes like priorities and time intervals. The user pushes a button to open the window blinds. One second later, a timer-triggered automatic rule tells the blinds to close. What should happen now? The \textit{request} model allows to clearly specify priorities (e.g. user interaction in favor of automation rules) and to handle concurrency properly.
+
+The \textit{Home2L Shell} is a powerful administration tool and allows to access resources and submit requests on the command line or by shell scripts.
+
+Both automation rules and resource drivers can also be part of a larger program. Any software linking against the \textit{Resources} library can access resources or publish own run-time information as resources.
+
+
 \subsection*{Efficient and Lightweight Design}
 
 All core components are written in C/C++, with a very minimum set of external dependencies beyond \textit{libc} - ideally suited for small embedded devices and microcontrollers. There is no need for a Java runtime environment or a heavy web framework. Starting up a server and a command shell and shutting both down again takes less than a second altogether - on an ARM-based minicomputer running at 144 MHz!
@@ -397,16 +410,16 @@ Central servers are single points of failure. \textit{Home2L} follows a complete
 
 \subsection*{Automation Rules Written in Python -- But Not Limited to That}
 
-There is no new language or tool to learn to formulate automation rules. \textit{Home2L} rules are typically formulated in Python, they profit from the simplicity and power of the Python language. There can be multiple rules scripts, they may run on any machine, and they may be combined with other software routines or be part of a larger application.
+There is no new language or tool to learn to formulate automation rules. \textit{Home2L} rules written in Python profit from the simplicity and power of the Python language. There can be multiple rules scripts, they may run on any machine, and they may be combined with other software routines or be part of larger applications.
 
 Other ways to interact with \textit{Home2L} resources is via the C/C++ API from any application or by shell scripts using the \textit{Home2L Shell} (see Sections~\ref{sec:resources-shell} and \ref{sec:tutorial-shell}).
 
 
-\subsection*{Easy Driver Development in C/C++, Python or Any Other Language}
-
-An API for \textit{resource} drivers allows to easily add support for new hardware or software services. A driver can be implemented in C/C++, in Python, or as a shell script. For all these cases, documented examples can be found in the source tree (see Section~\ref{sec:resources-drvdev}).
+\subsection*{Integrating Sensors/Actor Hardware and Services: MQTT, Python, Shell Scripts, ...}
 
 MQTT-enabled devices can be imported directly using the MQTT gateway driver (see Sections~\ref{sec:drvlib-mqtt} and \ref{sec:tutorial-mqtt}).
+
+An API for \textit{resource} drivers allows to easily add support for new hardware or software services. A driver can be implemented in C/C++, in Python, or as a shell script. For all these cases, documented examples can be found in the source tree (see Section~\ref{sec:resources-drvdev}).
 
 
 \subsection*{Easy Integration of ''Do-it-Yourself'' Hardware}
@@ -897,7 +910,7 @@ and Section~\ref{sec:resources-requests}) can be set in order to, for example, n
 but to autmatically turn it off again in an hour.
 
 
-\subsubsection{Simple Usage}
+\subsubsection{Easy Usage}
 
 Simple switching lights or closing shades is almost as easy as pushing a light button.
 Especially for household members with little technical affinity, it is important that standard use cases are easy.
@@ -1410,15 +1423,15 @@ We now manipulate the light by placing requests manually.
   as command line arguments. To turn the light on in 2 seconds and off
   again 3 seconds later enter:
   \begin{lstlisting}[language=home2l]
-    home2l> 1 +2000 -5000
+    home2l> 1 +2s -5s
     /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-141118.960
       ! (bool) 1         #shell        *7 +2020-01-11-141300.240 -2020-01-11-141303.240   @home2l-showcase<shell:431>/2020-01-11-141258
       ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
       ? wallclock/floorplan
       ? showhouse/UiDraw
   \end{lstlisting}
-  The arguments '+2000' and '-5000' add start and stop time attributes to
-  the request so that it becomes effective in 2000ms from now until 5000ms
+  The arguments '+2s' and '-5s' add start and stop time attributes to
+  the request so that it becomes effective in 2 seconds from now until 5 seconds
   from now.
 
 \item
@@ -1550,7 +1563,7 @@ The shell allows to subscribe to any resources using the ''s+'' and ''s-'' comma
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The \textit{Home2L Shell} can be run non-interactively, so that certain actions can be performed from shell scripts.
+The \textit{Home2L Shell} can be run non-interactively, so that certain actions can be performed from shell scripts. In general, the \lst{-e} option can be used to execute arbitrary commands without opening an interactive session. In addition, some \textit{Home2L Shell} commands can executed directly by a tool named after the command (e.g. \lstf{home2l r+}).
 
 \begin{itemize}[$\blacktriangleright$]
 
@@ -1561,27 +1574,60 @@ The \textit{Home2L Shell} can be run non-interactively, so that certain actions 
   \end{lstlisting}
 
 \item
-  To turn on the \textit{ShowHouse} light for 2 seconds:
+  To turn on the \textit{ShowHouse} light for 2 seconds (with priority 5):
   \begin{lstlisting}[language=bash]
-    $ home2l shell -e "c /alias/frontLight; 1 -2000"
+    $ home2l shell -e "c /alias/frontLight; 1 *5 -2s"
+  \end{lstlisting}
+  or alternatively:
+  \begin{lstlisting}[language=bash]
+    $ home2l r+ /alias/frontLight 1 *5 -2s
   \end{lstlisting}
 
 \item
   To log all motion events, you may use a command like:
   \begin{lstlisting}[language=bash]
-    $ home2l shell -e "s+ /host/showhouse/world/motion; f" | tee /tmp/motion.log
+    $ home2l shell -e "s+ /host/showhouse/world/motion; follow" | tee /tmp/motion.log
   \end{lstlisting}
-  (Of course, the command can also be run in the background.)
+  or shorter:
+  \begin{lstlisting}[language=bash]
+    $ home2l follow /host/showhouse/world/motion | tee /tmp/motion.log
+  \end{lstlisting}
+  (Of course, the commands can also be run in the background.)
 
 \item
-  To log the outside temparature over time, run:
+  To log the outside temperature over time, run:
   \begin{lstlisting}[language=bash]
-    $ home2l shell -e "s+ /alias/weather/temp; f"
+    $ home2l follow /alias/weather/temp
   \end{lstlisting}
   (Again, the output may be redirected at your choice as in the previous example.)
 
+\item
+  To obtain the current value of the door lock, run:
+  \begin{lstlisting}[language=bash]
+    $ home2l get /alias/doorLock
+  \end{lstlisting}
+
+\item
+  To wait until the door is locked (=1), run:
+  \begin{lstlisting}[language=bash]
+    $ home2l wait /alias/doorLock 1
+  \end{lstlisting}
+
 \end{itemize}
 
+
+\infobox{
+  The following commands are available for direct invocations as \lstf{home2l <cmd> [<args>]}:
+  \begin{itemize}
+    \item \lst{list} / \lst{show}
+    \item \lst{get} / \lst{wait}
+    \item \lst{r+} / \lst{request}
+    \item \lst{r-} / \lst{delrequest}
+    \item \lst{follow}
+  \end{itemize}
+  Commands in the same line are synonymous. To get information on these commands,
+  enter \lstf{help <cmd>} in the \textit{Home2l Shell} or run \lstf{home2l <cmd> -h}.
+}
 
 
 
@@ -1627,7 +1673,7 @@ MQTT messages manually.
     The topic \lst{home2l/online} indicates that the \textit{Home2L} MQTT gateway driver is online and alive.
     The topics \lst{mailbox/state} and \lst{mailbox/online} are \textit{not} controlled by the MQTT
     gateway driver. They refer to an external imported device and have been preset just by the
-    \lst{home2l demo} script (see Section~\ref{sec:tutorial-mqtt-imports}).
+    \lstf{home2l demo} script (see Section~\ref{sec:tutorial-mqtt-imports}).
   }
 
 \item
@@ -1873,9 +1919,171 @@ At your choice, it possible to use either your own MQTT broker or the MQTT broke
 
 \textit{Home2L} automation rules are normal Python scripts.
 They can be tested separately from already existing rules files and later be merged into them.
-Section~\ref{sec:tutorial-rules-python} gives an introduction to the \theapipython{} by
-means of an interactive Python session.
-After that, we will inspect and modify the supplied \reftool{rules-showhouse} file in Section~\ref{sec:tutorial-rules-examples}.
+Section~\ref{sec:tutorial-rules-example} describes this process for an example.
+Section~\ref{sec:tutorial-rules-python} gives an in-depth introduction to the
+\theapipython{} by means of an interactive Python session.
+Finally, the supplied \reftool{rules-showhouse} file will be inspected and extended in Section~\ref{sec:tutorial-rules-showhouse}.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Your Own Front Light Automation}
+\label{sec:tutorial-rules-example}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+In this section, we will deactivate the provided \reftool{rules-showhouse} script and write
+an own rules file to control the front light of the show house.
+
+\begin{itemize}[$\blacktriangleright$]
+
+\item
+  In the \textit{ShowHouse} window, quit ('Q') the \textit{ShowHouse} tool.
+  Then stop the \textit{Home2L} daemon together with \reftool{rules-showhouse} script and start
+  \reftool{home2l-showhouse} again:
+  \begin{lstlisting}[language=bash]
+    $ home2l demo stop
+    $ home2l showhouse
+  \end{lstlisting}
+
+  (This will stop the server instance, too, and the weather displays disappear. This is no problem.)
+
+  Then push 'M' and 'D' and verify that the front light no longer switches automatically on
+  motion at night.
+
+\item
+  Start a command shell in the Docker container (or switch to the one still open) and set
+  the \textit{Home2L} environment variables:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER bash
+    $ . /opt/home2l/env.sh   # to set the Python search path
+  \end{lstlisting}
+
+\item
+  Open a text editor to create a new file \lst{myrules}:
+  \begin{lstlisting}[language=bash]
+    $ cd
+    $ nano myrules
+  \end{lstlisting}
+  with the following contents:
+  \begin{lstlisting}
+    #!/usr/bin/python3
+
+    from home2l import *
+
+    # Init the Home2L package ...
+    Home2lInit ()
+
+    # Get some resource handles ...
+    rcDaylight = RcGet ("/alias/daylight")
+    rcRain = RcGet ("/alias/weatherWarning")
+    rcMotion = RcGet ("/alias/motion")
+    rcLight = RcGet ("/alias/frontLight")
+
+    # Rules area ...
+    rcLight.SetDefault (0)
+
+    Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = '#motion *3', delDelay = '5s')
+
+    # Go ahead ...
+    Home2lRun ()
+  \end{lstlisting}
+
+  The lines following \textit{''\# Get some resource handles...''} simply lookup some resource
+  objects and place them in Python variables. This is good practice, but not strictly
+  necessary. The rules commands later would also accept strings containing the resources
+  identifiers (URI) instead.
+
+  The rules area presently contains two calls controlling the front light (\lst{rcLight}):
+  The first (\lst{rcLight.SetDefault (0)}) sets a default request to let the light turn off (0)
+  if no other request is active.
+
+  The second rule (\lstf{Connect (...)}) is a connector that requests the light to turn on when
+  the motion detector (\lstf{rcMotion}) is active (\textit{True}) and to turn the light off
+  again 5 seconds after \lstf{rcMotion} becomes \textit{False} again.
+  The argument \lstf{attrs = '\#motion *3'} defines the request attributes
+  (request ID \textit{''motion''}, priority 3).
+  The argument \lstf{delDelay = '5s'} sets the delay for request deletion to 5 seconds.
+  The \lstf{lambda x: ...} expression is the so-called \textit{transfer function} and describes
+  how an \lst{rcMotion} value is translated into a request value for \lstf{rcLight}. In this
+  example, the light is requested to switch on (\lst{1}) if the motion sensor is active
+  (\lstf{x = True}), whereas the request \textit{''motion''} is deleted (\lstf{None}) in all
+  other cases.
+
+\item
+  Save the file and exit the editor. Then make it executable and run it:
+  \begin{lstlisting}[language=bash]
+    $ chmod a+x myrules
+    $ ./myrules
+  \end{lstlisting}
+  In the \textit{ShowHouse} windows, push 'M' and see that the front light switches on on
+  motion and stays on for 5 seconds.
+
+\item
+  The \lst{Connect(...)} statement is handy, but not the only solution for this rule.
+  Replace the line with the following code, which is -- besides the \lst{print()} statements --
+  equivalent, though a bit more verbose and extensible:
+  \begin{lstlisting}
+    @onUpdate (rcMotion)
+    def LightOnMotion (motion):
+      rcLight.SetRequest (1 if motion == True else None, attrs = '#motion *3', delDelay = '5s')
+      print ("Hi there - motion = " + str (motion))
+      # other arbitray Python code may be added here.
+  \end{lstlisting}
+  Run the modified script again and see that the front light is switched on motion as before,
+  while a text is printed whenever the value of \lst{rcMotion} changes.
+
+  As the \lst{print()} statement suggests, the function \lst{LightOnMotion()} is a normal
+  Python function, and it may contain any additional Code. The decorator
+  \lst{@onUpdate(rcMotion)} makes that function to be called whenever the value or state of
+  \lst{rcMotion} changes. The new resource value is passed as the function argument
+  (\lst{motion}).
+
+\item
+  To keep the light off at day time, another rule must be added. The following connector
+  lets the light stay off at day time, but not during rainy weather:
+  \begin{lstlisting}
+    Connect (rcLight, (rcDaylight, rcRain), lambda d, r: 0 if d == True and r == False else None, attrs = '#daylight *4')
+  \end{lstlisting}
+  Add this line to the script run it, and test its effect!
+
+\item
+  The previous example shows that connectors can have multiple source resources
+  (\lst{rcDaylight, rcRain}). Putting the logic into a single lambda expression may lead to
+  unreadable code for more complex functions. The following code is equivalent to it, but
+  uses a Python decorator to build a connector around a function:
+  \begin{lstlisting}
+    @connect (rcLight, (rcDaylight, rcRain), attrs = '#daylight *4')
+    def LightOffDuringDay (daylight, rain):
+      print ("LightOffDuringDay ({}, {}) called.".format (str(daylight), str(rain)))
+      if daylight == True and rain == False: return 0
+      return None
+  \end{lstlisting}
+  Similar to the \lst{@onUpdate} decorator, the function may contain arbitrary other Python
+  code, and it is called whenever a value or state of any of the resources \textit{rcDaylight}
+  or \textit{rcRain} changes.
+
+  Replace the \lst{Connect (...)} line with this alternative and run the script.
+  Manipulate the daylight and weather status in the \textit{ShowHouse} window and verify the
+  console output!
+
+\item
+  Stop the \textit{ShowHouse} script (press 'Q') and start it again. Watch the console output
+  of your \lst{myrules} script an see how it behaves if its resources get lost and reappear
+  again.
+
+\item
+  Finally, stop your \lst{myrules} script (\textit{Ctrl-C}) and start the \textit{Home2L}
+  daemon again:
+  \begin{lstlisting}[language=bash]
+    $ DOCKER demo start
+  \end{lstlisting}
+
+\end{itemize}
+
+
 
 
 
@@ -1885,18 +2093,20 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+This section describes an interactive Python session to explore some technical aspects of the \theapipython.
+
 \begin{itemize}[$\blacktriangleright$]
 
 \item
-  Start a command shell in the Docker container (or switch to the one still open):
+  Switch to the command shell of the previous section or start a new one with:
   \begin{lstlisting}[language=bash]
     $ DOCKER bash
+    $ . /opt/home2l/env.sh   # to set the Python search path
   \end{lstlisting}
 
 \item
-  Setup the \textit{Home2L} environment variables and start a Python session:
+  Start a Python session:
   \begin{lstlisting}[language=bash]
-    $ . /opt/home2l/env.sh
     $ python3
     ...
     >>>
@@ -1906,7 +2116,7 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
   Import the \textit{Home2L} package and initialize it:
   \begin{lstlisting}[language=python]
     >>> from home2l import *
-    >>> Home2lInit ("myrules")
+    >>> Home2lInit ("interactive")
   \end{lstlisting}
 
 \item
@@ -1935,7 +2145,7 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
   \reftool{home2l-showhouse}, enter:
   \begin{lstlisting}[language=python]
     >>> RcHosts ()
-    ['home2l-showcase<myrules:567>', 'server', 'showhouse', 'wallclock']
+    ['home2l-showcase<interactive:567>', 'server', 'showhouse', 'wallclock']
     >>> RcHostResources ("showhouse")
     ['/host/showhouse/signal/fp_mail', '/host/showhouse/signal/fp_music', '/host/showhouse/signal/fp_phone', '/host/showhouse/signal/fp_temp_bath',  ..., '/host/showhouse/world/bath-shades', '/host/showhouse/world/bath-window', '/host/showhouse/world/bedroom-shades', ..., '/host/showhouse/world/lock', '/host/showhouse/world/motion', '/host/showhouse/world/simBadWeather', '/host/showhouse/world/simDaylight']
   \end{lstlisting}
@@ -1954,9 +2164,9 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
   \begin{lstlisting}[language=python]
     >>> rcNow = RcGet ("/local/timer/now")
     >>> rcNow
-    (CResource) /host/home2l-showcase<myrules:567>/timer/now time ro
+    (CResource) /host/home2l-showcase<interactive:567>/timer/now time ro
     >>> rcNow.PrintInfo()
-    /host/home2l-showcase<myrules:567>/timer/now[time,ro] = 2020-01-11-150350 @2020-01-11-150350.000
+    /host/home2l-showcase<interactive:567>/timer/now[time,ro] = 2020-01-11-150350 @2020-01-11-150350.000
       (no requests)
       (no subscriptions)
     >>> rcNow.ValueState()
@@ -1981,7 +2191,7 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
     >>> str (rcNow.Value ())
     'None'
   \end{lstlisting}
-  \textbf{Oops!} The time is unknown? Well, this and the previous sequence is lacking
+  \textbf{Oh!} Why is the time unknown? Well, this and the previous sequence is lacking
   one important thing: To get values of resources, they must be subscribed to.
   The previous example only happened to work because we used local resources.
 
@@ -1989,11 +2199,11 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
   \begin{lstlisting}[language=python]
     >>> s = RcNewSubscriber ("mysub", rcNow)
     >>> s
-    (CRcSubscriber) home2l-showcase<myrules:567>/mysub: /host/wallclock/timer/now
+    (CRcSubscriber) home2l-showcase<interactive:567>/mysub: /host/wallclock/timer/now
     >>> rcNow.PrintInfo()
     /host/wallclock/timer/now[time,ro] = 2020-01-11-145439 @2020-01-11-145439.007
       (no requests)
-      ? home2l-showcase<myrules:567>/mysub
+      ? home2l-showcase<interactive:567>/mysub
       ? wallclock/floorplan
     >>> rcNow.ValueState()
     (CRcValueState) (time) 2020-01-11-144911
@@ -2012,15 +2222,15 @@ After that, we will inspect and modify the supplied \reftool{rules-showhouse} fi
   Resources can be manipulated by setting requests, for example, as follows:
   \begin{lstlisting}[language=python]
     >>> rcLight = RcGet ("/alias/frontLight")
-    >>> rcLight.SetRequest (True, "*5 -5000")
+    >>> rcLight.SetRequest (True, "*5 -5s")
   \end{lstlisting}
   The last command could also be written as:
   \begin{lstlisting}[language=python]
-    >>> rcLight.SetRequest (True, priority = 5, t1 = TicksOf (5000))
+    >>> rcLight.SetRequest (True, priority = 5, t1 = "5s")
   \end{lstlisting}
   ... or both together like:
   \begin{lstlisting}[language=python]
-  >>> RcSetRequest ("/alias/frontLight", "1 *5 -5000")
+  >>> RcSetRequest ("/alias/frontLight", "1 *5 -5s")
   \end{lstlisting}
   Actually, the methods \refapipython{CResource.SetRequest()} and \refapipython{RcSetRequest()}
   offer a wide range of possibilities to pass arguments. Values and attributes can be passed as strings
@@ -2045,7 +2255,7 @@ The rule monitors the current time and whenever the time changes, the value is p
   Therefore, we restart the \textit{Home2L} package first:
   \begin{lstlisting}[language=python]
   >>> Home2lDone ()
-  >>> Home2lInit ("myrules")
+  >>> Home2lInit ("interactive")
   \end{lstlisting}
 
 \item
@@ -2090,7 +2300,7 @@ The rule monitors the current time and whenever the time changes, the value is p
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{The \texttt{rules-showhouse} Automation Script}
-\label{sec:tutorial-rules-examples}
+\label{sec:tutorial-rules-showhouse}
 \labeltool{rules-showhouse}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2124,21 +2334,13 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
 
   Can you identify the rules mentioned above?
 
-  \infobox{
-    The rules script makes frequent use of the \refapipython{ValidValue} method to obtain values.
-    This method simplifies the handling of potentially unknown values by returning the passed
-    default value if the respective resouce value is unknown. For example, the line
-    \lstbox{if rcTempDayMaxOutside.ValidValue (0.0) < 25.0:}
-    can be read as ''if the temperature is less than 25.0 or unknown, then do ...''.
-  }
-
 \item
   In the next steps, we will modify the rules script. To facilitate editing and debugging,
   we will run it in the foreground as long as we work on it.
 
   Stop the \textit{Home2L} daemon:
   \begin{lstlisting}[language=bash]
-    $ DOCKER demo stop
+    $ DOCKER home2l demo stop
   \end{lstlisting}
 
   (The server instance will stop, too, and the weather displays disappear. This is no problem.)
@@ -2231,15 +2433,11 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
   at day time or whenever the door is unlocked in order to remind the user to
   lock it over night:
   \begin{lstlisting}
-    rcLock = RcGet ("/host/showhouse/world/lock")
-
-    @onUpdate(rcDaylight, rcLock)
-    def WallClockDisplayNew ():
-      print ("### daylight = " + str (rcDaylight.ValueState ()) + ", lock = " + str (rcLock.ValueState ()))
-      daylight = rcDaylight.ValidValue (False)
-      doorLocked = rcLock.ValidValue (False)
-      if not daylight and not doorLocked:
-        rcWallClockActive.SetRequest (value = True)
+    @onUpdate (rcDaylight, "/alias/doorLock")
+    def WallClockDisplayNew (daylight, lock):
+      print ("### daylight = {}, lock = {}".format (str (daylight), str (lock)))
+      if daylight == False and lock != True:
+        rcWallClockActive.SetRequest (1)
       else:
         rcWallClockActive.DelRequest ()
   \end{lstlisting}
@@ -2248,33 +2446,33 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
 
   The first line (\refapipython{@onUpdate()}), a Python \textit{decorator},
   causes the function \textit{WallClockDisplayNew()} to be called whenever
-  the value of any of the supplied resources changes. Inside the function
-  body, the values of \textit{rcDaylight} and \textit{rcLock} are
-  read using the \refapipython{ValidValue()} method, which takes a default
-  value as an argument and always returns a valid value, even if the
-  actual resource value is currently unknown. Depending on these values, a
-  request is set to switch the display active or not.
+  the value of any of the supplied resources changes. Depending on these values, a
+  request is set or deleted to switch the display active or not.
 
-  The line \lstf{print ("\#\#\# ...} just serves debugging purposes and is not strictly necessary.
+  The line \lstf{print (...)} just serves debugging purposes and is not strictly necessary.
 
 \item
   Add a new rule to mute the music player for 5 seconds if motion is detected in
   front of the house:
   \begin{lstlisting}
-    @onEvent ("/host/showhouse/world/motion")
+    @onEvent ("/alias/motion")
     def MuteOnMotion (ev, rc, vs):
       if ev == rceValueStateChanged and vs.Value () == True:
-        RcSetRequest ("/host/wallclock/ui/mute", "1 -5000")
+        RcSetRequest ("/host/wallclock/ui/mute", "1 -5s")
   \end{lstlisting}
-
   For demonstration purposes, this example uses the \refapipython{@onEvent()} decorator,
   which allows to track all events precisely.
+
+%  An alternative to this rule with similar semantics is:
+%  \begin{lstlisting}
+%    Connect ("/host/wallclock/ui/mute", "/alias/motion", lambda x: 1 if x == True else None, value = 1, delDelay = "5s")
+%  \end{lstlisting}
 
 \item
   Finally, start the \textit{Home2L} daemon again, which also starts your modified rules script
   in the background:
   \begin{lstlisting}[language=bash]
-    $ DOCKER demo start
+    $ DOCKER home2l demo start
   \end{lstlisting}
 
 \end{itemize}
@@ -3143,7 +3341,16 @@ To build and install the suite, do the following:
 
 This will install the so-called \textit{Home2L blob} on your computer. It
 contains all files for all architectures together with a sample
-configuration (in \textit{\$HOME2L\_ETC}). This \textit{blob} can now be simply
+configuration (in \textit{\$HOME2L\_ETC}).
+
+To complete the installation, run (assuming that the blob is installed in \textit{/opt/home2l}):
+\begin{lstlisting}
+$ sudo /opt/home2l/bin/home2l-install -i
+\end{lstlisting}
+
+The tool explains itself what it is doing.
+
+This \textit{blob} can later be simply
 copied to all machines of your cluster. The \reftool{home2l-rollout} tool
 can automate that for software or configuration updates.
 To use the \textit{Home2Ls}, some additional things have to be set up.
@@ -3235,16 +3442,6 @@ by the tools \reftool{home2l-install} and \reftool{home2l-rollout} as follows:
 \label{sec:installing-newhost}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-To install the \textit{Home2L} suite on the first computer, follow the building
-and installation steps described Section~\ref{sec:installing-compiling} to install
-a \textit{Home2L blob} on your \textit{master computer}. To complete the installation,
-run (assuming that the blob is installed in \textit{/opt/home2l}):
-\begin{lstlisting}
-$ sudo /opt/home2l/bin/home2l-install -i
-\end{lstlisting}
-
-The tool explains itself what it is doing.
 
 To prepare a new additional (Linux) machine and add it to the cluster, the
 installation blob can be cloned from an existing (typically the \textit{master}) machine.
@@ -4541,6 +4738,10 @@ The driver script is called by the \textit{Resources} library with one of the fo
                    # Drive a value (only in polling mode);
                    # The driver must report the success by means of a "v" message
                    # indicating the new value and state.
+                   # The argument <value> is either a valid value of the resource type
+                   # specified on initialization (see below) or "?" (unknown).
+                   # The latter indicates that no active request exists. In most cases,
+                   # a "?" should just be ignored by the driver.
 \end{lstlisting}
 
 In ''keep running'' mode, values to drive are passed to the script's standard input as lines with the following format:
@@ -4627,7 +4828,7 @@ Drivers can be registered as part of a Python application.
 
 A driver is defined using the decorator
 \begin{lstlisting}
-@newDriver ( <driver name>, [ <success state> ] )
+@driver ( <driver name>, [ <success state> ] )
 def DriverFunc (rc, vs):
   ...
 \end{lstlisting}
@@ -4642,7 +4843,7 @@ To improve code readability, it is allowed to place \refapipython{RcNewResource(
 The driver function \textit{DriverFunc()} is responsible for driving values to writable resources and is the similar to the
 \refapic{rcdOpDriveValue} operation in a binary driver. Different from binary drivers, the Python driver function is allowed to call \refapic{CResource::ReportValue()} to indicate its current value.
 
-Different from binary drivers, a Python driver is always called synchronously from the main Python thread (from \refapipython{Home2lRun()} or \refapipython{Home2lIterate()}) in a deferred way. Before this, immediately after the internal ''Drive'' operation, a state change towards ''busy'' is reported automatically. This automatic reporting behavior can be modified by the optional \textit{successState} argument of \textit{@newDriver} decorator (see \refapipython{NewDriver()} for possible options).
+Different from binary drivers, a Python driver is always called synchronously from the main Python thread (from \refapipython{Home2lRun()} or \refapipython{Home2lIterate()}) in a deferred way. Before this, immediately after the internal ''Drive'' operation, a state change towards ''busy'' is reported automatically. This automatic reporting behavior can be modified by the optional \textit{successState} argument of \textit{@driver} decorator (see \refapipython{NewDriver()} for possible options).
 
 Value and state changes can be reported any time by the \refapic{CResource::ReportValueState()} method.
 If only the value changed, \refapic{CResource::ReportValue()} can be used instead. With the \theapipython{}, the \refapic{CResource::Report...()} methods are the only ones that can be called from any thread. All other API functions must be called from the main thread.
@@ -4658,6 +4859,14 @@ If only the value changed, \refapic{CResource::ReportValue()} can be used instea
 
 
 In some places, particularly in the \reftool{home2l-shell} and the \theapipython{}, values, states or requests are printed or accepted in textual form. This section gives a reference on the syntax for value/state objects and requests.
+
+\textbf{Identifiers}, such as resource IDs, request IDs, subscriber IDs and instance names
+are case-sensitive and must be composed of the characters
+\begin{lstlisting}
+a..z A..Z 0..9 - _ .
+\end{lstlisting}
+where the initial character must not be \lst{0-9} or \lst{-}. Resource IDs and subscriber IDs
+can contain arbitrary slashes (\lst{/}) for defining a tree-structured namespace.
 
 The syntax of a \textbf{value/state} object is:
 \begin{lstlisting}
@@ -4771,11 +4980,11 @@ With the evolution of the \textit{Home2L} suite, the information above may becom
 
 With the \textit{Home2L} suite, automation scripts are typically written in Python. Automation scripts are normal Python programs. They can run on any machine, there can be multiple of them, and they can be started or stopped any time. The latter is particularly useful for testing and debugging. Even interactive work in a Python shell is possible.
 
-For a quick start, it is recommended to read the commented sample rules file \reftool{rules-showhouse} used in the tutorial (Chapter~\ref{ch:tutorial}). Also, it is worth looking into the source code of \reftool{home2l-showhouse}, which is implemented like a rules script in Python (see Sections \ref{sec:tutorial-rules} and~\ref{sec:tutorial-goingfurther}).
+For a quick start, it is recommended to read the tutorial (Section~\ref{sec:tutorial-rules-example}) and the commented sample rules file \reftool{rules-showhouse} used in the tutorial. Also, it is worth looking into the source code of \reftool{home2l-showhouse}, which is implemented like a rules script in Python (see Sections \ref{sec:tutorial-rules} and~\ref{sec:tutorial-goingfurther}).
 
-Typically, a rules script performs some initialization, declares some triggered functions, and finally calls \refapipython{Home2lRun()}) to enter the main event loop of the \textit{Home2L} library/package. While the native \textit{Home2L} library makes use of multi-threading, all Python functions besides \refapipython{CResource.Report...()} (see Section~\ref{sec:resources-drvdev-app-python}) must be called from the main thread.
+Typically, a rules script performs some initialization (\refapipython{Home2lInit()}), declares some triggered functions, and finally calls \refapipython{Home2lRun()} to enter the main event loop of the \textit{Home2L} library/package. While the native \textit{Home2L} library makes use of multi-threading, all Python functions besides \refapipython{CResource.Report...()} (see Section~\ref{sec:resources-drvdev-app-python}) must be called from the main thread.
 
-The following subsections give some additional hints and references to the respective places in the \theapipython{} documentation, which serves as a reference manual for rules writing.
+The following subsections give an overview on the various triggered functions (Section~\ref{sec:rules-events}), on accessing resource values and states (Section~\ref{sec:rules-values}), and on placing requests (Section~\ref{sec:rules-requests}).  Details can be found in the \theapipython{} documentation, which serves as a reference manual for rules writing.
 
 
 
@@ -4785,79 +4994,149 @@ The following subsections give some additional hints and references to the respe
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\subsection{Resource Events}
-
-Functions to be run on each event related to a specific set of resources can be defined with the \refapipython{@onEvent()} decorator:
-\begin{lstlisting}
-@onEvent ( <resources> )
-def MyFunc (ev, rc, vs):
-  # user code
-\end{lstlisting}
-
-Functions decorated this way are called for each individual event. This allows to receive all events without exceptions in the correct order (important to not miss any event or quick value change). Events can be value/state changes as well as indications whether the connection to a (remote) resource has been established or lost.
-
-As arguments, the decorator expects a set of resources for which events should be delivered. The argument may be a single resource, a tuple, or a list. Each resource may be specified by a string with its URI or by a reference to the resource object previously retrieved by \refapipython{RcGet()}.
-
-The argument \textit{'ev'} passed to the user function identifies the type of event,
-which can be:
-\begin{itemize}
-  \item \refapic{rceValueStateChanged}: The value or state has changed.
-  \item \refapic{rceConnected}: The connection has been (re-)established.
-  \item \refapic{rceDisconnected}: The connection has been lost.
-\end{itemize}
-The arguments \textit{rc} and \textit{vs} are the resource and their
-current value and state (see class \refapic{CRcValueState}), respectively.
-
-\infobox{
-  To maintain the precise event model, it is important to always use the passed argument
-  \textit{vs} and to never query \textit{rc} for its value/state, which may have changed since the event occurred.
-}
-
+The \textit{Home2L} package defines a number of Python decorators allowing to execute functions at certain occasions.
 
 
 \subsection{Value/State Updates}
 
-Functions decorated with \refapipython{@onUpdate()} are called whenever the value or state of a resource changes:
+Functions decorated with \refapipython{@onUpdate} are executed whenever the value or state of a resource changes:
 \begin{lstlisting}
-@onUpdate ( <resources> )
-def MyFunc ():
-  # user code
+  @onUpdate ( <resources> )
+  def MyFunc (a, b, c, ...):
+    # user code
 \end{lstlisting}
 
-If the value or state changes very quickly, the user function may be called only for the
-latest, most up-to-date value/state. Unlike functions decorated with
-\refapipython{@onEvent()}, events may automatically be dropped to optimize performance.
-This decorator is recommended if it is sufficient to always have the most up-to-date
-value/state of a resource, whereas the precise sequence of events is not relevant.
+\textit{a, b, c, ...} are arbitrary positional arguments, which are filled with the current values of the resources specified by \textit{<resources>}.
 
-\infobox{
-  \textit{MyFunc()} has no arguments here. Unlike the precise event model, with the
-  ''always up to date'' model assumed here, it is not critical to read the value/state
-  of some resource inside the user function. The worst thing that can happen is that
-  a value newer than the value that caused the invocation of the user function is
-  retrieved.
-}
+In the following example, the function \lst{WallClockDisplayNew (daylight, lock)} is executed whenever any of the resources \textit{rcDaylight} or \textit{rcLock} changes its value or state. The arguments \textit{daylight} and \textit{lock} contain the current values of the two resources on invocation. Both may occasionally be \textit{None} if the respective resource is unavailable. This is taken into account in the \lst{if ...} statement, which compares the arguments with explicit values (\textit{False} or \textit{True}).
+
+\begin{lstlisting}
+  rcDaylight = RcGet ("/alias/daylight")
+  rcLock = RcGet ("/alias/doorlock")
+  rcWallClockActive = RcGet ("/host/wallclock/ui/active")
+
+  @onUpdate (rcDaylight, rcLock)
+  def WallClockDisplayNew (daylight, lock):
+    if daylight == False and locked != True:
+      rcWallClockActive.SetRequest (1)
+    else:
+      rcWallClockActive.DelRequest ()
+\end{lstlisting}
+
+
+\textbf{Note:} If the value or state changes very quickly, the user function may be called only for the latest, most up-to-date value/state. Events may automatically be dropped to optimize performance. In most cases, this is the desired behavior. However, if the precise sequence of events is relevant, the decorator \refapipython{@onEvent} can and must be used instead.
 
 
 
 \subsection{Timed Functions}
 
-To run a function at a certain time or at certain intervals, the \refapipython{@at()} decorator can be used:
+To run a function at a certain time or at certain intervals, the \refapipython{@at} decorator can be used:
 \begin{lstlisting}
-@at ( t = <t> [ , dt = <interval> ] )
-def MyFunc ():
-  # user code
+  @at ( [ t = <t> ] [ , dt = <interval> ] [, args = <args> ] )
+  def MyFunc ( [ <args> ] ):
+    # user code
 \end{lstlisting}
 
-The \textit{dt} argument is optional. If unset (\textit{None} or 0), the function is called once only.
+The argument \textit{t} specifies the time of the (first) invocation. If left unspecified, the function is executed immediately. The \textit{dt} specifies the repetition interval. If unset (\textit{None} or 0), the function is called once only. For specifying times, any data type or string accepted by \refapipython{TicksAbsOf()} (\textit{t}) or \refapipython{TicksRelOf()} (\textit{dt}) can be supplied. See Section~\ref{sec:resources-syntax} for the syntax of time defining strings.
 
-Sometimes, a timed function is to be run multiple times in different situations.
-The reuse of the user function (\textit{MyFunc()} ) is simplified, if
+Sometimes, a timed function is to be run multiple times in different situations. The reuse of the user function (\textit{MyFunc()} ) is simplified, if
 \begin{lstlisting}
 RunAt (func, t, dt = 0, data = None)
 \end{lstlisting}
-
 is used instead of the decorator.
+
+\textbf{Example}
+\begin{lstlisting}
+  @at (dt = "5s")
+  def RefreshWatchdogRequest ():
+    # This function is executed every 5 seconds.
+    ...
+\end{lstlisting}
+
+
+
+
+\subsection{Connectors}
+
+A \textit{connector} is a background task, which continuously monitors a set of source (e.g. sensor) resources  and connects them to a target resource by setting (or deleting) a corresponding request to the target. The kind of connection is specified by a \textit{transfer function}, which allows to cover different use cases. For example,
+\begin{itemize}
+  \item a (Boolean) source value may be transferred ''as is'' to the target (i.e., if the
+    source value is \textit{False} a request with value \textit{False} will be set for the
+    target).
+  \item a Boolean source value may be transferred such that a value of \textit{True} results in
+    a target request with value \textit{True}, whereas in the other case no target request is
+    placed. This is useful if there are multiple ''reasons'' (e.g. motions sensors) for
+    switching on some service (e.g. a light), whereas the absence of a reason shall not force
+    the service to be off.
+  \item multiple source values may be combined by an arbitrary function.
+\end{itemize}
+
+A connector is created by calling
+\begin{lstlisting}
+  Connect ( <target>, <source resources>, <func>, <request attributes> )
+\end{lstlisting}
+or by writing a decorated transfer function:
+\begin{lstlisting}
+  @connect ( <target>, <source resources>, <request attributes> )
+  def ConnectTargetToSource (a, b, c, ...):
+    # Code for the transfer function; a, b, c, ... are the values of the source resources
+    return <result or 'None'>
+\end{lstlisting}
+If \textit{None} is returned by the transfer functions, no request is set (or the request is deleted).
+
+\textbf{Example}
+\begin{lstlisting}
+  Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = "#motion *3", delDelay = "5s")
+\end{lstlisting}
+This example connects the \textit{rcMotion} sensor to the \textit{rcLight} resource by maintaining requests with attributes \lstf{''\#motion *3''} (request ID = ''motion'', priority 3). The function \lst{lambda x: ...} transforms the value of the motion sensor to a requested value for the light. In this case, a motion value of \textit{True} causes the light to be switched on (value '1'). In all other cases, no request is set (value \textit{None}). If a request is deleted, this happens with a delay of 5 seconds (\lstf{delDelay = '5s'}).
+
+An equivalent form using the decorator is:
+\begin{lstlisting}
+  @connect (rcLight, rcMotion, attrs = "#motion *3", delDelay = "5s")
+  def ConnectLightToMotion (motion):
+    if motion == True: return 1
+    else: return None
+\end{lstlisting}
+
+Connectors can always be written by means value/state-triggered functions. The above example is also equivalent to:
+\begin{lstlisting}
+  @onUpdate (rcMotion)
+  def ConnectLightToMotion (motion):
+    rcLight.SetRequest (1 if motion == True else None, attrs = "#motion *3", delDelay = "5s")
+\end{lstlisting}
+
+
+
+\subsection{Gates}
+
+Gates are new read-only resources continuously showing values that are calculated by their \textit{gate function} based on values of other (source) resources. They can be seen as (logical) components in a circuit of automation rules.
+
+They can be defined by
+\begin{lstlisting}
+  NewGate ( <resource LID> , <type>, <source resources>, <func> )
+\end{lstlisting}
+or (decorator variant) as follows:
+\begin{lstlisting}
+  @gate ( <resource LID> , <type>, <source resources>, <func> )
+  def MyGate (a, b, c, ...):
+    # Code for the gate function; a, b, c, ... are the values of the source resources
+    return <result or 'None'>
+\end{lstlisting}
+
+Gates are assigned to the internal driver \lst{gate}, they can be accessed by the URI \lst{/local/gate/<resource LID>} or externally (if the resources server is enabled) by \lst{/host/<instance>/gate/<resource LID>}.
+
+\textbf{Example}
+\begin{lstlisting}
+  @gate ("hotDay", rctBool, rcTempDayMaxOutside, rcRainyWeather)
+  def GateHotDay (temp, rain):
+    if rain == True: return False
+    if temp >= 25.0: return True
+    return False
+\end{lstlisting}
+
+This example represents a new Boolean resource \lst{/local/gate/hotDay} indicating whether it is a hot day depending on raw data from other resources.
+
+\textit{Gates} and \textit{connectors} have some similarities. In particular, their gate and  transfer functions have the same interfaces an may be used interchangeably. The difference is that gates generate a new readable resource, while connectors set requests for an existing target resource.
 
 
 
@@ -4877,6 +5156,36 @@ As an argument, the decorator expects a set of host IDs, which is a list or tupl
 The user function \textit{MyFunc()} is called with the host ID as an argument on each day, shortly after midnight. It is called once per host, so that it should only set requests for the host identified by the argument.
 
 Note: For getting the time and to detect the presence or absence of a host, the \refapipython{@daily} decorator subscribes to the \refrc{timer/daily} resources of each host of the host set. If no host is passed, \code{/local/timer/daily} is subscribed. Hence, it is required that the \textit{timer} driver is not disabled on any of the hosts.
+
+
+
+\subsection{Precise Event Tracing}
+
+Functions to be run on each event related to a specific set of resources can be defined with the \refapipython{@onEvent()} decorator:
+\begin{lstlisting}
+@onEvent ( <resources> )
+def MyFunc (ev, rc, vs):
+  # user code
+\end{lstlisting}
+
+This allows to receive all events without exceptions in the correct order, and even quick value changes of the same or different resources can be captured precisely. Besides value/state changes, also other events are captured, such as indications whether the connection to a (remote) resource has been established or lost.
+
+As arguments, the decorator expects a set of resources for which events should be delivered. The argument may be a single resource, a tuple, or a list. Each resource may be specified by a string with its URI or by a reference to the resource object previously retrieved by \refapipython{RcGet()}.
+
+The argument \textit{ev} passed to the user function identifies the type of event, which can be:
+\begin{itemize}
+  \item \refapic{rceValueStateChanged}: The value or state has changed.
+  \item \refapic{rceConnected}: The connection has been (re-)established.
+  \item \refapic{rceDisconnected}: The connection has been lost.
+\end{itemize}
+The arguments \textit{rc} and \textit{vs} are the resource and their current value and state (see class \refapic{CRcValueState}), respectively.
+
+\infobox{
+  It is important to always use the passed argument \textit{vs} and to never query \textit{rc}
+  for its value/state inside the function, since that may have changed since the event
+  occurred. Event-triggered functions accessing resources to read values most probably have a
+  design flaw and are prone to race condition bugs!
+}
 
 
 
@@ -4933,20 +5242,12 @@ vs.IsKnown ()   # True, if the value can be retrieved (state is 'rcsValid' or 'r
 
 
 \warnbox{
-  Due to the highly concurrent nature of the \textit{Resources} library, resource values and
-  states may change any time. In particular, multiple successive calls of \refapipython{CResource.ValueState()} or
-  \refapipython{CResource.Value()} may deliver different results.
+  Resource values and states may change any time. Hence, multiple successive calls of
+  \refapipython{CResource.ValueState()} or \refapipython{CResource.Value()} may deliver
+  different results.
   The method \refapipython{CResource.ValueState()} delivers a consistent local copy of
   the complete value/state object, so that it is safe to read multiple attributes
-  from \textit{''vs''}afterwards.
-}
-
-
-\warnbox{
-  To functions decorated with \refapipython{@onEvent()}, an appropriately captured value/state
-  object is already passed by the \textit{''vs''} argument, and that must be used in order
-  to avoid race conditions. Event-triggered functions accessing their resources to read values
-  most probably have a design flaw and are prone to race conditions!
+  from \textit{''vs''} afterwards.
 }
 
 
@@ -5544,7 +5845,7 @@ The \textit{Brownie maintenance tool} (\reftool{home2l-brownie2l}) is a powerful
 
 Details about the respective operations are provided by the online help (''help'' command).
 
-The \textit{Brownie tool} can operate without any database and thus help to create or update a database. If available, the database is specified with the \refenv{br.database} parameter.
+The \textit{Brownie tool} can operate without any database and thus help to create or update a database. If available, the database is specified with the \refenv{br.config} parameter.
 
 The \textit{Brownie tool} may access the bus either directly or attach to a running driver (\reftool{home2l-drv-brownies}). The interface is specified by the \refenv{br.link} parameter. Attaching to a running driver allows to keep the driver running for a long time and collect long-term statistics. While attached, the driver suspends its normal operation (resources get invalidated during that time) to avoid collisions with actions performed by the \textit{Brownie tool}.
 
@@ -5626,7 +5927,7 @@ A \textit{Brownie} database always refers to one bus tree with a single root mas
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-This section gives background information on the more complex device features (\textit{firmware modules}). The details can generally be found
+This section gives background information on the device features (\textit{firmware modules}). The details can generally be found
 \begin{itemize}
   \item in the \refapicgroup{brownies__features}{code documentation (Brownies / Features)}
         for compile-time options and technical aspects,
@@ -5635,6 +5936,47 @@ This section gives background information on the more complex device features (\
   \item in Section~\ref{sec:drvlib-brownies-env} for run-time options,
   \item in Section~\ref{sec:drvlib-brownies-rc} for the provided resources.
 \end{itemize}
+
+
+
+\subsection{General-Purpose Digital I/Os (\textit{gpio})}
+\label{sec:brownies-features-gpio}
+
+Most microcontroller pin can be configured as general-purpose inputs or outputs using the  \refapic{GPIO\_IN\_PRESENCE} and \refapic{GPIO\_OUT\_PRESENCE} bit masks. For inputs, the internal pull-ups can be activated arbitrarily (\refapic{GPIO\_IN\_PULLUP}). For outputs, the initial power-on value can be defined by the \refapic{GPIO\_OUT\_PRESET} setting.
+
+GPIO inputs are not debounced explicitly. If debouncing is desired, the \textit{matrix} module (see Section~\ref{sec:brownies-features-matrix}) may be used instead.
+
+
+
+\subsection{Switch Matrix (\textit{matrix})}
+\label{sec:brownies-features-matrix}
+
+Purpose of the \textit{matrix} module is to drive a larger number of binary sensors, usually arranged as a diode matrix, with special options for window sensors.
+
+The matrix has a preconfigured number of \textit{rows R} and \textit{columns C}. The last $R$ GPIO pins are assigned to rows and act as stimulation outputs, the $C$ GPIO pins preceding the row lines are the sensing inputs and assigned to columns. Periodically, the firmware drives a high value (VCC) to exactly one row output (the others are kept at GND level) and reads the column inputs. The column inputs must have pull-down resistors towards GND. This way, the firmware can detect which column signals have a connection to the row signal. The sensor switches must be installed such that each of them connects a unique combination of row and column lines in line with a diode from the row line towards the column line.
+
+As a special case, if only a single row is configured, no row output signals are generated (and no output pin is reserved). In this case, the column lines act as general-purpose inputs, but with debouncing enabled and with the option to interpret signal pairs as indicators for a window state (see below).
+
+The sensor values are debounced internally, the scan frequency can be adjusted with the \refapic{MATRIX\_T\_PERIOD} setting. An internal event queue ensures that quick changes and the order of changes can be preserved even in presence of delays in the communication with the Linux host.
+
+In addition, the \textit{matrix} module can combine the information of two window reed sensors into a single resource indicating whether a window is closed, open or tilted. Different placements of reed sensors are supported. Details can be found in the documentation of \refenv{br.matrix.win.<brownieID>.<winID>}.
+
+
+
+\subsection{Analog Sensing (\textit{adc})}
+\label{sec:brownies-features-adc}
+
+\textit{The ADC feature is not implemented yet. This section is under construction.}
+
+
+
+\subsection{Serial Interface (\textit{uart})}
+
+The \textit{uart} module (UART = Universal Asynchronous Receiver-Transmitter) allows to connect to devices with a UART-like interface such as RS485. It allows to connect remote devices such as heating controllers or ventilation machines with RS485 interfaces to the \textit{Brownie} bus.
+
+The \textit{uart} module supports bit rates of up to 19,200 baud and common UART parameters. However, it is designed for low data throughput only. A few tens of bytes per second (e.g. typical control and status messages) are supported pretty reliably, but nothing more due to the limited data throughput of the \textit{Brownie} protocol. The size of the receive buffer (\refapic{UART\_RX\_BUFSIZE}) must be at least as big as the size of a status messages to be received.
+
+On the host, the UART is made accessible as a Unix domain socket named \lstf{\$HOME2L\_TMP/brownies/<Brownie ID>.uart}.
 
 
 
@@ -5650,23 +5992,10 @@ In the \textit{Brownie} firmware, the \textit{ZACwire} datagrams are received by
 
 
 
-\subsection{Switch Matrix (\textit{matrix})}
-\label{sec:brownies-features-matrix}
-
-Purpose of the \textit{matrix} module is to drive a larger number of sensors arranged as a diode matrix with special options for window sensors.
-
-The matrix has a preconfigured number of \textit{rows R} and \textit{columns C}. The last $R$ GPIO pins are assigned to rows and act as stimulation outputs, the $C$ GPIO pins preceding the row lines are the sensing inputs and assigned to columns. Periodically, the firmware drives a high value (VCC) to exactly one row output (the others are kept at GND level) and reads the column inputs. The column inputs must have pull-down resistors towards GND. This way, the firmware can detect which column signals have a connection to the row signal. The sensor switches must be installed such that each of them connects a unique combination of row and column lines in line with a diode from the row line towards the column line.
-
-The sensor values are debounced internally, the scan frequency can be adjusted with the \refapic{MATRIX\_T\_PERIOD} setting. An internal event queue ensures that quick changes and the order of changes can be preserved even in presence of delays in the communication with the Linux host.
-
-In addition, the \textit{matrix} module can combine the information of two window reed sensors into a single resource indicating whether a window is closed, open or tilted. Different placements of reed sensors are supported. Details can be found in the documentation of \refenv{br.matrix.win.<brownieID>.<winID>}.
-
-
-
-\subsection{Window Shades and Openers (\textit{shades})}
+\subsection{Window Shades, Blinds and Openers (\textit{shades})}
 \label{sec:brownies-features-shades}
 
-The \textit{shades} module implements the functionality of one or two shades (or blinds) or window opening actuators together with a pair of push buttons (up/down) each.
+The \textit{shades} module implements the functionality of one or two shades, blinds or window opening actuators (any of which referred to as \textit{shades}) together with a pair of push buttons (up/down) each.
 
 The shades can be controlled either with the device buttons directly or remotely by the Linux host via the \reftool{home2l-drv-brownies} driver. The firmware ensures that even in case of a bus failure, the actuators can be be controlled by the device buttons directly. Optionally, they can be configured to automatically move into a fail-safe position (e.g. "window closed") in case of a bus failure. This behavior is compiled into the firmware by the \refapic{SHADES\_0\_RINT\_FAILSAFE} / \refapic{SHADES\_1\_RINT\_FAILSAFE} feature settings and cannot be accidentally disabled or changed by configuration.
 
@@ -5682,13 +6011,6 @@ The current actuator position is traced with the help of a timer. To make this w
 The actuators must have internal limit switches to avoid damage.
 
 Within the \reftool{home2l-drv-brownies} driver, the state of an actuator is represented by the resource \refrc{brownies/<brownieID>/shades<n>/pos}, which is a percentage value between 0\% (= ''shades up'' or ''window closed'') and 100\% (= ''shades down'' or ''window open''). Movement can be triggered by setting a request with the target position to this resource. If the user pushes one of the two buttons, an automatic request with the desired position is generated.
-
-
-
-\subsection{Analog Sensing (\textit{adc})}
-\label{sec:brownies-features-adc}
-
-\textit{The ADC feature is not implemented yet. This section is under construction.}
 
 
 
@@ -5753,9 +6075,12 @@ The directory \refsrc{brownies/circuits} contains some sample circuits as inspir
     contains useful information on this, \textit{BSS138} is a suitable transistor model.
 
   \item[Matrix 4x8 (\code{matrix4x8})] ~ \\
-    is board incorporating a \textit{Brownie} capable of monitoring up to 32 switch sensors
+    is a board incorporating a \textit{Brownie} capable of monitoring up to 32 switch sensors
     (e.g. window reed contacts). In addition, the board can host a B-type hub and a temperature
     sensor.
+
+  \item[Relais and RS485 (\code{relais_rs485})] ~ \\
+    contains 4 GPIO-switchable relays, a digital sensor input and an RS485 interface with galvanic separation.
 
   \item[Window (\code{window})] ~ \\
     is a small board to be placed near a window with electrical shades.
@@ -6614,6 +6939,35 @@ Service (DWD).
 \subsection{Provided Resources}
 \label{sec:drvlib-weather-rc}
 \input{ref_rc_drv_weather}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \textit{MPD} Monitor Driver}
+\label{sec:drvlib-mpd} \labeltool{home2l-drv-mpd}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Description}
+\label{sec:drvlib-mpd-description}
+
+The \textit{MPD} monitor driver connects to running MPD instances and provides their player states as resources of type \refapic{ERctPlayerState}.
+
+Also, MPD players being in a paused state for a longer time are stopped after a defined time.
+
+
+
+\subsection{Configuration Parameters}
+\label{sec:drvlib-mpd-env}
+\input{ref_env_drv_mpd}
+
+
+\subsection{Provided Resources}
+\label{sec:drvlib-mpd-rc}
+
+For each defined MPD server, a read-only resource of type \refapic{ERctPlayerState} is provided with the local ID (LID) being equal to the server ID.
 
 
 

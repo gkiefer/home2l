@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2019-2020 Gundolf Kiefer
+# (C) 2015-2021 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,17 +66,17 @@ all: build
 
 BROWNIE2L := home2l-brownie2l
 BROWNIE2L_BIN := $(DIR_OBJ)/$(BROWNIE2L)
-SRC_BROWNIE2L := $(SRC) $(BROWNIE2L).C
-OBJ_BROWNIE2L := $(SRC_BROWNIE2L:%.C=$(DIR_OBJ)/%.o)
+BROWNIE2L_SRC := $(SRC) $(BROWNIE2L).C
+BROWNIE2L_OBJ := $(BROWNIE2L_SRC:%.C=$(DIR_OBJ)/%.o)
 
 ifeq ($(WITH_READLINE),1)
 LDFLAGS += -lreadline
 endif
 
 
-$(BROWNIE2L_BIN): $(DEP_CONFIG) $(OBJ_BROWNIE2L)
+$(BROWNIE2L_BIN): $(DEP_CONFIG) $(BROWNIE2L_OBJ)
 	@echo LD $(BROWNIE2L)
-	@$(CC) -o $@ $(OBJ_BROWNIE2L) $(LDFLAGS)
+	@$(CC) -o $@ $(BROWNIE2L_OBJ) $(LDFLAGS)
 
 
 
@@ -86,7 +86,7 @@ $(BROWNIE2L_BIN): $(DEP_CONFIG) $(OBJ_BROWNIE2L)
 
 
 # Automatic dependencies...
--include $(OBJ_BROWNIE2L:%.o=%.d)
+-include $(BROWNIE2L_OBJ:%.o=%.d)
 
 
 

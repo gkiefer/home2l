@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,9 @@
 
 #include "gpio.h"
 #include "matrix.h"
-#include "temperature.h"
 #include "adc.h"
+#include "uart.h"
+#include "temperature.h"
 #include "shades.h"
 
 #include <string.h>
@@ -56,8 +57,9 @@
   PRE TwiHub##POST;                       \
   PRE Gpio##POST;                         \
   PRE Matrix##POST;                       \
+  PRE Adc##POST;                          \
+  PRE Uart##POST;                         \
   PRE Temperature##POST;                  \
-  PRE Adc##POST;                       \
   PRE Shades##POST;                       \
 } while(false)
 
@@ -75,6 +77,10 @@
  *
  * Note, that spurious interrupts may occur, since it is not possible to identify
  * a pin that causes an interrupt.
+ *
+ * Note: PCINT* interrupts are always cleared after the global ISR.
+ *       This is essential for the UART module and good for the temperature/ZACwire module,
+ *       but may cause other pin change interrupts to get lost.
  */
 
 
@@ -83,77 +89,53 @@
 
 // ***** Pin change interrupt (PCI) declarations for all modules *****
 
-
-#define PCI_TEMPERATURE_PIN P_TEMP_ZACWIRE
-#define PCI_TEMPERATURE_ISR TemperatureISR
-
-
-// All pins & ISRs...
-#define PCI_ALL_PINS (PCI_TEMPERATURE_PIN)
-
-#define PCI_CALL_SUBISRS(P) \
-  if ((P) & PCI_TEMPERATURE_PIN) PCI_TEMPERATURE_ISR();
-
-
-
-// ***** Pin Change ISRs *****
-
 /* Note: ATtiny84 and ATtiny have ISRs for 8-bit groups (PCINT0, PCINT1),
  *       ATtiny861 has a single vector for all pin change interrupts (PCINT).
  */
 
 
-#if defined(ISR_PCINT0) && (LO(PCI_ALL_PINS))
+#if defined(ISR_PCINT0) && (LO(PCINT_ALL_PINS))
 ISR(ISR_PCINT0) {
   //~ P_OUT_1 (P_A7);
-  PCI_CALL_SUBISRS (PCI_ALL_PINS & 0x00ff)
-#if LO(P_TEMP_ZACWIRE) && LO(P_TEMP_ZACWIRE) != LO(PCI_ALL_PINS)
-#warning "PCINT0 interrupts are cleared after the global ISR. This is good for the temperature/ZACwire module, but may cause other pin change interrupts to get lost"
-#endif
-  if (LO(P_TEMP_ZACWIRE)) GIFR |= (1 << PCIF0);    // Clear interrupt flag
+  PCINT_CALL_SUBISRS (PCINT_ALL_PINS & 0x00ff)
+  if (LO(PCINT_ALL_PINS)) GIFR |= (1 << PCIF0);    // Clear interrupt flag
   //~ P_OUT_0 (P_A7);
 }
 #endif
 
 
-#if defined(ISR_PCINT1) && (HI(PCI_ALL_PINS))
+#if defined(ISR_PCINT1) && (HI(PCINT_ALL_PINS))
 ISR(ISR_PCINT1) {
   //~ P_OUT_1 (P_A7);
-  PCI_CALL_SUBISRS (PCI_ALL_PINS & 0xff00)
-#if HI(P_TEMP_ZACWIRE) && HI(P_TEMP_ZACWIRE) != HI(PCI_ALL_PINS)
-#warning "PCINT1 interrupts are cleared after the global ISR. This is good for the temperature/ZACwire module, but may cause other pin change interrupts to get lost"
-#endif
-  if (HI(P_TEMP_ZACWIRE)) GIFR |= (1 << PCIF1);    // Clear interrupt flag
+  PCINT_CALL_SUBISRS (PCINT_ALL_PINS & 0xff00)
+  if (HI(PCINT_ALL_PINS)) GIFR |= (1 << PCIF1);    // Clear interrupt flag
   //~ P_OUT_0 (P_A7);
 }
 #endif
 
 
-#if defined(ISR_PCINT) && (PCI_ALL_PINS)
+#if defined(ISR_PCINT) && (PCINT_ALL_PINS)
 ISR(ISR_PCINT) {
   //~ P_OUT_1 (P_A7);
-  PCI_CALL_SUBISRS (PCI_ALL_PINS)
-#if (P_TEMP_ZACWIRE) && (P_TEMP_ZACWIRE != PCI_ALL_PINS)
-#warning "PCINT interrupts are cleared after the global ISR. This is good for the temperature/ZACwire module, but may cause other pin change interrupts to get lost"
-#endif
-  if (P_TEMP_ZACWIRE) GIFR |= (1 << PCIF);    // Clear interrupt flag
+  PCINT_CALL_SUBISRS (PCINT_ALL_PINS)
+  if (PCINT_ALL_PINS) GIFR |= (1 << PCIF);    // Clear interrupt flag
   //~ P_OUT_0 (P_A7);
 }
 #endif
 
 
 static inline void InitInterrupts () {
-#if MCU_TYPE == MCU_TYPE_ATTINY85
-  PCMSK = PCI_ALL_PINS;
-  GIMSK = PCI_ALL_PINS ? (1 << PCIE) : 0;
-#elif (MCU_TYPE == MCU_TYPE_ATTINY84)
-  PCMSK0 = LO(PCI_ALL_PINS);
-  PCMSK1 = HI(PCI_ALL_PINS);
-  GIMSK = (LO(PCI_ALL_PINS) ? (1 << PCIE0) : 0) | (HI(PCI_ALL_PINS) ? (1 << PCIE1) : 0);
-#elif (MCU_TYPE == MCU_TYPE_ATTINY861)
-  PCMSK0 = LO(PCI_ALL_PINS);
-  PCMSK1 = HI(PCI_ALL_PINS);
-  GIMSK = ((PCI_ALL_PINS & 0x0f00) ? (1 << PCIE0) : 0) | ((PCI_ALL_PINS & 0xf0ff) ? (1 << PCIE1) : 0);
+#if MCU_TYPE == BR_MCU_ATTINY85
+  PCMSK = PCINT_ALL_PINS;
+  GIMSK = PCINT_ALL_PINS ? (1 << PCIE) : 0;
+#elif (MCU_TYPE == BR_MCU_ATTINY84)
+  PCMSK0 = LO(PCINT_ALL_PINS);
+  PCMSK1 = HI(PCINT_ALL_PINS);
+  GIMSK = (LO(PCINT_ALL_PINS) ? (1 << PCIE0) : 0) | (HI(PCINT_ALL_PINS) ? (1 << PCIE1) : 0);
+#elif (MCU_TYPE == BR_MCU_ATTINY861)
+  PCMSK0 = LO(PCINT_ALL_PINS);
+  PCMSK1 = HI(PCINT_ALL_PINS);
+  GIMSK = ((PCINT_ALL_PINS & 0x0f00) ? (1 << PCIE0) : 0) | ((PCINT_ALL_PINS & 0xf0ff) ? (1 << PCIE1) : 0);
 #else
 #error "Unsupported MCU type"
 #endif

@@ -17,6 +17,8 @@ var searchData=
   ['clearresources',['ClearResources',['../classCRcDriver.html#aaaea097aeec893fc59334019ff6b055f',1,'CRcDriver']]],
   ['cleartexture',['ClearTexture',['../classCWidget.html#a268e0110cb1b35e3bc7bbcdc3b7801c1',1,'CWidget']]],
   ['cleartimedcmds',['ClearTimedCmds',['../classCSleeper.html#ad20e131db83edc347d2f825d425808f5',1,'CSleeper']]],
+  ['close',['Close',['../classCServiceKeeper.html#a24ff02eff39e8c8c9cf9d88f700c41b6',1,'CServiceKeeper']]],
+  ['closenow',['CloseNow',['../classCServiceKeeper.html#ab18e6d923837fcc10e9dfc1a4de5b34c',1,'CServiceKeeper']]],
   ['colorblend',['ColorBlend',['../group__ui__base.html#gafa4dc090d42c3f5fa4646ad88ce3dca8',1,'ui_base.H']]],
   ['colorbrighter',['ColorBrighter',['../group__ui__base.html#ga99ebab916d2c5aeff968086bd1c12f7b',1,'ui_base.H']]],
   ['colordarker',['ColorDarker',['../group__ui__base.html#ga4081ed8b189ccf3cf998a475f9bf2316',1,'ui_base.H']]],

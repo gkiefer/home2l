@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2019-2020 Gundolf Kiefer
+ *  (C) 2015-2021 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,10 +23,15 @@
 #include "system.H"
 #include "apps.H"
 #include "app_phone.H"
+#include "app_music.H"
 
 #include <resources.H>
 
 #include <dirent.h>
+
+
+#define FLOORPLAN_MINI_COLORED 0     // set to 1 to use more colors in the mini view of the floorplan
+
 
 
 static class CFloorplan *fpFloorplan = NULL;
@@ -85,6 +90,14 @@ ENV_PARA_INT ("floorplan.motionRetention", envFloorplanMotionRetention, 300);
 
 
 // ***** Documentation of per-gadget options *****
+
+
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.optional", bool, false);
+  /* For icon-like or text gadgets: Declare the resource as optional
+   *
+   * If set, the respective gadget is declared optional. If resources of an
+   * optional gadget become unknown, the gadgets are not highlighted as defective.
+   */
 
 
 ENV_PARA_BOOL ("floorplan.win.handle", envFloorplanWinHandle, false);
@@ -460,7 +473,7 @@ static CRcRequest *NewUserRequest () {
 
 static void HandleLongPush (CResource *rc) {
   CRcRequest *req, reqDefault;
-  bool setNotReset = false, haveDefault;
+  bool setNotReset = false;
 
   // Determine new user request ...
   req = NewUserRequest ();
@@ -481,16 +494,9 @@ static void HandleLongPush (CResource *rc) {
   // Check if we should do "auto" instead of "reset" ...
   if (req && !setNotReset) {
 
-    // Check if a "_default" or "default" request has been set ...
-    rc->GetRequest (&reqDefault, "_default");
-    haveDefault = reqDefault.Value ()->IsValid ();
-    if (!haveDefault) {
-      rc->GetRequest (&reqDefault, "default");
-      haveDefault = reqDefault.Value ()->IsValid ();
-    }
-
-    // If we have a default, just remove the current user request ...
-    if (haveDefault) {
+    // Check if a "default" request has been set, if so just remove the current user request ...
+    rc->GetRequest (&reqDefault, rcDefaultRequestId);
+    if (reqDefault.Value ()->IsValid ()) {
       FREEO (req);
       rc->DelRequest (RcGetUserRequestId ());
     }
@@ -528,7 +534,7 @@ class CResourceDialog: public CMessageBox, public CTimer {
     void Setup (CResource *_rc, EGadgetType _subType, const char *_title);
 
     void SetLayout (bool _withInfo);
-    void UpdateRequest (bool fetchReq);       // to be called if the request changed
+    void UpdateRequests (bool fetchReq);       // to be called if the request changed
     void UpdateView ();                       // to be called if the resource value/state changed
     int Run (CScreen *_screen);               // always returns 0
 
@@ -546,8 +552,8 @@ class CResourceDialog: public CMessageBox, public CTimer {
     TColor color;
     CResource *rc;
     EGadgetType subType;
-    CRcRequest request;   // current own request (e.g. with GID "#user")
-
+    CRcRequest reqUser;     // current own request (e.g. with GID "#user")
+    CRcRequest reqDefault;  // current default request
     CButton btnValue;
     bool valueNotPlusButton;
 
@@ -558,7 +564,7 @@ class CResourceDialog: public CMessageBox, public CTimer {
     CString *choiceText;
     float *choiceVal;     // common type for values (string types are not supported)
 
-    CButton btnBack, btnAuto, btnEdit;
+    CButton btnBack, btnAuto, btnDefault, btnEdit;
 
     bool withInfo;
     CCanvas cvsInfo;
@@ -569,28 +575,25 @@ class CResourceDialog: public CMessageBox, public CTimer {
 
 class CScreenResourceEdit: public CInputScreen {
   public:
-    CScreenResourceEdit () { inputReq = NULL; }
-    ~CScreenResourceEdit () { if (inputReq) delete inputReq; }
+    CScreenResourceEdit () { reqInput = NULL; }
+    ~CScreenResourceEdit () { if (reqInput) delete reqInput; }
 
-    void Setup (CResource *_rc, CRcRequest *req) {
+    void Setup (const char *label, CResource *_rc, CRcRequest *_reqTemplate, int silentPrio) {
+      CString s;
+
       rc = _rc;
-      if (req) {
-        req->Convert (_rc, false);
-        CInputScreen::Setup (req->ToStr (false, false, 0, req->Priority () == rcPrioUser ? "#*@i" : "#@i"));
-      }
-      else {
-        CString s;
-        s.SetF (" %s", envFloorplanReqAttrs ? envFloorplanReqAttrs : RcGetUserRequestAttrs ());
-        CInputScreen::Setup (s.Get ());
-      }
+      reqTemplate = _reqTemplate;
+      reqTemplate->Convert (_rc, false);
+      reqTemplate->ToStr (&s, false, false, 0, reqTemplate->Priority () == silentPrio ? "#*@i" : "#@i");
+      CInputScreen::Setup (label, s.Get ());
     }
 
-    CRcRequest *GetRequest () { CRcRequest *ret = inputReq; inputReq = NULL; return ret; }
+    CRcRequest *GetRequest () { CRcRequest *ret = reqInput; reqInput = NULL; return ret; }
       ///< Get request and ownership of the request object.
 
   protected:
     CResource *rc;
-    CRcRequest *inputReq;
+    CRcRequest *reqTemplate, *reqInput;
 
     // Callbacks ...
     virtual void Commit () {
@@ -598,21 +601,19 @@ class CScreenResourceEdit: public CInputScreen {
       bool ok;
 
       // Create a request object and check it ...
-      inputReq = new CRcRequest ();
-      inputReq->SetGid (RcGetUserRequestId ());   // mainly to have 'inputReq->Convert()' print warnings with the correct ID
-      inputReq->SetPriority (rcPrioUser);         // set default
+      reqInput = new CRcRequest (reqTemplate);
       GetInput (&s);
-      ok = inputReq->SetFromStr (s.Get ());
+      ok = reqInput->SetFromStr (s.Get ());
       if (ok) {
-        inputReq->Convert (rc);
-        ok = inputReq->IsCompatible ();
+        reqInput->Convert (rc);
+        ok = reqInput->IsCompatible ();
       }
 
       // Report error or complete ...
       if (ok) Return ();
       else {
-        delete inputReq;
-        inputReq = NULL;
+        delete reqInput;
+        reqInput = NULL;
         RunErrorBox (_("Syntax error in request specification"));
       }
     }
@@ -786,6 +787,11 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
   btnAuto.SetHotkey (SDLK_a);
   btnAuto.SetCbPushed (CbResourceDialogOnButtonPushed, this);
 
+  btnDefault.SetColor (GREY);
+  btnDefault.SetLabel (WHITE, "ic-ground-48");
+  btnDefault.SetHotkey (SDLK_d);
+  btnDefault.SetCbPushed (CbResourceDialogOnButtonPushed, this);
+
   btnEdit.SetColor (GREY);
   btnEdit.SetLabel (WHITE, "ic-edit-48");
   btnEdit.SetHotkey (SDLK_e);
@@ -803,7 +809,7 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
   SetLayout (false);
 
   // Read own request and initialize choices selection based on it ...
-  UpdateRequest (true);
+  UpdateRequests (true);
 }
 
 
@@ -927,10 +933,11 @@ void CResourceDialog::SetLayout (bool _withInfo) {
   //   ... buttons ...
   r = Rect (rContent.w, UI_BUTTONS_HEIGHT);
   RectAlign (&r, rContent, 0, 1);
-  layout = LayoutRow (r, UI_BUTTONS_SPACE, -1, -2, -1, 0);
+  layout = LayoutRow (r, UI_BUTTONS_SPACE, -3, -6, -1, -2, 0);
   btnBack.SetArea (layout[0]);
   btnAuto.SetArea (layout[1]);
-  btnEdit.SetArea (layout[2]);
+  btnDefault.SetArea (layout[2]);
+  btnEdit.SetArea (layout[3]);
   free (layout);
 
   // Add/delete info widget ...
@@ -944,20 +951,20 @@ void CResourceDialog::SetLayout (bool _withInfo) {
 }
 
 
-void CResourceDialog::UpdateRequest (bool fetchReq) {
+void CResourceDialog::UpdateRequests (bool fetchReq) {
   int n, idx;
 
   //~ INFOF (("### UpdateRequest (%i) ...", (int) fetchReq));
 
-  // Read own request ...
-  if (fetchReq) rc->GetRequest (&request, RcGetUserRequestId ());
-  request.Convert (rc, false);   // In case of an incompatibility, a warning would have been emitted before.
+  // Read user request ...
+  if (fetchReq) rc->GetRequest (&reqUser, RcGetUserRequestId ());
+  reqUser.Convert (rc, false);   // In case of an incompatibility, a warning would have been emitted before.
   //~ INFOF (("###   request = '%s'", request.ToStr ()));
 
   // Match it against the choices ...
   idx = -1;
-  if (request.Value ()->IsKnown () && request.IsCompatible ()) {
-    for (n = 0; n < choices; n++) if (choiceVal[n] == request.Value ()->ValidFloat (NAN)) {
+  if (reqUser.Value ()->IsKnown () && reqUser.IsCompatible ()) {
+    for (n = 0; n < choices; n++) if (choiceVal[n] == reqUser.Value ()->ValidFloat (NAN)) {
       idx = n;
       break;
     }
@@ -976,10 +983,14 @@ void CResourceDialog::UpdateRequest (bool fetchReq) {
   }
 
   // Set color of "Auto" button ...
-  btnAuto.SetColor (request.Value ()->IsValid () ? RCDLG_COL_CHOICE : RCDLG_COL_SELECTED);
+  btnAuto.SetColor (reqUser.Value ()->IsValid () ? RCDLG_COL_CHOICE : RCDLG_COL_SELECTED);
+
+  // Read default request ...
+  if (fetchReq) rc->GetRequest (&reqDefault, rcDefaultRequestId);
+  reqDefault.Convert (rc, false);   // In case of an incompatibility, a warning would have been emitted before.
 
   // Update info view ...
-  if (withInfo) UpdateView ();
+  UpdateView ();
 }
 
 
@@ -998,6 +1009,9 @@ void CResourceDialog::UpdateView () {
 
   // Set value button ...
   if (valueNotPlusButton) btnValue.SetLabel (vs.ToStr (), YELLOW);
+
+  // Set color of "Default" button ...
+  btnDefault.SetLabel (reqDefault.Value ()->IsValid () ? YELLOW : WHITE, withInfo ? "ic-ground-48" : "ic-ground-24");
 
   // Highlight current value or its neighbors ...
   rcVal = vs.ValidFloat (NAN);
@@ -1065,6 +1079,7 @@ void CResourceDialog::Start (CScreen *_screen) {
 
     _screen->AddWidget (&btnBack, 1);
     _screen->AddWidget (&btnAuto, 1);
+    _screen->AddWidget (&btnDefault, 1);
     _screen->AddWidget (&btnEdit, 1);
   }
 }
@@ -1084,6 +1099,7 @@ void CResourceDialog::Stop () {
 
     screen->DelWidget (&btnBack);
     screen->DelWidget (&btnAuto);
+    screen->DelWidget (&btnDefault);
     screen->DelWidget (&btnEdit);
   }
   CMessageBox::Stop ();
@@ -1131,23 +1147,76 @@ void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
     btnChoicesSelected = -1;
     OnListboxPushed (NULL, -1, longPush);
   }
+  else if (btn == &btnDefault) {
+    if (longPush) {
+      if (!reqDefault.Value ()->IsValid ())
+        rc->SetDefault (0);
+      else
+        rc->DelRequest (rcDefaultRequestId);
+      UpdateRequests (true);
+    }
+    else {
+
+      // Run input dialog for the default request ...
+      CScreenResourceEdit scrEdit;
+      CRcRequest *reqInput, reqTemplate;
+      CScreen *myScreen = screen;
+
+      // Stop message box (would not survive switching to the edit screen) ...
+      Stop ();
+
+      // Set request template ...
+      reqTemplate.Set (0, rcDefaultRequestId, rcPrioDefault);
+      if (reqDefault.Value ()->IsValid ()) reqTemplate.Set (&reqDefault);    // ... to current request
+
+      // Run input dialog and apply result ...
+      scrEdit.Setup (_("Default:"), rc, &reqTemplate, rcPrioDefault);
+      scrEdit.Run ();
+      reqInput = scrEdit.GetRequest ();
+      if (reqInput) {
+        reqInput->SetGid (rcDefaultRequestId);   // enforce "default" GID, because it can otherwise not be edited again
+        reqDefault.Set (reqInput);               // store locally for the view
+        if (reqInput->Value ()->IsValid ()) rc->SetRequest (reqInput);  // apply ...
+        else rc->DelRequest (reqInput->Gid ());
+      }
+
+      // Update view and start the message box again ...
+      UpdateRequests (false);
+      Start (myScreen);
+    }
+  }
   else if (btn == &btnEdit) {
+
+    // Run input dialog for the user request ...
     CScreenResourceEdit scrEdit;
-    CRcRequest *req;
+    CRcRequest *reqInput, reqTemplate;
     CScreen *myScreen = screen;
 
-    Stop ();          // stop message box (would not survive switching to the edit screen)
-    scrEdit.Setup (rc, request.Value ()->IsValid () ? &request : NULL);
-    scrEdit.Run ();
-    req = scrEdit.GetRequest ();
-    if (req) {
-      req->SetGid (RcGetUserRequestId ());    // force user GID, because it can otherwise not be edited again here
-      request.Set (req);
-      if (req->Value ()->IsValid ()) rc->SetRequest (req);
-      else rc->DelRequest (req->Gid ());
+    // Stop message box (would not survive switching to the edit screen) ...
+    Stop ();
+
+    // Set request template ...
+    if (reqUser.Value ()->IsValid ()) reqTemplate.Set (&reqUser);   // ... to current request
+    else {    // ... according to configuration options ...
+      reqTemplate.SetPriority (rcPrioUser);         // preset default priority
+      reqTemplate.SetAttrsFromStr (envFloorplanReqAttrs ? envFloorplanReqAttrs : RcGetUserRequestAttrs ());
+        // set user defaults, ignoring errors
     }
-    UpdateRequest (false);
-    Start (myScreen); // start the message box again
+
+    // Run input dialog and apply result ...
+    scrEdit.Setup (_("User request:"), rc, &reqTemplate, rcPrioUser);
+    scrEdit.Run ();
+    reqInput = scrEdit.GetRequest ();
+    if (reqInput) {
+      reqInput->SetGid (RcGetUserRequestId ());   // enforce user GID, because it can otherwise not be edited again here
+      reqUser.Set (reqInput);                     // store locally for the view
+      if (reqInput->Value ()->IsValid ()) rc->SetRequest (reqInput);  // apply ...
+      else rc->DelRequest (reqInput->Gid ());
+    }
+
+    // Update view and start the message box again ...
+    UpdateRequests (false);
+    Start (myScreen);
   }
   else {
     idx = btn - &btnChoices[0];
@@ -1167,21 +1236,21 @@ void CResourceDialog::OnListboxPushed (class CListbox *lb, int idx, bool longPus
   if (lb) idx = wdgChoices.GetSelectedItem ();    // in the listbox case: check if the selection has just been unselected (= auto)
   if (idx < 0) {
     rc->DelRequest (RcGetUserRequestId ());
-    request.Reset ();
+    reqUser.Reset ();
   }
   else {
     req = NewUserRequest ();
     req->SetValue (choiceVal[idx]);
-    request.Set (req);                            // store as current request
+    reqUser.Set (req);                            // store as current request
     rc->SetRequest (req);
   }
-  UpdateRequest (false);
+  UpdateRequests (false);
   if (!longPush && !withInfo) Stop ();
 }
 
 
 void CResourceDialog::OnTime () {
-  UpdateView ();
+  UpdateRequests (true);
 }
 
 
@@ -1324,7 +1393,7 @@ static const struct {
 
   { "lock",       NULL },              // gtLock  (varying icons: "padlock" / "padlock_open")
   { "motion",     "walk" },            // gtMotion
-  { "light",      "light" },           // gtLight
+  { "light",      NULL },              // gtLight (varying icons: "light_off" / "light")
   { "mail",       "email" },           // gtMail
   { "phone",      "phone" },           // gtPhone
   { "music",      "audio" },           // gtMusic
@@ -1600,7 +1669,7 @@ bool CGadgetShades::UpdateSurface () {
   // Set highlight status (without geError) ...
   if (surfEmph != geError && shades > 0.0 && shades < 100.0) {
     if (floorplan->GetValidUseState () >= rcvUseVacation) surfEmph = geAttention;
-    if (floorplan->GetValidWeather ()) surfEmph = geAttention;
+    //~ if (floorplan->GetValidWeather ()) surfEmph = geAttention;
   }
 
   // Done ...
@@ -1930,6 +1999,7 @@ class CGadgetIcon: public CGadget {
   protected:
     CResource *rcState;
     TTicksMonotonic tLastMotion;
+    bool optional;
 };
 
 
@@ -1940,11 +2010,13 @@ void CGadgetIcon::InitSub (int _x, int _y, int _orient, int _size) {
   baseArea = Rect (_x - iconSize / 2, _y - iconSize / 2, iconSize, iconSize);
 
   // Other static properties ...
-  visibilityLevel = fvlMini; // (_size >= 1) ? fvlMini : fvlFull;
+  visibilityLevel = fvlMini;
+  //~ visibilityLevel = (_size >= 1) ? fvlMini : fvlFull;
 
-  // Resources ...
+  // Resources and options ...
   rcState = GetGadgetResource (this, "state");
   RegisterResource (rcState);
+  optional = EnvGetBool (GetGadgetEnvKey (this, "optional"), false);
 
   // Type-specifics...
   switch (gdtType) {
@@ -1954,7 +2026,7 @@ void CGadgetIcon::InitSub (int _x, int _y, int _orient, int _size) {
       break;
 
     case gtMotion:
-      tLastMotion = NEVER;
+      tLastMotion = 0;   // 0 = "never"
       RegisterResource (floorplan->TimerRc ());
         // Needed to automatically turn off motion icon after some time.
       break;
@@ -1985,15 +2057,17 @@ bool CGadgetIcon::UpdateSurface () {
   char buf[256];
   const char *iconBaseName;
   CRcValueState vs;
+  ERctUseState attentionLevel;
   ERctPhoneState phoneState;
   TColor iconColor;
-  bool changePossible, locked, motion;
+  bool changePossible, locked, motion, showAsUnkown;
 
   // Set defaults...
   changePossible = true;
   iconBaseName = gdtTypeInfo [gdtType].icon;
   iconColor = (viewLevel == fvlMini) ? GREY : WHITE;
   surfEmph = geNone;
+  showAsUnkown = false;
 
   // Type-specific appearances...
   switch (gdtType) {
@@ -2005,30 +2079,35 @@ bool CGadgetIcon::UpdateSurface () {
       iconColor = locked ? GREY : WHITE;
       if (floorplan->GetValidUseState () >= rcvUseNight && !locked)
         surfEmph = geAttention;
-      if (!vs.IsKnown ()) surfEmph = geError;
+      showAsUnkown = !vs.IsKnown ();
       break;
 
     case gtMotion:
       iconColor = WHITE;
       rcState->GetValueState (&vs);
-      motion = vs.ValidBool (false);
-      if (!motion) {
-        if (TicksMonotonicIsNever (tLastMotion)) {
-          iconBaseName = NULL;
-          changePossible = false;   // give hint that no redrawing is necessary
-        }
-        else {
-          if (TicksMonotonicNow () > tLastMotion + TICKS_FROM_SECONDS (envFloorplanMotionRetention)) {
-            iconBaseName = NULL;
-            tLastMotion = NEVER;
-          }
-        }
+      if (!vs.IsKnown ()) {
+        showAsUnkown = true;
+        tLastMotion = -1;   // -1 = "never", but force UI update
       }
       else {
-        tLastMotion = TicksMonotonicNow ();
-        surfEmph = geAttention;
+        motion = vs.Bool ();
+        if (!motion) {
+          if (tLastMotion <= 0) {
+            iconBaseName = NULL;
+            if (tLastMotion == 0) changePossible = false;   // give hint that no redrawing is necessary
+          }
+          else {
+            if (TicksMonotonicNow () > tLastMotion + TICKS_FROM_SECONDS (envFloorplanMotionRetention)) {
+              iconBaseName = NULL;
+              tLastMotion = 0;   // 0 = "never"
+            }
+          }
+        }
+        else {
+          tLastMotion = TicksMonotonicNow ();
+          surfEmph = geAttention;
+        }
       }
-      if (!vs.IsKnown ()) surfEmph = geError;
       break;
 
     case gtPhone:
@@ -2038,13 +2117,13 @@ bool CGadgetIcon::UpdateSurface () {
       else if (vs.Type () == rctPhoneState) phoneState = (ERctPhoneState) vs.ValidUnitInt (rctPhoneState);
       else vs.Clear (rctPhoneState);
 
-      if (!vs.IsKnown ()) surfEmph = geError;
+      if (!vs.IsKnown ()) showAsUnkown = true;
       else switch (phoneState) {
         case rcvPhoneRinging:
           surfEmph = geAttention;
           // fall through: icon color is the same as in call...
         case rcvPhoneInCall:
-          iconColor = (viewLevel == fvlMini) ? WHITE : YELLOW;
+          iconColor = YELLOW;
           break;
         default:
           break;
@@ -2052,49 +2131,71 @@ bool CGadgetIcon::UpdateSurface () {
       break;
 
     case gtMusic:
-      // TBD
-      break;
-
     case gtLight:
     case gtWlan:
     case gtBluetooth:
     case gtService:
+
+      // Set color ...
       rcState->GetValueState (&vs);
       if (vs.IsBusy ()) iconColor = LIGHT_RED;
       else {
-        if (vs.ValidBool (false))
-          iconColor = (viewLevel == fvlMini) ? WHITE : YELLOW;
+        if (vs.ValidBool (false)) iconColor = YELLOW;
       }
-      if (!vs.IsKnown ()) surfEmph = geError;
+
+      // Determine emphasis ...
+      if (!vs.IsKnown ()) showAsUnkown = true;
       else if (vs.ValidBool (false) == true && gdtType != gtLight) {
-        if (floorplan->GetValidUseState () >=
-              (gdtType == gtWlan ? rcvUseVacation : rcvUseNight)
-            )
-          surfEmph = geAttention;
+        switch (gdtType) {
+          case gtLight:     attentionLevel = rcvUseVacation; break;
+          case gtMusic:
+          case gtBluetooth: attentionLevel = rcvUseDay;  break;
+          default:          attentionLevel = rcvUseNight;
+        }
+        if (floorplan->GetValidUseState () > attentionLevel) surfEmph = geAttention;
+      }
+
+      // Set icon (if not constant) ...
+      if (gdtType == gtLight) {
+        iconBaseName = vs.ValidBool (false) ? "light" : "light_off";
       }
       break;
 
     case gtMail:
-      iconColor = WHITE;
+      iconColor = YELLOW;
       rcState->GetValueState (&vs);
-      if (vs.IsKnown ()) {
+      if (!vs.IsKnown ()) {
+        if (!optional) showAsUnkown = true;   // if optional, the icon disappears completely
+      }
+      else {
         if (vs.ValidBool (false)) {     // there is new mail ...
           if (floorplan->GetValidUseState () >= rcvUseVacation) surfEmph = geAttention;
         }
         else iconBaseName = NULL;       // no new mail
       }
-      else surfEmph = geError;          // value is unknown
       break;
 
     default:
       ASSERT (false);
   };
 
+  // Show as unknown if applicable ...
+  if (showAsUnkown) {
+    if (optional) iconColor = DARK_DARK_GREY;
+    else {
+      surfEmph = geError;
+      iconColor = WHITE;
+    }
+  }
+
   // Set the surface...
+#if !FLOORPLAN_MINI_COLORED
+  if (viewLevel == fvlMini) if (iconColor == YELLOW) iconColor = WHITE;
+#endif
   if (!iconBaseName || viewArea.w < 12) surf = NULL;      // icon not visible
   else {
-    if (viewLevel != fvlMini && baseArea.w > 6)
-      iconColor = ColorScale (iconColor, 0x100 * 6 / baseArea.w);
+    //~ if (viewLevel != fvlMini && baseArea.w > 6)
+      //~ iconColor = ColorScale (iconColor, 0x100 * 6 / baseArea.w);
     if (viewArea.w >= 48) {
       snprintf (buf, sizeof (buf),  "ic-%s-%02i", iconBaseName, viewArea.w);
       surf = IconGet (buf, iconColor);
@@ -2135,7 +2236,11 @@ void CGadgetIcon::OnPushed (CButton *btn, bool longPush) {
       break;
 
     case gtMusic:
-      // TBD: Activate music player and connect to this MPD
+      p = strrchr (rcState->Uri (), '/');    // get LID of state resource
+      ASSERT (p != NULL);
+      if (longPush) AppMusicPlayerOff ();
+      else AppActivate (appIdMusic);
+      AppMusicSetServer (p + 1);
       break;
 
     case gtBluetooth:
@@ -2646,8 +2751,12 @@ void CFloorplan::Iterate () {
 
 
 SDL_Surface *CFloorplan::GetEmphSurface () {
-  static const TColor emphColorsMini[geEND] = { BLACK, GREY, DARK_YELLOW, LIGHT_RED };
   static const TColor emphColors[geEND] = { BLACK, ColorScale (YELLOW, 0x80), DARK_YELLOW, LIGHT_RED };
+#if FLOORPLAN_MINI_COLORED
+  static const TColor *emphColorsMini = emphColors;
+#else
+  static const TColor emphColorsMini[geEND] = { BLACK, GREY, DARK_YELLOW, LIGHT_RED };
+#endif
   CGadget *gdt;
   SDL_Rect r;
   int n, e;
