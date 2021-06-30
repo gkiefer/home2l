@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -110,15 +110,15 @@ Macros</h2></td></tr>
 Atomic read and write operations ...</h2></td></tr>
 <tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp766951e70a085f725a887578e4bdf9ad"></a> (presently GCC-specific) </p>
 </td></tr>
-<tr class="memitem:gac2cc5b0f8085c2a032023c33394e9bfa"><td class="memItemLeft" align="right" valign="top"><a id="gac2cc5b0f8085c2a032023c33394e9bfa"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_READ</b>(PTR)&#160;&#160;&#160;__sync_fetch_and_add (&amp;(PTR), 0)</td></tr>
-<tr class="separator:gac2cc5b0f8085c2a032023c33394e9bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4a0031ba30915f0687a0f4838be4a27d"><td class="memItemLeft" align="right" valign="top"><a id="ga4a0031ba30915f0687a0f4838be4a27d"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_WRITE</b>(PTR,  VAL)&#160;&#160;&#160;__sync_bool_compare_and_swap (&amp;(PTR), PTR, VAL)</td></tr>
-<tr class="separator:ga4a0031ba30915f0687a0f4838be4a27d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga575fcc76571c0dcd6964ff980a95d94a"><td class="memItemLeft" align="right" valign="top"><a id="ga575fcc76571c0dcd6964ff980a95d94a"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_INC</b>(PTR,  N)&#160;&#160;&#160;__sync_fetch_and_add ((&amp;PTR), (N))</td></tr>
-<tr class="separator:ga575fcc76571c0dcd6964ff980a95d94a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac87c9d88167fbf1fb937744e05cdbefc"><td class="memItemLeft" align="right" valign="top"><a id="gac87c9d88167fbf1fb937744e05cdbefc"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_READ</b>(OBJ)&#160;&#160;&#160;__atomic_load_n (&amp;(OBJ), __ATOMIC_RELAXED)</td></tr>
+<tr class="separator:gac87c9d88167fbf1fb937744e05cdbefc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3cd251c3e978aa5e8d50e26cb64da654"><td class="memItemLeft" align="right" valign="top"><a id="ga3cd251c3e978aa5e8d50e26cb64da654"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_WRITE</b>(OBJ,  VAL)&#160;&#160;&#160;__atomic_store_n (&amp;(OBJ), VAL, __ATOMIC_RELAXED)</td></tr>
+<tr class="separator:ga3cd251c3e978aa5e8d50e26cb64da654"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab753a735e377f811778c91c796227749"><td class="memItemLeft" align="right" valign="top"><a id="gab753a735e377f811778c91c796227749"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_INC</b>(OBJ,  N)&#160;&#160;&#160;__atomic_exchange_n (&amp;(OBJ), (OBJ) + (N), __ATOMIC_RELAXED)</td></tr>
+<tr class="separator:gab753a735e377f811778c91c796227749"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Enhanced file and directory operations ...</h2></td></tr>

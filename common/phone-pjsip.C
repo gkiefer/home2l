@@ -21,76 +21,37 @@
 
 #include "phone.H"
 
-#include "config.H"
+#include "base.H"
 
-#include <sys/stat.h>       // for 'open'
+#include <pjsua.h>
+
+#include <sys/stat.h>           // for 'open'
 #include <errno.h>
 #include <string.h>
 
-#include <pjsua-lib/pjsua.h>
+
+/* NOTE: PJSIP does not support fully separated phone objects.
+ *   Presently, the creation of multiple 'CPhone' objects is possible, but they
+ *   all share the same audio and video media.
+ *   In the future, the creation of multiple 'CPhone' objects may be disabled,
+ *   so that it is discouraged to use multiple objects in a single application.
+ */
+
+extern const char *envPhoneRotationKey;
+
+
+
+
+
+// ********************** Platform-specific adapters ***************************
+
+
+// ***** Debian *****
+
+#if !ANDROID
+
 
 #include <alsa/asoundlib.h>
-
-
-
-
-
-// ********************** Home2l Helpers ***************************************
-
-
-// The following functions are implemented in 'base.C', the prototypes
-// must match those in 'base.H'.
-void LogPara (const char *_logHead, const char* _logFile, int _logLine);
-void LogPrintf (const char *format, ...);
-
-
-#if WITH_DEBUG == 1
-#define DEBUG(LEVEL, MSG) do { if (envDebug >= LEVEL) LogPara ("DEBUG", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-#define DEBUGF(LEVEL, FMT) do { if (envDebug >= LEVEL) LogPara ("DEBUG", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-#else
-#define DEBUG(MSG) do {} while (0)
-#define DEBUGF(FMT) do {} while (0)
-#endif
-
-#define INFO(MSG) do { LogPara ("INFO", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-#define INFOF(FMT) do { LogPara ("INFO", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-
-#define WARNING(MSG) do { LogPara ("WARNING", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-#define WARNINGF(FMT) do { LogPara ("WARNING", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-
-#define SECURITY(MSG) do { LogPara ("SECURITY", __FILE__, __LINE__); LogPrintf (MSG); } while (0)
-#define SECURITYF(FMT) do { LogPara ("SECURITY", __FILE__, __LINE__); LogPrintf FMT; } while (0)
-
-#define ERROR(MSG) do { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf (MSG); _exit (3); } while (0)
-#define ERRORF(FMT) do { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf FMT; _exit (3); } while (0)
-
-#define ASSERT(COND) do { if (!(COND)) { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf ("Assertion failed"); abort (); } } while (0)
-#define ASSERTM(COND,MSG) do { if (!(COND)) { LogPara ("ERROR", __FILE__, __LINE__); LogPrintf ("Assertion failed: %s", MSG); abort (); } } while (0)
-
-#define ASSERT_WARN(COND) do { if (!(COND)) WARNING("Weak assertion failed"); } while (0)
-
-
-
-
-
-// *************************** PJSIP-related helpers ***************************
-
-
-#define NO_ID_PJ PJSUA_INVALID_ID        // "NULL" value for all sorts of IDs...
-
-
-#define PJSTR_ARGS(PJSTR) (int) (PJSTR).slen, (PJSTR).ptr
-  // This allows to use printf as follows:
-  //   pj_str_t some_pj_str;
-  //   printf ("The string reads: '%.*s'.\n", PJSTR_ARGS(some_pj_str));
-
-
-//~ static char *PjStrDupToC (pj_str_t pjStr) {
-  //~ char *ret = malloc (pjStr.slen + 1);
-  //~ memcpy (ret, pjStr.ptr, pjStr.slen);
-  //~ ret [pjStr.slen] = '\0';
-  //~ return ret;
-//~ }
 
 
 #pragma GCC diagnostic push
@@ -110,11 +71,91 @@ static void AlsaErrorHandler (const char *file, int line, const char *function, 
 #pragma GCC diagnostic pop
 
 
+static inline void AlsaInit () {
+  snd_lib_error_set_handler (NULL); // AlsaErrorHandler);
+    // Unset PJSIP's ALSA error handler to avoid problems with logging (see below).
+    // Note [2017-09-02]:
+    //   A level of >= 4 results in a strange "Calling pjlib from unknown/external thread." assertion inside PJLIB.
+    //   This happens inside 'pjmedia-audiodev/alsa_dev.c:static void alsa_error_handler ()':
+    //   PJLIB registers an ALSA log function, which may be triggered by an SDL2-internal thread and calls 'pj_log ()',
+    //   which then throws the assertion.
+    //   In consequence, log levels > 3 presently cannot be used out-of-the-box.
+}
+
+
+static inline void AndroidInit () {}
+
+
+
+
+// ***** Android *****
+
+#else // !ANDROID
+
+
+/* The following code replaces the code around 'JNI_OnLoad()' in PJSIP, file 'pjsip/pjlib/src/pj/os_core_unix.c',
+ * which had to be disabled by setting 'PJ_JNI_HAS_JNI_ONLOAD=0' in the prebuild script, since PJSIP is built as
+ * a static library.
+ */
+
+
+#include <jni.h>
+
+#include "system.H"
+
+
+JavaVM *pj_jni_jvm = NULL;
+
+
+static inline void AndroidInit () {
+  pj_jni_jvm = AndroidGetJavaVM ();
+}
+
+
+static inline void AlsaInit () {}
+
+
+
+
+#endif // !ANDROID
+
+
+
+
+
+
+// *************************** PJSIP-related helpers ***************************
+
+
+#define NO_ID_PJ PJSUA_INVALID_ID        // "NULL" value for all sorts of IDs (= -1 in PJSIP 2.11) ...
+
+
+#define PJSTR_ARGS(PJSTR) (int) (PJSTR).slen, (PJSTR).ptr
+  // This allows to use printf as follows:
+  //   pj_str_t some_pj_str;
+  //   printf ("The string reads: '%.*s'.\n", PJSTR_ARGS(some_pj_str));
+
+
+//~ static char *PjStrDupToC (pj_str_t pjStr) {
+  //~ char *ret = malloc (pjStr.slen + 1);
+  //~ memcpy (ret, pjStr.ptr, pjStr.slen);
+  //~ ret [pjStr.slen] = '\0';
+  //~ return ret;
+//~ }
+
+
+static const char *PjStrError (pj_status_t pjStatus) {
+  static char buf[256];
+  pj_strerror (pjStatus, buf, sizeof (buf));
+  return buf;
+}
+
+
 static bool AnalyseSipUri (pj_str_t uri, pj_str_t *retUser, pj_str_t *retDomain) {
   // Analyse a given URI as robustly as possible.
   // Both 'retUser' and 'retDomain' must be defined, they will refer to substrings
-  // inside 'uri' or to 'NULL', if no respective component has been found.
-  // Return 'false' if neither a user nor a domain component has been found.
+  // inside 'uri' or will be set to 'NULL', if no respective component has been found.
+  // Returns 'false' if neither a user nor a domain component has been found.
   char *p, *q;
 
   // Clear return values...
@@ -163,16 +204,17 @@ static bool AnalyseSipUri (pj_str_t uri, pj_str_t *retUser, pj_str_t *retDomain)
 
 
 static const char *StrMediaDir (pjmedia_dir dir) {
+  // Cases commented out are numerically equivalent to others.
   switch (dir) {
     case PJMEDIA_DIR_NONE:              return "NONE";
     case PJMEDIA_DIR_ENCODING:          return "ENCODING";
-    //~ case PJMEDIA_DIR_CAPTURE:           return "CAPTURE";
+    // case PJMEDIA_DIR_CAPTURE:           return "CAPTURE";
     case PJMEDIA_DIR_DECODING:          return "DECODING";
-    //~ case PJMEDIA_DIR_PLAYBACK:          return "PLAYBACK";
-    //~ case PJMEDIA_DIR_RENDER:            return "RENDER";
+    // case PJMEDIA_DIR_PLAYBACK:          return "PLAYBACK";
+    // case PJMEDIA_DIR_RENDER:            return "RENDER";
     case PJMEDIA_DIR_ENCODING_DECODING: return "ENCODING_DECODING";
-    //~ case PJMEDIA_DIR_CAPTURE_PLAYBACK:  return "CAPTURE_PLAYBACK";
-    //~ case PJMEDIA_DIR_CAPTURE_RENDER:    return "CAPTURE_RENDER";
+    // case PJMEDIA_DIR_CAPTURE_PLAYBACK:  return "CAPTURE_PLAYBACK";
+    // case PJMEDIA_DIR_CAPTURE_RENDER:    return "CAPTURE_RENDER";
     default: return "UNKNOWN";
   }
 }
@@ -186,82 +228,38 @@ static const char *StrCallMediaStatus (pjsua_call_media_status s) {
 }
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void DumpMediaInfos () {
-  pjmedia_aud_dev_info audDevInfo[99];
-  pjmedia_vid_dev_info vidDevInfo[99];
-  pjsua_codec_info codecInfo[99];
-  int n, k, count;
-
-  // Audio...
-  count = sizeof (audDevInfo) / sizeof (pjmedia_aud_dev_info);
-  ASSERT (PJ_SUCCESS == pjsua_enum_aud_devs (audDevInfo, (unsigned *) &count));
-  for (n = 0; n < count; n++) {
-    INFOF (("# Audio device #%i: name = '%s', #in/#out = %i/%i, driver = '%s', %i formats",
-            n, audDevInfo[n].name, audDevInfo[n].input_count, audDevInfo[n].output_count,
-            audDevInfo[n].driver, audDevInfo[n].ext_fmt_cnt));
-  }
-
-  // Video...
-  count = sizeof (vidDevInfo) / sizeof (pjmedia_vid_dev_info);
-  ASSERT (PJ_SUCCESS == pjsua_vid_enum_devs (vidDevInfo, (unsigned *) &count));
-  for (n = 0; n < count; n++) {
-    INFOF (("# Video device #%i: name = '%s', driver = '%s', dir = %s, %i formats",
-            n, vidDevInfo[n].name, vidDevInfo[n].driver,
-            StrMediaDir (vidDevInfo[n].dir),
-            vidDevInfo[n].fmt_cnt));
-    for (k = 0; k < (int) vidDevInfo[n].fmt_cnt; k++) {
-      INFOF (("#   format %i: %ix%i, %i/%i fps, %i bps", k,
-            (int) vidDevInfo[n].fmt[k].det.vid.size.w, (int) vidDevInfo[n].fmt[k].det.vid.size.h,
-            (int) vidDevInfo[n].fmt[k].det.vid.fps.num, (int) vidDevInfo[n].fmt[k].det.vid.fps.denum,
-            (int) vidDevInfo[n].fmt[k].det.vid.avg_bps));
-    }
-  }
-
-  // Video codecs...
-  count = sizeof (codecInfo) / sizeof (pjsua_codec_info);
-  ASSERT (PJ_SUCCESS == pjsua_vid_enum_codecs (codecInfo, (unsigned *) &count));
-  for (n = 0; n < count; n++) {
-    INFOF (("# Codec #%i: id = '%.*s', prio = %i, desc = '%.*s'", n,
-            PJSTR_ARGS (codecInfo[n].codec_id), codecInfo[n].priority,
-            PJSTR_ARGS (codecInfo[n].desc)));
-  }
-
-  // Testing...
-  //~ ASSERT (PJ_SUCCESS == pjsua_vid_preview_start (PJMEDIA_VID_DEFAULT_CAPTURE_DEV, NULL));
-}
-#pragma GCC diagnostic pop
-
-
 static void DumpCallInfo (pjsua_call_id callId) {
   pjsua_call_info callInfo;
   pjsua_call_media_info *mediaInfo;
+  pj_status_t pjStatus;
   int n;
-  bool ok;
 
-  INFOF (("# DumpCallInfo (callId = %i)", callId));
-  ok = (PJ_SUCCESS == pjsua_call_get_info (callId, &callInfo));
-  ASSERT_WARN (ok);
-  if (!ok) return;
+  DEBUGF (1, ("DumpCallInfo (callId = %i)", callId));
+
+  // Get call info ...
+  pjStatus = pjsua_call_get_info (callId, &callInfo);
+  if (pjStatus != PJ_SUCCESS) {
+    DEBUGF (1, ("failed to obtain call info: %s", PjStrError (pjStatus)));
+    return;
+  }
 
   // General...
-  INFOF (("#   local_info = '%.*s', local_contact = '%.*s'",
+  DEBUGF (1, ("  local_info = '%.*s', local_contact = '%.*s'",
           PJSTR_ARGS (callInfo.local_info), PJSTR_ARGS (callInfo.local_contact)));
-  INFOF (("#   remote_info = '%.*s', remote_contact = '%.*s'",
+  DEBUGF (1, ("  remote_info = '%.*s', remote_contact = '%.*s'",
           PJSTR_ARGS (callInfo.remote_info), PJSTR_ARGS (callInfo.remote_contact)));
-  INFOF (("#   state = '%.*s', last_status = '%.*s' (%i), media_status = %s",
+  DEBUGF (1, ("  state = '%.*s', last_status = '%.*s' (%i), media_status = %s",
           PJSTR_ARGS (callInfo.state_text), PJSTR_ARGS (callInfo.last_status_text), callInfo.last_status,
           StrCallMediaStatus (callInfo.media_status)));
-  INFOF (("#   conf_slot = %i, media_cnt = %i, prov_media_cnt = %i",
+  DEBUGF (1, ("  conf_slot = %i, media_cnt = %i, prov_media_cnt = %i",
           callInfo.conf_slot, callInfo.media_cnt, callInfo.prov_media_cnt));
-  INFOF (("#   rem_offerer (SDP offerer?) = %i, rem_aud_cnt = %i, rem_vid_cnt = %i",
+  DEBUGF (1, ("  rem_offerer (SDP offerer?) = %i, rem_aud_cnt = %i, rem_vid_cnt = %i",
           (int) callInfo.rem_offerer, (int) callInfo.rem_aud_cnt, (int) callInfo.rem_vid_cnt));
 
   // Media...
   for (n = 0; n < (int) callInfo.media_cnt; n++) {
     mediaInfo = &callInfo.media[n];
-    INFOF (("#   Active media %i: index = %i, type = %s, dir = %s, status = %s, stream (aud: conf_slot / vid: dev_index) = %i",
+    DEBUGF (1, ("  Active media %i: index = %i, type = %s, dir = %s, status = %s, stream (aud: conf_slot / vid: dev_index) = %i",
             n, (int) mediaInfo->index,
             mediaInfo->type == PJMEDIA_TYPE_NONE ? "NONE" :
             mediaInfo->type == PJMEDIA_TYPE_AUDIO ? "AUDIO" :
@@ -274,7 +272,7 @@ static void DumpCallInfo (pjsua_call_id callId) {
   }
   for (n = 0; n < (int) callInfo.prov_media_cnt; n++) {
     mediaInfo = &callInfo.prov_media[n];
-    INFOF (("#   Provisional media %i: index = %i, type = %s, dir = %s, stream (aud: conf_slot / vid: dev_index) = %i",
+    DEBUGF (1, ("  Provisional media %i: index = %i, type = %s, dir = %s, stream (aud: conf_slot / vid: dev_index) = %i",
             n, (int) mediaInfo->index,
             mediaInfo->type == PJMEDIA_TYPE_NONE ? "NONE" :
             mediaInfo->type == PJMEDIA_TYPE_AUDIO ? "AUDIO" :
@@ -284,111 +282,6 @@ static void DumpCallInfo (pjsua_call_id callId) {
             mediaInfo->type == PJMEDIA_TYPE_AUDIO ? mediaInfo->stream.aud.conf_slot :
             mediaInfo->type == PJMEDIA_TYPE_VIDEO ? mediaInfo->stream.vid.cap_dev : -999));
   }
-}
-
-
-
-
-
-// *************************** LIBDATA *****************************************
-
-
-struct TMgmtCheckRec {
-  bool regState, callState, mediaState;
-  pjsua_call_id incomingCallId;
-  pjsua_call_id callId;   // last callId ID of a "call state" event (to identify 'callStatus')
-  int callStatus;         // last known call status code, -1 == unknown
-  int dtmfDigit;    // -1 == unset
-};
-
-
-static inline void MgmtCheckRecClear (TMgmtCheckRec *rec) {
-  rec->regState = rec->callState = rec->mediaState = false;
-  rec->incomingCallId = rec->callId = NO_ID_PJ;
-  rec->callStatus = -1;
-  rec->dtmfDigit = -1;
-}
-
-
-struct TPhoneData {
-  bool isSet, haveAccount;
-  pjsua_acc_id pjAccountId;
-
-  pjsua_call_id pjCallId[2];
-  int callStatus[2];   // last known call status code, -1 == unknown
-
-  TMgmtCheckRec check;    // [T:any] - protected by the mutex 'mgmtMutex'
-};
-
-#define PHONE_LIBDATA(phone) (* (TPhoneData *) phone->GetLibData ())
-#define LIBDATA (* (TPhoneData *) libData)
-
-
-
-
-
-// *************************** Phone management ********************************
-
-
-#define MAX_PHONES 8        // Maximum number of allowed phones
-
-
-static pthread_mutex_t mgmtMutex = PTHREAD_MUTEX_INITIALIZER;   // Mutex for all following 'mgmt*' variables
-static int mgmtPhones = 0;        // count number of phones to create/destroy 'PPJSUA' accordingly
-static CPhone *mgmtPhoneList[MAX_PHONES];
-
-
-static inline void MgmtLock () { pthread_mutex_lock (&mgmtMutex); }
-static inline void MgmtUnlock () { pthread_mutex_unlock (&mgmtMutex); }
-
-
-// All the following function assert that 'mgmtMutex' is already locked - the caller is responsible!
-// Return values are probably only valid until the next 'MgmtUnlock ()' operation!
-
-
-static void MgmtAddPhone (CPhone *phone) {
-  ASSERT (mgmtPhones < MAX_PHONES);
-
-  mgmtPhoneList[mgmtPhones] = phone;
-  mgmtPhones++;
-}
-
-
-static void MgmtDelPhone (CPhone *phone) {
-  int id;
-
-  for (id = 0; id < mgmtPhones; id++) if (mgmtPhoneList[id] == phone) break;
-  ASSERT (id < mgmtPhones);     // phone should not be deleted twice!
-
-  mgmtPhones--;
-  mgmtPhoneList[id] = mgmtPhoneList[mgmtPhones];
-}
-
-
-static int MgmtPhoneIdOfAccount (pjsua_acc_id accId) {
-  for (int n = 0; n < mgmtPhones; n++)
-    if (PHONE_LIBDATA(mgmtPhoneList[n]).pjAccountId == accId) return n;
-  return -1;
-}
-
-
-static CPhone *MgmtPhoneOfAccount (pjsua_acc_id accId) {
-  int id = MgmtPhoneIdOfAccount (accId);
-  return id >= 0 ? mgmtPhoneList[id] : NULL;
-}
-
-
-static int MgmtPhoneIdOfCall (pjsua_call_id callId) {
-  for (int n = 0; n < mgmtPhones; n++)
-    if (PHONE_LIBDATA(mgmtPhoneList[n]).pjCallId[0] == callId ||
-        PHONE_LIBDATA(mgmtPhoneList[n]).pjCallId[1] == callId) return n;
-  return -1;
-}
-
-
-static CPhone *MgmtPhoneOfCall (pjsua_call_id callId) {
-  int id = MgmtPhoneIdOfCall (callId);
-  return id >= 0 ? mgmtPhoneList[id] : NULL;
 }
 
 
@@ -402,6 +295,9 @@ static CPhone *MgmtPhoneOfCall (pjsua_call_id callId) {
 #define WINDOW_MAIN 0
 #define WINDOW_SIDE 1
 
+#define VIDEO_DEFAULT_WIDTH   352
+#define VIDEO_DEFAULT_HEIGHT  288
+#define VIDEO_DEFAULT_FPS      25
 
 static const char *videoDriverName = "Home2l";
 static const char *videoDeviceName = "Screen"; // [VIDEO_DEVICES] = { "Main", "Side" };
@@ -409,12 +305,65 @@ static const char *videoDeviceName = "Screen"; // [VIDEO_DEVICES] = { "Main", "S
 static pjmedia_vid_dev_index videoDeviceIndex = -1;     // Is set once during the first invocation of 'VideoGetDeviceIndex'.
 
 
+/* NOTE [2021-06-18, PJSIP 2.11]
+ *    PJSIP has the habbit to pass synthetic empty frames to 'put_frame' functions, even if there is no new
+ *    incoming video data see pjsip/pjmedia/src/pjmedia/vid_conf.c:791). However, the
+ *    function 'pjmedia_port_put_frame()' does not call the application-provided "put frame" function,
+ *    but an internal one, which may do automatic image format conversions without checking if the input
+ *    frame is valid or empty. They crash with the synthetic empty frame.
+ *
+ *    As a workaround, we try to offer and support as many formats as possible via 'videoFormatList' here
+ *    with the hope that now conversion functions are called. This is not an ideal solution. Let's hope it works.
+ */
+
+
+static uint32_t videoFormatList [] = {
+  // Video formats offered ...
+  PJMEDIA_FORMAT_RGBA,
+  PJMEDIA_FORMAT_RGB24,
+  PJMEDIA_FORMAT_BGRA,
+  PJMEDIA_FORMAT_DIB,
+  PJMEDIA_FORMAT_YUY2,
+  PJMEDIA_FORMAT_UYVY,
+  PJMEDIA_FORMAT_YVYU,
+  PJMEDIA_FORMAT_I420,
+  PJMEDIA_FORMAT_YV12,
+  PJMEDIA_FORMAT_I420JPEG,
+  PJMEDIA_FORMAT_I422JPEG
+};
+
+
+static EPhoneVideoFormat PhoneVideoFormatOf (uint32_t pjMediaFormat) {
+  switch (pjMediaFormat) {
+#if PJ_IS_BIG_ENDIAN
+    case PJMEDIA_FORMAT_RGBA:     return pvfRGBA8888;
+    case PJMEDIA_FORMAT_RGB24:    return pvfRGB24;
+    case PJMEDIA_FORMAT_BGRA:     return pvfBGRA8888;
+#else /* PJ_IS_BIG_ENDIAN */
+    case PJMEDIA_FORMAT_RGBA:     return pvfABGR8888;
+    case PJMEDIA_FORMAT_RGB24:    return pvfBGR24;
+    case PJMEDIA_FORMAT_BGRA:     return pvfARGB8888;
+#endif /* PJ_IS_BIG_ENDIAN */
+    case PJMEDIA_FORMAT_DIB :     return pvfRGB24;
+    case PJMEDIA_FORMAT_YUY2:     return pvfYUY2;
+    case PJMEDIA_FORMAT_UYVY:     return pvfUYVY;
+    case PJMEDIA_FORMAT_YVYU:     return pvfYVYU;
+    case PJMEDIA_FORMAT_I420:     return pvfIYUV;
+    case PJMEDIA_FORMAT_YV12:     return pvfYV12;
+    case PJMEDIA_FORMAT_I420JPEG: return pvfIYUV;
+    case PJMEDIA_FORMAT_I422JPEG: return pvfYV12;
+    default: break;
+  }
+  return pvfNone;
+}
+
 
 struct TVideoStream {
   pjmedia_vid_dev_stream base;      // Base stream (must be first element in structure)
   pjmedia_vid_dev_param param;      // Settings
 
   // Output data (may be protected by 'windowsMutex', the fields above are not)...
+  bool running;                     // video stream running?
   bool changed;                     // is set by 'VideoStreamPutFrame ()'.
   pjmedia_frame frame;              // frame data in native format ('buf == NULL' => invalid)
   TPhoneVideoFrame phoneVideoFrame; // points inside 'pjFrame'
@@ -429,7 +378,7 @@ static inline TVideoStream *CastVideoStream (pjmedia_vid_dev_stream *strm) {
 static pthread_mutex_t windowsMutex = PTHREAD_MUTEX_INITIALIZER;       // Mutex for 'windows' and all output data in 'TVideoStream' objects referred to
 static TVideoStream *windows[WINDOWS] = { NULL, NULL };
   // The 'TVideoStream *' pointers are the native window handles of the respective PJMEDIA streams.
-  // To put some output to screen, the native window handle of a stream of must be stored in this
+  // To put some output to screen, the native window handle of a stream must be stored in this
   // array.
 
 
@@ -442,28 +391,33 @@ static int WindowOfStream (pjmedia_vid_dev_stream *strm) {
 
 
 static void WindowAssign (int window, pjmedia_vid_dev_hwnd *hwnd) {
-  ASSERT (hwnd->type == PJMEDIA_VID_DEV_HWND_TYPE_NONE && window >= 0 && window < WINDOWS);
   pthread_mutex_lock (&windowsMutex);
-  windows[window] = (TVideoStream *) hwnd->info.window;
+  if (hwnd) {
+    ASSERT (hwnd->type == PJMEDIA_VID_DEV_HWND_TYPE_NONE && window >= 0 && window < WINDOWS);
+    windows[window] = (TVideoStream *) hwnd->info.window;
+  }
+  else windows[window] = NULL;
   pthread_mutex_unlock (&windowsMutex);
-  INFOF (("### WindowAssign (): %08x -> %i", windows[window], window));
+  //~ INFOF (("### WindowAssign (): %08x -> %i", windows[window], window));
 }
 
 
-static bool WindowAssignByID (int window, pjsua_vid_win_id wid) {
+static pj_status_t WindowAssignByID (int window, pjsua_vid_win_id wid) {
   pjsua_vid_win_info winInfo;
+  pj_status_t pjStatus;
 
-  INFOF (("### WindowAssignByID (%i, %i)", window, wid));
+  //~ INFOF (("### WindowAssignByID (%i, %i)", window, wid));
   pthread_mutex_lock (&windowsMutex);
   windows[window] = NULL;
   pthread_mutex_unlock (&windowsMutex);
-  if (wid < 0) return false;
-  if (PJ_SUCCESS != pjsua_vid_win_get_info (wid, &winInfo)) return false;
-  INFO ("###    ... have winInfo.");
-  if (winInfo.rdr_dev != videoDeviceIndex) return false;
-  INFO ("###    ... correct device.");
+  if (wid < 0) return PJ_EINVAL;
+  pjStatus = pjsua_vid_win_get_info (wid, &winInfo);
+  if (pjStatus != PJ_SUCCESS) return pjStatus;
+  //~ INFO ("###    ... have winInfo.");
+  if (winInfo.rdr_dev != videoDeviceIndex) return PJ_EINVAL;
+  //~ INFO ("###    ... correct device.");
   WindowAssign (window, &winInfo.hwnd);
-  return true;
+  return PJ_SUCCESS;
 }
 
 
@@ -480,9 +434,8 @@ pj_status_t VideoStreamGetParam (pjmedia_vid_dev_stream *strm, pjmedia_vid_dev_p
   // Returns
   //     PJ_SUCCESS on successful operation or the appropriate error code.
   TVideoStream *videoStream = CastVideoStream (strm);
-  int win = WindowOfStream (strm);
 
-  INFOF (("### VideoStreamGetParam (%08x, %i)", videoStream, win));
+  //~ INFOF (("### VideoStreamGetParam (%08x, %i)", videoStream, WindowOfStream (strm)));
 
   *param = videoStream->param;
   return PJ_SUCCESS;
@@ -497,12 +450,11 @@ pj_status_t VideoStreamGetCap (pjmedia_vid_dev_stream *strm, pjmedia_vid_dev_cap
   // Returns
   //     PJ_SUCCESS on successful operation or the appropriate error code.
   TVideoStream *videoStream = CastVideoStream (strm);
-  int win = WindowOfStream (strm);
   pjmedia_format *retFmt = (pjmedia_format *) value;
   pjmedia_rect_size *retRectSize = (pjmedia_rect_size *) value;
   pjmedia_vid_dev_hwnd *retHwnd = (pjmedia_vid_dev_hwnd *) value;
 
-  INFOF (("### VideoStreamGetCap (%08x, %i)", videoStream, win));
+  //~ INFOF (("### VideoStreamGetCap (%08x, %i)", videoStream, WindowOfStream (strm)));
 
   switch (cap) {
     case PJMEDIA_VID_DEV_CAP_FORMAT:
@@ -510,11 +462,8 @@ pj_status_t VideoStreamGetCap (pjmedia_vid_dev_stream *strm, pjmedia_vid_dev_cap
       break;
     case PJMEDIA_VID_DEV_CAP_OUTPUT_RESIZE:
       *retRectSize = videoStream->param.fmt.det.vid.size;   // videoStream->param.disp_size;
-      //~ retRectSize->w = videoStream->phoneVideoFrame.w;
-      //~ retRectSize->h = videoStream->phoneVideoFrame.h;
       break;
     case PJMEDIA_VID_DEV_CAP_OUTPUT_WINDOW:
-      // TBD: Is this necessary?
       *retHwnd = videoStream->param.window;
       break;
     default:
@@ -534,9 +483,8 @@ pj_status_t VideoStreamSetCap (pjmedia_vid_dev_stream *strm, pjmedia_vid_dev_cap
   pjmedia_format *fmt = (pjmedia_format *) value;
   const pjmedia_rect_size *rectSize = (pjmedia_rect_size *) value;
   TVideoStream *videoStream = CastVideoStream (strm);
-  int win = WindowOfStream (strm);
 
-  INFOF (("### VideoStreamSetCap (%08x, %i)", videoStream, win));
+  //~ INFOF (("### VideoStreamSetCap (%08x, win = %i, cap = %i)", videoStream, WindowOfStream (strm), (int) cap));
 
   switch (cap) {
     case PJMEDIA_VID_DEV_CAP_FORMAT:
@@ -569,68 +517,82 @@ pj_status_t VideoStreamStart (pjmedia_vid_dev_stream *strm) {
   // Returns
   //     PJ_SUCCESS on successful operation or the appropriate error code.
   TVideoStream *videoStream = CastVideoStream (strm);
-  int win = WindowOfStream (strm);   // hint only
 
-  // TBD: Eliminate this function?
+  //~ INFOF (("### VideoStreamStart (%08x, %i)", videoStream, WindowOfStream (strm)));
 
-  INFOF (("### VideoStreamStart (%08x, %i)", videoStream, win));
+  videoStream->running = true;
   return PJ_SUCCESS;
 }
 
 
 pj_status_t VideoStreamPutFrame (pjmedia_vid_dev_stream *strm, const pjmedia_frame *frame) {
-  // Put one frame to the stream. Application needs to call this function periodically only if the stream doesn't support "active interface", i.e. the pjmedia_vid_dev_info.has_callback member is PJ_FALSE.
+  // Put one frame to the stream. Application needs to call this function periodically only if
+  // the stream doesn't support "active interface", i.e. the pjmedia_vid_dev_info.has_callback member
+  // is PJ_FALSE.
   //     strm The video stream.
   //     frame  The video frame to put to the device.
   // Returns
   //     PJ_SUCCESS on successful operation or the appropriate error code.
   TVideoStream *videoStream = CastVideoStream (strm);
-  int wY, hY, wUV, hUV, destSize, destSizeY, destSizeUV;
 
-  //~ INFOF (("### VideoStreamPutFrame (%08x, %i)", videoStream, WindowOfStream (strm)));
+  //~ INFOF (("### VideoStreamPutFrame (videoStream=%08x, frame=%08x, window=%i)", videoStream, frame, WindowOfStream (strm)));
+  //~ if (frame) INFOF (("###   frame = (win = %i, type = %i, buf = %08x, size = %i, timestamp = %i)", WindowOfStream (strm), frame->type, frame->buf, frame->size, frame->timestamp));
+
+  // Sanity, ignore empty frames ...
+  if (!videoStream->running) return PJ_SUCCESS;
+  if (frame->size == 0 || frame->buf == NULL) return PJ_SUCCESS;
 
   // Lock windows...
   pthread_mutex_lock (&windowsMutex);
 
-  // NOTE: The following code assumes that the Y, U, and V planes are stored immediately
-  //       behind each other in the buffer without any padding. Also, some other implicit
-  //       assumptions on the layout are made, that appear to be correct as of 2017-09-10,
-  //       but may eventually turn out to be incorrect.
-  //
-  //       We do not make any assertions or corrections here. If the format is not quite
-  //       correct, the most likely effect will be more or less visible  artefacts in the
-  //       image.
-
-  // Determine dimensions and memory requirements (according to the assumed memory layout)...
-  wY = videoStream->phoneVideoFrame.w = videoStream->param.fmt.det.vid.size.w;
-  hY = videoStream->phoneVideoFrame.h = videoStream->param.fmt.det.vid.size.h;
-  wUV = (wY + 1) >> 1;
-  hUV = (hY + 1) >> 1;
-  destSizeY = wY * hY;
-  destSizeUV = wUV * hUV;
-  destSize = destSizeY + 2 * destSizeUV;
-
-  //~ INFOF (("###   ... Y plane (%i, %i), U+V plane (%i, %i), plane bytes = %i, size = %i",
-          //~ wY, hY, wUV, hUV, destSize, frame->size));
+  // Check if the frame really changed ...
+  //   WORKAROUND [2021-06-15, PJSIP 2.11 with VP8]:
+  //     If the far end switched off video, this function keeps on being called with new time stamps,
+  //     but identical images. It appears, the only way to check if the incoming video is still present is
+  //     to compare the complete frame (see pjsip/pjmedia/src/pjmedia/vid_conf.c:791).
+  if (videoStream->frame.size >= frame->size) {
+    if (memcmp (videoStream->frame.buf, frame->buf, frame->size) == 0) {
+      pthread_mutex_unlock (&windowsMutex);
+      return PJ_SUCCESS;
+    }
+  }
 
   // (Re-)alloc frame...
-  if ((int) videoStream->frame.size < destSize) {
+  if ((int) videoStream->frame.size < (int) frame->size) {
     if (videoStream->frame.buf) free (videoStream->frame.buf);
-    videoStream->frame.buf = malloc (destSize);
-    videoStream->frame.size = destSize;
+    videoStream->frame.buf = malloc (frame->size);
+    videoStream->frame.size = frame->size;
   }
 
   // Copy frame...
+  //   [2021-06-18, PJSIP 2.11] No clear information could be found in the PJSIP documentation on
+  //       who is owning the 'frame' object and its dynamic data. The PJSIP SDL driver copies a reference
+  //       to 'frame' and uses it in another thread at an unspecified time later, but it never frees or
+  //       destroys the object.
+  //       For this reason, we copy the frame here to be on the safe side.
+  //       TBD: Check later, if we can eliminate this copying.
   pjmedia_frame_copy (&(videoStream->frame), frame);
 
   // Set 'phoneVideoFrame' fields...
   videoStream->changed = true;
 
-  videoStream->phoneVideoFrame.planeY = (uint8_t *) videoStream->frame.buf;
-  videoStream->phoneVideoFrame.planeU = (uint8_t *) videoStream->frame.buf + destSizeY;
-  videoStream->phoneVideoFrame.planeV = (uint8_t *) videoStream->phoneVideoFrame.planeU + destSizeUV;
-  videoStream->phoneVideoFrame.pitchY = wY;
-  videoStream->phoneVideoFrame.pitchU = videoStream->phoneVideoFrame.pitchV = wUV;
+  videoStream->phoneVideoFrame.format = PhoneVideoFormatOf (videoStream->param.fmt.id);
+  videoStream->phoneVideoFrame.w = videoStream->param.fmt.det.vid.size.w;
+  videoStream->phoneVideoFrame.h = videoStream->param.fmt.det.vid.size.h;
+
+  videoStream->phoneVideoFrame.planeY = NULL;
+  videoStream->phoneVideoFrame.data = (uint8_t *) videoStream->frame.buf;
+  switch (videoStream->param.fmt.id) {
+    case PJMEDIA_FORMAT_YUY2:
+    case PJMEDIA_FORMAT_UYVY:
+    case PJMEDIA_FORMAT_YVYU:
+      // Packed formats ...
+      videoStream->phoneVideoFrame.pitch = videoStream->phoneVideoFrame.w * 2;
+      break;
+    default:
+      // Normal case ...
+      videoStream->phoneVideoFrame.pitch = videoStream->phoneVideoFrame.w;
+  }
 
   // Unlock windows & done...
   pthread_mutex_unlock (&windowsMutex);
@@ -644,12 +606,10 @@ pj_status_t VideoStreamStop (pjmedia_vid_dev_stream *strm) {
   // Returns
   //     PJ_SUCCESS on successful operation or the appropriate error code.
   TVideoStream *videoStream = CastVideoStream (strm);
-  int win = WindowOfStream (strm);   // hint only
 
-  INFOF (("### VideoStreamStop (%08x, %i)", videoStream, win));
+  //~ INFOF (("### VideoStreamStop (%08x, %i)", videoStream, WindowOfStream (strm)));
 
-  // TBD: Eliminate this function?
-
+  videoStream->running = false;
   return PJ_SUCCESS;
 }
 
@@ -668,7 +628,7 @@ pj_status_t VideoStreamDestroy (pjmedia_vid_dev_stream *strm) {
   if (win >= 0) windows[win] = NULL;
   pthread_mutex_unlock (&windowsMutex);
 
-  INFOF (("### VideoStreamDestroy (%08x, %i)", videoStream, win));
+  //~ INFOF (("### VideoStreamDestroy (%08x, %i)", videoStream, win));
 
   // Cleanup object...
   if (videoStream->frame.buf) free (videoStream->frame.buf);
@@ -702,9 +662,6 @@ pj_status_t VideoFactoryInit (pjmedia_vid_dev_factory *f) {
   //   f The video device factory
 
   //~ INFO ("### VideoFactoryInit ()");
-
-  // TBD: More init? Eliminate?
-
   return PJ_SUCCESS;
 }
 
@@ -712,10 +669,8 @@ pj_status_t VideoFactoryInit (pjmedia_vid_dev_factory *f) {
 pj_status_t VideoFactoryDestroy (pjmedia_vid_dev_factory *f) {
   // Close this video device factory and release all resources back to the operating system.
   //     f  The video device factory.
+
   //~ INFO ("### VideoFactoryDestroy ()");
-
-  // TBD: Cleanup something?
-
   return PJ_SUCCESS;
 }
 
@@ -723,6 +678,7 @@ pj_status_t VideoFactoryDestroy (pjmedia_vid_dev_factory *f) {
 unsigned VideoFactoryGetDevCount (pjmedia_vid_dev_factory *f) {
   // Get the number of video devices installed in the system.
   //     f  The video device factory.
+
   //~ INFO ("### VideoFactoryGetDevCount ()");
   return 1;
 }
@@ -734,24 +690,28 @@ pj_status_t VideoFactoryGetDevInfo (pjmedia_vid_dev_factory *f, unsigned index, 
   //     index  Device index.
   //     info   The video device information structure which will be initialized by this function once it returns successfully.
   //~ INFOF (("### VideoFactoryGetDevInfo (%i)", (int) index));
+  int i;
 
   PJ_UNUSED_ARG (f);
   PJ_ASSERT_RETURN (index == 0, PJMEDIA_EVID_INVDEV);
 
+  bzero(info, sizeof (*info));
   info->id = index;
   strcpy (info->name, videoDeviceName);
   strcpy (info->driver, videoDriverName);
   info->dir = PJMEDIA_DIR_RENDER;
   info->has_callback = PJ_FALSE;     // PJSIP SDL driver has 'PJ_FALSE'.
   info->caps =  PJMEDIA_VID_DEV_CAP_FORMAT | PJMEDIA_VID_DEV_CAP_OUTPUT_RESIZE | PJMEDIA_VID_DEV_CAP_OUTPUT_WINDOW;
-  info->fmt_cnt = 1;
-  bzero (&info->fmt[0], sizeof (pjmedia_format));
-  info->fmt[0].id = PJMEDIA_FORMAT_I420; // PJMEDIA_FORMAT_YV12;  // x264 appears to deliver I420
-  info->fmt[0].type = PJMEDIA_TYPE_VIDEO;
-  info->fmt[0].detail_type = PJMEDIA_FORMAT_DETAIL_VIDEO;
-    // NOTE: The format "YV12" is currently the only one supported by Home2l, the same as delivered
-    //       by liblinphone, and appears to be convenient for ffmpeg.
-    //       Can we live with only this one, or do we need to offer more formats?
+
+  // Init formats ...
+  info->fmt_cnt = ENTRIES (videoFormatList);
+  for (i = 0; i < ENTRIES (videoFormatList); i++)
+    pjmedia_format_init_video (&info->fmt[i], videoFormatList[i], VIDEO_DEFAULT_WIDTH, VIDEO_DEFAULT_HEIGHT, VIDEO_DEFAULT_FPS, 1);
+    // NOTE: The format "I420" appears to be the only one possible here (with VP8, x264, ffmpeg).
+    //       On the other hand, "YV12" is currently the only one supported by Home2l, and the same as delivered by liblinphone.
+    //       By defintion, both only differ in the order of the U and V planes. For some reason, everything
+    //       appears to be fine with selecting I420 here and assuming YV12 in CWidgetVideo::Iterate () (app_phone.C).
+    //       It's magic!
   return PJ_SUCCESS;
 }
 
@@ -761,24 +721,22 @@ pj_status_t VideoFactoryDefaultParam (pj_pool_t *pool, pjmedia_vid_dev_factory *
   //     f      The video device factory.
   //     index  Device index.
   //     param  The video device parameter.
+
   //~ INFOF (("### VideoFactoryDefaultParam (%i)", (int) index));
 
   PJ_UNUSED_ARG (pool);
   PJ_UNUSED_ARG (f);
   PJ_ASSERT_RETURN (index == 0, PJMEDIA_EVID_INVDEV);
 
-  bzero (param, sizeof (pjmedia_vid_dev_param));  // zero-out everything, optional fields are left out now below.
+  bzero (param, sizeof (*param));  // zero-out everything, optional fields are left out now below.
   param->dir = PJMEDIA_DIR_RENDER;
   param->cap_id = PJMEDIA_VID_INVALID_DEV;
   param->rend_id = index;
-  param->clock_rate = PJSUA_DEFAULT_CLOCK_RATE; // stock SDL driver uses 90000 (0 = unset does not work)
+  param->clock_rate = PJSUA_DEFAULT_CLOCK_RATE;   // stock SDL driver uses 90000 (0 = unset does not work)
   param->flags = PJMEDIA_VID_DEV_CAP_FORMAT | PJMEDIA_VID_DEV_CAP_OUTPUT_RESIZE;
 
   // Format... (see comment in 'VideoFactoryDevInfo')
-  param->fmt.id = PJMEDIA_FORMAT_I420;
-  param->fmt.type = PJMEDIA_TYPE_VIDEO;
-  param->fmt.detail_type = PJMEDIA_FORMAT_DETAIL_VIDEO;
-  //~ INFOF (("###    param->fmt.det.vid.size = %ix%i", param->fmt.det.vid.size.w, param->fmt.det.vid.size.h));
+  pjmedia_format_init_video(&param->fmt, videoFormatList[0], VIDEO_DEFAULT_WIDTH, VIDEO_DEFAULT_HEIGHT, VIDEO_DEFAULT_FPS, 1);
   return PJ_SUCCESS;
 }
 
@@ -799,10 +757,9 @@ pj_status_t VideoFactoryCreateStream (pjmedia_vid_dev_factory *f, pjmedia_vid_de
 
   //~ INFOF (("### VideoFactoryCreateStream () -> %08x", videoStream));
 
-  // Zero out complete object; only non-zero fields are set below...
-  bzero (videoStream, sizeof (TVideoStream));
-
   // Fill '*videoStream'...
+  bzero (videoStream, sizeof (TVideoStream));   // zero out complete object; only non-zero fields are set below...
+
   videoStream->base.op = &videoStreamCallbacks;
 
   videoStream->param = *param;
@@ -873,133 +830,477 @@ static pjmedia_vid_dev_index VideoGetDeviceIndex () {
 
 
 
+// *************************** LIBDATA *****************************************
+
+
+struct TMgmtCheckRec {
+  bool regState, callState, mediaState;
+  pjsua_call_id incomingCallId;
+  pjsua_call_id callId;   // last callId ID of a "call state" event (to identify 'callStatus')
+  int callStatus;         // last known call status code, -1 == unknown
+  int dtmfDigit;          // -1 == unset
+};
+
+
+static inline void MgmtCheckRecClear (TMgmtCheckRec *rec) {
+  rec->regState = rec->callState = rec->mediaState = false;
+  rec->incomingCallId = rec->callId = NO_ID_PJ;
+  rec->callStatus = -1;
+  rec->dtmfDigit = -1;
+}
+
+
+struct TPhoneData {
+  bool isSet, haveAccount;
+  pjsua_acc_id pjAccountId;
+
+  pjsua_call_id pjCallId[2];
+  int callStatus[2];                // last known call status code, -1 == unknown
+  pjsua_player_id playerId;         // audio player ID for ringback
+  TTicksMonotonic tLastStatusLog;   // used for regular status logs, e.g. during calls
+
+  TMgmtCheckRec check;              // [T:any] - data potentially accessed by assynchronous callbacks;
+                                    //           protected by the mutex 'mgmtMutex'
+};
+
+#define PHONE_LIBDATA(phone) (* (TPhoneData *) phone->GetLibData ())
+#define LIBDATA (* (TPhoneData *) libData)
+
+STATIC_ASSERT (sizeof (TPhoneData) <= LIBDATA_SIZE);
+
+
+
+
+
+// *************************** Phone management ********************************
+
+
+#define MAX_PHONES 1        // Maximum number of allowed phones
+
+
+static pthread_mutex_t mgmtMutex = PTHREAD_MUTEX_INITIALIZER;   // Mutex for all following 'mgmt*' variables
+static int mgmtPhones = 0;        // count number of phones to create/destroy 'PPJSUA' accordingly
+static CPhone *mgmtPhoneList[MAX_PHONES];
+
+
+static inline void MgmtLock () { pthread_mutex_lock (&mgmtMutex); }
+static inline void MgmtUnlock () { pthread_mutex_unlock (&mgmtMutex); }
+
+
+// All the following function assert that 'mgmtMutex' is already locked - the caller is responsible!
+// Return values are probably only valid until the next 'MgmtUnlock ()' operation!
+
+
+static void MgmtAddPhone (CPhone *phone) {
+  ASSERT (mgmtPhones < MAX_PHONES);
+
+  mgmtPhoneList[mgmtPhones] = phone;
+  mgmtPhones++;
+}
+
+
+static void MgmtDelPhone (CPhone *phone) {
+  int id;
+
+  for (id = 0; id < mgmtPhones; id++) if (mgmtPhoneList[id] == phone) break;
+  ASSERT (id < mgmtPhones);     // phone should not be deleted twice!
+
+  mgmtPhones--;
+  mgmtPhoneList[id] = mgmtPhoneList[mgmtPhones];
+}
+
+
+static int MgmtPhoneIdOfAccount (pjsua_acc_id accId) {
+  for (int n = 0; n < mgmtPhones; n++)
+    if (PHONE_LIBDATA(mgmtPhoneList[n]).pjAccountId == accId) return n;
+  return -1;
+}
+
+
+static CPhone *MgmtPhoneOfAccount (pjsua_acc_id accId) {
+  int id = MgmtPhoneIdOfAccount (accId);
+  return id >= 0 ? mgmtPhoneList[id] : NULL;
+}
+
+
+static int MgmtPhoneIdOfCall (pjsua_call_id callId) {
+  for (int n = 0; n < mgmtPhones; n++)
+    if (PHONE_LIBDATA(mgmtPhoneList[n]).pjCallId[0] == callId ||
+        PHONE_LIBDATA(mgmtPhoneList[n]).pjCallId[1] == callId) return n;
+  return -1;
+}
+
+
+static CPhone *MgmtPhoneOfCall (pjsua_call_id callId) {
+  int id = MgmtPhoneIdOfCall (callId);
+  return id >= 0 ? mgmtPhoneList[id] : NULL;
+}
+
+
+
+
+
 // *************************** Media management ********************************
 
 
+static int mediaDevAudioIn = PJMEDIA_AUD_DEFAULT_CAPTURE_DEV;
+static int mediaDevAudioOut = PJMEDIA_AUD_DEFAULT_PLAYBACK_DEV;
+static int mediaDevVideoIn = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
+//~ #define mediaDevVideoOut (VideoGetDeviceIndex ())
+
+
 static CPhone *mediaOwner = NULL;
-  // In PJSIP, appearently only a single core and a single set of audio/video devices are allowed at
-  // a time. This variable points to the 'CPhone' object currently owning the right to use the devices.
+  // In PJSIP, only a single core and a single set of audio/video devices are allowed at a time.
+  // This variable points to the 'CPhone' object currently owning the right to use the devices.
   // This variable may only be accessed from the main thread. It is primarily maintained by
   // 'MediaUpdate ()', but call action methods should also recognize ist to avoid errors.
 static unsigned mediaActivated = 0;
+  // Media currently active
+static bool mediaVideoTransmitting = false;
+  // Video camera stream is currently transmitted
+static bool mediaVideoPreview = false;
+  // Video camera preview is currently active
+
+static void MediaDumpDevicesAndCodecs () {
+  /* Log a readable list of available and selected devices and codecs.
+   * The output is important to inform the user about possible values
+   * for the device and codec selection environment parameters.
+   *
+   * Selected audio and video devices are printed depending on 'mediaDev*',
+   * which must have been set in advance.
+   *
+   * Codecs are displayed as selected if their priority is set to
+   * 'PJMEDIA_CODEC_PRIO_HIGHEST'. Unwanted codecs may not be disabled
+   * completely to save a bit of compatibility if the preferred codec
+   * is not usable in a call.
+   */
+  pjmedia_aud_dev_info audDevInfo[PJMEDIA_AUD_MAX_DEVS];
+  pjsua_codec_info codecInfo[MAX (PJMEDIA_CODEC_MGR_MAX_CODECS, PJMEDIA_VID_CODEC_MGR_MAX_CODECS)];
+  pjmedia_vid_dev_info vidDevInfo;
+  int devAudioIn, devAudioOut;
+  int n, k, count;
+
+  INFO ("\n--------------------------- Phone Devices and Codecs ---------------------------");
+
+  // Audio...
+  INFO ("\nAudio Devices:");
+  count = ENTRIES (audDevInfo);
+  ASSERT (PJ_SUCCESS == pjsua_enum_aud_devs (audDevInfo, (unsigned *) &count));
+  ASSERT (PJ_SUCCESS == pjsua_get_snd_dev (&devAudioIn, &devAudioOut));
+  if (devAudioIn < 0) devAudioIn = mediaDevAudioIn;
+  if (devAudioOut < 0) devAudioOut = mediaDevAudioOut;
+  for (n = 0; n < count; n++) {
+    INFOF (("  %c%3i. '%s' (#in/#out = %i/%i, driver = '%s', %i format(s))",
+            n == mediaDevAudioIn ? (n == mediaDevAudioOut ? '*' : 'M') : (n == mediaDevAudioOut ? 'P' : ' '),
+            n, audDevInfo[n].name, audDevInfo[n].input_count, audDevInfo[n].output_count,
+            audDevInfo[n].driver, audDevInfo[n].ext_fmt_cnt));
+  }
+
+  // Audio codecs...
+  INFO ("\nAudio Codecs:");
+  count = ENTRIES (codecInfo);
+  ASSERT (PJ_SUCCESS == pjsua_enum_codecs (codecInfo, (unsigned *) &count));
+  for (n = 0; n < count; n++) {
+    INFOF (("  %c%3i. '%.*s' (prio = %i, desc = '%.*s')",
+            codecInfo[n].priority > PJMEDIA_CODEC_PRIO_HIGHEST ? '*' : ' ', n,
+            PJSTR_ARGS (codecInfo[n].codec_id), codecInfo[n].priority,
+            PJSTR_ARGS (codecInfo[n].desc)));
+  }
+
+  // Video...
+  //   Note [2021-05-18]: There is also a 'pjsua_vid_enum_devs()' call to get all
+  //       devices at once, similar to the audio devices and codecs.
+  //       However, on Android, it appearantly does not work and returns a scrambled
+  //       list (alignment problem?).
+  INFO ("\nVideo Devices:");
+  count = pjsua_vid_dev_count ();
+  for (n = 0; n < count; n++) {
+    ASSERT (PJ_SUCCESS == pjsua_vid_dev_get_info (n, &vidDevInfo));
+    INFOF (("  %c%3i. '%s' (driver = '%s', dir = %s, %i format(s))",
+            (n == mediaDevVideoIn || n == VideoGetDeviceIndex ()) ? '*' : ' ',
+            n, vidDevInfo.name, vidDevInfo.driver,
+            StrMediaDir (vidDevInfo.dir),
+            vidDevInfo.fmt_cnt));
+    for (k = 0; k < (int) vidDevInfo.fmt_cnt; k++) {
+      DEBUGF(1, ("          format %i: %ix%i, %i/%i fps, %i bps, %s", k,
+            (int) vidDevInfo.fmt[k].det.vid.size.w, (int) vidDevInfo.fmt[k].det.vid.size.h,
+            (int) vidDevInfo.fmt[k].det.vid.fps.num, (int) vidDevInfo.fmt[k].det.vid.fps.denum,
+            (int) vidDevInfo.fmt[k].det.vid.avg_bps,
+            StrPhoneVideoFormat (PhoneVideoFormatOf (vidDevInfo.fmt[k].id))));
+    }
+  }
+
+  // Video codecs...
+  INFO ("\nVideo Codecs:");
+  count = ENTRIES (codecInfo);
+  ASSERT (PJ_SUCCESS == pjsua_vid_enum_codecs (codecInfo, (unsigned *) &count));
+  for (n = 0; n < count; n++) {
+    INFOF (("  %c%3i. '%.*s' (prio = %i, desc = '%.*s')",
+            codecInfo[n].priority >= PJMEDIA_CODEC_PRIO_HIGHEST ? '*' : ' ', n,
+            PJSTR_ARGS (codecInfo[n].codec_id), codecInfo[n].priority,
+            PJSTR_ARGS (codecInfo[n].desc)));
+  }
+
+  INFO ("\n------------------------ Phone Devices and Codecs (END) ------------------------\n");
+}
+
+
+static void MediaSetup () {
+  const char *devStr;
+  pj_status_t pjStatus;
+  pj_str_t pjStr;
+
+  // Audio device(s) ...
+  devStr = envPhoneAudioInDevice ? envPhoneAudioInDevice : envPhoneAudioDevice;
+  if (devStr) {
+    if (PJ_SUCCESS != pjmedia_aud_dev_lookup (envPhoneAudioDriver, devStr, &mediaDevAudioIn)) {
+      WARNINGF (("Invalid audio input device: '%s'", devStr));
+      mediaDevAudioIn = PJMEDIA_AUD_DEFAULT_CAPTURE_DEV;
+    }
+    //~ INFOF (("### Selected audio in device %i", mediaDevAudioIn));
+  }
+  devStr = envPhoneAudioInDevice ? envPhoneAudioOutDevice : envPhoneAudioDevice;
+  if (devStr) {
+    if (PJ_SUCCESS != pjmedia_aud_dev_lookup (envPhoneAudioDriver, devStr, &mediaDevAudioOut)) {
+      WARNINGF (("Invalid audio output device: '%s'", devStr));
+      mediaDevAudioOut = PJMEDIA_AUD_DEFAULT_PLAYBACK_DEV;
+    }
+    //~ INFOF (("### Selected audio out device %i", mediaDevAudioOut));
+  }
+
+  // Audio codec ...
+  if (envPhoneAudioCodec) {
+    pj_strset2 (&pjStr, (char *) envPhoneAudioCodec);
+    pjStatus = pjsua_codec_set_priority (&pjStr, PJMEDIA_CODEC_PRIO_HIGHEST);
+    if (pjStatus != PJ_SUCCESS)
+      WARNINGF (("Failed to prioritize audio codec '%s': %s", PjStrError (pjStatus)));
+  }
+
+  // Echo cancellation ...
+  ASSERT (PJ_SUCCESS == pjsua_set_ec (
+    envPhoneEchoTail > 0 ? envPhoneEchoTail : PJSUA_DEFAULT_EC_TAIL_LEN,
+    PJMEDIA_ECHO_USE_SW_ECHO
+    | (envPhoneEchoAlgo == 0 ? PJMEDIA_ECHO_SIMPLE :
+       envPhoneEchoAlgo == 1 ? PJMEDIA_ECHO_SPEEX :
+       envPhoneEchoAlgo == 2 ? PJMEDIA_ECHO_WEBRTC :
+       PJMEDIA_ECHO_DEFAULT)
+    | (envPhoneEchoAggressiveness == 0 ? PJMEDIA_ECHO_AGGRESSIVENESS_CONSERVATIVE :
+       envPhoneEchoAggressiveness == 1 ? PJMEDIA_ECHO_AGGRESSIVENESS_MODERATE :
+       envPhoneEchoAggressiveness == 2 ? PJMEDIA_ECHO_AGGRESSIVENESS_AGGRESSIVE :
+       PJMEDIA_ECHO_AGGRESSIVENESS_DEFAULT)
+    | (envPhoneEchoNoiseSuppression ? PJMEDIA_ECHO_USE_NOISE_SUPPRESSOR : 0)
+  ));
+
+  // Video in (capture) device ...
+  if (envPhoneVideoDevice) {
+    if (PJ_SUCCESS != pjmedia_vid_dev_lookup (envPhoneVideoDriver, envPhoneVideoDevice, &mediaDevVideoIn)) {
+      WARNINGF (("Invalid video input device: '%s'", envPhoneVideoDevice));
+      mediaDevVideoIn = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
+    }
+  }
+  //    camera orientation ...
+  if (envPhoneRotation != 0) {
+    /* [2021-06-16, PJSIP 2.11]
+     *   On Android, the call 'pjsua_vid_dev_set_setting()' leads to a strange crash inside 'PJSUA_LOCK()' right at the
+     *   entry of the function. On Debian/Linux, video cameras appearently do not always support the orientation capability,
+     *   and the feature is usually not necessary, anyway.
+     *   For these reasons, the feature is currently disabled (fixes are welcome).
+     */
+    WARNINGF (("Camera orientation correction is presently unsupported: Ignoring '%s = %i'.", envPhoneRotationKey, envPhoneRotation));
+    /*
+    pjmedia_vid_dev_info pjDevInfo;
+    pjmedia_orient pjCamOrient;
+
+    ASSERT (PJ_SUCCESS == pjmedia_vid_dev_get_info (mediaDevVideoIn, &pjDevInfo));
+    if (!(pjDevInfo.caps & PJMEDIA_VID_DEV_CAP_ORIENTATION))
+      WARNINGF (("Camera does not support orientation correction: Ignoring '%s = %i'.", envPhoneRotationKey, envPhoneRotation));
+    else {
+      //~ INFOF (("### camDev = %i, devInfo.caps = %x", mediaDevVideoIn, pjDevInfo.caps));
+      pjCamOrient =
+        envPhoneRotation ==   0 ? PJMEDIA_ORIENT_NATURAL :
+        envPhoneRotation ==  90 ? PJMEDIA_ORIENT_ROTATE_90DEG :
+        envPhoneRotation == 180 ? PJMEDIA_ORIENT_ROTATE_180DEG :
+        envPhoneRotation == 270 ? PJMEDIA_ORIENT_ROTATE_270DEG :
+        PJMEDIA_ORIENT_UNKNOWN;
+      if (pjCamOrient == PJMEDIA_ORIENT_UNKNOWN)
+        WARNINGF (("Unsupported camera orientation ('%s'): %i", envPhoneRotationKey, envPhoneRotation));
+      else
+        ASSERT_WARN (PJ_SUCCESS == pjsua_vid_dev_set_setting (
+            mediaDevVideoIn, PJMEDIA_VID_DEV_CAP_ORIENTATION, &pjCamOrient, true
+          ));
+    }
+    */
+  }
+
+  // Video codec ...
+  if (envPhoneVideoCodec) {
+    pj_strset2 (&pjStr, (char *) envPhoneVideoCodec);
+    pjStatus = pjsua_codec_set_priority (&pjStr, PJMEDIA_CODEC_PRIO_HIGHEST);
+    if (pjStatus != PJ_SUCCESS)
+      WARNINGF (("Failed to prioritize video codec '%s': %s", PjStrError (pjStatus)));
+  }
+
+}
 
 
 static void MediaUpdate () {
   // The behavior of the function depends on the actually selected media,
-  // but also on the current phone state. Audio devices are never accessed in
-  // "device-permitting" states (see notes in 'phone.H').
+  // but also on
+  // a) the current phone state - audio devices are never accessed in
+  //    "device-permitting" states (see notes in 'phone.H') - and
+  // b) the presence of a video stream in the active call.
+  //
   // Hence, this function must also be called on each state change by
-  // which the "device-permitting" status may change.
+  // which the "device-permitting" status may change or whenever a video stream
+  // is established.
   //
   // Audio in/out is switched at the device level, streams are always enabled.
-  // Video in/out switching may involve re-invites.
+  // Video in/out switching may in the future involve re-invites.
+  //
   pjsua_call_id callId;
   pjsua_call_info callInfo;
   pjsua_conf_port_id confId;
   pjsua_snd_dev_param sndDevParam;
-  unsigned mediaSelected, _mediaActivated, mediaToChange;
+  pjsua_vid_preview_param previewParam;
+  pjsua_call_vid_strm_op_param opParam;
+  pj_status_t pjStatus;
+  unsigned mediaSelected;     // media as selected by the CPhone object
+  unsigned _mediaActivated;   // media actually active (prospective value for 'mediaActivated')
+  unsigned mediaToChange;     // mask to indicate media to change wrt. to the present state
   int n;
-  bool ok;
 
-  // TBD: lock call(s), see https://trac.pjsip.org/repos/wiki/PJSUA_Locks
-
-  // Get really selected media...
+  // Determine effectively selected media...
+  //   These are the media as requested by the phone with the following exceptions:
+  //   - If no phone is active or the active phone is in a "device permitting" state, all media are unselected.
   callId = NO_ID_PJ;
   confId = NO_ID_PJ;
   if (!mediaOwner) {
-    INFOF (("### MediaUpdate (): no owner"));
+    //~ INFOF (("### MediaUpdate (): no owner - deactivating all media"));
     mediaSelected = pmNone;
   }
   else {
     mediaSelected = mediaOwner->GetMediaSelected ();
     if (PhoneStateIsDevicePermitting (mediaOwner->GetState ())) mediaSelected = pmNone;
-    INFOF (("### MediaUpdate (): phone state = %i, mediaSelected = %i", mediaOwner->GetState (), mediaSelected));
+    //~ INFOF (("### MediaUpdate (): phone state = %i, mediaSelected = %i, mediaActivated = %i", mediaOwner->GetState (), mediaSelected, mediaActivated));
 
     // Try to obtain current call ID, call info & conference ID...
     callId = PHONE_LIBDATA(mediaOwner).pjCallId[0];
-    if (callId >= 0) {
-      ASSERT (PJ_SUCCESS == pjsua_call_get_info (callId, &callInfo));
-      confId = pjsua_call_get_conf_port (callId);
+    if (callId != NO_ID_PJ) {
+      if (PJ_SUCCESS == pjsua_call_get_info (callId, &callInfo))
+        confId = pjsua_call_get_conf_port (callId);
+      else callId = NO_ID_PJ;
+        // This may happen due to a race. If the call has been stopped after the last run of
+        // 'UpdatePhoneState()', 'PHONE_LIBDATA(mediaOwner).pjCallId[0]' may have become invalid.
     }
   }
-  if (callId < 0 || confId < 0) mediaSelected &= ~(pmAudio | pmVideoOut);
 
   // Prepare new activation vector...
   _mediaActivated = mediaActivated;
-  mediaToChange = mediaSelected ^ mediaActivated;
+  mediaToChange = mediaSelected ^ _mediaActivated;
 
   // Audio...
   if (mediaToChange & pmAudio) {
-    if ((mediaSelected & pmAudio) == 0 || callId < 0 || confId < 0) {
-      INFO ("###    Set audio NULL device...");
+    if ((mediaSelected & pmAudio) == 0) {
+      //~ INFO ("###    Setting  audio NULL device (disabling audio) ...");
       ASSERT_WARN (PJ_SUCCESS == pjsua_set_null_snd_dev ());
       _mediaActivated &= ~pmAudio;
     }
     else {
 
       // Enable device...
-      INFO ("###    Enabling audio device...");
+      //~ INFO ("###    Enabling audio device...");
       pjsua_snd_dev_param_default (&sndDevParam);
+      sndDevParam.capture_dev = mediaDevAudioIn;
+      sndDevParam.playback_dev = mediaDevAudioOut;
       ASSERT_WARN (PJ_SUCCESS == pjsua_set_snd_dev2 (&sndDevParam));
 
       // Audio in...
-      if (mediaToChange & pmAudioIn) {
-        INFO ("###    Setting mic level...");
-        ASSERT_WARN (PJ_SUCCESS == pjsua_conf_adjust_tx_level (confId, mediaSelected & pmAudioIn ? 1.0 : 0.0));
-        // TBD: option for amplification
+      if ((mediaToChange & pmAudioIn) && confId >= 0) {
+        //~ INFO ("###    Setting mic level...");
+        ASSERT_WARN (PJ_SUCCESS == pjsua_conf_adjust_tx_level (confId, (mediaSelected & pmAudioIn) ? envPhoneAudioInGain : 0.0));
       }
 
       // Audio out...
-      if (mediaToChange & pmAudioOut) {
-        INFO ("###    Setting speaker level...");
-        ASSERT_WARN (PJ_SUCCESS == pjsua_conf_adjust_rx_level (confId, mediaSelected & pmAudioOut ? 1.0 : 0.0));
+      if ((mediaToChange & pmAudioOut) && confId >= 0) {
+        //~ INFO ("###    Setting speaker level...");
+        ASSERT_WARN (PJ_SUCCESS == pjsua_conf_adjust_rx_level (confId, (mediaSelected & pmAudioOut) ? envPhoneAudioInGain : 0.0));
       }
 
       // Report success...
-      _mediaActivated = (_mediaActivated & ~pmAudio) | (mediaSelected & pmAudio);
+      _mediaActivated &= ~pmAudio;
+      if (confId >= 0) _mediaActivated |= (mediaSelected & pmAudio);
     }
   }
 
-  // Video in (camera)...
-  if ((mediaToChange & pmVideoIn) && (callId >= 0)) {
+  // Video in: Handle camera preview ...
+  //   Camera preview is enabled if an only if both video in (camera) and video out (screen)
+  //   are selected. This saves processing effort on tools without a display (e.g. doorman).
+  if (!mediaVideoPreview && (mediaSelected & pmVideo) == pmVideo) {
 
-    // Check if the current call has an active video stream...
-    DumpCallInfo (callId);
-    ok = false;
-    for (n = 0; n < (int) callInfo.media_cnt && !ok; n++) {
-      if (callInfo.media[n].type == PJMEDIA_TYPE_VIDEO && callInfo.media[n].status == PJSUA_CALL_MEDIA_ACTIVE)
-        if (callInfo.media[n].dir == PJMEDIA_DIR_DECODING || callInfo.media[n].dir == PJMEDIA_DIR_ENCODING_DECODING) ok = true;
+    // Start local preview...
+    pjsua_vid_preview_param_default (&previewParam);
+    previewParam.rend_id = VideoGetDeviceIndex ();
+    pjStatus = pjsua_vid_preview_start (mediaDevVideoIn, &previewParam);
+    if (pjStatus == PJ_SUCCESS) {
+      pjStatus = WindowAssignByID (WINDOW_SIDE, pjsua_vid_preview_get_win (mediaDevVideoIn));
+      if (pjStatus != PJ_SUCCESS) pjsua_vid_preview_stop (mediaDevVideoIn);
     }
-    if (!ok) {
-      INFO ("###   ... no active video stream - NOT changing video");
-    }
-    else {
-      if (mediaSelected & pmVideoIn) {
-
-        // Switch on transmission...
-        //~ pjsua_call_vid_strm_op_param strmOpParam;
-        //~ pjsua_call_vid_strm_op_param_default (&strmOpParam);
-        ASSERT_WARN (PJ_SUCCESS == pjsua_call_set_vid_strm (callId, PJSUA_CALL_VID_STRM_START_TRANSMIT, NULL));
-        _mediaActivated |= pmVideoIn;
-      }
-      else {
-
-        // Switch off transmission...
-        ASSERT_WARN (PJ_SUCCESS == pjsua_call_set_vid_strm (callId, PJSUA_CALL_VID_STRM_STOP_TRANSMIT, NULL));
-        _mediaActivated &= ~pmVideoIn;
-      }
-    }
+    if (pjStatus == PJ_SUCCESS)
+      mediaVideoPreview = true;
+    else
+      WARNINGF (("Failed to start local camera preview: %s", PjStrError (pjStatus)));
   }
+  else if (mediaVideoPreview && (mediaSelected & pmVideo) != pmVideo) {
+
+    // Stop preview...
+    pjStatus = pjsua_vid_preview_stop (mediaDevVideoIn);
+    if (pjStatus != PJ_SUCCESS)
+      WARNINGF (("Failed to stop local camera preview: %s", PjStrError (pjStatus)));
+    mediaVideoPreview = false;    // mark as not running anyway
+  }
+
+  // Video in: Handle transmitted stream ...
+  //~ INFOF (("###    mediaVideoTransmitting = %i, callId = %i", (int) mediaVideoTransmitting, callId));
+  if (!mediaVideoTransmitting && (mediaSelected & pmVideoIn) && callId >= 0) {
+    //~ INFO ("###   ... switching on video transmission.");
+
+    // Switch on transmission...
+    pjsua_call_vid_strm_op_param_default (&opParam);
+    opParam.cap_dev = mediaDevVideoIn;
+    pjStatus = pjsua_call_set_vid_strm (callId, PJSUA_CALL_VID_STRM_CHANGE_CAP_DEV, &opParam);
+    if (pjStatus == PJ_SUCCESS)
+      pjStatus = pjsua_call_set_vid_strm (callId, PJSUA_CALL_VID_STRM_START_TRANSMIT, NULL);
+    if (pjStatus == PJ_SUCCESS)
+      mediaVideoTransmitting = true;
+    else
+      WARNINGF (("Failed to start video camera transmission: %s", PjStrError (pjStatus)));
+  }
+  else if (mediaVideoTransmitting && !(mediaSelected & pmVideoIn)) {
+    //~ INFO ("###   ... switching off video transmission.");
+
+    // Switch off transmission ...
+    //   If there is no valid callId, we assume that there is no call, and the transmission has been stopped already.
+    if (callId != NO_ID_PJ) {
+      pjStatus = pjsua_call_set_vid_strm (callId, PJSUA_CALL_VID_STRM_STOP_TRANSMIT, NULL);
+      if (pjStatus != PJ_SUCCESS)
+        WARNINGF (("Failed to stop video camera transmission: %s", PjStrError (pjStatus)));
+    }
+    mediaVideoTransmitting = false;    // mark as not running anyway
+  }
+
+  // Video in: Update '_mediaActivated' ...
+  if (mediaVideoTransmitting || mediaVideoPreview)  _mediaActivated |= pmVideoIn;
+  else                                              _mediaActivated &= ~pmVideoIn;
 
   // Video out (screen)...
   if (mediaToChange & pmVideoOut) {
-    if (mediaSelected & pmVideoOut) {
+    if ((mediaSelected & pmVideoOut) && callId >= 0) {
 
       // Determine window ID of incoming video...
       for (n = 0; n < (int) callInfo.media_cnt; n++) {
         if (callInfo.media[n].type == PJMEDIA_TYPE_VIDEO) { //  && (callInfo->media[n].dir == PJMEDIA_DIR_DECODING || callInfo->media[n].dir == PJMEDIA_DIR_ENCODING_DECODING)) {
           if (WindowAssignByID (WINDOW_MAIN, callInfo.media[n].stream.vid.win_in)) {
-            _mediaActivated |= pmVideoIn;
+            _mediaActivated |= pmVideoOut;
             break;
           }
         }
@@ -1007,10 +1308,9 @@ static void MediaUpdate () {
     }
     else {
       WindowAssign (WINDOW_MAIN, NULL);
+      _mediaActivated &= ~pmVideoOut;
     }
   }
-
-  // TBD: unlock call(s)
 
   // Done...
   mediaActivated = _mediaActivated;
@@ -1018,7 +1318,6 @@ static void MediaUpdate () {
 
 
 static bool MediaLock (CPhone *phone) {
-  pjsua_vid_preview_param previewParam;
 
   // Sanity...
   if (phone == mediaOwner) return true;
@@ -1028,15 +1327,6 @@ static bool MediaLock (CPhone *phone) {
   mediaOwner = phone;
   ASSERT_WARN (mediaActivated == 0);
   mediaActivated = 0;
-
-  // Start local preview...
-  pjsua_vid_preview_param_default (&previewParam);
-  previewParam.rend_id = VideoGetDeviceIndex ();
-  ASSERT_WARN (PJ_SUCCESS == pjsua_vid_preview_start (PJMEDIA_VID_DEFAULT_CAPTURE_DEV, &previewParam));
-  ASSERT_WARN (WindowAssignByID (WINDOW_SIDE, pjsua_vid_preview_get_win (PJMEDIA_VID_DEFAULT_CAPTURE_DEV)));
-
-  // Select sound device...
-  // TBD (only select here, it is switched on/off in 'MediaUpdate')
 
   // Done...
   return true;
@@ -1056,9 +1346,6 @@ static void MediaUnlock (CPhone *phone) {
   MediaUpdate ();
   ASSERT_WARN (mediaActivated == 0);
   mediaActivated = 0;
-
-  // Stop preview...
-  ASSERT_WARN (PJ_SUCCESS == pjsua_vid_preview_stop (PJMEDIA_VID_DEFAULT_CAPTURE_DEV));
 }
 
 
@@ -1086,7 +1373,9 @@ void CPhone::SelectMedia (unsigned selected, unsigned mask) {
 
 bool CPhone::Dial (const char *uri) {
   pjsua_acc_info accInfo;
-  pj_str_t sipUser, sipDomain, sipAccountUser, cleanUriPj;
+  pj_str_t sipUser, sipDomain, sipAccountUser, cleanUriPj, ringbackFilePj;
+  pjsua_conf_port_id confPort;
+  pj_status_t pjStatus;
   char *cleanUri;
   bool ok;
 
@@ -1136,15 +1425,29 @@ bool CPhone::Dial (const char *uri) {
   // Report state change...
   if (ok) {
     //~ INFOF (("### Inviting (%i)", LIBDATA.pjCallId[0]));
-    ReportInfo ("Inviting...");
+    ReportInfo (_("Inviting..."));
     ReportState (state >= psTransferIdle ? psTransferDialing : psDialing);
   }
 
   // Update media...
-  //   TBD: This must happen after the state change was reported, but should probably happen before
-  //        'pjsua_call_make_call ()'.
-  //         => Move "Dial..." section behind this and revert change on failure?
   MediaUpdate ();
+
+  // Start ringback sound ...
+  //~ INFOF (("### Playing ringback sound '%s' ...", envPhoneRingbackFile));
+  //   create player ...
+  pj_strset2 (&ringbackFilePj, (char *) envPhoneRingbackFile);
+  pjStatus = pjsua_player_create (&ringbackFilePj, 0, &(LIBDATA.playerId));
+  if (pjStatus != PJ_SUCCESS) LIBDATA.playerId = PJSUA_INVALID_ID;
+  //   connect to conference ...
+  else {
+    confPort = pjsua_player_get_conf_port (LIBDATA.playerId);
+    //~ INFOF (("###   playerId = %i, confPort = %i", LIBDATA.playerId, confPort));
+    pjStatus = pjsua_conf_connect (confPort, 0);
+    if (pjStatus == PJ_SUCCESS) pjStatus = pjsua_conf_adjust_rx_level (confPort, envPhoneRingbackLevel);
+  }
+  //   handle error ...
+  if (pjStatus != PJ_SUCCESS)
+    WARNINGF (("Failed to play ringback sound '%s': %s", envPhoneRingbackFile, PjStrError (pjStatus)));
 
   // Complete...
   free (cleanUri);
@@ -1189,20 +1492,20 @@ bool CPhone::Hangup () {
 
   // Else: unpause secondary call, if present...
   else if (LIBDATA.pjCallId[1] != NO_ID_PJ) {
-    INFOF (("### #%i = (%i), #%i = (%i)", 0, LIBDATA.pjCallId[0], 1, LIBDATA.pjCallId[1]));
+    //~ INFOF (("### #%i = (%i), #%i = (%i)", 0, LIBDATA.pjCallId[0], 1, LIBDATA.pjCallId[1]));
     ok = (PJ_SUCCESS == pjsua_call_reinvite (LIBDATA.pjCallId[1], PJSUA_CALL_UNHOLD, NULL));
       // TBD: include 'PJSUA_CALL_INCLUDE_DISABLED_MEDIA' option? (see http://www.pjsip.org/docs/latest/pjsip/docs/html/group__PJSUA__LIB__CALL.htm)
     ASSERT_WARN (ok);
     if (ok) {
       LIBDATA.pjCallId[0] = LIBDATA.pjCallId[1];
       LIBDATA.pjCallId[1] = NO_ID_PJ;
-      ReportInfo ("Resuming paused call.");
+      ReportInfo (_("Resuming paused call."));
       ReportState (psInCall);
         // We assert that the secondary call is still connected. If not, the state will be changed again
         // in 'UpdatePhoneState ()'. To trigger this check, we set the respective flag now.
       LIBDATA.check.callState = true;
     }
-    INFOF (("### #%i = (%i), #%i = (%i)", 0, LIBDATA.pjCallId[0], 1, LIBDATA.pjCallId[1]));
+    //~ INFOF (("### #%i = (%i), #%i = (%i)", 0, LIBDATA.pjCallId[0], 1, LIBDATA.pjCallId[1]));
   }
 
   // Else: Nothing to do...
@@ -1272,7 +1575,7 @@ bool CPhone::PrepareTransfer () {
   // State transition...
   LIBDATA.pjCallId[1] = LIBDATA.pjCallId[0];
   LIBDATA.pjCallId[0] = NO_ID_PJ;
-  ReportInfo ("Call is paused. Please dial the number to transfer to.");
+  ReportInfo (_("Call is paused. Please dial the number to transfer to."));
   ReportState (psTransferIdle);
   return false;
 }
@@ -1281,11 +1584,11 @@ bool CPhone::PrepareTransfer () {
 bool CPhone::CompleteTransfer () {
   bool ok;
 
-  INFOF (("### CPhone::Transfer: #%i = (%i), #%i = (%i)", 0, LIBDATA.pjCallId[0], 1, LIBDATA.pjCallId[1]));
+  //~ INFOF (("### CPhone::Transfer: #%i = (%i), #%i = (%i)", 0, LIBDATA.pjCallId[0], 1, LIBDATA.pjCallId[1]));
 
   // If destination has not yet picked up: Just enter the "auto-pickup" state...
   if (state == psTransferDialing) {
-    ReportInfo ("Pick up destination phone to complete the transfer.");
+    ReportInfo (_("Pick up destination phone to complete the transfer."));
     ReportState (psTransferAutoComplete);
     return true;
   }
@@ -1387,10 +1690,12 @@ static void UpdatePhoneState (CPhone *phone) {
   TMgmtCheckRec _check;
   pjsua_acc_info accInfo;
   pjsua_call_info callInfo;
-  EPhoneState phoneState, newPhoneState, lastPhoneState;
+  EPhoneState oldPhoneState, newPhoneState;
   int n, callStatus;
   bool havePrimaryCall, primaryConfirmed, haveSecondaryCall;
   bool ok;
+
+  //~ INFO ("### UpdatePhoneState()");
 
   // Copy out and acknowledge check record in a thread-safe way...
   phoneData = &PHONE_LIBDATA(phone);
@@ -1403,7 +1708,7 @@ static void UpdatePhoneState (CPhone *phone) {
   // Handle registration change...
   if (_check.regState) {
     ASSERT (PJ_SUCCESS == pjsua_acc_get_info (PHONE_LIBDATA(phone).pjAccountId, &accInfo));
-    phone->ReportInfo ("Registration: %.*s (%i)", PJSTR_ARGS (accInfo.status_text), accInfo.status);
+    phone->ReportInfo (_("Registration: %.*s (%i)"), PJSTR_ARGS (accInfo.status_text), accInfo.status);
   }
 
   // Handle call state change...
@@ -1420,6 +1725,7 @@ static void UpdatePhoneState (CPhone *phone) {
       }
 
     //~ INFOF (("### #%i = (%i), #%i = (%i)", 0, phoneData->pjCallId[0], 1, phoneData->pjCallId[1]));
+
     // Assign call status...
     for (n = 0; n < 2; n++) if (_check.callId == phoneData->pjCallId[n] && _check.callStatus >= 0) {
       //~ INFOF (("### storing call status (%i) = %i to slot #%i", _check.callId, _check.callStatus, n));
@@ -1443,7 +1749,7 @@ static void UpdatePhoneState (CPhone *phone) {
     if (havePrimaryCall) {
       havePrimaryCall = (PJ_SUCCESS == pjsua_call_get_info (phoneData->pjCallId[0], &callInfo));
       if (havePrimaryCall) {
-        INFOF (("Call #0 state: %.*s", PJSTR_ARGS (callInfo.state_text)));
+        //~ INFOF (("Call #0 state: %.*s", PJSTR_ARGS (callInfo.state_text)));
         if (callInfo.state == PJSIP_INV_STATE_DISCONNECTED) havePrimaryCall = false;
       }
       if (!havePrimaryCall) phoneData->pjCallId[0] = NO_ID_PJ;
@@ -1453,11 +1759,12 @@ static void UpdatePhoneState (CPhone *phone) {
     // Perform eventual state transition...
     //   Depending on the currently queried call infos ('havePrimaryCall', 'primaryConfirmed', 'haveSecondary')
     //   and the previous phone state, we determine an eventual state change.
-    phoneState = newPhoneState = phone->GetState ();
+    oldPhoneState = newPhoneState = phone->GetState ();
     if (!haveSecondaryCall) {
+
       // Case 1: No secondary call...
-      if (phoneState >= psTransferIdle) {
-        switch (phoneState) {
+      if (oldPhoneState >= psTransferIdle) {
+        switch (oldPhoneState) {
           case psTransferIdle:
             newPhoneState = psIdle;
             break;
@@ -1476,69 +1783,79 @@ static void UpdatePhoneState (CPhone *phone) {
       else if (primaryConfirmed) newPhoneState = psInCall;
     }
     else {
+
       // Case 2: We have a secondary, paused call...
       if (!havePrimaryCall) newPhoneState = psTransferIdle;
       else if (primaryConfirmed) newPhoneState = psTransferInCall;
     }
+    //~ INFOF (("###   phoneState: %i -> %i", oldPhoneState, newPhoneState));
 
     // Report info and new state...
-    if (newPhoneState != phoneState) {
+    if (newPhoneState != oldPhoneState) {
 
       // Info message...
       //~ INFO ("### reporting state change...");
-      if (newPhoneState < psTransferIdle && phoneState >= psTransferIdle) {
+      if (newPhoneState < psTransferIdle && oldPhoneState >= psTransferIdle) {
         // Paused call ended: report just that...
         MgmtLock ();
         callStatus = PHONE_LIBDATA(phone).callStatus[1];
         MgmtUnlock ();
         if (callStatus >= 0)
-          phone->ReportInfo ("Paused call ended: %.*s (%i)", PJSTR_ARGS (*pjsip_get_status_text (callStatus)), callStatus);
+          phone->ReportInfo (_("Paused call ended: %.*s (%i)"), PJSTR_ARGS (*pjsip_get_status_text (callStatus)), callStatus);
         else
-          phone->ReportInfo ("Paused call ended.");
+          phone->ReportInfo (_("Paused call ended."));
       }
       else switch (newPhoneState) {
         case psIdle:
         case psTransferIdle:
-          if (newPhoneState > phoneState) phone->ReportInfo ("Ready.");
+          if (newPhoneState > oldPhoneState) phone->ReportInfo (_("Ready."));
           else {
             MgmtLock ();
             callStatus = PHONE_LIBDATA(phone).callStatus[0];
             MgmtUnlock ();
             if (callStatus >= 0)
-              phone->ReportInfo ("Call ended: %.*s (%i)", PJSTR_ARGS (*pjsip_get_status_text (callStatus)), callStatus);
+              phone->ReportInfo (_("Call ended: %.*s (%i)"), PJSTR_ARGS (*pjsip_get_status_text (callStatus)), callStatus);
             else
-              phone->ReportInfo ("Call ended.");
+              phone->ReportInfo (_("Call ended."));
           }
           break;
         case psInCall:
         case psTransferInCall:
-          phone->ReportInfo ("Connected.");
+          phone->ReportInfo (_("Connected."));
           break;
         default:
           ASSERT (false);
       }
 
-      // New state...
-      lastPhoneState = phoneState;
-      //   report the state...
+      // New state ...
+      //   report the state ...
       phone->ReportState (newPhoneState);
-      //   update media...
-      if (PhoneStateIsDevicePermitting (lastPhoneState) != PhoneStateIsDevicePermitting (newPhoneState))
+      //   stop ringback if appropriate ...
+      if (oldPhoneState == psDialing || oldPhoneState == psTransferDialing) {
+        //~ INFOF (("### Stopping ringback sound '%s' (%i) ...", envPhoneRingbackFile, phoneData->playerId));
+        if (phoneData->playerId != PJSUA_INVALID_ID) {
+          // destroy player, implicitely disconnecting it from the conference ...
+          ASSERT_WARN (PJ_SUCCESS == pjsua_player_destroy (phoneData->playerId));
+          phoneData->playerId = PJSUA_INVALID_ID;
+        }
+      }
+      //   update media ...
+      if (PhoneStateIsDevicePermitting (oldPhoneState) != PhoneStateIsDevicePermitting (newPhoneState))
         MediaUpdate ();
-
-      //   unclaim the audio/video devices if possible
+      //   unclaim the audio/video devices if possible ...
       if (newPhoneState == psIdle) MediaUnlock (phone);
     }
 
     // Auto-complete transfer if appropriate...
-    if (newPhoneState == psTransferInCall && phoneState == psTransferAutoComplete) phone->CompleteTransfer ();
+    if (newPhoneState == psTransferInCall && oldPhoneState == psTransferAutoComplete) phone->CompleteTransfer ();
+
   } // if (_check.callState)
 
   // Handle incoming call...
   if (_check.incomingCallId != NO_ID_PJ) {
     //~ INFOF (("### incoming (%i)", _check.incomingCallId));
     if (PJ_SUCCESS == pjsua_call_get_info (_check.incomingCallId, &callInfo)) {
-      phone->ReportInfo ("%.*s is calling!", PJSTR_ARGS (callInfo.remote_info));
+      phone->ReportInfo (_("%.*s is calling!"), PJSTR_ARGS (callInfo.remote_info));
 
       newPhoneState = phone->GetIncomingCallAction ();    // desired incoming call action
       if (phone->GetState () != psIdle || phoneData->pjCallId[0] != NO_ID_PJ) newPhoneState = psIdle;     // we are busy => must reject
@@ -1569,7 +1886,6 @@ static void UpdatePhoneState (CPhone *phone) {
         if (callInfo.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
 
           // When media is active, connect call to sound device...
-          //   TBD: Move to 'MediaUpdate ()'?
           pjsua_conf_connect (callInfo.conf_slot, 0);
           pjsua_conf_connect (0, callInfo.conf_slot);
 
@@ -1644,6 +1960,8 @@ const char *CPhone::GetPeerUrl (int callId) {
 // *************************** CPhone: Video stream ****************************
 
 
+
+
 TPhoneVideoFrame *CPhone::VideoLockFrame (int streamId) {
   TVideoStream *videoStream;
 
@@ -1659,6 +1977,7 @@ TPhoneVideoFrame *CPhone::VideoLockFrame (int streamId) {
   videoStream->phoneVideoFrame.changed = videoStream->changed;
   videoStream->changed = false;
   return videoStream->frame.buf ? &videoStream->phoneVideoFrame : NULL;
+  return NULL;
 }
 
 
@@ -1676,7 +1995,7 @@ void CPhone::VideoUnlock () {
 void CPhone::ReportState (EPhoneState _state) {
   EPhoneState oldState;
 
-  INFOF (("### CPhone::ReportState: %i -> %i", state, _state));
+  //~ INFOF (("### CPhone::ReportState: %i -> %i", state, _state));
   if (_state != state) {
     oldState = state;
     state = _state;
@@ -1693,7 +2012,7 @@ void CPhone::ReportInfo (const char *fmt, ...) {
   vasprintf (&buf, fmt, ap);
   va_end (ap);
 
-  INFOF (("(PJSIP-Info) %s", buf));
+  //~ INFOF (("(PJSIP-Info) %s", buf));
   OnInfo (buf);
 
   free (buf);
@@ -1706,7 +2025,7 @@ void CPhone::ReportInfo (const char *fmt, ...) {
 // *************************** CPhone: Setting up ******************************
 
 
-// ***** PJSUA / PJSIP callbacks (asynchrous!) *****
+// ***** PJSUA / PJSIP callbacks (asynchronous!) *****
 
 
 static void AsyncOnLogging (int level, const char *data, int len) {
@@ -1785,7 +2104,7 @@ static void AsyncOnCallMediaState (pjsua_call_id callId) {
 
   MgmtLock ();
   phone = MgmtPhoneOfCall (callId);
-  ASSERT_WARN (phone != NULL);   // TBD: may be stricter than necessary
+  ASSERT_WARN (phone != NULL);
   if (phone) PHONE_LIBDATA(phone).check.mediaState = true;
   MgmtUnlock ();
 }
@@ -1802,15 +2121,60 @@ static void AsyncOnDtmfDigit (pjsua_call_id callId, int digit) {
 }
 
 
-void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
-                    const char *tmpDir,
-                    const char *) {
+static inline void PjsuaInit (const char *agentName) {
   pjsua_config pjCfg;
   pjsua_logging_config logCfg;
   pjsua_media_config mediaCfg;
   pjsua_transport_config transportCfg;
 
-  // Shutdown if already setup...
+  // Create PJSUA...
+  AndroidInit ();
+  ASSERT (PJ_SUCCESS == pjsua_create());
+
+  // Init PJSUA...
+  pjsua_config_default (&pjCfg);
+  pj_strset2 (&pjCfg.user_agent, (char *) agentName);
+  pjCfg.cb.on_reg_state = &AsyncOnRegState;
+  pjCfg.cb.on_incoming_call = &AsyncOnIncomingCall;
+  pjCfg.cb.on_call_state = &AsyncOnCallState;
+  pjCfg.cb.on_call_media_state = &AsyncOnCallMediaState;
+  pjCfg.cb.on_dtmf_digit = &AsyncOnDtmfDigit;
+
+  pjsua_logging_config_default (&logCfg);
+  logCfg.level = logCfg.console_level = 6; // withLogging ? 6 : 3;
+    // The 'console_level' also applies to the callback function, so both levels are set equally.
+  logCfg.msg_logging = PJ_TRUE; // PJ_FALSE;    // with 'PJ_TRUE', complete protocol excerpts are printed.
+  logCfg.cb = AsyncOnLogging;
+
+  pjsua_media_config_default (&mediaCfg);
+  ASSERT (pjsua_init (&pjCfg, &logCfg, &mediaCfg) == PJ_SUCCESS);
+  AlsaInit ();
+
+  // Register video driver,,,
+  ASSERT (PJ_SUCCESS == pjmedia_vid_register_factory (VideoFactoryCreateFunc, NULL));
+    // Video devices must be selected in the account settings.
+
+  // Add UDP transport...
+  pjsua_transport_config_default (&transportCfg);
+  transportCfg.port = envPhoneSipPort;
+  ASSERT (PJ_SUCCESS == pjsua_transport_create (PJSIP_TRANSPORT_UDP, &transportCfg, NULL));
+
+  // Initialization is done, now start PJSUA...
+  ASSERT (PJ_SUCCESS == pjsua_start ());
+
+  // Init media parameters ...
+  MediaSetup ();
+}
+
+
+static inline void PjsuaDone () {
+  pjsua_destroy();
+}
+
+
+void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging, const char *tmpDir) {
+
+  // Reset if already setup...
   if (LIBDATA.isSet) Done ();
 
   // If this is the first phone: Initialize PJSUA...
@@ -1818,56 +2182,10 @@ void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
   if (mgmtPhones == 0) {
     MgmtAddPhone (this);
     MgmtUnlock ();
-
-    // Create PJSUA...
-    ASSERT (PJ_SUCCESS == pjsua_create());
-
-    // Init PJSUA...
-    pjsua_config_default (&pjCfg);
-    pj_strset2 (&pjCfg.user_agent, (char *) agentName);   // TBD: is this safe?
-    pjCfg.cb.on_reg_state = &AsyncOnRegState;
-    pjCfg.cb.on_incoming_call = &AsyncOnIncomingCall;
-    pjCfg.cb.on_call_state = &AsyncOnCallState;
-    pjCfg.cb.on_call_media_state = &AsyncOnCallMediaState;
-    pjCfg.cb.on_dtmf_digit = &AsyncOnDtmfDigit;
-
-    pjsua_logging_config_default (&logCfg);
-    logCfg.level = logCfg.console_level = 6; // withLogging ? 6 : 3;
-      // The 'console_level' also applies to the callback function, so both levels are set equally.
-    logCfg.msg_logging = PJ_FALSE;    // with 'PJ_true', complete protocol excerpts would be printed.
-    logCfg.cb = AsyncOnLogging;
-
-    pjsua_media_config_default (&mediaCfg);
-      // TBD: Setup video parameters in 'mediaCfg'?
-
-    ASSERT (pjsua_init (&pjCfg, &logCfg, &mediaCfg) == PJ_SUCCESS);
-    snd_lib_error_set_handler (NULL); // AlsaErrorHandler);
-      // Unset PJSIP's ALSA error handler to avoid problems with logging (see below).
-      // Note [2017-09-02]:
-      //   A level of >= 4 results in a strange "Calling pjlib from unknown/external thread." assertion inside PJLIB.
-      //   This happens inside 'pjmedia-audiodev/alsa_dev.c:static void alsa_error_handler ()':
-      //   PJLIB registers an ALSA log function, which may be triggered by an SDL2-internal thread and calls 'pj_log ()',
-      //   which then throws the assertion.
-      //   In consequence, log levels > 3 presently cannot be used out-of-the-box.
-
-    // Register video driver,,,
-    ASSERT (PJ_SUCCESS == pjmedia_vid_register_factory (VideoFactoryCreateFunc, NULL));
-      // Video devices must be selected in the account settings.
-
-    // Add UDP transport...
-    pjsua_transport_config_default (&transportCfg);
-    transportCfg.port = 5060;
-    ASSERT (PJ_SUCCESS == pjsua_transport_create (PJSIP_TRANSPORT_UDP, &transportCfg, NULL));
-
-    // Initialization is done, now start PJSUA...
-    ASSERT (PJ_SUCCESS == pjsua_start ());
-
-    // Setup ringback file ...
-    if (envPhoneRingbackFile) {}    // TBD / Can we change this at all?
+    PjsuaInit (agentName);
+    MediaDumpDevicesAndCodecs ();
   }
   else MgmtUnlock ();
-
-  DumpMediaInfos ();
 
   // Complete...
   LIBDATA.isSet = true;
@@ -1897,13 +2215,21 @@ bool CPhone::Register (const char *identity, const char *secret) {
    *    cfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
    *    cfg.cred_info[0].data = pj_str(SIP_PASSWD);
    *
-   *    status = pjsua_acc_add(&cfg, PJ_true, &acc_id);
+   *    status = pjsua_acc_add(&cfg, PJ_TRUE, &acc_id);
    *    if (status != PJ_SUCCESS) error_exit("Error adding account", status);
    */
   pjsua_acc_config pjAccCfg;
   pj_str_t identityPj, sipUser, sipDomain;
-  char *bufSipId, *bufSipUri;
+  char *bufRegUri;
   bool ok;
+
+  // Sanity and default registration arguments ...
+  if (!identity) identity = envPhoneRegister;
+  if (!secret) secret = envPhoneSecret;
+  if (!identity || !secret) {
+    WARNING ("Missing registration information (identity or password): Not registering phone.");
+    return false;
+  }
 
   // Interpret 'identity' (extract domain & user)...
   pj_cstr (&identityPj, identity);
@@ -1913,51 +2239,39 @@ bool CPhone::Register (const char *identity, const char *secret) {
 
   // Do the registration...
   if (ok) {
-    asprintf (&bufSipId, "sip:%.*s@%.*s", PJSTR_ARGS (sipUser), PJSTR_ARGS (sipDomain));
-    asprintf (&bufSipUri, "sip:%.*s", PJSTR_ARGS (sipDomain));
+    asprintf (&bufRegUri, "sip:%.*s", PJSTR_ARGS (sipDomain));
 
-    ReportInfo ("Registration in progress (%.*s@%.*s) ...", PJSTR_ARGS (sipUser), PJSTR_ARGS (sipDomain));
+    ReportInfo (_("Registration in progress (%.*s@%.*s) ..."), PJSTR_ARGS (sipUser), PJSTR_ARGS (sipDomain));
 
     // Account configuration...
     //   ... general ...
     pjsua_acc_config_default (&pjAccCfg);
-    pjAccCfg.id = pj_str (bufSipId);            // TBD: is this safe?
-    pjAccCfg.reg_uri = pj_str (bufSipUri);      // TBD: is this safe?
+    pjAccCfg.id = pj_str ((char *) identity);
+    pjAccCfg.reg_uri = pj_str (bufRegUri);
 
     pjAccCfg.cred_count = 1;
     pjAccCfg.cred_info[0].realm = pj_str ((char *) "*");
     pjAccCfg.cred_info[0].scheme = pj_str ((char *) "digest");
-    pjAccCfg.cred_info[0].username = sipUser;               // TBD: is this safe?
+    pjAccCfg.cred_info[0].username = sipUser;
     pjAccCfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-    pjAccCfg.cred_info[0].data = pj_str ((char *) secret);  // TBD: is this safe?
+    pjAccCfg.cred_info[0].data = pj_str ((char *) secret);
 
     //   ... video settings ...
     pjAccCfg.vid_cap_dev = PJMEDIA_VID_DEFAULT_CAPTURE_DEV;
     pjAccCfg.vid_rend_dev = VideoGetDeviceIndex ();
-    pjAccCfg.vid_in_auto_show = PJ_true;
+    pjAccCfg.vid_in_auto_show = PJ_TRUE;
     pjAccCfg.vid_out_auto_transmit = PJ_FALSE;    // disable auto transmit by default
 
-    if (pjsua_acc_add (&pjAccCfg, PJ_true, &LIBDATA.pjAccountId) != PJ_SUCCESS) {
+    if (pjsua_acc_add (&pjAccCfg, PJ_TRUE, &LIBDATA.pjAccountId) != PJ_SUCCESS) {
       WARNINGF (("PJSIP: pjsua_acc_add() failed for identity '%s'.", identity));
       ok = false;
     }
 
-    free (bufSipId);
-    free (bufSipUri);
+    free (bufRegUri);
   }
 
   // Done...
   return ok;
-}
-
-
-void CPhone::SetCamRotation (int rot) {
-  // TBD
-}
-
-
-void CPhone::DumpSettings () {
-  // TBD: This is a place holder for debug information (remove?)
 }
 
 
@@ -1969,9 +2283,6 @@ void CPhone::DumpSettings () {
 
 void CPhone::Init () {
 
-  // Sanity...
-  ASSERT (sizeof (libData) >= sizeof (TPhoneData));
-
   // Set fail-safe fields...
   state = psNone;
   incomingAction = psRinging;
@@ -1980,9 +2291,13 @@ void CPhone::Init () {
   cbInfo = NULL;
   cbPhoneStateChangedData = cbInfoData = NULL;
 
+  PhoneVideoFrameInit (&picInfo);
+
   LIBDATA.haveAccount = false;
   LIBDATA.pjAccountId = NO_ID_PJ;
   LIBDATA.pjCallId[0] = LIBDATA.pjCallId[1] = NO_ID_PJ;
+  LIBDATA.playerId = PJSUA_INVALID_ID;
+  LIBDATA.tLastStatusLog = NEVER;
 
   LIBDATA.isSet = false;   // will be set later in 'Setup'
 
@@ -1993,6 +2308,7 @@ void CPhone::Init () {
 void CPhone::Done () {
   if (LIBDATA.isSet) {
     CancelAllCalls ();
+    ASSERT_WARN (PJ_SUCCESS == pjsua_acc_del (LIBDATA.pjAccountId));
     LIBDATA.isSet = false;
 
     // If this was the last open phone: Shutdown PJSUA...
@@ -2000,7 +2316,7 @@ void CPhone::Done () {
     MgmtDelPhone (this);
     if (mgmtPhones == 0) {
       MgmtUnlock ();
-      pjsua_destroy();
+      PjsuaDone ();
     }
     else MgmtUnlock ();
   }
@@ -2008,6 +2324,7 @@ void CPhone::Done () {
 
 
 void CPhone::Iterate () {
+  TTicksMonotonic tNow;
   TMgmtCheckRec *check = &LIBDATA.check;
   char dtmfChar;
 
@@ -2024,5 +2341,31 @@ void CPhone::Iterate () {
     check->dtmfDigit = -1;
     MgmtUnlock ();
     OnDtmfReceived (dtmfChar);
+  }
+
+  // Log statistics ...
+  tNow = TicksMonotonicNow ();
+  if (tNow > LIBDATA.tLastStatusLog + TICKS_FROM_SECONDS (5)) {
+    pjmedia_echo_stat ecStat;
+    pj_status_t pjStatus;
+    char callStat[4096];
+    int callId;
+
+    callId = LIBDATA.pjCallId[0];
+    if (callId >= 0) {
+      pjStatus = pjsua_call_dump (LIBDATA.pjCallId[0], true, callStat, sizeof (callStat), "  ");
+      if (pjStatus != PJ_SUCCESS)
+        WARNINGF (("Failed to retrieve call statistics: %s", PjStrError (pjStatus)));
+      else
+        DEBUGF (1, ("Call statistics:\n%s", callStat));
+
+      pjStatus = pjsua_get_ec_stat (&ecStat);
+      if (pjStatus != PJ_SUCCESS)
+        DEBUGF (1, ("No echo canceller statistics available: %s", PjStrError (pjStatus)));
+      else
+        DEBUGF (1, ("Echo canceller (%s): %s\n", ecStat.name, ecStat.stat_info));
+    }
+
+    LIBDATA.tLastStatusLog = tNow;
   }
 }

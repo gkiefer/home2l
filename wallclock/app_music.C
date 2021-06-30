@@ -709,9 +709,9 @@ void CMusicPlayer::StreamerWatchdog () {
 
 
 void CMusicPlayer::Update () {
-  const struct mpd_status *mpdStatus;
+  struct mpd_status *mpdStatus;
   const struct mpd_audio_format *mpdAudioFormat;
-  const struct mpd_song *mpdSong;
+  struct mpd_song *mpdSong;
   ERctPlayerState _playerState;
   EStreamerState _streamerState;
   const char *songArtist, *songDate, *streamTitle;
@@ -809,6 +809,7 @@ void CMusicPlayer::Update () {
       songUri.Set (mpd_song_get_uri (mpdSong));
       songDuration = (int) mpd_song_get_duration (mpdSong);
 
+      // Enable/disable recording for HTTP streams ...
       _songIsStream = MpdUriIsStream (songUri.Get ());
       //~ INFOF (("### ... new (%i, stream = %i)", _songIdx, (int) songIsStream));
       if (_songIsStream != songIsStream) {
@@ -842,6 +843,9 @@ void CMusicPlayer::Update () {
       // Set main title...
       songTitle.Set (mpd_song_get_tag (mpdSong, MPD_TAG_TITLE, 0));
       if (songTitle.IsEmpty ()) songTitle.Set (songSubtitle);
+
+      // Done with the song ...
+      mpd_song_free (mpdSong);
     }
     else {
       songUri.Clear ();
@@ -881,7 +885,8 @@ void CMusicPlayer::Update () {
     // If we have a stream: Re-check the title, which now contains changing info...
     if (songIsStream) {
       mpdSong = mpd_run_get_queue_song_pos (mpdConnection, _songIdx);
-      if (mpdSong) streamTitle = mpd_song_get_tag (mpdSong, MPD_TAG_TITLE, 0); else streamTitle = NULL;
+      if (mpdSong) streamTitle = mpd_song_get_tag (mpdSong, MPD_TAG_TITLE, 0);
+      else streamTitle = NULL;
       if (streamTitle) {
         if (songTitle.Compare (streamTitle) != 0) {
           songTitle.Set (streamTitle);
@@ -890,6 +895,7 @@ void CMusicPlayer::Update () {
           if (view) view->OnSongChanged (playerState, queueSongs, songQueueIdx, songDuration);
         }
       }
+      if (mpdSong) mpd_song_free (mpdSong);
     }
 
     // Update song position...
@@ -907,6 +913,7 @@ void CMusicPlayer::Update () {
   }
 
   // Done...
+  mpd_status_free (mpdStatus);
   inUpdate = false;
 }
 
@@ -974,7 +981,7 @@ void CMusicPlayer::SetServer (int idx) {
     // Store the new server...
     EnvPut (envMpdServerKey, mpdId);
 
-    if (!EnvGetHostAndPort (StringF (&s, "music.%s.host", mpdId), &mpdHost, &mpdPort, envMpdDefaultPort, true)) {
+    if (!EnvGetHostAndPort (StringF (&s, "music.%s.host", mpdId), &mpdHost, &mpdPort, envMpdDefaultPort)) {
       mpdHost.SetC ("localhost");
       mpdPort = envMpdDefaultPort;
     }
@@ -1179,6 +1186,7 @@ void CMusicPlayer::ReadOutputs () {
         mpd_run_disable_output (mpdConnection, outputId[outputIdx]);
         mpd_run_enable_output (mpdConnection, outputId[outputIdx]);
       }
+      mpd_status_free (mpdStatus);
     }
   }
 }
@@ -1411,6 +1419,7 @@ bool CMusicPlayer::DirLoad (const char *uri) {
             ASSERT (false);
         }
       }
+      mpd_entity_free (mpdEntity);
     }
     mpdOk = mpd_response_finish (mpdConnection);
   }
@@ -1652,12 +1661,12 @@ bool CMusicPlayer::QueueTryLinkDir () {
   mpdOk = mpd_send_list_queue_meta (mpdConnection);
   ok = mpdOk ? true : false;
   n = 0;
-  while ( ok && (mpdEntity = mpd_recv_entity (mpdConnection)) != NULL) {
+  while (ok && (mpdEntity = mpd_recv_entity (mpdConnection)) != NULL) {
     //~ INFOF (("###    compare #%i", n));
     mpdType = mpd_entity_get_type (mpdEntity);
     if (mpdType == MPD_ENTITY_TYPE_SONG) {
       mpdSong = mpd_entity_get_song (mpdEntity);
-      queueUri = mpd_song_get_uri (mpdSong);
+      queueUri = mpdSong ? mpd_song_get_uri (mpdSong) : NULL;
       if (!queueUri) ok = false;
       if (n >= dirEntries || dirList[n]->Type () != detSong) ok = false;
       if (ok) {
@@ -1666,6 +1675,7 @@ bool CMusicPlayer::QueueTryLinkDir () {
         n++;
       }
     }
+    mpd_entity_free (mpdEntity);
   }
   mpdOk = mpd_response_finish (mpdConnection);
   if (!mpdOk) ok = false;
@@ -1685,7 +1695,7 @@ bool CMusicPlayer::SetSongAndPos (int idx, int pos) {
   bool mpdOk;
 
   // Sanity...
-  if (!ServerConnected () || idx < 0 || idx >= queueSongs || pos < 0 || songIsStream) return false;     // illegal parameters => no action and fail
+  if (!ServerConnected () || idx < 0 || idx >= queueSongs || pos < 0) return false;     // illegal parameters => no action and fail
 
   // Operation...
   mpdOk = mpd_run_seek_pos (mpdConnection, (unsigned) idx, (unsigned) pos);
@@ -1896,6 +1906,7 @@ SDL_Surface *CListboxDirectory::RenderItem (CListboxItem *item, int idx, SDL_Sur
     surfText = FontRenderText (font, entry->Title (), col1);
   }
   SurfaceBlit (surfText, NULL, surf, &r, -1, 0, SDL_BLENDMODE_BLEND);
+  SurfaceFree (surfText);
 
   // Done...
   return surf;

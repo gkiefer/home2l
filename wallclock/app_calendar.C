@@ -1193,6 +1193,7 @@ void CScreenCalMain::DrawCalendar () {
       d = DateIncByDays (d, 1);
     } // for (k...)
   } // for (n...)
+  if (surf) SurfaceFree (surf);
 
   wdgCalendar.SetSurface (surfCalendar);
 }

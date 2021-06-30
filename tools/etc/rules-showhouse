@@ -40,9 +40,9 @@ Home2lInit (instance = "rules")
 
 
 # Get common resources ...
-rcUse = RcGet ("/alias/use")
-rcDaylight = RcGet ("/alias/daylight")
-rcWeatherWarning = RcGet ("/alias/weatherWarning")
+rcUse = RcGet ("use")
+rcDaylight = RcGet ("daylight")
+rcWeatherWarning = RcGet ("weatherWarning")
 
 
 
@@ -60,16 +60,16 @@ rcWeatherWarning = RcGet ("/alias/weatherWarning")
 # off in the WallClock UI. Try it!
 
 
-rcMotion = RcGet ("/alias/motion")
-rcLight  = RcGet ("/alias/frontLight")
+rcMotion = RcGet ("motion")
+rcLight  = RcGet ("frontLight")
 
 # Set default request (0 = light off) ...
 rcLight.SetDefault (0)
 
 # Switch on the light based on the motion sensor ...
 Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = "#motion *3", delDelay = "5s")
-  # This connector connects the 'rcMotion' sensor to the 'rcLight' resource by
-  # maintaining requests with attributes "#motion *3" (ID = "motion", priority 3).
+  # Connect the 'rcMotion' sensor to the 'rcLight' resource by maintaining requests with
+  # attributes "#motion *3" (ID = "motion", priority 3).
   # The lambda function transforms the value of the motion sensor to a requested
   # value for the light. In this case, a motion value of 'True' causes the light
   # to be switched on (value '1'), in all other cases, no request is set (value 'None').
@@ -98,8 +98,8 @@ Connect (rcLight, rcDaylight, lambda x: 0 if x == True else None, attrs = "#dayt
 #   Change this to a value of 25 degrees or higher to try the 'RoofWindowCooling' rule.
 rcTempDayMaxOutside = NewSignal ("tempDayMaxOutside", rctTemp, 20.0)
 
-rcRoofWindow = RcGet ("/alias/floorplan/living-roofwin/opener")
-rcRoofShades = RcGet ("/alias/floorplan/living-roofwin/shades")
+rcRoofWindow = RcGet ("floorplan/living-roofwin/opener")
+rcRoofShades = RcGet ("floorplan/living-roofwin/shades")
 
 
 
@@ -118,7 +118,7 @@ def ShadesAtNight (daylight):
   # Set requests for all relevant windows ...
   #   The resources URIs can be looked up in the floorplan / resources.conf.
   for room in ( "dining", "kitchen", "bedroom", "bath" ):
-    RcSetRequest ("/alias/floorplan/" + room + "-shades/shades", value);
+    RcSetRequest ("floorplan/" + room + "-shades/shades", value);
 
 
 
@@ -135,7 +135,7 @@ def GateHotDay (temp):
   if temp >= 25.0: return True
   return False
 
-rcHotDay = GetGateRc (GateHotDay)
+rcHotDay = GetLocalRc (GateHotDay)
 
 
 @onUpdate (rcHotDay, rcDaylight)

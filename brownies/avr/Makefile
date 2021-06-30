@@ -192,6 +192,12 @@ viewdata: $(BROWNIE).elf
 
 ############################## Programming targets #############################
 
+# To initialize a new brownie, enter:
+#
+# $ make init MCU=<mcu>
+#
+# where <mcu> ::= t861 | t84 | t85
+
 
 .PHONY: program init check info term
 

@@ -174,8 +174,9 @@ SRC :=
 ifeq ($(RELEASE),1)     # Optimize for speed, but do not sacrifice code size too much
 CFLAGS += -O2
 CC_SUFF :=
-else    # Optimize debugging experience
+else                    # Optimize debugging experience (and exclude stripping on install)
 CFLAGS += # -Og
+STRIP :=
 CC_SUFF := '*'
 endif
 

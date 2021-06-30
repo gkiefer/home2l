@@ -1028,11 +1028,11 @@ SDL_Surface *IconGet (const char *name, TColor color, TColor bgColor, int scaleD
 
     // Load bitmap file ...
     snprintf (fileName, sizeof (fileName) - 1, "%s/share/icons/%s.bmp", EnvHome2lRoot (), name);
-    DEBUGF (1, ("Loading icon '%s'", fileName));
+    DEBUGF (2, ("Loading icon '%s'", fileName));
     surfBase = SDL_LoadBMP (fileName);
     if (!surfBase)
       ERRORF (("Unable to load bitmap '%s': %s", fileName, SDL_GetError ()));
-    DEBUGF (1, ("  bitmap '%s' loaded, pixel format: %s", fileName, SDL_GetPixelFormatName (surfBase->format->format)));
+    DEBUGF (2, ("  bitmap '%s' loaded, pixel format: %s", fileName, SDL_GetPixelFormatName (surfBase->format->format)));
     palette = surfBase->format->palette;
     if (palette) {
       // We have a palette -> adopt it to the correct color efficiently...
@@ -1470,12 +1470,12 @@ void UiInit (const char *windowTitle) {
   bool accelerated;
 
   // Init SDL and SDL_TTF...
+  if (SDL_Init (SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+    ERROR ("'SDL_Init' failed");
   SDL_SetHint (SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     // Prevent SDL2 from setting its own Ctrl-C signal handler (SIG_INT, SIG_QUIT).
     // Otherwise, the application cannot be normally killed or interrupted if it hangs
     // for some reason.
-  if (SDL_Init (SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_AUDIO))
-    ERROR ("'SDL_Init' failed");
   if (TTF_Init()) {
     SDL_Quit ();
     ERROR ("'TTF_Init' failed");

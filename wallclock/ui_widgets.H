@@ -231,16 +231,20 @@ class CButton: public CWidget {
     void SetColor (TColor _colNorm, TColor _colDown);
 
     void SetLabel (SDL_Surface *_icon, SDL_Rect *srcRect = NULL, bool takeOwnership = false);
-      ///< @brief Set '_icon' as tbe button label.
+      ///< @brief Set '_icon' as the button label.
       ///
       /// By default, the object keeps a reference to '_icon' internally, and the caller must
       /// keep the icon valid as long as the button object lives or until another label is set.
       /// If 'takeOwnership == true', the button object will free the surface as soon as appropriate
       /// (which may be later or very soon, e.g. during this call!). Hence, if the caller cannot
       /// conveniently keep '_icon' valid, the caller should make a copy (SurfaceDup() ) and
-      /// pass 'takeOwenership = true' here.
+      /// pass 'takeOwnership = true' here.
+      ///
+      /// **Note:** It is legal to not call any of the SetLabel() methods and have no label at all.
+      /// This is, for example, used in the floor plan view, where the "labels" are actually parts of
+      /// other (background) widgets.
     void SetLabel (const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
-      ///< @brief Set text-only label.
+      ///< @brief Set a text-only label.
     void SetLabel (SDL_Surface *_icon, const char *text, TColor textColor = WHITE, TTF_Font *font = NULL);
       ///< @brief Set icon (and optionally text) label. The icon has its own color(s).
     void SetLabel (TColor color, const char *iconName, const char *text = NULL, TTF_Font *font = NULL)
@@ -260,6 +264,7 @@ class CButton: public CWidget {
     /// @{
     virtual void OnPushed (bool longPush);
     void SetCbPushed (FCbButtonPushed *cb, void *_data = NULL) { cbPushed = cb; cbPushedData = _data; }
+    void *GetCbPushedData () { return cbPushedData; }
     /// @}
 
     /// @name Callbacks...
@@ -442,9 +447,9 @@ class CListbox: public CCanvas {
 
     int GetItemHeight () { return itemHeight; }
     int GetItemLabelWidth (int idx);
-      ///< Retrieve the label (net) width of an item (e.g. to optimize geometry).
+      ///< @brief Retrieve the label (net) width of an item (e.g. to optimize geometry).
     SDL_Rect GetItemRect (int idx);
-      ///< Get the area of an item.
+      ///< @brief Get the area of an item.
 
     void ScrollTo (int idx, int vAlign = -1) { CCanvas::ScrollTo (GetItemRect (idx), 0, vAlign); Changed (); }
     void ScrollIn (int idx) { CCanvas::ScrollIn (GetItemRect (idx)); Changed (); }
@@ -452,9 +457,13 @@ class CListbox: public CCanvas {
 
     /// @name Content selection ...
     /// @{
-    void SelectItem (int idx, bool _isSelected = true);   // for 'lmSelectSingle', 'lmSelectAny'
-    void SelectAll (bool _isSelected = true);             // 'lmSelectAny'
-    void SelectNone () { SelectAll (false); }             // 'lmSelectSingle', 'lmSelectAny'
+    void SelectItem (int idx, bool _isSelected = true);   ///< @brief (De-)Select item (for 'lmSelectSingle', 'lmSelectAny')
+    void SelectAll (bool _isSelected = true);             ///< @brief Select all items (for 'lmSelectAny')
+    void SelectNone () { SelectAll (false); }             ///< @brief Deselect all items (for 'lmSelectSingle', 'lmSelectAny')
+
+    bool MouseDown () { return downIdx >= 0; }
+      ///< @brief Determine whether the listbox is currently dragged by the mouse.
+      /// In this case, calling a Select...() method may interfere with the user interaction and should be avoided.
     /// @}
 
     /// @name Returning results ...

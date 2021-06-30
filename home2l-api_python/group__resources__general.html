@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -85,8 +85,8 @@ Accessing resources ...</h2></td></tr>
 <tr class="separator:gaee374d405cfd9d1bac7b18e7ea06a9a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3e4da430382a54dd9855411bb05f308b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga3e4da430382a54dd9855411bb05f308b">RcGarbageCollection</a> ()</td></tr>
 <tr class="separator:ga3e4da430382a54dd9855411bb05f308b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadb74b2e0ca76712d7badb8a7969d2a25"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gadb74b2e0ca76712d7badb8a7969d2a25">RcBump</a> (rc=None)</td></tr>
-<tr class="separator:gadb74b2e0ca76712d7badb8a7969d2a25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga26afef0b08c09f6471149bdbe149a78a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga26afef0b08c09f6471149bdbe149a78a">RcBump</a> (rc=None, soft=False)</td></tr>
+<tr class="separator:ga26afef0b08c09f6471149bdbe149a78a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Subscriptions (from C/C++ API) ...</h2></td></tr>
@@ -110,14 +110,16 @@ Placing requests ...</h2></td></tr>
 <tr class="separator:ga7bdd56fd80fe561b0a632d50505ea032"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad5a47e16a6336dd90801c72df50e5f32"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gad5a47e16a6336dd90801c72df50e5f32">RcDelRequest</a> (rc, id=None, t1=None)</td></tr>
 <tr class="separator:gad5a47e16a6336dd90801c72df50e5f32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3d8674e43791b00b1dbaa2e9875d9cc8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga3d8674e43791b00b1dbaa2e9875d9cc8">RcSetDefault</a> (rc, reqDef=None, attrs=None, value=None, t0=None, t1=None, repeat=None, hysteresis=None, delDelay=None)</td></tr>
+<tr class="separator:ga3d8674e43791b00b1dbaa2e9875d9cc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Drivers (from C/C++ API) ...</h2></td></tr>
 <tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrpd66ee10e136229129db5cdd76009007b"></a>Low-level operations to directly create and use 'CRcDriver' objects.</p>
 <p>Most probably, you will not need these functions. The preferred way in Python is to use the more compfortable decorators and operations in module "Home2L / Drivers". </p>
 </td></tr>
-<tr class="memitem:ga8c4071d0db33fb53a428eb7adeba8539"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga8c4071d0db33fb53a428eb7adeba8539">RcRegisterDriver</a> (drvLid, _successState=rcsBusy)</td></tr>
-<tr class="separator:ga8c4071d0db33fb53a428eb7adeba8539"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad7513922b29957e49452029e94b31c6f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gad7513922b29957e49452029e94b31c6f">RcRegisterDriver</a> (drvLid, _successState=rcsNoReport)</td></tr>
+<tr class="separator:gad7513922b29957e49452029e94b31c6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaaf6a973b9adf5c186143ca880c0d2e8c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#gaaf6a973b9adf5c186143ca880c0d2e8c">RcRegisterResource</a> (args)</td></tr>
 <tr class="separator:gaaf6a973b9adf5c186143ca880c0d2e8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0828e172b36ff29d022816d981e5d02a"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__resources__general.html#ga0828e172b36ff29d022816d981e5d02a">RcRegisterSignal</a> (args)</td></tr>
@@ -184,7 +186,7 @@ Lookup a resource by its URI and return a reference to it.
 <pre class="fragment">RcGet(char const * uri, bool allowWait=False) -&gt; CResource
 RcGet(char const * uri) -&gt; CResource
 
-Lookup a resource by its URI and return a reference to it.
+Lookup a resource by its URI and return a reference to it (shortcut for 'RcGetResource()').
 </pre> 
 </div>
 </div>
@@ -205,8 +207,8 @@ Lookup a resource by its URI and return a reference to it.
 <pre class="fragment">RcGarbageCollection()</pre> 
 </div>
 </div>
-<a id="gadb74b2e0ca76712d7badb8a7969d2a25"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gadb74b2e0ca76712d7badb8a7969d2a25">&#9670;&nbsp;</a></span>RcBump()</h2>
+<a id="ga26afef0b08c09f6471149bdbe149a78a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga26afef0b08c09f6471149bdbe149a78a">&#9670;&nbsp;</a></span>RcBump()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -215,12 +217,23 @@ Lookup a resource by its URI and return a reference to it.
           <td class="memname">def home2l.RcBump </td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rc</em> = <code>None</code></td><td>)</td>
+          <td class="paramname"><em>rc</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>soft</em> = <code>False</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">RcBump(CResource rc=None)
+<pre class="fragment">RcBump(CResource rc=None, bool soft=False)
+RcBump(CResource rc=None)
 RcBump()
 </pre> 
 </div>
@@ -533,8 +546,78 @@ Examples:
 <pre class="fragment">Delete a request.</pre> 
 </div>
 </div>
-<a id="ga8c4071d0db33fb53a428eb7adeba8539"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga8c4071d0db33fb53a428eb7adeba8539">&#9670;&nbsp;</a></span>RcRegisterDriver()</h2>
+<a id="ga3d8674e43791b00b1dbaa2e9875d9cc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga3d8674e43791b00b1dbaa2e9875d9cc8">&#9670;&nbsp;</a></span>RcSetDefault()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def home2l.RcSetDefault </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>rc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>reqDef</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>attrs</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>value</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>t0</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>t1</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>repeat</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>hysteresis</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>delDelay</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre class="fragment">Set a default request.</pre> 
+</div>
+</div>
+<a id="gad7513922b29957e49452029e94b31c6f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad7513922b29957e49452029e94b31c6f">&#9670;&nbsp;</a></span>RcRegisterDriver()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -549,7 +632,7 @@ Examples:
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>_successState</em> = <code>rcsBusy</code>&#160;</td>
+          <td class="paramname"><em>_successState</em> = <code>rcsNoReport</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -558,7 +641,7 @@ Examples:
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">RcRegisterDriver(char const * drvLid, ERcState _successState=rcsBusy) -&gt; CRcEventDriver
+<pre class="fragment">RcRegisterDriver(char const * drvLid, ERcState _successState=rcsNoReport) -&gt; CRcEventDriver
 RcRegisterDriver(char const * drvLid) -&gt; CRcEventDriver
 
 Register a new driver.
@@ -580,8 +663,9 @@ Register a new driver.
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">RcRegisterResource(char const * drvLid, char const * rcLid, ERcType _type, bool _writable=True) -&gt; CResource
-RcRegisterResource(char const * drvLid, char const * rcLid, ERcType _type) -&gt; CResource
+<pre class="fragment">RcRegisterResource(char const * drvLid, char const * rcLid, ERcType _type, bool _writable, void * _data=None) -&gt; CResource
+RcRegisterResource(char const * drvLid, char const * rcLid, ERcType _type, bool _writable) -&gt; CResource
+RcRegisterResource(char const * drvLid, char const * rcLid, char const * rcTypeDef, void * _data=None) -&gt; CResource
 RcRegisterResource(char const * drvLid, char const * rcLid, char const * rcTypeDef) -&gt; CResource
 
 Register a new resource to a driver.

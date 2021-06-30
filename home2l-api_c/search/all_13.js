@@ -12,6 +12,7 @@ var searchData=
   ['temp_5fnotify',['TEMP_NOTIFY',['../group__brownies__features.html#ga8aeff9b8e31d5a3ea07f219ac7a09132',1,'configure.h']]],
   ['text',['text',['../structTButtonDescriptor.html#a9fdee2982eb6f0fe9efa0a95f8c061ca',1,'TButtonDescriptor']]],
   ['textrender',['TextRender',['../group__ui__base.html#ga71d91e783e7ca0aec2c4397ba4a19ba4',1,'ui_base.H']]],
+  ['ticks_5ffrom_5fmillis',['TICKS_FROM_MILLIS',['../group__common__datetime.html#ga8205d957c97028a3d623805b2633a5b2',1,'base.H']]],
   ['ticks_5ffrom_5fseconds',['TICKS_FROM_SECONDS',['../group__common__datetime.html#gae3cec4def438f60ce079aef1eae8e21f',1,'base.H']]],
   ['ticksabsfromstring',['TicksAbsFromString',['../group__common__datetime.html#ga258f94d9f9402acc38c5c1768bddbc8a',1,'base.H']]],
   ['ticksabstostring',['TicksAbsToString',['../group__common__datetime.html#ga48cfa0ea2db98357120e96ea471c7aad',1,'TicksAbsToString(TTicks ticks, int fracDigits=INT_MAX, bool precise=false):&#160;base.H'],['../group__common__datetime.html#ga137fa320afde4a5a8d7a4bb9b061803a',1,'TicksAbsToString(CString *ret, TTicks ticks, int fracDigits=INT_MAX, bool precise=false):&#160;base.H']]],

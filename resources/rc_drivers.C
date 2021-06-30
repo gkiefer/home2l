@@ -333,7 +333,7 @@ ENV_PARA_SPECIAL ("drv.<id>", const char *, NULL);
    * Please refer to the \hyperref[sec:resources-drvdev-external]{section on writing external drivers}
    * in for further information on script-based drivers.
    */
-ENV_PARA_INT ("rc.drvMinRunTime", envMinRunTime, 3000);
+ENV_PARA_INT ("rc.drvMinRunTime", envMinRunTime, 10000);
   /* Minimum run time of a properly configured external driver (ms)
    *
    * To avoid endless busy loops caused by drivers crashing repeatedly on their startup

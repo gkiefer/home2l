@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - Python API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -68,8 +68,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
-<p>Running functions on resource events/updates or at certain times. </p>
-<h1>home2l_drivers</h1>
+<p>Running functions on resource updates, on events or at certain times. </p>
 <div class="dynheader">
 Collaboration diagram for Rules:</div>
 <div class="dyncontent">
@@ -100,15 +99,6 @@ Functions</h2></td></tr>
 <tr class="memitem:ga60b3341fc2f766012cf00feefb201182"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__rules.html#ga60b3341fc2f766012cf00feefb201182">connect</a> (target, rcSet, attrs=None, id=None, priority=None, t0=None, hysteresis=None, delDelay=None)</td></tr>
 <tr class="memdesc:ga60b3341fc2f766012cf00feefb201182"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decorator to define a connector.  <a href="group__home2l__rules.html#ga60b3341fc2f766012cf00feefb201182">More...</a><br /></td></tr>
 <tr class="separator:ga60b3341fc2f766012cf00feefb201182"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga93a0d7ab0520e7a8ed8dc738cde4a447"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__rules.html#ga93a0d7ab0520e7a8ed8dc738cde4a447">NewGate</a> (rcName, rcType, rcSet, func, subscrId=None)</td></tr>
-<tr class="memdesc:ga93a0d7ab0520e7a8ed8dc738cde4a447"><td class="mdescLeft">&#160;</td><td class="mdescRight">Define a new gate.  <a href="group__home2l__rules.html#ga93a0d7ab0520e7a8ed8dc738cde4a447">More...</a><br /></td></tr>
-<tr class="separator:ga93a0d7ab0520e7a8ed8dc738cde4a447"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga6511631ea5df65925ac9f053f619bb7f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__rules.html#ga6511631ea5df65925ac9f053f619bb7f">gate</a> (rcName, rcType, rcSet)</td></tr>
-<tr class="memdesc:ga6511631ea5df65925ac9f053f619bb7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decorator to define a new gate.  <a href="group__home2l__rules.html#ga6511631ea5df65925ac9f053f619bb7f">More...</a><br /></td></tr>
-<tr class="separator:ga6511631ea5df65925ac9f053f619bb7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga01c963b57dfea4efd8b0290587dfa1a7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__rules.html#ga01c963b57dfea4efd8b0290587dfa1a7">GetGateRc</a> (func)</td></tr>
-<tr class="memdesc:ga01c963b57dfea4efd8b0290587dfa1a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get resource reference of a gate.  <a href="group__home2l__rules.html#ga01c963b57dfea4efd8b0290587dfa1a7">More...</a><br /></td></tr>
-<tr class="separator:ga01c963b57dfea4efd8b0290587dfa1a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga8617bb7a5492e7e0a2751f4d47cd6cc7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__home2l__rules.html#ga8617bb7a5492e7e0a2751f4d47cd6cc7">RunAt</a> (func, t=0, dt=0, args=None, subscrId=None)</td></tr>
 <tr class="memdesc:ga8617bb7a5492e7e0a2751f4d47cd6cc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Let a function be called at a given time or periodically.  <a href="group__home2l__rules.html#ga8617bb7a5492e7e0a2751f4d47cd6cc7">More...</a><br /></td></tr>
 <tr class="separator:ga8617bb7a5492e7e0a2751f4d47cd6cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -213,9 +203,9 @@ in which case, the function name is used as an identifier.
 This decorator allows to easily let a function be executed on given events
 as follows:
 
-    @onEvent (&lt;resource set&gt;)
-    def MyFunc (ev, rc, vs):
-      ...</pre> 
+|   @onEvent (&lt;resource set&gt;)
+|   def MyFunc (ev, rc, vs):
+|     ...</pre> 
 </div>
 </div>
 <a id="ga70c3e1dbdda42c97f64bd067ac59e150"></a>
@@ -305,9 +295,9 @@ in which case, the function name is used as an identifier.
 This decorator allows to easily define a function executed on value changes
 as follows:
 
-    @onUpdate ( &lt;resource set&gt; )
-    def MyFunc ():
-      ...</pre> 
+|   @onUpdate ( &lt;resource set&gt; )
+|   def MyFunc ():
+|     ...</pre> 
 </div>
 </div>
 <a id="ga5846a72ab221ad653c3d19900fc1101a"></a>
@@ -444,26 +434,26 @@ Examples:
 - Let a light be switched on for 5 seconds if a motion sensor is activated, but only
   at night time:
 
-    rcLight = RcGet ('/alias/light')  # get reference to the light resource
-    rcLight.SetDefault (0)            # set default request: light off (0)
-    Connect (rcLight, '/alias/day', lamda x: 0 if x == True else None, attrs = '#daytime *3')
-# keep light off (0) at day time (True) at high priority (*3)
-    Connect (rcLight, '/alias/motion', lamda x: 1 if x == True else None, attrs = '#motion *2', delDelay = '5s')
-# switch light on (1) if the motion detector is active at a lower
-# priority (*2); after the motion sensor becomes inactive, the request
-# is deleted with a delay of 5 seconds ('5s')
+  |   rcLight = RcGet ('/alias/light')  # get reference to the light resource
+  |   rcLight.SetDefault (0)            # set default request: light off (0)
+  |   Connect (rcLight, '/alias/day', lamda x: 0 if x == True else None, attrs = '#daytime *3')
+  |     # keep light off (0) at day time (True) at high priority (*3)
+  |   Connect (rcLight, '/alias/motion', lamda x: 1 if x == True else None, attrs = '#motion *2', delDelay = '5s')
+  |     # switch light on (1) if the motion detector is active at a lower
+  |     # priority (*2); after the motion sensor becomes inactive, the request
+  |     # is deleted with a delay of 5 seconds ('5s')
 
 - Force the light off at day time, but during rainy weather:
 
-    Connect (rcLight, ('/alias/motion', '/alias/rain'), lamda m, r: 0 if m == True and not r == True else None)
+  |   Connect (rcLight, ('/alias/motion', '/alias/rain'), lamda m, r: 0 if m == True and not r == True else None)
 
   or alternatively (decorator variant):
 
-    @connect (rcLight, ('/alias/motion', '/alias/rain')):
-    def LightOffDuringDayAndGoodWeather (motion, rain):
-# (some additional code may be added here)
-      if motion == True and not rain == True: return 0
-      else: return None
+  |   @connect (rcLight, ('/alias/motion', '/alias/rain')):
+  |   def LightOffDuringDayAndGoodWeather (motion, rain):
+  |     # (some additional code may be added here)
+  |     if motion == True and not rain == True: return 0
+  |     else: return None
 </pre> 
 </div>
 </div>
@@ -536,171 +526,10 @@ This allows to decorate a transfer function, thus creating a connector,
 which continuously updates requests for the target resource 'target' depending
 on the values of the resources given by 'rcSet':
 
-    @connect ( &lt;target&gt;, &lt;rcSet&gt; [, &lt;request attrs&gt;] )
-    def TransferFunc (a, b, c, ...):
-      ...
-      return &lt;value&gt;</pre> 
-</div>
-</div>
-<a id="ga93a0d7ab0520e7a8ed8dc738cde4a447"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga93a0d7ab0520e7a8ed8dc738cde4a447">&#9670;&nbsp;</a></span>NewGate()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def home2l.NewGate </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rcName</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rcType</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rcSet</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>func</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>subscrId</em> = <code>None</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Define a new gate. </p>
-<pre class="fragment">Define a new gate.
-
-A gate is a read-only resource showing a value that is calculated by the
-gate function based on values of other resources.
-
-'rcName' is the name of the gate, 'rcType' is its type. The gate will be
-assigned to the 'gates' driver.
-
-'rcSet' specifies the resource(s) the gate function depends on.
-It may be a single resource or a tuple or list of multiple resources.
-
-'func' is the gate function. It is called as:
-
-    value = func (a, b, c, ...)
-
-'a, b, c, ...' are positional arguments with arbitrary names by which the
-values of the 'rcSet' resources are passed. The function must return the
-actual value to be reported. If 'None' is returned, a state of 'rcsUnkown'
-is reported. A state of 'rcsBusy' is never reported.
-
-'NewGate()' returns a reference to the newly created resource.
-
-Notes on writing gate functions ('func'):
-
-1. Any of the arguments 'a, b, c, ...' may also be 'None' if the respective
-   resource has a state of 'rcsUnkown'. This must be considered when writing
-   gate functions. For example, to check whether a Boolean resource x is known
-   and false, the expression should be 'if x == False: ...' instead of
-   'if not x: ...', since in the latter case 'not x' would evaluate as true,
-   if x is 'None'. In general, Boolean resource values should always be used
-   in conjunction with a comparision. For example, an expression like
-   'a and b' may be written as '(a == True) and (b != False)', which implies,
-   that a value of 'None' is treated like 'False' for 'a', but like 'True'
-   for 'b'.
-
-2. To facilitate gate function writing, especially if the source resources have
-   numerical types, 'TypeError' exceptions are caught by the caller and result
-   in a return value of 'None'. 'TypeError' exceptions are typically raised
-   if one of the arguments of an arithmetic exception is 'None'.
-
-3. The gate function is evaluated whenever a value/state change occurs for
-   any of the resources of 'rcSet', but only then. If resources are read
-   inside the gate function, they usually must be contained in 'rcSet'.
-   It is good practice to not read out resources directly, but only rely
-   on the arguments passed to the gate function.
-</pre> 
-</div>
-</div>
-<a id="ga6511631ea5df65925ac9f053f619bb7f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga6511631ea5df65925ac9f053f619bb7f">&#9670;&nbsp;</a></span>gate()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def home2l.gate </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rcName</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rcType</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>rcSet</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Decorator to define a new gate. </p>
-<pre class="fragment">Decorator variant of 'NewGate()'.
-
-This decorator allows to easily define a gate as follows:
-
-    @gate ( &lt;gate name&gt;, &lt;type&gt;, &lt;source resources&gt; )
-    def MyGateFunc (a, b, c, ...):
-      ...
-      return ...</pre> 
-</div>
-</div>
-<a id="ga01c963b57dfea4efd8b0290587dfa1a7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga01c963b57dfea4efd8b0290587dfa1a7">&#9670;&nbsp;</a></span>GetGateRc()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">def home2l.GetGateRc </td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>func</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Get resource reference of a gate. </p>
-<pre class="fragment">Lookup resource of a gate by its decorated function.
-
-Usually, the URI of a gate is 'local/gates/&lt;gate name&gt;'. This function
-allows to query a resource defined by the '@gate' decorator by a reference
-to the decorated function.
-</pre> 
+|   @connect ( &lt;target&gt;, &lt;rcSet&gt; [, &lt;request attrs&gt;] )
+|   def TransferFunc (a, b, c, ...):
+|     ...
+|     return &lt;value&gt;</pre> 
 </div>
 </div>
 <a id="ga8617bb7a5492e7e0a2751f4d47cd6cc7"></a>
@@ -810,9 +639,9 @@ Presently, there is no mechanism to delete a previously defined timer.
 This decorator allows to execute a function at given times
 as follows:
 
-    @at ( t = &lt;t&gt; [, dt = &lt;interval&gt;] [, args = &lt;args&gt;] )
-    def MyTimedFunc ( [&lt;args&gt;] ):
-      ...</pre> 
+|   @at ( t = &lt;t&gt; [, dt = &lt;interval&gt;] [, args = &lt;args&gt;] )
+|   def MyTimedFunc ( [&lt;args&gt;] ):
+|     ...</pre> 
 </div>
 </div>
 <a id="ga414fe36f2d5ae7a819a1482a6577cafc"></a>
@@ -900,9 +729,9 @@ names are used as identifiers.
 This decorator allows to easily define a function executed daily or whenever
 a host becomes reachable (again) as follows:
 
-    @daily ( [ &lt;host set&gt; ] )
-    def MyFunc (host):
-      ...</pre> 
+|   @daily ( [ &lt;host set&gt; ] )
+|   def MyFunc (host):
+|     ...</pre> 
 </div>
 </div>
 </div><!-- contents -->

@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['boolfromstring',['BoolFromString',['../group__common__strings.html#ga64fd14280479b0e9975c9c11b66e3835',1,'base.H']]],
   ['brfeaturesfromstr',['BrFeaturesFromStr',['../group__brownies__linux.html#ga6b7f420ba372d02121add8cf139ec257',1,'brownies.H']]],
   ['brfeaturestostr',['BrFeaturesToStr',['../group__brownies__linux.html#gaacbae25ff534ed2291cf474e0da17a3a',1,'brownies.H']]],
   ['brmcufromstr',['BrMcuFromStr',['../group__brownies__linux.html#ga7b441daca5556ade1953a760ad850111',1,'brownies.H']]],

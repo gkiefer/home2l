@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -280,8 +280,31 @@ Macros</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">ADCs ...</div></td></tr>
 <tr class="memitem:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gad3629f7b30386a42cafbd821d0fdb63e">ADC_PORTS</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memdesc:gad3629f7b30386a42cafbd821d0fdb63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET) <br /></td></tr>
+<tr class="memdesc:gad3629f7b30386a42cafbd821d0fdb63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of ADC input ports (max. 2) <br /></td></tr>
 <tr class="separator:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae068bb96d2ffb6dbc0716405a20eae0c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gae068bb96d2ffb6dbc0716405a20eae0c">ADC_PERIOD</a>&#160;&#160;&#160;1024</td></tr>
+<tr class="memdesc:gae068bb96d2ffb6dbc0716405a20eae0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample period in ticks (max. 32767)  <a href="group__brownies__features.html#gae068bb96d2ffb6dbc0716405a20eae0c">More...</a><br /></td></tr>
+<tr class="separator:gae068bb96d2ffb6dbc0716405a20eae0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad3516b3cb7e10cf59f7b6f8a311a22e3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gad3516b3cb7e10cf59f7b6f8a311a22e3">P_ADC_0_STROBE</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gad3516b3cb7e10cf59f7b6f8a311a22e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pin to output a strobe signal before each sampling (0 = no strobe)  <a href="group__brownies__features.html#gad3516b3cb7e10cf59f7b6f8a311a22e3">More...</a><br /></td></tr>
+<tr class="separator:gad3516b3cb7e10cf59f7b6f8a311a22e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5c7c129260123a27f0d9fbbd800dbc4c"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga5c7c129260123a27f0d9fbbd800dbc4c">ADC_0_STROBE_VALUE</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga5c7c129260123a27f0d9fbbd800dbc4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Strobe value (the other times, the pin drives the opposite value) <br /></td></tr>
+<tr class="separator:ga5c7c129260123a27f0d9fbbd800dbc4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae4b7f271408ca3958c511aeb9d41fac0"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gae4b7f271408ca3958c511aeb9d41fac0">ADC_0_STROBE_TICKS</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gae4b7f271408ca3958c511aeb9d41fac0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Duration of a strobe if ADC_STROBE_PIN != 0. <br /></td></tr>
+<tr class="separator:gae4b7f271408ca3958c511aeb9d41fac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0844d86999ddfb7454d5e646967fbe83"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>P_ADC_1_STROBE</b>&#160;&#160;&#160;0</td></tr>
+<tr class="separator:ga0844d86999ddfb7454d5e646967fbe83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga003481726670e80edd8514d6df99d2a2"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ADC_1_STROBE_VALUE</b>&#160;&#160;&#160;1</td></tr>
+<tr class="separator:ga003481726670e80edd8514d6df99d2a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3472f77042eae1bc061e41982b0f9d1d"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ADC_1_STROBE_TICKS</b>&#160;&#160;&#160;0</td></tr>
+<tr class="separator:ga3472f77042eae1bc061e41982b0f9d1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">UART ...</div></td></tr>
 <tr class="memitem:ga9096b850d2d6dc210384231faa3956e8"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga9096b850d2d6dc210384231faa3956e8">WITH_UART</a>&#160;&#160;&#160;0</td></tr>

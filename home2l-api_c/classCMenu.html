@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -70,7 +70,7 @@ $(function() {
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>Menu widget. </p>
 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00556">556</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00565">565</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -183,14 +183,21 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ScrollTo</b> (int idx
 void&#160;</td><td class="memItemRight" valign="bottom"><b>ScrollIn</b> (int idx)</td></tr>
 <tr class="separator:a7404e41826b346a7d847187573322f42 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a429072b4066da773ffa37c52dd0394a9 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a429072b4066da773ffa37c52dd0394a9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SelectItem</b> (int idx, bool _isSelected=true)</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a429072b4066da773ffa37c52dd0394a9">SelectItem</a> (int idx, bool _isSelected=true)</td></tr>
+<tr class="memdesc:a429072b4066da773ffa37c52dd0394a9 inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">(De-)Select item (for 'lmSelectSingle', 'lmSelectAny') <br /></td></tr>
 <tr class="separator:a429072b4066da773ffa37c52dd0394a9 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6a63a8de7e6cffdef3d9c58d6bdb24fa inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a6a63a8de7e6cffdef3d9c58d6bdb24fa"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SelectAll</b> (bool _isSelected=true)</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a6a63a8de7e6cffdef3d9c58d6bdb24fa">SelectAll</a> (bool _isSelected=true)</td></tr>
+<tr class="memdesc:a6a63a8de7e6cffdef3d9c58d6bdb24fa inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select all items (for 'lmSelectAny') <br /></td></tr>
 <tr class="separator:a6a63a8de7e6cffdef3d9c58d6bdb24fa inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa225aed4dd597cfd80946d72f93f1a15 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="aa225aed4dd597cfd80946d72f93f1a15"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SelectNone</b> ()</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#aa225aed4dd597cfd80946d72f93f1a15">SelectNone</a> ()</td></tr>
+<tr class="memdesc:aa225aed4dd597cfd80946d72f93f1a15 inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deselect all items (for 'lmSelectSingle', 'lmSelectAny') <br /></td></tr>
 <tr class="separator:aa225aed4dd597cfd80946d72f93f1a15 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21aa210e78f886da198927c8b7db0977 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a21aa210e78f886da198927c8b7db0977"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCListbox.html#a21aa210e78f886da198927c8b7db0977">MouseDown</a> ()</td></tr>
+<tr class="memdesc:a21aa210e78f886da198927c8b7db0977 inherit pub_methods_classCListbox"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine whether the listbox is currently dragged by the mouse. In this case, calling a Select...() method may interfere with the user interaction and should be avoided. <br /></td></tr>
+<tr class="separator:a21aa210e78f886da198927c8b7db0977 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5322fa205e3f314f9c7d3d89983824f5 inherit pub_methods_classCListbox"><td class="memItemLeft" align="right" valign="top"><a id="a5322fa205e3f314f9c7d3d89983824f5"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>ItemIsSelected</b> (int idx)</td></tr>
 <tr class="separator:a5322fa205e3f314f9c7d3d89983824f5 inherit pub_methods_classCListbox"><td class="memSeparator" colspan="2">&#160;</td></tr>

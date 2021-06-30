@@ -27,6 +27,9 @@ EXT_STATIC_LIBS := SDL2_static SDL2_ttf_static
 EXT_SHARED_LIBS :=
 
 ifeq ($(WITH_PHONE),1)
+	ifeq ($(PHONE_LIB),pjsip)
+		EXT_STATIC_LIBS += pjsip
+	endif
 	ifeq ($(PHONE_LIB),linphone)
 		EXT_SHARED_LIBS += linphone-armeabi-v7a mediastreamer_base-armeabi-v7a mediastreamer_voip-armeabi-v7a ortp-armeabi-v7a
 		#~ EXT_SHARED_LIBS := ffmpeg_shared linphone_shared			# 2.5.1

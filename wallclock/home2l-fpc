@@ -111,7 +111,7 @@ for g in gadgets:
     gdtType = gdtType[:-1]
 
   # Get transformation matrix ...
-  #~ print ("  # " + gdtId)
+  # ~ print ("  # " + gdtId)
   transform = g.attrib["transform"]
   func, dummy, args = g.attrib["transform"].partition("(")
   args = args.rstrip(")").split(",")
@@ -134,11 +134,11 @@ for g in gadgets:
   gdtX, gdtY = round (x), round (y - 128 + height)
   det = matrix[0] * matrix[3] - matrix[1] * matrix[2]
 
-  #~ print ("# {:16} = {}{}:{}".format (gdtId, gdtType, gdtSubType, transform))
-  #~ print ("# {:28} = matrix({},{},{},{},{},{})".format ("", matrix[0], matrix[1], matrix[2], matrix[3], gdtX, gdtY))
+  # ~ print ("# {:16} = {}{}:{}".format (gdtId, gdtType, gdtSubType, transform))
+  # ~ print ("# {:28} = matrix({},{},{},{},{},{})".format ("", matrix[0], matrix[1], matrix[2], matrix[3], gdtX, gdtY))
 
   # Get orientation and size, depending on the type ...
-  if gdtType == "win" or gdtType == "shades" or gdtType == "rwin" or gdtType == "garage":
+  if gdtType in ( "win", "door", "gate", "shades", "rwin", "garage" ):
     gdtOrient = None
     tolerance = 0.01
     if abs (matrix[2]) < tolerance:  # north or south
@@ -150,7 +150,7 @@ for g in gadgets:
     if gdtOrient == None:
       raise RuntimeError ("Unable to determine orientation of element '{}': '{}'".format (gdtId, transform))
 
-    if gdtType == "win" and det < 0:
+    if gdtType in ( "win", "door", "gate" ) and det < 0:
       gdtOrient = gdtOrient + 4    # for windows: add 4 to orientation if flipped
 
     if gdtType == "shades":
@@ -173,9 +173,9 @@ for g in gadgets:
   # Store sample resource entries ...
   aliasFmt = "A " + fpName + "/{:24} sample/signal/fp_{}"
   aliasFmtOptional = aliasFmt + "   # (optional)"
-  if gdtType == "win":
-    sampleEntry = aliasFmt.format (gdtId + "/state", "win");
-    sampleEntry = aliasFmtOptional.format (gdtId + "/handle", "win");
+  if gdtType in ( "win", "door", "gate" ):
+    sampleEntry = aliasFmt.format (gdtId + "/state", gdtType);
+    if gdtType == "win": sampleEntry += '\n' + aliasFmtOptional.format (gdtId + "/handle", gdtType);
   elif gdtType == "shades":
     sampleEntry = aliasFmt.format (gdtId + "/shades", "shades");
   elif gdtType == "rwin":
@@ -220,6 +220,8 @@ with open (sampleName, 'w') as sampleFile:
     "# Sample signals (may be used for your testing purposes).\n"
     "\n"
     "S sample fp_win       window  closed\n"
+    "S sample fp_door      bool    false\n"
+    "S sample fp_gate      bool    false\n"
     "S sample fp_shades    percent 0.0\n"
     "S sample fp_opener    percent 0.0\n"
     "S sample fp_garage    bool    false\n"
@@ -232,6 +234,7 @@ with open (sampleName, 'w') as sampleFile:
     "S sample fp_wlan      bool    false\n"
     "S sample fp_bluetooth bool    false\n"
     "S sample fp_service   bool    false\n"
+    "S sample fp_warning   bool    false\n"
     "S sample fp_temp      temp    23.5\n"
     "\n"
     "\n"

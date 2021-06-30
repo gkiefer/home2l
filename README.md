@@ -33,13 +33,13 @@ The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for autom
 What is New?
 ============
 
-* Improved **Python API** to simplify rules writing
+* **Brownies:** New **ADC** module for analog input, improved GPIO module
 
-* **Shell:** Call aliases and 'get'/'wait' commands for scripted use
+* New *PJSIP* phone backend for **DoorMan** and **WallClock**
 
-* Brownies: **UART** module to communicate with remote RS485 devices
+* Further improvements of the **Python API** to simplify rules writing
 
-* **WallClock:** UI improvements
+* **WallClock:** More UI improvements
 
 
 
@@ -136,11 +136,9 @@ The core part, the *Resources* library, is kept small and portable with APIs for
 How can I Help?
 ===============
 
-Until now, the *Home2L*  project has been developed by a single private person in his spare time. The code has been published with the hope that is useful to the community.
+The code has been published with the hope that is useful to the community. To let the project grow further and make available to a broader audience, **volunteers and partners are welcome**.
 
-To let the project grow further and make available to a broader audience, **volunteers and partners are welcome**.
-
-Great contributions would be:
+Great contributions are:
 
 - **Report and help fixing bugs.**
 
@@ -150,14 +148,14 @@ Great contributions would be:
 
 - **Documentation**: Write good documentation, particularly for end users.
 
-For any questions on how to participate, do not hesitate to contact the author via the project page.
+For any questions on how to participate, do not hesitate to contact us directly.
 
 
 
 Questions?
 ==========
 
-For any questions or support requests, feel free to submit an issue labeled with "support" on the [GitHub project page](https://github.com/gkiefer/home2l/issues).
+Feel free to contact: Gundolf Kiefer `<gundolf.kiefer@web.de>`
 
 
 

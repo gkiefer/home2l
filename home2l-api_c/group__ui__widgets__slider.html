@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -132,13 +132,13 @@ Macros</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><span class="keywordtype">void</span> CB_NAME (<span class="keyword">class</span> <a class="code" href="classCSlider.html">CSlider</a> *slider, <span class="keywordtype">int</span> val, <span class="keywordtype">int</span> lastVal, <span class="keywordtype">void</span> *data) {    \</div><div class="line">    ((CLASS_NAME *) data)-&gt;METHOD_NAME (slider, val, lastVal);                \</div><div class="line">  }</div><div class="ttc" id="classCSlider_html"><div class="ttname"><a href="classCSlider.html">CSlider</a></div><div class="ttdoc">Slider widget. </div><div class="ttdef"><b>Definition:</b> <a href="ui__widgets_8H_source.html#l00985">ui_widgets.H:985</a></div></div>
+<b>Value:</b><div class="fragment"><div class="line"><span class="keywordtype">void</span> CB_NAME (<span class="keyword">class</span> <a class="code" href="classCSlider.html">CSlider</a> *slider, <span class="keywordtype">int</span> val, <span class="keywordtype">int</span> lastVal, <span class="keywordtype">void</span> *data) {    \</div><div class="line">    ((CLASS_NAME *) data)-&gt;METHOD_NAME (slider, val, lastVal);                \</div><div class="line">  }</div><div class="ttc" id="classCSlider_html"><div class="ttname"><a href="classCSlider.html">CSlider</a></div><div class="ttdoc">Slider widget. </div><div class="ttdef"><b>Definition:</b> <a href="ui__widgets_8H_source.html#l00994">ui_widgets.H:994</a></div></div>
 </div><!-- fragment -->
 <p>Macro to define a trampoline to another class. </p>
 <p>The class must define a method: </p><pre class="fragment">void CLASS_NAME::METHOD_NAME (CSlider *slider, int val, int lastVal)
 </pre><p>If the method is protected, the following line may be added to the class: </p><pre class="fragment">friend CB_NAME (CButton *, int, int, void *);
 </pre><p>To the slider, the trampoline must be passed by a call like: </p><pre class="fragment">CSlider::SetCbValueChanged (CB_NAME, &lt;class object pointer&gt;)</pre> 
-<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00959">959</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="ui__widgets_8H_source.html#l00968">968</a> of file <a class="el" href="ui__widgets_8H_source.html">ui_widgets.H</a>.</p>
 
 </div>
 </div>

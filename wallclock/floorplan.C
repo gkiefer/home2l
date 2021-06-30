@@ -93,10 +93,27 @@ ENV_PARA_INT ("floorplan.motionRetention", envFloorplanMotionRetention, 300);
 
 
 ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.optional", bool, false);
-  /* For icon-like or text gadgets: Declare the resource as optional
+  /* Declare the resource as optional (currently supported for icon-like or text gadgets)
    *
    * If set, the respective gadget is declared optional. If resources of an
-   * optional gadget become unknown, the gadgets are not highlighted as defective.
+   * optional gadget become unknown, the gadgets are not highlighted as defective,
+   * but just disappear or grey out.
+   */
+
+
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.interactive", const char *, "0");
+  /* Make the gadget interactive (currently supported window or garage door gadgets)
+   *
+   * If set to a value different from a boolean "false" (or "0"), the respective gadget is
+   * interactive and can be pushed by the user (e.g. like icons of type 'gtService' or 'gtLight').
+   *
+   * On a simple push, the resource dialog opens for the selected resource.
+   * On a long push, a request is set to toggle the value in the same way as
+   * for gadgets of type 'gtService'.
+   *
+   * The selected resource can either be given explicitely by this parameter or
+   * is set to the state (main) resource of the gadget, if this parameter is set
+   * boolean value representing "true".
    */
 
 
@@ -192,9 +209,6 @@ enum EFloorplanViewLevel {
 #define FP_MAX_GADGET_RESOURCES 4     // Maximum average number of resources the gadgets can depend on
 
 
-static inline bool GadgetTypeIsIcon (EGadgetType t) { return t >= gtLock && t <= gtService; }
-
-
 enum EGadgetEmph {
   geNone = 0,
   geAttention,  // attention recommended; e.g. unlocked door at night or running service when out of home.
@@ -223,6 +237,7 @@ class CGadget {
     // Querying (static) properties ...
     class CFloorplan *Floorplan () { return floorplan; }
     const char *Id () { return gdtId.Get (); }
+    EGadgetType Type () { return gdtType; }
     EFloorplanViewLevel VisibilityLevel () { return visibilityLevel; }
     bool IsVisible (EFloorplanViewLevel level) { return level >= visibilityLevel; }
     bool IsPushable () { return pushable; }
@@ -429,12 +444,11 @@ class CScreenFloorplan: public CScreen, public CTimer {
     EFloorplanViewLevel view;
     TTicksMonotonic tInterval;
 
-    CWidget wdgBuilding;  // static building plan for the background
-    CWidget wdgEmph;      // Emphasis / highlighting
-    CWidget **wdgList;    // elements may point to objects of class 'CWidget' or 'CFlatButton', depending on whether the gadget is pushable
+    CWidget wdgBuilding;          // static building plan for the background
+    CWidget wdgEmph;              // Emphasis / highlighting
+    CWidget *wdgListGadgets;      // widgets for the gadgets
     int pushableGadgets;
-    CWidget *wdgPoolNorm;
-    CFlatButton *wdgPoolPushable;
+    CFlatButton *btnListGadgets;  // (Transparent) buttons for the pushable gadgets
 
     CButton *buttonBar;
     ERctUseState lastUseState, lastUseStateReq;
@@ -460,50 +474,61 @@ class CScreenFloorplan: public CScreen, public CTimer {
 #define FULL_SCALE 2    // scale level of the full-screen view
 
 
-static CRcRequest *NewUserRequest () {
+static CRcRequest *NewUserRequest (ERcType rcType) {
   CRcRequest *req = new CRcRequest ((CRcValueState *) NULL, NULL, rcPrioUser);
     // init with default attributes
   req->SetAttrsFromStr (envFloorplanReqAttrs ? envFloorplanReqAttrs : RcGetUserRequestAttrs ());
     // set request user attributes
   req->SetGid (RcGetUserRequestId ());
     // set GID
+  if (rcType == rctTrigger) req->SetForTrigger ();
+    // set some trigger-specific values
   return req;
 }
 
 
+
+
+
+
+
+// *************************** Generic Long-Push Handler ***********************
+
+
 static void HandleLongPush (CResource *rc) {
-  CRcRequest *req, reqDefault;
+  CRcRequest *req, reqCurrent;
+  ERcType rcType;
   bool setNotReset = false;
 
-  // Determine new user request ...
-  req = NewUserRequest ();
-  switch (rc->Type ()) {
-    case rctBool:
-      setNotReset = (rc->ValidBool (false) == false);
-      req->SetValue (setNotReset ? true : false);
-      break;
-    case rctPercent:
-      setNotReset = (rc->ValidFloat (0.0f) == 0.0f);
-      req->SetValue (setNotReset ? 100.0f : 0.0f);
-      break;
-    default:
-      // Unsupported type: Ignore long push
-      FREEO (req);
+  // Check if we have a current request ...
+  rc->GetRequest (&reqCurrent, RcGetUserRequestId ());
+  if (reqCurrent.Value ()->IsValid ()) {
+
+    // Yes: Remove that request ...
+    rc->DelRequest (RcGetUserRequestId ());
   }
+  else {
 
-  // Check if we should do "auto" instead of "reset" ...
-  if (req && !setNotReset) {
-
-    // Check if a "default" request has been set, if so just remove the current user request ...
-    rc->GetRequest (&reqDefault, rcDefaultRequestId);
-    if (reqDefault.Value ()->IsValid ()) {
-      FREEO (req);
-      rc->DelRequest (RcGetUserRequestId ());
+    // No: Determine and set a new user request ...
+    rcType = rc->Type ();
+    req = NewUserRequest (rcType);
+    switch (rcType) {
+      case rctBool:
+        setNotReset = (rc->ValidBool (false) == false);
+        req->SetValue (setNotReset ? true : false);
+        break;
+      case rctPercent:
+        setNotReset = (rc->ValidFloat (0.0f) == 0.0f);
+        req->SetValue (setNotReset ? 100.0f : 0.0f);
+        break;
+      case rctTrigger:
+        break;
+      default:
+        // Unsupported type: Ignore long push
+        FREEO (req);
     }
+    if (req) rc->SetRequest (req);
   }
-
-  // Set request if adequate ...
-  if (req) rc->SetRequest (req);
 }
 
 
@@ -521,8 +546,6 @@ static void HandleLongPush (CResource *rc) {
 
 #define RCDLG_COL_CHOICE    BLACK     // color of (unselected) choice buttons or list items
 #define RCDLG_COL_SELECTED  (color)   // color of selected choice ('color' = selected color variable)
-//~ #define RCDLG_COL_CHOICE    ColorDarker (color, 0x40)
-//~ #define RCDLG_COL_SELECTED  (color)
 
 
 class CResourceDialog: public CMessageBox, public CTimer {
@@ -534,7 +557,7 @@ class CResourceDialog: public CMessageBox, public CTimer {
     void Setup (CResource *_rc, EGadgetType _subType, const char *_title);
 
     void SetLayout (bool _withInfo);
-    void UpdateRequests (bool fetchReq);       // to be called if the request changed
+    void UpdateRequests (bool fetchReq);      // to be called if the request changed
     void UpdateView ();                       // to be called if the resource value/state changed
     int Run (CScreen *_screen);               // always returns 0
 
@@ -551,6 +574,7 @@ class CResourceDialog: public CMessageBox, public CTimer {
     CString title;
     TColor color;
     CResource *rc;
+    ERcType rcType;         // buffer resource type to avoid races if that happens to change dynamically
     EGadgetType subType;
     CRcRequest reqUser;     // current own request (e.g. with GID "#user")
     CRcRequest reqDefault;  // current default request
@@ -578,13 +602,13 @@ class CScreenResourceEdit: public CInputScreen {
     CScreenResourceEdit () { reqInput = NULL; }
     ~CScreenResourceEdit () { if (reqInput) delete reqInput; }
 
-    void Setup (const char *label, CResource *_rc, CRcRequest *_reqTemplate, int silentPrio) {
+    void Setup (const char *label, CResource *_rc, CRcRequest *_reqTemplate, CRcRequest *_reqPreset) {
       CString s;
 
       rc = _rc;
       reqTemplate = _reqTemplate;
-      reqTemplate->Convert (_rc, false);
-      reqTemplate->ToStr (&s, false, false, 0, reqTemplate->Priority () == silentPrio ? "#*@i" : "#@i");
+      _reqPreset->Convert (_rc, false);
+      _reqPreset->ToStr (&s, false, false, 0, _reqPreset->Priority () == reqTemplate->Priority () ? "#*@i" : "#@i");
       CInputScreen::Setup (label, s.Get ());
     }
 
@@ -652,15 +676,17 @@ void CResourceDialog::Clear () {
 
 
 void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_title) {
-  ERcType rcType;
+  const char *choiceFirst, *choiceLast;
   bool reverse;
   int n, idx, itemHeight;
 
   // Store parameters ...
   Clear ();
   rc = _rc;
+  rcType = _rc->Type ();
   subType = _subType;
   withInfo = false;
+  choices = 0;
 
   // Set title ...
   title.Clear ();
@@ -668,7 +694,10 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
   else switch (_subType) {
     case gtWindow:
     case gtRoofWindow:  title.SetC (_("Window"));     break;
+    case gtDoor:        title.SetC (_("Door"));       break;
+    case gtGate:        title.SetC (_("Gate"));       break;
     case gtShades:      title.SetC (_("Shades"));     break;
+    case gtGarage:      title.SetC (_("Garage"));     break;
     case gtLight:       title.SetC (_("Light"));      break;
     case gtMail:        title.SetC (_("Mail"));       break;
     case gtPhone:       title.SetC (_("Phone"));      break;
@@ -676,6 +705,7 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
     case gtWlan:        title.SetC (_("Wifi Access Point"));  break;
     case gtBluetooth:   title.SetC (_("Bluetooth"));  break;
     case gtService:     title.SetC (_("Service"));    break;
+    case gtWarning:     title.SetC (_("Warning"));    break;
     default:
       title.SetC (rc->Uri ());
   }
@@ -683,7 +713,10 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
   // Determine color based on subtype ...
   switch (_subType) {
     case gtWindow:
+    case gtDoor:
+    case gtGate:
     case gtRoofWindow:
+    case gtGarage:
       color = DARK_RED;
       break;
     default:
@@ -691,21 +724,48 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
   }
 
   // Analyse type and prepare choices ...
-  rcType = rc->Type ();
   switch (rcType) {
 
     case rctBool:
       choices = 2;
       choiceText = new CString [2];
       choiceVal = MALLOC (float, 2);
-      choiceText[0].SetC (_("Off"));
       choiceVal[0] = 0.0;
-      choiceText[1].SetC (_("On"));
       choiceVal[1] = 1.0;
+      switch (_subType) {
+        case gtWindow:
+        case gtDoor:
+        case gtGate:
+        case gtGarage:
+          choiceText[0].SetC (_("Closed"));
+          choiceText[1].SetC (_("Open"));
+          break;
+        default:
+          choiceText[0].SetC (_("Off"));
+          choiceText[1].SetC (_("On"));
+      }
       break;
 
     case rctPercent:
-      reverse = (_subType == gtWindow || _subType == gtRoofWindow);
+      choiceFirst = choiceLast = NULL;
+      reverse = false;
+      switch (_subType) {
+        case gtShades:
+          choiceFirst = _("0% = Up");
+          choiceLast =  _("100% = Down");
+          break;
+        case gtWindow:
+        case gtDoor:
+        case gtGate:
+        case gtRoofWindow:
+        case gtGarage:
+          reverse = true;
+          choiceFirst = _("100% = Open");
+          choiceLast =  _("0% = Closed");
+          break;
+        default:
+          break;
+      }
       choices = RCDLG_PERCENT_STEPS;
       choiceText = new CString [RCDLG_PERCENT_STEPS];
       choiceVal = MALLOC (float, RCDLG_PERCENT_STEPS);
@@ -714,19 +774,12 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
         choiceVal[idx] = (n * 100.0) / (RCDLG_PERCENT_STEPS - 1);
         choiceText[idx].SetF ("%.0f%%", choiceVal[idx]);
       }
-      switch (_subType) {
-        case gtShades:
-          choiceText[0].SetC (_("0% = Up"));
-          choiceText[RCDLG_PERCENT_STEPS-1].SetC (_("100% = Down"));
-          break;
-        case gtWindow:
-        case gtRoofWindow:
-          choiceText[0].SetC (_("100% = Open"));
-          choiceText[RCDLG_PERCENT_STEPS-1].SetC (_("0% = Closed"));
-          break;
-        default:
-          break;
-      }
+      if (choiceFirst) choiceText[0].SetC (choiceFirst);
+      if (choiceLast) choiceText[RCDLG_PERCENT_STEPS-1].SetC (choiceLast);
+      break;
+
+    case rctTrigger:
+      // The "Auto" button will be re-used as a "Trigger" button to simplify the layout.
       break;
 
     default:
@@ -741,7 +794,7 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
       }
       // Default: Leave empty (choices = 0)
   }
-  valueNotPlusButton = !RcTypeIsEnumType (rcType) && (rcType != rctBool);
+  valueNotPlusButton = !RcTypeIsEnumType (rcType) && (rcType != rctBool) && (rcType != rctTrigger);
 
   // Prepare buttons or listbox for choices...
   if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
@@ -783,8 +836,14 @@ void CResourceDialog::Setup (CResource *_rc, EGadgetType _subType, const char *_
   btnBack.SetCbPushed (CbResourceDialogOnButtonPushed, this);
 
   btnAuto.SetColor (RCDLG_COL_CHOICE);
-  btnAuto.SetLabel (_("Auto"), WHITE);
-  btnAuto.SetHotkey (SDLK_a);
+  if (rcType == rctTrigger) {
+    btnAuto.SetLabel (_("Trigger"), WHITE);
+    btnAuto.SetHotkey (SDLK_t);
+  }
+  else {
+    btnAuto.SetLabel (_("Auto"), WHITE);
+    btnAuto.SetHotkey (SDLK_a);
+  }
   btnAuto.SetCbPushed (CbResourceDialogOnButtonPushed, this);
 
   btnDefault.SetColor (GREY);
@@ -933,11 +992,21 @@ void CResourceDialog::SetLayout (bool _withInfo) {
   //   ... buttons ...
   r = Rect (rContent.w, UI_BUTTONS_HEIGHT);
   RectAlign (&r, rContent, 0, 1);
-  layout = LayoutRow (r, UI_BUTTONS_SPACE, -3, -6, -1, -2, 0);
-  btnBack.SetArea (layout[0]);
-  btnAuto.SetArea (layout[1]);
-  btnDefault.SetArea (layout[2]);
-  btnEdit.SetArea (layout[3]);
+  if (rcType == rctTrigger) {
+    // Trigger: Simplified layout without "Default" button (and "Auto" re-used as a trigger button) ...
+    layout = LayoutRow (r, UI_BUTTONS_SPACE, -3, -6, -3, 0);
+    btnBack.SetArea (layout[0]);
+    btnAuto.SetArea (layout[1]);
+    btnEdit.SetArea (layout[2]);
+  }
+  else {
+    // General case ...
+    layout = LayoutRow (r, UI_BUTTONS_SPACE, -3, -6, -1, -2, 0);
+    btnBack.SetArea (layout[0]);
+    btnAuto.SetArea (layout[1]);
+    btnDefault.SetArea (layout[2]);
+    btnEdit.SetArea (layout[3]);
+  }
   free (layout);
 
   // Add/delete info widget ...
@@ -973,8 +1042,10 @@ void CResourceDialog::UpdateRequests (bool fetchReq) {
 
   // Update choice listbox or buttons ...
   if (choices > RCDLG_HORIZONTAL_THRESHOLD) {
-    if (idx >= 0) wdgChoices.SelectItem (idx);
-    else wdgChoices.SelectNone ();
+    if (!wdgChoices.MouseDown ()) {     // do not interfere with user interaction
+      if (idx >= 0) wdgChoices.SelectItem (idx);
+      else wdgChoices.SelectNone ();
+    }
   }
   else {
     btnChoicesSelected = idx;
@@ -988,6 +1059,10 @@ void CResourceDialog::UpdateRequests (bool fetchReq) {
   // Read default request ...
   if (fetchReq) rc->GetRequest (&reqDefault, rcDefaultRequestId);
   reqDefault.Convert (rc, false);   // In case of an incompatibility, a warning would have been emitted before.
+
+  // NOTE: In the 'rctTrigger' case, the "Auto" button 'btnAuto' is reused as a trigger button
+  //       and must be always get the color 'RCDLG_COL_CHOICE'. In the present implementation, this
+  //       is the case automatically.
 
   // Update info view ...
   UpdateView ();
@@ -1011,7 +1086,8 @@ void CResourceDialog::UpdateView () {
   if (valueNotPlusButton) btnValue.SetLabel (vs.ToStr (), YELLOW);
 
   // Set color of "Default" button ...
-  btnDefault.SetLabel (reqDefault.Value ()->IsValid () ? YELLOW : WHITE, withInfo ? "ic-ground-48" : "ic-ground-24");
+  if (rcType != rctTrigger)
+    btnDefault.SetLabel (reqDefault.Value ()->IsValid () ? YELLOW : WHITE, withInfo ? "ic-ground-48" : "ic-ground-24");
 
   // Highlight current value or its neighbors ...
   rcVal = vs.ValidFloat (NAN);
@@ -1079,7 +1155,7 @@ void CResourceDialog::Start (CScreen *_screen) {
 
     _screen->AddWidget (&btnBack, 1);
     _screen->AddWidget (&btnAuto, 1);
-    _screen->AddWidget (&btnDefault, 1);
+    if (rcType != rctTrigger) _screen->AddWidget (&btnDefault, 1);
     _screen->AddWidget (&btnEdit, 1);
   }
 }
@@ -1135,6 +1211,7 @@ int CResourceDialog::Run (CScreen *_screen) {
 
 
 void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
+  CRcRequest *req;
   int idx;
 
   if (btn == &btnValue) {
@@ -1144,8 +1221,21 @@ void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
     Stop ();
   }
   else if (btn == &btnAuto) {
-    btnChoicesSelected = -1;
-    OnListboxPushed (NULL, -1, longPush);
+    //~ INFOF (("### btnAuto: type = %i", (int) rcType));
+    if (rcType == rctTrigger) {
+      // Special case: For triggers, the "Auto" button is reused as the "Trigger" button.
+      // The following code does what is usually done in OnListboxPushed().
+      req = NewUserRequest (rcType);
+      reqUser.Set (req);         // store as current request
+      rc->SetRequest (req);
+      //~ INFOF (("### Trigger: %s", req->ToStr ()));
+      UpdateRequests (false);
+      if (!longPush && !withInfo) Stop ();
+    }
+    else {
+      btnChoicesSelected = -1;
+      OnListboxPushed (NULL, -1, longPush);
+    }
   }
   else if (btn == &btnDefault) {
     if (longPush) {
@@ -1159,7 +1249,7 @@ void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
 
       // Run input dialog for the default request ...
       CScreenResourceEdit scrEdit;
-      CRcRequest *reqInput, reqTemplate;
+      CRcRequest *reqInput, reqTemplate, reqPreset;
       CScreen *myScreen = screen;
 
       // Stop message box (would not survive switching to the edit screen) ...
@@ -1167,10 +1257,11 @@ void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
 
       // Set request template ...
       reqTemplate.Set (0, rcDefaultRequestId, rcPrioDefault);
-      if (reqDefault.Value ()->IsValid ()) reqTemplate.Set (&reqDefault);    // ... to current request
+      reqPreset.Set (&reqTemplate);
+      if (reqDefault.Value ()->IsValid ()) reqPreset.Set (&reqDefault);    // ... to current request
 
       // Run input dialog and apply result ...
-      scrEdit.Setup (_("Default:"), rc, &reqTemplate, rcPrioDefault);
+      scrEdit.Setup (_("Default:"), rc, &reqTemplate, &reqPreset);
       scrEdit.Run ();
       reqInput = scrEdit.GetRequest ();
       if (reqInput) {
@@ -1189,22 +1280,26 @@ void CResourceDialog::OnButtonPushed (class CButton *btn, bool longPush) {
 
     // Run input dialog for the user request ...
     CScreenResourceEdit scrEdit;
-    CRcRequest *reqInput, reqTemplate;
+    CRcRequest *reqInput, reqTemplate, reqPreset;
     CScreen *myScreen = screen;
 
     // Stop message box (would not survive switching to the edit screen) ...
     Stop ();
 
-    // Set request template ...
-    if (reqUser.Value ()->IsValid ()) reqTemplate.Set (&reqUser);   // ... to current request
+    // Set request template and preset ...
+    reqTemplate.SetGid (RcGetUserRequestId ());
+    reqTemplate.SetPriority (rcPrioUser);
+    if (reqUser.Value ()->IsValid ()) reqPreset.Set (&reqUser);   // ... to current request
     else {    // ... according to configuration options ...
-      reqTemplate.SetPriority (rcPrioUser);         // preset default priority
-      reqTemplate.SetAttrsFromStr (envFloorplanReqAttrs ? envFloorplanReqAttrs : RcGetUserRequestAttrs ());
+      reqPreset.Set (&reqTemplate);
+      reqPreset.SetAttrsFromStr (envFloorplanReqAttrs ? envFloorplanReqAttrs : RcGetUserRequestAttrs ());
         // set user defaults, ignoring errors
+      if (rc->Type () == rctTrigger) reqPreset.SetForTrigger ();
+        // set some trigger-specific values
     }
 
     // Run input dialog and apply result ...
-    scrEdit.Setup (_("User request:"), rc, &reqTemplate, rcPrioUser);
+    scrEdit.Setup (_("User request:"), rc, &reqTemplate, &reqPreset);
     scrEdit.Run ();
     reqInput = scrEdit.GetRequest ();
     if (reqInput) {
@@ -1239,7 +1334,7 @@ void CResourceDialog::OnListboxPushed (class CListbox *lb, int idx, bool longPus
     reqUser.Reset ();
   }
   else {
-    req = NewUserRequest ();
+    req = NewUserRequest (rcType);
     req->SetValue (choiceVal[idx]);
     reqUser.Set (req);                            // store as current request
     rc->SetRequest (req);
@@ -1290,6 +1385,17 @@ static CResource *GetGadgetResource (CGadget *gdt, const char *name) { // TTS
 
 static const char *GetGadgetEnvKey (CGadget *gdt, const char *name = NULL) {    // TTS
   return StringF (name ? "floorplan.gadgets.%s.%s" : "floorplan.gadgets.%s", gdt->Id (), name);
+}
+
+
+static CResource *GetInteractionResource (CGadget *gdt, CResource *rcState) { // TTS
+  const char *envInteractive;
+  bool valBool;
+
+  envInteractive = EnvGet (GetGadgetEnvKey (gdt, "interactive"));
+  if (!envInteractive) return NULL;
+  if (BoolFromString (envInteractive, &valBool)) return valBool ? rcState : NULL;
+  return RcGet (envInteractive);
 }
 
 
@@ -1386,10 +1492,14 @@ static const struct {
 } gdtTypeInfo [gtEND] = {
   { NULL, NULL },      // gtNone = 0
 
-  { "win",        NULL },      // gtWindow
-  { "shades",     NULL },      // gtShades
-  { "rwin",       NULL },      // gtRoofWindow
-  { "garage",     NULL },      // gtGarage
+  { "win",        NULL },     // gtWindow
+  { "door",       NULL },     // gtDoor
+  { "gate",       NULL },     // gtGate
+  { "shades",     NULL },     // gtShades
+  { "rwin",       NULL },     // gtRoofWindow
+  { "garage",     NULL },     // gtGarage
+
+  { "temp",       NULL },     // gtTemp
 
   { "lock",       NULL },              // gtLock  (varying icons: "padlock" / "padlock_open")
   { "motion",     "walk" },            // gtMotion
@@ -1400,10 +1510,7 @@ static const struct {
   { "wlan",       "wifi_tethering" },  // gtWlan
   { "bluetooth",  "bluetooth" },       // gtBluetooth
   { "service",    "service" },         // gtService
-
-  { "temp", NULL },      // gtTemp
-
-  { "zoom", "zoom_in" }      // gtZoom
+  { "warning",    "warning" }          // gtWarning
 };
 
 
@@ -1414,14 +1521,15 @@ static const struct {
 
 
 class CGadgetWindow: public CGadget {
-  // Handles: gtWindow
+  // Handles: gtWindow, gtDoor, gtGate
 
   public:
     virtual void InitSub (int _x, int _y, int _orient, int _size);
     virtual bool UpdateSurface ();
+    virtual void OnPushed (CButton *btn, bool longPush);
 
   protected:
-    CResource *rcState, *rcHandle;
+    CResource *rcState, *rcHandle, *rcInteraction;
     int orient, size;
 };
 
@@ -1463,9 +1571,6 @@ void CGadgetWindow::InitSub (int _x, int _y, int _orient, int _size) {
       break;
   }
 
-  // Other static properties ...
-  visibilityLevel = fvlMini;
-
   // Resources...
   rcState = GetGadgetResource (this, "state");
   rcHandle = EnvGetBool (GetGadgetEnvKey (this, "handle"), envFloorplanWinHandle) ?
@@ -1474,60 +1579,72 @@ void CGadgetWindow::InitSub (int _x, int _y, int _orient, int _size) {
   if (rcHandle) RegisterResource (rcHandle);
   RegisterResource (floorplan->UseStateRc ());
   RegisterResource (floorplan->WeatherRc ());
+
+  // Other static properties ...
+  visibilityLevel = fvlMini;
+  if ( (rcInteraction = GetInteractionResource (this, rcState)) ) pushable = true;
 }
 
 
 bool CGadgetWindow::UpdateSurface () {
   CRcValueState vs;
-  ERctWindowState state, handle;
+  ERctWindowState winState, handleState;
   char buf[16];
   TColor color;
   int scale, surfOrient;
 
-  // Get state...
+  // Get window state ...
   rcState->GetValueState (&vs);
-  state = ReadValidWindowState (&vs);
-  if (state == rcvWindowOpenOrTilted) state = rcvWindowOpen;
+  winState = ReadValidWindowState (&vs);
+  if (winState == rcvWindowOpenOrTilted || vs.IsBusy ()) winState = rcvWindowOpen;
 
   // Determine color...
-  if (viewLevel == fvlMini) {
-    if (state == rcvWindowClosed) color = GREY;
-    else color = WHITE;
-  }
+  if (vs.IsBusy ()) color = LIGHT_RED;
   else {
-    if (state == rcvWindowClosed) color = WHITE;
-    else color = YELLOW;
+    if (viewLevel == fvlMini) color = (winState != rcvWindowClosed) ? WHITE : GREY;
+    else color = (winState != rcvWindowClosed) ? YELLOW : WHITE;
   }
 
   // Get and scale icon...
-  surfOrient = (state == rcvWindowOpen) ? orient : (orient & 3);
-  snprintf (buf, sizeof (buf), "fp-win%02i%c", size, "ctll" [state]);
+  surfOrient = (winState == rcvWindowOpen) ? orient : (orient & 3);
+  snprintf (buf, sizeof (buf), "fp-win%02i%c", size, "ctll" [winState]);
   scale = floorplan->GetViewScale (viewLevel);
   surf = IconGet (buf, color, (viewLevel == fvlMini) ? TRANSPARENT : BLACK, 1 << (ICON_SCALE - scale), surfOrient, true);
     // Usually, all gadget surfaces must have a transparent background.
-    // The only exception is made here for windows in the normal (full-screen) views,
-    // since the window surface must overwrite the building wall.
+    // We make an exception here, since the window, door and gate surface must overwrite the building wall.
+    // On the mini-floorplan, the gadget must be transparent again in order to avoid artifacts if
+    // the mini-floorplan is pushed-
 
   // Set highlight status...
   surfEmph = geNone;
   if (!vs.IsKnown ()) surfEmph = geError;
-  else if (state != rcvWindowClosed) {
-    if (floorplan->GetValidUseState () >= ((state == rcvWindowTilted) ? rcvUseAway : rcvUseNight)) surfEmph = geAttention;
-    if (floorplan->GetValidWeather ()) surfEmph = (state == rcvWindowTilted) ? geAttention : geAlert;
+  else if (winState != rcvWindowClosed) {
+    if (vs.IsBusy ()) surfEmph = geAttention;
+    if (floorplan->GetValidUseState () >= ((winState == rcvWindowTilted) ? rcvUseAway : rcvUseNight)) surfEmph = geAttention;
+    if (floorplan->GetValidWeather ()) surfEmph = (winState == rcvWindowTilted || gdtType == gtGate) ? geAttention : geAlert;
+      // Open windows and doors lead to an alert on bad weather.
+      // Gates and tilted windows do not lead to an alert on bad weather (but to an attention).
   }
   if (surfEmph == geNone && rcHandle) {
     // Check state of handle (if present) ...
     rcHandle->GetValueState (&vs);
     if (!vs.IsKnown ()) surfEmph = geAttention;
     else {
-      handle = ReadValidWindowState (&vs);
-      if (handle == rcvWindowOpenOrTilted) handle = rcvWindowOpen;
-      if (handle != state) surfEmph = geAttention;
+      handleState = ReadValidWindowState (&vs);
+      if (handleState == rcvWindowOpenOrTilted) handleState = rcvWindowOpen;
+      if (handleState != winState) surfEmph = geAttention;
     }
   }
 
   // Done...
   return true;
+}
+
+
+void CGadgetWindow::OnPushed (CButton *btn, bool longPush) {
+  ASSERT (rcInteraction != NULL);
+  if (longPush) HandleLongPush (rcInteraction);
+  else RunResourceDialog (rcInteraction, gdtType);
 }
 
 
@@ -1896,9 +2013,10 @@ class CGadgetGarage: public CGadget {
   public:
     virtual void InitSub (int _x, int _y, int _orient, int _size);
     virtual bool UpdateSurface ();
+    virtual void OnPushed (CButton *btn, bool longPush);
 
   protected:
-    CResource *rcState;
+    CResource *rcState, *rcInteraction;
     int orient;
 };
 
@@ -1929,14 +2047,15 @@ void CGadgetGarage::InitSub (int _x, int _y, int _orient, int _size) {
       ASSERT (false);
   }
 
-  // Static properties ...
-  visibilityLevel = fvlMini;
-
   // Resources ...
   rcState = GetGadgetResource (this, "state");
   RegisterResource (rcState);
   RegisterResource (floorplan->UseStateRc ());
   RegisterResource (floorplan->WeatherRc ());
+
+  // Static properties ...
+  visibilityLevel = fvlMini;
+  if ( (rcInteraction = GetInteractionResource (this, rcState)) ) pushable = true;
 }
 
 
@@ -1949,36 +2068,51 @@ bool CGadgetGarage::UpdateSurface () {
 
   // Read resource ...
   rcState->GetValueState (&vs);
-  if (!vs.IsKnown ()) {
-    surfEmph = geError;
-    stateOpen = true;
+  switch (vs.State ()) {
+    case rcsValid:
+      stateOpen = (ReadValidWindowState (&vs) == rcvWindowClosed) ? false : true;
+      break;
+    case rcsBusy:
+      surfEmph = geAttention;
+      stateOpen = true;
+      break;
+    default:
+      surfEmph = geError;
+      stateOpen = true;
   }
-  else
-    stateOpen = (ReadValidWindowState (&vs) == rcvWindowClosed) ? false : true;
 
   // Determine color...
-  if (viewLevel == fvlMini)
-    color = stateOpen ? WHITE : GREY;
-  else
-    color = stateOpen ? YELLOW : WHITE;    // consistent with 'CGadgetWindow' (open garage is no worse than tilted window)
+  if (vs.IsBusy ()) color = LIGHT_RED;
+  else {
+    if (viewLevel == fvlMini) color = stateOpen ? WHITE : GREY;
+    else color = stateOpen ? YELLOW : WHITE;    // consistent with 'CGadgetWindow' (open garage is no worse than tilted window)
+  }
 
   // Set surface...
   surf = IconGet (stateOpen ? "fp-garageo" : "fp-garagec",
                   color, (viewLevel == fvlMini) ? TRANSPARENT : BLACK,
                   1 << (ICON_SCALE - floorplan->GetViewScale (viewLevel)), orient, true);
     // Usually, all gadget surfaces must have a transparent background.
-    // The only exception is made here for windows in the normal (full-screen) views,
-    // since the window surface must overwrite the building wall.
+    // We make an exception here, since the garage door surface must overwrite the building wall.
+    // On the mini-floorplan, the gadget must be transparent again in order to avoid artifacts if
+    // the mini-floorplan is pushed-
 
   // Set highlight status ...
   if (stateOpen) {
     if (floorplan->GetValidUseState () >= rcvUseNight) surfEmph = geAttention;
-    if (floorplan->GetValidWeather ()) surfEmph = geAlert;
+    if (floorplan->GetValidWeather ()) surfEmph = geAttention; // geAlert;
   }
   if (!vs.IsKnown ()) surfEmph = geError;
 
   // Done...
   return true;
+}
+
+
+void CGadgetGarage::OnPushed (CButton *btn, bool longPush) {
+  ASSERT (rcInteraction != NULL);
+  if (longPush) HandleLongPush (rcInteraction);
+  else RunResourceDialog (rcInteraction, gtGarage);
 }
 
 
@@ -1997,7 +2131,7 @@ class CGadgetIcon: public CGadget {
     virtual void OnPushed (CButton *btn, bool longPush);
 
   protected:
-    CResource *rcState;
+    CResource *rcState, *rcInteraction;
     TTicksMonotonic tLastMotion;
     bool optional;
 };
@@ -2017,6 +2151,9 @@ void CGadgetIcon::InitSub (int _x, int _y, int _orient, int _size) {
   rcState = GetGadgetResource (this, "state");
   RegisterResource (rcState);
   optional = EnvGetBool (GetGadgetEnvKey (this, "optional"), false);
+
+  // Check explicit "interaction" option ...
+  if ( (rcInteraction = GetInteractionResource (this, rcState)) ) pushable = true;
 
   // Type-specifics...
   switch (gdtType) {
@@ -2162,6 +2299,7 @@ bool CGadgetIcon::UpdateSurface () {
       break;
 
     case gtMail:
+    case gtWarning:
       iconColor = YELLOW;
       rcState->GetValueState (&vs);
       if (!vs.IsKnown ()) {
@@ -2169,7 +2307,7 @@ bool CGadgetIcon::UpdateSurface () {
       }
       else {
         if (vs.ValidBool (false)) {     // there is new mail ...
-          if (floorplan->GetValidUseState () >= rcvUseVacation) surfEmph = geAttention;
+          if (floorplan->GetValidUseState () >= rcvUseVacation || gdtType == gtWarning) surfEmph = geAttention;
         }
         else iconBaseName = NULL;       // no new mail
       }
@@ -2194,8 +2332,6 @@ bool CGadgetIcon::UpdateSurface () {
 #endif
   if (!iconBaseName || viewArea.w < 12) surf = NULL;      // icon not visible
   else {
-    //~ if (viewLevel != fvlMini && baseArea.w > 6)
-      //~ iconColor = ColorScale (iconColor, 0x100 * 6 / baseArea.w);
     if (viewArea.w >= 48) {
       snprintf (buf, sizeof (buf),  "ic-%s-%02i", iconBaseName, viewArea.w);
       surf = IconGet (buf, iconColor);
@@ -2215,7 +2351,11 @@ void CGadgetIcon::OnPushed (CButton *btn, bool longPush) {
   char buf[64];
   const char *p, *phoneUrl;
 
-  switch (gdtType) {
+  if (rcInteraction) {
+    if (longPush) HandleLongPush (rcInteraction);
+    else RunResourceDialog (rcInteraction, gdtType);
+  }
+  else switch (gdtType) {
     case gtPhone:
       // Try to get number from environment...
       phoneUrl = EnvGet (GetGadgetEnvKey (this, "dial"));
@@ -2420,15 +2560,15 @@ void CFloorplan::Done () {
 
   if (gadgetList) {
     for (n = 0; n < gadgets; n++) delete gadgetList[n];
-    delete gadgetList;
+    delete [] gadgetList;
     gadgetList = NULL;
   }
 
   for (n = 0; n < FP_MAX_VIEWS; n++) SurfaceFree (&buildingSurfList[n]);
 
   FREEA (rcGdtList);
-  if (changedGadgetsIdxList) delete changedGadgetsIdxList;
-  FREEA (emphGadgetsIdxList);
+  FREEA (changedGadgetsIdxList);
+  FREEP (emphGadgetsIdxList);
 
   SurfaceFree (&emphSurf);
 }
@@ -2519,9 +2659,14 @@ bool CFloorplan::Setup (const char *_lid) {
     if (ok) {
       // Create appropriate object...
       switch (gdtType) {
-        case gtWindow:      gdt = new CGadgetWindow ();       break;
+        case gtWindow:
+        case gtDoor:
+        case gtGate:        gdt = new CGadgetWindow ();       break;
+
         case gtShades:      gdt = new CGadgetShades ();       break;
+
         case gtRoofWindow:  gdt = new CGadgetRoofWindow ();   break;
+
         case gtGarage:      gdt = new CGadgetGarage ();       break;
 
         case gtTemp:        gdt = new CGadgetText ();         break;
@@ -2898,15 +3043,18 @@ SDL_Surface *CWidgetFloorplan::GetSurface () {
   if (changed) {
 
     // Draw the stack ...
+
     //   1. Button backlight ...
     SurfaceSet (&surface, CreateSurface (area.w, area.h));
     SDL_FillRect (surface, NULL, ToUint32 (isDown ? colDown : colNorm));
 
-    // Decide if we show the emphasis map nothing at all ...
+    // Decide if we show the emphasis map or nothing at all ...
     if ((2 * floorplan->EmphGadgets () < floorplan->Gadgets () || floorplan->EmphGadgets () < 4) || floorplan->HaveAlert ()) {
+
       //   2. Emphasis surface ('emphSurf') ...
       emphSurf = floorplan->GetEmphSurface ();
       if (emphSurf) SurfaceBlit (emphSurf, NULL, surface, NULL, 0, 0, SDL_BLENDMODE_BLEND);
+
       //   3. Map ('mapSurf') ...
       //~ SDL_SetSurfaceAlphaMod (mapSurf, stampSurf ? 0x80 : 0xff);
       SurfaceBlit (mapSurf, NULL, surface, NULL, 0, 0, SDL_BLENDMODE_BLEND);
@@ -2957,17 +3105,17 @@ static TButtonDescriptor fpButtons[btnIdFpEND] = {
 CScreenFloorplan::CScreenFloorplan () {
   floorplan = NULL;
   tInterval = 0;
-  wdgList = NULL;
-  wdgPoolNorm = wdgPoolPushable = NULL;
+  wdgListGadgets = NULL;
+  btnListGadgets = NULL;
   buttonBar = NULL;
 }
 
 
 void CScreenFloorplan::Clear () {
   floorplan = NULL;
-  FREEA (wdgList);
-  FREEA (wdgPoolNorm);
-  FREEA (wdgPoolPushable);
+  DelAllWidgets ();
+  FREEA (wdgListGadgets);
+  FREEA (btnListGadgets);
   FREEA (buttonBar);
 }
 
@@ -2976,7 +3124,7 @@ void CScreenFloorplan::Setup (CFloorplan *_floorplan, TTicksMonotonic _tInterval
   CGadget *gdt;
   CFlatButton *btn;
   SDL_Rect r;
-  int idx, numNorm, idxNorm, idxPushable;
+  int i, iBtn;
 
   // Store args ...
   floorplan = _floorplan ? _floorplan : fpFloorplan;
@@ -2988,29 +3136,27 @@ void CScreenFloorplan::Setup (CFloorplan *_floorplan, TTicksMonotonic _tInterval
   haveAlert = false;
   returnScreen = NULL;
 
-  // Create widget pools and objects ...
+  // Create widgets and buttons for the gadgets ...
   //   The widgets themselves are initialized in 'Activate()'.
   pushableGadgets = 0;
-  for (idx = 0; idx < floorplan->Gadgets (); idx++)
-    if (floorplan->Gadget (idx)->IsPushable ()) pushableGadgets++;
-  numNorm = floorplan->Gadgets () - pushableGadgets;
+  for (i = 0; i < floorplan->Gadgets (); i++)
+    if (floorplan->Gadget (i)->IsPushable ()) pushableGadgets++;
 
-  SETA (wdgPoolNorm, new CWidget [numNorm]);
-  SETA (wdgPoolPushable, new CFlatButton [pushableGadgets]);
-  SETA (wdgList, new CWidget * [floorplan->Gadgets ()]);
-  idxNorm = idxPushable = 0;
-  for (idx = 0; idx < floorplan->Gadgets (); idx++) {
-    gdt = floorplan->Gadget (idx);
-    if (!gdt->IsPushable ()) {
-      wdgList[idx] = &wdgPoolNorm[idxNorm++];
-      wdgList[idx]->SetTextureBlendMode (SDL_BLENDMODE_BLEND);
-    }
-    else {
-      btn = &wdgPoolPushable[idxPushable++];
-      wdgList[idx] = btn;
-      //~ btn->SetColor (COL_FP_MAIN_DARKER, FLATBUTTON_COL_DOWN);
+  SETA (wdgListGadgets, new CWidget [floorplan->Gadgets ()]);
+  SETA (btnListGadgets, new CFlatButton [pushableGadgets]);
+  iBtn = 0;
+  for (i = 0; i  < floorplan->Gadgets (); i++) {
+    gdt = floorplan->Gadget (i);
+
+    // Setup widget ...
+    wdgListGadgets[i].SetTextureBlendMode (SDL_BLENDMODE_BLEND);
+
+    // Setup button if interactive (Pushable) ...
+    if (gdt->IsPushable ()) {
+      btn = &btnListGadgets[iBtn++];
       btn->SetCbPushed (CbGadgetOnButtonPushed, gdt);
       btn->SetTextureBlendMode (SDL_BLENDMODE_ADD);     // make pushable widgets transparent; they have black (non-transparent) background
+      //~ btn->SetLabel (NULL);   // necessary?
     }
   }
 
@@ -3053,11 +3199,16 @@ void CScreenFloorplan::CheckAlert (CScreen *_returnScreen) {
 }
 
 
+static inline bool GadgetIsOpaque (EGadgetType t) { return t == gtWindow || t == gtDoor || t == gtGate || t == gtGarage; }
+  // Helper to identify gadgets visualized in a non-transparent way
+
+
 void CScreenFloorplan::Activate (bool on) {
   CGadget *gdt;
+  CFlatButton *btn;
   SDL_Surface *surf;
   SDL_Rect r;
-  int n, idx;
+  int i, n;
 
   CScreen::Activate (on);
   if (on) {
@@ -3076,28 +3227,27 @@ void CScreenFloorplan::Activate (bool on) {
     wdgBuilding.SetSurface (surf);
     AddWidget (&wdgBuilding);
 
-    // Add static (normal) gadgets ...
-    for (idx = 0; idx < floorplan->Gadgets (); idx++) {
-      gdt = floorplan->Gadget (idx);
-      if (!gdt->IsPushable ()) {
-        gdt->UpdateSurface ();
-        wdgList[idx]->SetArea (*gdt->ViewArea ());
-        wdgList[idx]->SetSurface (gdt->Surface ());
-        AddWidget (wdgList [idx]);
-      }
+    // Add static parts of all gadgets ...
+    for (i = 0; i < floorplan->Gadgets (); i++) {
+      gdt = floorplan->Gadget (i);
+      gdt->UpdateSurface ();
+      wdgListGadgets[i].SetArea (*gdt->ViewArea ());
+      wdgListGadgets[i].SetSurface (gdt->Surface ());
+      if (GadgetIsOpaque (gdt->Type ()))            // Only push opaque widgets now, then ...
+        AddWidget (&wdgListGadgets [i]);
     }
+    for (i = 0; i < floorplan->Gadgets (); i++)     // ... push transparent widgets on top of the opaque ones.
+      if (!GadgetIsOpaque (floorplan->Gadget (i)->Type ()))
+        AddWidget (&wdgListGadgets [i]);
 
-    // Add pushable gadgets ...
-    for (idx = 0; idx < floorplan->Gadgets (); idx++) {
-      gdt = floorplan->Gadget (idx);
-      if (gdt->IsPushable ()) {
-        r = *gdt->ViewArea ();
-        RectGrow (&r, 16, 16);
-        wdgList[idx]->SetArea (r);
-        gdt->UpdateSurface ();
-        static_cast<CFlatButton *> (wdgList[idx])->SetLabel (gdt->Surface ());
-        AddWidget (wdgList [idx]);
-      }
+    // Add buttons for pushable gadgets ...
+    for (i = 0; i < pushableGadgets; i++) {
+      btn = &btnListGadgets[i];
+      gdt = (CGadget *) btn->GetCbPushedData ();
+      r = *gdt->ViewArea ();
+      RectGrow (&r, 16, 16);
+      btn->SetArea (r);
+      AddWidget (&btnListGadgets[i]);
     }
 
     // Add highlighter...
@@ -3134,10 +3284,7 @@ void CScreenFloorplan::OnTime () {
   for (n = 0; n < floorplan->ChangedGadgets (); n++) {
     idx = floorplan->ChangedGadgetIdx (n);
     gdt = floorplan->Gadget (idx);
-    if (!gdt->IsPushable ())
-      wdgList[idx]->SetSurface (gdt->Surface ());
-    else
-      static_cast<CFlatButton *> (wdgList[idx])->SetLabel (gdt->Surface ());
+    wdgListGadgets[idx].SetSurface (gdt->Surface ());
   }
 
   // Update emphasis ...
@@ -3176,7 +3323,7 @@ void CScreenFloorplan::OnButtonPushed (CButton *btn, bool longPush) {
     case btnIdFpUseNight:
     case btnIdFpUseLeaving:
     case btnIdFpUseVacation:
-      req = NewUserRequest ();
+      req = NewUserRequest (rc->Type ());
       useStateReq = (ERctUseState) (btnId - btnIdFpUseDay);
       req->SetValue (useStateReq);
       rc->SetRequest (req);
@@ -3198,12 +3345,12 @@ bool CScreenFloorplan::HandleEvent (SDL_Event *ev) {
     // Note: 'wdgEmph' must be the last widget added in 'Activate ()'. If this is not the topmost
     //       one here, we conclude that some modal widget is presently on top of it and revert to normal
     //       event handling.
-    wdgPoolPushable[0].GetMouseEventPos (ev, &x, &y);
+    btnListGadgets[0].GetMouseEventPos (ev, &x, &y);
       // We have no canvas => can use the first (= any) gadget to transform the mouse coordinates once.
     minIdx = -1;
     minDist = INT_MAX;
-    for (n = 0; n < pushableGadgets; n++) if (wdgPoolPushable[n].IsOnScreen (this)) {
-      r = wdgPoolPushable[n].GetArea ();
+    for (n = 0; n < pushableGadgets; n++) if (btnListGadgets[n].IsOnScreen (this)) {
+      r = btnListGadgets[n].GetArea ();
       if (RectContains (r, x, y)) {
         dx = r->x + r->w/2 - x;
         dy = r->y + r->h/2 - y;
@@ -3216,7 +3363,7 @@ bool CScreenFloorplan::HandleEvent (SDL_Event *ev) {
     }
     if (minIdx >= 0) {
       // Pass the event to the closest pushable gadget...
-      if (wdgPoolPushable[minIdx].HandleEvent (ev)) return true;
+      if (btnListGadgets[minIdx].HandleEvent (ev)) return true;
     }
   }
 

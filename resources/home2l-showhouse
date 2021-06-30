@@ -46,8 +46,8 @@ Home2lInit (server = True)
 
 
 # Get reference(s) to common resources...
-rcDaylight = RcGet ("/alias/daylight")
-rcWeatherWarning = RcGet ("/alias/weatherWarning")
+rcDaylight = RcGet ("daylight")
+rcWeatherWarning = RcGet ("weatherWarning")
 
 
 
@@ -55,7 +55,7 @@ rcWeatherWarning = RcGet ("/alias/weatherWarning")
 
 ################################################################################
 #                                                                              #
-#                              Driver "world"                                  #
+#                              Local Resources                                 #
 #                                                                              #
 ################################################################################
 
@@ -66,64 +66,25 @@ rcWeatherWarning = RcGet ("/alias/weatherWarning")
 
 
 
-#################### Define all driver resources ###############################
+######################### Front Door Light #####################################
 
-# The following resources will be driven by our driver.
-# It is legal to create them before the driver "world" itself.
-
-
-# Daylight simulation (sensing)...
-rcSimDaylight = NewResource ("world", "simDaylight", rctBool, False)
-  # We create an own resource to simulate day or night based on a user input.
-  # Real daylight information is also available by the timer driver at
-  # '/local/timer/twiLight/day'. To allow to easily switch between simulated
-  # and real daylight, the UI accesses this property over the alias '/alias/daylight',
-  # which may be setup to point either at the real daylight or the simulated resource.
+# The decorator creates a new resource representing the front door light.
+# The supplied function is called whenever a value of a writable (aka "acting")
+# resource needs to be changed. It is responsible for driving new values to
+# acting resources ('rcLight' in this case).
 
 
-# Bad weather simulation (sensing)...
-rcSimBadWeather = NewResource ("world", "simBadWeather", rctBool, False)
-  # Resource to simulate bad weather based on a user input.
-  # Real weather information can be obtained from the "weather" driver
-  # ('weather/radarWarning').
+# Light resource ...
+@resource ("light", rctBool)
+def DriveLight (rc, val):
+  # Here, we would have to physically switch on or off the light, depending on 'vs'.
+  # Since we only simulate the light, there is no real code here.
+  if val != None: rc.ReportValue (val)      # Report the new valid value (indicating success)
 
 
-# Motion simulation (sensing)...
-rcMotion = NewResource ("world", "motion", rctBool, False)
-
-
-# Light (acting)...
-rcLight = NewResource ("world", "light", rctBool, True)
-
-
-# Door lock (sensing)...
-rcLock = NewResource ("world", "lock", rctBool, False)
-
-
-# Window sensors (sensing) ...
-#   Note: 'lid' stands for "local ID" (LID), which is the part of the Unified
-#         Resource Identifier (URI) that follows the driver name. The LID can be
-#         queried any time from a resource by the CResource::Lid() method and
-#         is used in this driver to identify window sensors and actuators.
-rcWindows = {}
-for lid in [ "dining-window-l", "dining-window-r", "kitchen-window",
-             "bedroom-window", "bath-window", "garage-gate" ]:
-  rcWindows[lid] = NewResource ("world", lid, rctWindowState, False)
-
-
-# Actuators for shades and the roof window (acting) ...
-rcActuators = {}
-for lid in [ "living-window", "living-shades", "dining-shades", "kitchen-shades",
-             "bedroom-shades", "bath-shades" ]:
-  rcActuators[lid] = NewResource ("world", lid, rctPercent, True)
-
-
-# User input (internal, sensing) ...
-rcInternalInput = NewResource ("world", "internal/input", rctString, False)
-  # This is an internal resource representing a keyboard driver.
-  # We make use of the capabilities of the Resources library to deal with the
-  # standard (blocking) console input. A background thread queries the
-  # console input and passes all input characters over this resource.
+# Set default request for the light...
+rcLight = GetLocalRc (DriveLight)
+rcLight.SetDefault (False)
 
 
 
@@ -131,23 +92,22 @@ rcInternalInput = NewResource ("world", "internal/input", rctString, False)
 
 #################### Simulation of actuators (rcActuators) #####################
 
-# The following variables and functions help to simulate actuators (shades,
-# roof window) in a natural way. If a new value is driven, the actuator moves
-# to the target postion in steps of 5% each 200 milliseconds (approx.).
+# The following simulates all actuators (shades, roof window) in a natural way.
+# If a new value is driven, the actuator moves to the target postion in steps
+# of 5% each 200 milliseconds (approx.).
 # The dictionary '_actPosToValue' contains the to-values. Actuators not
 # contained there have reached their current target position.
 
+
+rcActuators = {}        # dictionary of actuator resources
 
 _actPos = {}            # current position for all actuators
 _actPosToValue = {}     # to-value of actuators that need to move
 
 
-# Reset all positions to "0" ...
-for name in rcActuators.keys (): _actPos[name] = 0
-
-
-# Update all actuators ...
+# Helper to update all actuators ...
 def ActuatorsUpdate ():
+  global rcActuators
   global _actPos
   global _actPosToValue
 
@@ -166,46 +126,24 @@ def ActuatorsUpdate ():
     RunAt (ActuatorsUpdate, 200);   # let this method be called again in 200ms
 
 
-# Drive a new value to one actuator identified by the local ID (LID) ...
-def ActuatorsDrive (lid, value):
+# Drive function for an actuator resource ...
+def ActuatorsDrive (rc, val):
   global _actPosToValue
-  _actPosToValue[lid] = value       # put target position into dictionary
+  if val != None: _actPosToValue[rc.Lid ()] = val    # put target position into dictionary
   ActuatorsUpdate ()
 
 
-
-
-
-
-#################### Main driver function and acting resource(s) ###############
-
-# This creates the driver and registers all its previously declared resources.
-#
-# The supplied function is called whenever a value of a writable (aka "acting")
-# resource needs to be changed. It is responsible for driving new values to
-# acting resources ('rcLight' in this case).
-#
-# Value reporting for sensing resources is inherently done asynchronously, e.g.
-# by a background thread or an event-triggered function.
-
-
-@driver ("world", rcsNoReport)
-def DriverFunc (rc, vs):
-  if rc == rcLight:                 # Drive the front door light ...
-    # Here, we would have to physically switch on or off the light, depending on 'vs'.
-    # Since we only simulate the light, there is no real code here.
-    rc.ReportValueState (vs)        # Report the new valid value (indicating success)
-
-  elif rc.Lid () in rcActuators:    # Drive the actuator of the given LID ...
-    ActuatorsDrive (rc.Lid (), vs.Value ())
-
-
-# Set default request for the light...
-rcLight.SetDefault (False)
-
-
-# Report initial actuator states...
-for lid, rc in rcActuators.items (): rc.ReportValue (_actPos[lid])
+# Create and initialize the resources ...
+#   Note: 'lid' stands for "local ID" (LID), which is the part of the Unified
+#         Resource Identifier (URI) that follows the driver name. The LID can be
+#         queried any time from a resource by the CResource::Lid() method and
+#         is used in the drive function to identify actuators.
+for lid in ( "living-window", "living-shades", "dining-shades", "kitchen-shades",
+             "bedroom-shades", "bath-shades" ):
+  rc = NewResource (lid, rctPercent, ActuatorsDrive)
+  rcActuators[lid] = rc
+  _actPos[lid] = 0      # reset position
+  rc.ReportValue (0)    # report the initial position
 
 
 
@@ -217,7 +155,7 @@ for lid, rc in rcActuators.items (): rc.ReportValue (_actPos[lid])
 # asynchronous keyboard input which is neither blocking the main programm
 # nor requires active polling.
 #
-# We solve this here by implementing a resource driver for the keyboard input.
+# This is solved here by implementing a resource driver for the keyboard input.
 # A background thread ('InputThread()') reads the keyboard with blocking stdin
 # reads and reports all keys as value changes.
 
@@ -226,6 +164,14 @@ import threading
 import sys;
 import tty;
 import termios;
+
+
+# User input resource (internal) ...
+rcInternalInput = NewResource ("internal/input", rctString)
+  # This is an internal resource representing a keyboard driver.
+  # We make use of the capabilities of the Resources library to deal with the
+  # standard (blocking) console input. A background thread queries the
+  # console input and passes all input characters over this resource.
 
 
 def InputThread ():
@@ -254,13 +200,54 @@ inputThread.start ()
 
 
 
-##### Sensing resources: rcLock, rcMotion, rcSimDaylight, rcSimBadWeather ######
+######################### Various Sensing Resources ############################
 
-# These resources are handled by an event-triggered function that processes
-# all keyboard events delivered by the 'rcInternalInput' resource.
+# This section defines a couple of sensing resources simulation the environment
+# (daylight, weather conditions) or sensors inside the house.
+#
+# Value reporting for sensing resources is generally done asynchronously, e.g.
+# by a background thread or an event-triggered function.
+#
+# In this case, the sensor resources are updated by an event-triggered function
+# that processes all keyboard events delivered by the 'rcInternalInput' resource.
 
 
-# Internal variables ...
+# Daylight simulation ...
+rcSimDaylight = NewResource ("simDaylight", rctBool)
+  # We create an own resource to simulate day or night based on a user input.
+  # Real daylight information is also available by the timer driver at
+  # '/local/timer/twiLight/day'. To allow to easily switch between simulated
+  # and real daylight, the UI accesses this property over the alias '/alias/daylight',
+  # which may be setup to point either at the real daylight or the simulated resource.
+
+
+# Bad weather simulation ...
+rcSimBadWeather = NewResource ("simBadWeather", rctBool)
+  # Resource to simulate bad weather based on a user input.
+  # Real weather information can be obtained from the "weather" driver
+  # ('weather/radarWarning').
+
+
+# Motion simulation ...
+rcMotion = NewResource ("motion", rctBool)
+
+
+# Door lock ...
+rcLock = NewResource ("lock", rctBool)
+
+
+# Window sensors ...
+#   Note: 'lid' stands for "local ID" (LID), which is the part of the Unified
+#         Resource Identifier (URI) that follows the driver name. The LID can be
+#         queried any time from a resource by the CResource::Lid() method and
+#         is used in this driver to identify window sensors and actuators.
+rcWindows = {}
+for lid in ( "dining-window-l", "dining-window-r", "kitchen-window",
+             "bedroom-window", "bath-window", "garage-gate" ):
+  rcWindows[lid] = NewResource (lid, rctWindowState)
+
+
+# Initialize internal variables ...
 _valSimDaylight = True
 _valSimBadWeather = False
 _valLock = False

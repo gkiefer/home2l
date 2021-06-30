@@ -26,8 +26,8 @@ WITH_ANDROID ?= 1
 	# Build Android APK (requires Android SDK and NDK to build)
 
 # IP phone backend (if WITH_PHONE == 1) ...
-PHONE_LIB := linphone
-#~ PHONE_LIB := pjsip
+PHONE_LIB ?= pjsip
+#~ PHONE_LIB ?= linphone
 
 WITH_GSTREAMER ?= 1
 
@@ -99,9 +99,6 @@ $(WALLCLOCK_BIN): $(DEP_CONFIG) $(OBJ) icons.build
 	@echo LD $(WALLCLOCK)
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
-#~ 	@$(CC) -o /dev/shm/$(WALLCLOCK) $(OBJ) $(LDFLAGS)
-#~ 	@mv /dev/shm/$(WALLCLOCK) .
-
 
 all: $(WALLCLOCK_BIN)
 
@@ -149,14 +146,6 @@ APK_NDK_FLAGS := -C $(APK_BUILD)/jni \
 
 print-sources:
 	@echo $(APK_BUILD)/config.C $(SRC)
-
-#~ 	@echo -n "config.C"
-#~ 	@for F in $(SRC); do \
-#~ 	  for D in "" "../common/" "../resources/"; do \
-#~ 	    test $$F != config.C && test -f $$D$$F && echo -n " $$D$$F"; \
-#~ 	  done; \
-#~ 	done; \
-#~ 	echo
 
 
 print-config:
@@ -226,7 +215,7 @@ $(APK_JAVA_CONFIG): $(APK_NDK_SO)
 
 
 $(APK): $(APK_NDK_SO) $(APK_JAVA_SRC) $(APK_JAVA_CONFIG)
-	cp -vau ../external/linphone/usr/android/lib/liblinphone.jar $(APK_BUILD)/libs && \
+	if [[ "$$PHONE_LIB" == "linphone" ]]; then cp -vau ../external/linphone/usr/android/lib/liblinphone.jar $(APK_BUILD)/libs; fi && \
 	cp -vau android/src $(APK_BUILD) && \
 	cd $(APK_BUILD) && ant -silent debug
 

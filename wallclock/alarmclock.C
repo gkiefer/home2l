@@ -183,8 +183,8 @@ static void UpdateAcSurface () {
       if (tAlarm == NEVER) surfText = NULL;   // no time
       else {
         TicksToDateTime (tAlarm, &dt, &tm);
-        if (tAlarm - TicksNow () <= TICKS_FROM_SECONDS (24*60*60)) {
-          // next alarm is within 24 hours: just show time...
+        if (tAlarm - TicksNow () <= TICKS_FROM_SECONDS (23*60*60)) {
+          // next alarm is clearly within 24 hours: just show time...
           sprintf (buf, "%i:%02i", HOUR_OF (tm), MINUTE_OF (tm));
           surfText = FontRenderText (FontGet (fntNormal, 48), buf, col);
         }
@@ -246,8 +246,8 @@ static void UpdateTimer () {
       if (tAlarm != NEVER) {
         tLeft = tAlarm - TicksNow ();
         if (tLeft < 0) tLeft = 0;
-        if (tLeft > TICKS_FROM_SECONDS (600)) tLeft = TICKS_FROM_SECONDS (600);   // avoid overflows
-        if (tLeft > TICKS_FROM_SECONDS (1)) tLeft = tLeft * 7/8;    // round down
+        if (tLeft > TICKS_FROM_SECONDS (600)) tLeft = TICKS_FROM_SECONDS (600);   // avoid overflows; have updates at least every 10 minutes (e.g. for the day display)
+        else if (tLeft > TICKS_FROM_SECONDS (1)) tLeft = tLeft * 7/8;    // round down
         acTimer.Reschedule (TicksMonotonicNow () + (TTicksMonotonic) tLeft);
       }
       else acTimer.Clear ();

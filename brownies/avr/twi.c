@@ -1125,6 +1125,7 @@ void TwiHubIterate () {
           twiSlReply.status = brNoDevice;
           TwiSlReplyCommit (BR_REPLY_SIZE_STATUS);
           hubReqPtr = hubRplPtr = 0;
+          break;
         }
 
         hubRplBytes = (slReqStatus == brOk) ? BrReplySize (twiSlRequest.op) : BR_REPLY_SIZE_STATUS;

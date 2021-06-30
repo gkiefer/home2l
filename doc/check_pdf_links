@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Home2L. If not, see <https://www.gnu.org/licenses/>.
 
-
+import sys
 import os
 import PyPDF2
 import requests
@@ -44,7 +44,7 @@ def CheckFile (fileName, locPath):
         elif "/F" in ank:
           uri = ank["/F"]
         elif ank["/S"] != "/GoTo":
-          print ("ERROR: Strange annotation on page {}: {}".format (pageNo + 1, str (ank)))
+          print ("  ERROR: Strange annotation on page {}: {}".format (pageNo + 1, str (ank)))
           error = True
         if uri:
           # ~ print ("{:>3}: {}".format (pageNo + 1, uri))
@@ -55,6 +55,7 @@ def CheckFile (fileName, locPath):
   extUrls = None
   for uri, pageSet in uriSet.items ():
     # ~ print ("Checking '{}' on page(s) {} ...".format (uri, pageSet))
+    if uri[0:4] == "www.": uri = "https://" + uri
     if "://" in uri:
       # Check external web reference ...
       if extUrls: extUrls = "{} '{}'".format (extUrls, uri)
@@ -64,10 +65,10 @@ def CheckFile (fileName, locPath):
         req = requests.get (uri)
         if req.status_code == 200: ok = True
       except requests.exceptions.SSLError:
-        print ("WARNING: SSL error with URL '{}' {}".format (uri, sorted (pageSet)))
+        print ("  WARNING: SSL error with URL '{}' {}".format (uri, sorted (pageSet)))
         ok = True
       except: pass
-      if not ok: print ("ERROR: Non-existing remote URL '{}' {}".format (uri, sorted (pageSet)))
+      if not ok: print ("  ERROR: Non-existing remote URL '{}' {}".format (uri, sorted (pageSet)))
     else:
       # Check local file ...
       uri = uri.rstrip(".")
@@ -75,9 +76,13 @@ def CheckFile (fileName, locPath):
         # or directories without a period in their name. As a workaround, affected link targets end
         # with a period (''.'') (see also: comment in 'home2l-book.tex').
         # These extra trailing periods are removed by this.
-      ok = os.path.exists (locPath + "/" + uri)
-      if not ok: ok = os.path.exists (uri)
-      if not ok: print ("ERROR: Non-existing local file '{}' {}.".format (uri, sorted (pageSet)))
+      if locPath:
+        ok = os.path.exists (locPath + "/" + uri)
+        if not ok: ok = os.path.exists (uri)
+        if not ok: print ("  ERROR: Non-existing local file '{}' {}.".format (uri, sorted (pageSet)))
+      else:
+        ok = True
+        print ("  INFO: Relative link to '{}' {}.".format (uri, sorted (pageSet)))
     if not ok: error = True
 
   # Done ...
@@ -85,5 +90,8 @@ def CheckFile (fileName, locPath):
   return not error
 
 
-if not CheckFile ("../README.pdf", ".."): exit (1)
-if not CheckFile ("home2l-book.pdf", ".."): exit (1)
+# Main ...
+if len (sys.argv) < 2:
+  print ("Usage: {} <PDF file> [<path for local relative references>]".format (sys.argv[0]))
+else:
+  if not CheckFile (sys.argv[1], None if len (sys.argv) <= 2 else sys.argv[2]): exit (1)

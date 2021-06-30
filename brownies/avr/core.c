@@ -51,16 +51,17 @@ const __flash TBrFeatureRecord brFeatureRecord = {
   .versionRevision  = VERSION_REVISION,
 
   .features =
-      BR_FEATURE_MAINTENANCE * IS_MAINTENANCE +
-      BR_FEATURE_TIMER    * WITH_TIMER +
-      BR_FEATURE_NOTIFY   * TWI_SL_NOTIFY +
-      BR_FEATURE_TWIHUB   * WITH_TWIHUB +
-      BR_FEATURE_ADC_0    * WITH_ADC +
-      BR_FEATURE_ADC_1    * ((WITH_ADC && ADC_PORTS >= 2) ? 1 : 0) +
-      BR_FEATURE_UART     * WITH_UART +
-      BR_FEATURE_TEMP     * WITH_TEMP_ZACWIRE +
-      BR_FEATURE_SHADES_0 * WITH_SHADES +
-      BR_FEATURE_SHADES_1 * ((WITH_SHADES && SHADES_PORTS >= 2) ? 1 : 0),
+      BR_FEATURE_MAINTENANCE  * IS_MAINTENANCE +
+      BR_FEATURE_TIMER        * WITH_TIMER +
+      BR_FEATURE_NOTIFY       * TWI_SL_NOTIFY +
+      BR_FEATURE_TWIHUB       * WITH_TWIHUB +
+      BR_FEATURE_ADC_0        * WITH_ADC +
+      BR_FEATURE_ADC_1        * ((WITH_ADC && ADC_PORTS >= 2) ? 1 : 0) +
+      BR_FEATURE_ADC_PASSIVE  * ((WITH_ADC && !ADC_PERIOD) ? 1 : 0) +
+      BR_FEATURE_UART         * WITH_UART +
+      BR_FEATURE_TEMP         * WITH_TEMP_ZACWIRE +
+      BR_FEATURE_SHADES_0     * WITH_SHADES +
+      BR_FEATURE_SHADES_1     * ((WITH_SHADES && SHADES_PORTS >= 2) ? 1 : 0),
 
   .gpiPresence  = GPIO_IN_PRESENCE,
   .gpiPullup    = GPIO_IN_PULLUP & GPIO_IN_PRESENCE,

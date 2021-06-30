@@ -5,8 +5,6 @@ var searchData=
   ['delrequest',['DelRequest',['../classhome2l_1_1CResource.html#ae4334063704d1754640872d06f4813e3',1,'home2l::CResource']]],
   ['delresource',['DelResource',['../classhome2l_1_1CRcSubscriber.html#a749c835db3f83ba872f83268d9dc7d50',1,'home2l::CRcSubscriber']]],
   ['delresources',['DelResources',['../classhome2l_1_1CRcSubscriber.html#a4832bc471dfa170d5fe52360436e529f',1,'home2l::CRcSubscriber']]],
-  ['driver',['driver',['../group__home2l__drivers.html#gacbb6a2f7f5533f154fb752c124cb6e44',1,'home2l']]],
-  ['driverdata',['DriverData',['../classhome2l_1_1CResource.html#a1c58cc51010d928ff0e62501cf886b00',1,'home2l::CResource']]],
-  ['drivers',['Drivers',['../group__home2l__drivers.html',1,'']]],
+  ['driver',['driver',['../group__home2l__resources.html#gacbb6a2f7f5533f154fb752c124cb6e44',1,'home2l']]],
   ['directory_20services',['Directory Services',['../group__resources__directory.html',1,'']]]
 ];

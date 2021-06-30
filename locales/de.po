@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2021-01-03 20:09+0100\n"
+        "POT-Creation-Date: 2021-06-21 21:25+0200\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -18,157 +18,214 @@ msgstr  "Project-Id-Version: Home2L\n"
         "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. TRANSLATORS: Set the first character to the locale's numerical decimal point. All other characters are ignored.
-#: ../common/base.C:674
+#: ../common/base.C:686
 msgid   ". (decimal point)"
 msgstr  ","
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "January"
 msgstr  "Januar"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "February"
 msgstr  "Februar"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "March"
 msgstr  "März"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "April"
 msgstr  "April"
 
-#: ../common/base.C:2069 ../common/base.C:2070
+#: ../common/base.C:2118 ../common/base.C:2119
 msgid   "May"
 msgstr  "Mai"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "June"
 msgstr  "Juni"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "July"
 msgstr  "Juli"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "August"
 msgstr  "August"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "September"
 msgstr  "September"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "October"
 msgstr  "Oktober"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "November"
 msgstr  "November"
 
-#: ../common/base.C:2069
+#: ../common/base.C:2118
 msgid   "December"
 msgstr  "Dezember"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Jan"
 msgstr  "Jan"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Feb"
 msgstr  "Feb"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Mar"
 msgstr  "Mär"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Apr"
 msgstr  "Apr"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Jun"
 msgstr  "Jun"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Jul"
 msgstr  "Jul"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Aug"
 msgstr  "Aug"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Sep"
 msgstr  "Sep"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Oct"
 msgstr  "Okt"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Nov"
 msgstr  "Nov"
 
-#: ../common/base.C:2070
+#: ../common/base.C:2119
 msgid   "Dec"
 msgstr  "Dez"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Monday"
 msgstr  "Montag"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Tuesday"
 msgstr  "Dienstag"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Wednesday"
 msgstr  "Mittwoch"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Thursday"
 msgstr  "Donnerstag"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Friday"
 msgstr  "Freitag"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Saturday"
 msgstr  "Samstag"
 
-#: ../common/base.C:2071
+#: ../common/base.C:2120
 msgid   "Sunday"
 msgstr  "Sonntag"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Mon"
 msgstr  "Mo"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Tue"
 msgstr  "Di"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Wed"
 msgstr  "Mi"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Thu"
 msgstr  "Do"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Fri"
 msgstr  "Fr"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Sat"
 msgstr  "Sa"
 
-#: ../common/base.C:2072
+#: ../common/base.C:2121
 msgid   "Sun"
 msgstr  "So"
+
+#: ../common/phone-pjsip.C:1409
+msgid   "Inviting..."
+msgstr  "Rufe an..."
+
+#: ../common/phone-pjsip.C:1483
+msgid   "Resuming paused call."
+msgstr  "Gehe zurück zum geparkten Anruf."
+
+#: ../common/phone-pjsip.C:1559
+msgid   "Call is paused. Please dial the number to transfer to."
+msgstr  "Anruf ist geparkt. Bitte wähle jetzt die Ziel-Nummer."
+
+#: ../common/phone-pjsip.C:1572
+msgid   "Pick up destination phone to complete the transfer."
+msgstr  "Gehe jetzt zum Ziel-Telefon und nimm einfach ab."
+
+#: ../common/phone-pjsip.C:1692
+#, c-format
+msgid   "Registration: %.*s (%i)"
+msgstr  "Registrierung: %.*s (%i)"
+
+#: ../common/phone-pjsip.C:1785
+#, c-format
+msgid   "Paused call ended: %.*s (%i)"
+msgstr  "Geparkter Anruf beendet: %.*s (%i)"
+
+#: ../common/phone-pjsip.C:1787
+msgid   "Paused call ended."
+msgstr  "Geparkter Anruf beendet."
+
+#: ../common/phone-pjsip.C:1792
+msgid   "Ready."
+msgstr  "Bereit."
+
+#: ../common/phone-pjsip.C:1798
+#, c-format
+msgid   "Call ended: %.*s (%i)"
+msgstr  "Anruf beendet: %.*s (%i)"
+
+#: ../common/phone-pjsip.C:1800
+msgid   "Call ended."
+msgstr  "Anruf beendet."
+
+#: ../common/phone-pjsip.C:1805
+msgid   "Connected."
+msgstr  "Verbunden."
+
+#: ../common/phone-pjsip.C:1839
+#, c-format
+msgid   "%.*s is calling!"
+msgstr  "Anruf von: %.*s"
+
+#: ../common/phone-pjsip.C:2225
+#, c-format
+msgid   "Registration in progress (%.*s@%.*s) ..."
+msgstr  "Registrierung läuft (%.*s@%.*s) ..."
 
 #: ../wallclock/alarmclock.C:590
 msgid   "Enabled"
@@ -185,25 +242,25 @@ msgstr  "Kann die Kalenderdatei '%s/%s.rem' nicht laden:\n"
 
 #. TRANSLATORS: Format string for the day header in the calendar event list (de_DE: "%s   %i.%i.%i")
 #. Arguments are: <week day name>, <day>, <month>, <year>
-#: ../wallclock/app_calendar.C:698
+#: ../wallclock/app_calendar.C:700
 #, c-format
 msgid   "%1$s   %3$i/%2$i/%4$i"
 msgstr  "%s   %i.%i.%i"
 
-#: ../wallclock/app_calendar.C:788
+#: ../wallclock/app_calendar.C:790
 msgid   "Really remove the current entry?"
 msgstr  "Bist Du sicher, dass Du\n"
         "den Eintrag löschen möchtest?"
 
-#: ../wallclock/app_calendar.C:946
+#: ../wallclock/app_calendar.C:948
 msgid   "Today"
 msgstr  "Heute"
 
-#: ../wallclock/app_calendar.C:1450
+#: ../wallclock/app_calendar.C:1453
 msgid   "Calendar"
 msgstr  "Kalender"
 
-#: ../wallclock/app_home.C:487 ../wallclock/floorplan.C:673
+#: ../wallclock/app_home.C:487 ../wallclock/floorplan.C:702
 msgid   "Mail"
 msgstr  "Mail"
 
@@ -226,99 +283,127 @@ msgstr  "%s, %i. %s %i"
 msgid   "Quit Home2L"
 msgstr  "Home2l beenden"
 
-#: ../wallclock/app_music.C:986
+#: ../wallclock/app_music.C:994
 msgid   "Connecting ..."
 msgstr  "Verbinde ..."
 
-#: ../wallclock/app_music.C:1273
+#: ../wallclock/app_music.C:1282
 msgid   "* Music Collection *"
 msgstr  "* Musik-Sammlung *"
 
-#: ../wallclock/app_music.C:1277
+#: ../wallclock/app_music.C:1286
 msgid   "* Current Queue *"
 msgstr  "* Aktuelle Liste *"
 
-#: ../wallclock/app_music.C:1278
+#: ../wallclock/app_music.C:1287
 msgid   "* Playlists *"
 msgstr  "* Abspiellisten *"
 
-#: ../wallclock/app_music.C:1279
+#: ../wallclock/app_music.C:1288
 msgid   "* Main *"
 msgstr  "* Hauptmenü *"
 
-#: ../wallclock/app_music.C:1428
+#: ../wallclock/app_music.C:1438
 msgid   "Music Collection"
 msgstr  "Musik-Sammlung"
 
-#: ../wallclock/app_music.C:1950 ../wallclock/floorplan.C:675
+#: ../wallclock/app_music.C:1962 ../wallclock/floorplan.C:704
 msgid   "Music"
 msgstr  "Musik"
 
-#: ../wallclock/app_phone.C:967 ../wallclock/floorplan.C:674
+#: ../wallclock/app_phone.C:1012 ../wallclock/floorplan.C:703
 msgid   "Phone"
 msgstr  "Telefon"
 
-#: ../wallclock/floorplan.C:617
+#: ../wallclock/floorplan.C:641
 msgid   "Syntax error in request specification"
 msgstr  "Syntax-Fehler in der Request-Spezifikation"
 
-#: ../wallclock/floorplan.C:670
+#: ../wallclock/floorplan.C:696
 msgid   "Window"
 msgstr  "Fenster"
 
-#: ../wallclock/floorplan.C:671
+#: ../wallclock/floorplan.C:697
+msgid   "Door"
+msgstr  "Tür"
+
+#: ../wallclock/floorplan.C:698
+msgid   "Gate"
+msgstr  "Tor"
+
+#: ../wallclock/floorplan.C:699
 msgid   "Shades"
 msgstr  "Rolladen"
 
-#: ../wallclock/floorplan.C:672
+#: ../wallclock/floorplan.C:700
+msgid   "Garage"
+msgstr  "Garage"
+
+#: ../wallclock/floorplan.C:701
 msgid   "Light"
 msgstr  "Licht"
 
-#: ../wallclock/floorplan.C:676
+#: ../wallclock/floorplan.C:705
 msgid   "Wifi Access Point"
 msgstr  "WLAN Access Point"
 
-#: ../wallclock/floorplan.C:677
+#: ../wallclock/floorplan.C:706
 msgid   "Bluetooth"
 msgstr  "Bluetooth"
 
-#: ../wallclock/floorplan.C:678
+#: ../wallclock/floorplan.C:707
 msgid   "Service"
 msgstr  "Service"
 
-#: ../wallclock/floorplan.C:701
+#: ../wallclock/floorplan.C:708 ../wallclock/ui_widgets.C:1233
+msgid   "Warning"
+msgstr  "Warnung"
+
+#: ../wallclock/floorplan.C:740
+msgid   "Closed"
+msgstr  "Zu"
+
+#: ../wallclock/floorplan.C:741
+msgid   "Open"
+msgstr  "Auf"
+
+#: ../wallclock/floorplan.C:744
 msgid   "Off"
 msgstr  "Aus"
 
-#: ../wallclock/floorplan.C:703
+#: ../wallclock/floorplan.C:745
 msgid   "On"
 msgstr  "Ein"
 
-#: ../wallclock/floorplan.C:719
+#: ../wallclock/floorplan.C:754
 msgid   "0% = Up"
 msgstr  "0% = Oben"
 
-#: ../wallclock/floorplan.C:720
+#: ../wallclock/floorplan.C:755
 msgid   "100% = Down"
 msgstr  "100% = Unten"
 
-#: ../wallclock/floorplan.C:724
+#: ../wallclock/floorplan.C:763
 msgid   "100% = Open"
 msgstr  "100% = Auf"
 
-#: ../wallclock/floorplan.C:725
+#: ../wallclock/floorplan.C:764
 msgid   "0% = Closed"
 msgstr  "0% = Zu"
 
-#: ../wallclock/floorplan.C:786 ../wallclock/floorplan.C:2949
+#: ../wallclock/floorplan.C:840
+msgid   "Trigger"
+msgstr  "Trigger"
+
+#: ../wallclock/floorplan.C:844 ../wallclock/floorplan.C:3097
 msgid   "Auto"
 msgstr  "Auto"
 
-#: ../wallclock/floorplan.C:1173
+#: ../wallclock/floorplan.C:1264
 msgid   "Default:"
 msgstr  "Default:"
 
-#: ../wallclock/floorplan.C:1207
+#: ../wallclock/floorplan.C:1302
 msgid   "User request:"
 msgstr  "Dein Wunsch:"
 
@@ -349,43 +434,39 @@ msgstr  "Home2L %s ist installiert und funktioniert, wurde aber auf\n"
         "bitte den Eintrag 'home2l.unconfigured = 1' in 'etc/home2l.conf'.\n"
 
 #. TRANSLATORS: Standard buttons for message boxes
-#: ../wallclock/ui_widgets.C:1119
+#: ../wallclock/ui_widgets.C:1124
 msgid   "Cancel"
 msgstr  "Abbrechen"
 
-#: ../wallclock/ui_widgets.C:1119
+#: ../wallclock/ui_widgets.C:1124
 msgid   "OK"
 msgstr  "OK"
 
-#: ../wallclock/ui_widgets.C:1119
+#: ../wallclock/ui_widgets.C:1124
 msgid   "No"
 msgstr  "Nein"
 
-#: ../wallclock/ui_widgets.C:1119
+#: ../wallclock/ui_widgets.C:1124
 msgid   "Yes"
 msgstr  "Ja"
 
-#: ../wallclock/ui_widgets.C:1218
+#: ../wallclock/ui_widgets.C:1223
 msgid   "Information"
 msgstr  "Information"
 
-#: ../wallclock/ui_widgets.C:1228
-msgid   "Warning"
-msgstr  "Warnung"
-
-#: ../wallclock/ui_widgets.C:1238
+#: ../wallclock/ui_widgets.C:1243
 msgid   "Error"
 msgstr  "Fehler"
 
-#: ../wallclock/ui_widgets.C:1248
+#: ../wallclock/ui_widgets.C:1253
 msgid   "Sure?"
 msgstr  "Sicher?"
 
-#: ../wallclock/ui_widgets.C:1258
+#: ../wallclock/ui_widgets.C:1263
 msgid   "Question"
 msgstr  "Frage"
 
-#: ../wallclock/ui_widgets.C:1842
+#: ../wallclock/ui_widgets.C:1847
 msgid   "Discard changes?"
 msgstr  "Sollen die Änderungen im Eintrag\n"
         "verworfen werden?"

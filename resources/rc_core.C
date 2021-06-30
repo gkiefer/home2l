@@ -957,13 +957,11 @@ static bool CRcServerCbOnSubscriberEvent (CRcEventProcessor *subscr, CRcEvent *e
 void CRcServer::OnFdReadable () {
   CString line, def, info;
   bool error;
-  char **argv;
-  int argc;
+  CSplitString args;
   CResource *rc;
   CRcSubscriber *subscr;
   CRcValueState vs;
   CRcDriver *driver;
-  CRcHost *host;
   const char *uri;
   TTicks t1;
   int n, k, num, verbosity;
@@ -974,19 +972,18 @@ void CRcServer::OnFdReadable () {
   }
   error = false;
   while (receiveBuf.ReadLine (&line) && !error) {
-    DEBUGF (3, ("[resources] From client '%s' (%s): '%s'", hostId.Get (), peerAdrStr.Get (), line.Get ()));
+    DEBUGF (3, ("From client '%s' (%s): '%s'", hostId.Get (), peerAdrStr.Get (), line.Get ()));
 
     // Interpret line...
     line.Strip ();
     error = false;
-    argv = NULL;
     switch (line[0]) {
 
       case 'h':   // h <client host id> <version>     # connect ("hello") message
-        line.Split (&argc, &argv);
-        if (argc != 3) { error = true; break; }
+        args.Set (line.Get ());
+        if (args.Entries () != 3) { error = true; break; }
         Lock ();
-        hostId.Set (argv[1]);
+        hostId.Set (args[1]);
         Unlock ();
         ATOMIC_WRITE (state, scsConnected);
 
@@ -1009,19 +1006,15 @@ void CRcServer::OnFdReadable () {
         //~ SendFlush ();
         ResetAliveTimer ();
 
-        // Check if we know the client and eventually initiate a return visit ...
-        host = hostMap.Get (hostId.Get ());
-        if (host) {
-          DEBUGF (1, ("[resources] I know this host '%s'... I am interested in it!", host->Id ()));
-          host->RequestConnect ();
-        }
+        // Soft-"Bump" all host connections, since we ourselves may have just regained network connectivity ...
+        RcBump (NULL, true);
         break;
 
       case 's':   // s+ <subscriber lid> <driver>/<rcname>             # subscribe to resource (no wildcards allowed)
                   // s- <subscriber lid> <driver>/<rcname>             # unsubscribe to resource (no wildcards allowed)
-        line.Split (&argc, &argv);
-        if (argc != 3) { error = true; break; }
-        def.SetF ("%s/%s", hostId.Get (), argv[1]);   // subscriber GID
+        args.Set (line.Get ());
+        if (args.Entries () != 3) { error = true; break; }
+        def.SetF ("%s/%s", hostId.Get (), args[1]);   // subscriber GID
         subscr = subscrDict.Get (def.Get ());
         if (!subscr) {
           // Create new subscriber...
@@ -1032,7 +1025,7 @@ void CRcServer::OnFdReadable () {
           subscrDict.Set (subscr->Lid (), subscr);
           Unlock ();
         }
-        uri = GetLocalUri (argv[2]);
+        uri = GetLocalUri (args[2]);
         switch (line[1]) {
           case '+':
             subscr->DelResources (uri);   // unsubscribe first - it may not have been properly cleared before
@@ -1047,23 +1040,23 @@ void CRcServer::OnFdReadable () {
 
       case 'r':   // r+ <driver>/<rcname> <reqGid> <request specification>     # add or change a request
                   // r- <driver>/<rcname> <reqGid>                             # remove a request
-        line.Split (&argc, &argv, 3);
-        rc = argc < 3 ? NULL : GetLocalResource (argv[1]);
+        args.Set (line.Get (), 3);
+        rc = args.Entries () < 3 ? NULL : GetLocalResource (args[1]);
         error = true;
         if (rc) switch (line[1]) {
           case '+':
-            rc->SetRequestFromStr (argv[2]);
+            rc->SetRequestFromStr (args[2]);
             error = false;
             break;
           case '-':
-            line.Split (&argc, &argv, 4);
-            if (argc == 3) {      // no time given ...
-              rc->DelRequest (argv[2], 0);
+            args.Set (line.Get (), 4);
+            if (args.Entries () == 3) {      // no time given ...
+              rc->DelRequest (args[2], 0);
               error = false;
             }
-            else if (argc >= 4) if (argv[3][0] == '-')      // time attribute given ...
-              if (TicksAbsFromString (argv[3] + 1, &t1)) {
-                rc->DelRequest (argv[2], t1);
+            else if (args.Entries () >= 4) if (args[3][0] == '-')      // time attribute given ...
+              if (TicksAbsFromString (args[3] + 1, &t1)) {
+                rc->DelRequest (args[2], t1);
                 error = false;
               }
             break;
@@ -1074,12 +1067,12 @@ void CRcServer::OnFdReadable () {
         switch (line[1]) {
 
           case 'r':   // ir <driver>/<rcname> <verbosity>  # request the output of 'CResource::GetInfo'
-            line.Split (&argc, &argv);
-            if (argc != 3) { error = true; break; }
-            verbosity = argv[2][0] - '0';
+            args.Set (line.Get ());
+            if (args.Entries () != 3) { error = true; break; }
+            verbosity = args[2][0] - '0';
             if (verbosity < 0 || verbosity > 3) { error = true; break; }
-            rc = GetLocalResource (argv[1]);
-            if (!rc) { WARNINGF (("Unknown resource '%s'", argv[1])); error = true; break; }
+            rc = GetLocalResource (args[1]);
+            if (!rc) { WARNINGF (("Unknown resource '%s'", args[1])); error = true; break; }
 
             rc->GetInfo (&info, verbosity);
             sendBuf.AppendFByLine ("i %s\n", info.Get ());
@@ -1107,11 +1100,11 @@ void CRcServer::OnFdReadable () {
                   // e.                              # Send EOF to the previously started command
         switch (line[1]) {
           case 'c':
-            line.Split (&argc, &argv, 3);
-            if (argc < 2) { error = true; break; }
+            args.Set (line.Get (), 3);
+            if (args.Entries () < 2) { error = true; break; }
             if (!execShell) execShell = new CShellBare ();
-            if (!execShell->StartRestricted (argv[1], argc == 3 ? argv[2] : NULL)) {
-              WARNINGF (("Unable to start command '%s (%s)' - previous command not completed yet?", argv[1], argc == 3 ? argv[2] : ""));
+            if (!execShell->StartRestricted (args[1], args.Entries () == 3 ? args[2] : NULL)) {
+              WARNINGF (("Unable to start command '%s (%s)' - previous command not completed yet?", args[1], args.Entries () == 3 ? args[2] : ""));
               error = true;
             }
             execTimer.Set (0, 100, CRcServerExecTimerCallback, this);
@@ -1135,10 +1128,6 @@ void CRcServer::OnFdReadable () {
     } // switch (line[0])
 
     // Cleanup and post-processing...
-    if (argv) {
-      FREEP (argv[0]);
-      free (argv);
-    }
     if (error) {
       SECURITYF (("Malformed message received from '%s' - disconnecting: '%s'", peerAdrStr.Get (), line.Get ()));
       Disconnect ();
@@ -1152,7 +1141,7 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
   CRcEvent ev;
   bool canPostponeAliveTimer;
 
-  DEBUGF (3, ("[resources] CRcServer::NetRun (%s, %i), state = %i", HostId (), opcode, ATOMIC_READ (state)));
+  DEBUGF (3, ("CRcServer::NetRun (%s, %i), state = %i", HostId (), opcode, ATOMIC_READ (state)));
 
   canPostponeAliveTimer = false;
   switch ((EServerNetOpcode) opcode) {
@@ -1210,15 +1199,15 @@ void CRcServer::SendFlush () {
     // Write 'sendBuf' to socket...
     bytesToWrite = sendBuf.Len ();
     if (bytesToWrite) {
-      DEBUGF (3, ("[resources] Sending to client %s (%s):\n%s", hostId.Get (), peerAdrStr.Get (), sendBuf.Get ()));
+      DEBUGF (3, ("Sending to client %s (%s):\n%s", hostId.Get (), peerAdrStr.Get (), sendBuf.Get ()));
 
       bytesWritten = write (fd, sendBuf.Get (), bytesToWrite);
       if (bytesWritten == bytesToWrite) sendBuf.Clear ();
       else {
-        if (bytesWritten >= 0) DEBUGF (3, ("[resources]   ... written %i out of %i bytes.", bytesWritten, bytesToWrite));
+        if (bytesWritten >= 0) DEBUGF (3, ("  ... written %i out of %i bytes.", bytesWritten, bytesToWrite));
         else {
-          if (errno == EAGAIN || errno == EWOULDBLOCK) DEBUGF (3, ("[resources]   ... would block."));
-          else DEBUGF (3, ("[resources]   ... error: %s", strerror (errno)));
+          if (errno == EAGAIN || errno == EWOULDBLOCK) DEBUGF (3, ("  ... would block."));
+          else DEBUGF (3, ("  ... error: %s", strerror (errno)));
         }
         // Could not write everything: schedule a retry...
         sendBuf.Del (0, bytesWritten);
@@ -1280,7 +1269,6 @@ void CRcServer::PrintInfoAll (FILE *f, int verbosity) {
 void *CConThread::Run () {
   char buf[INET_ADDRSTRLEN+1];
   CString s, newErrStr, hostId, netHost;
-  //~ const char *netHostResolved;
   int netPort;
   struct addrinfo aHints, *aInfo;
   struct sockaddr_in sockAdr, *pSockAdr;
@@ -1377,7 +1365,7 @@ void *CConThread::Run () {
 
   // Send greeting...
   //   This is the only place something is sent without using the 'CRcHost::Send' method.
-  //   However, the channel has not yet transferred to the caller, so that no race conditions
+  //   However, the channel has not yet been transferred to the caller, so that no race conditions
   //   can occur. Second, the success of 'connect' does not guarantee that the connection is
   //   usable. Hence, we write something here.
   if (ok) {
@@ -1396,14 +1384,16 @@ void *CConThread::Run () {
     if (ok) {
       DEBUGF (1, ("Connection to '%s' established.", hostId.Get ()));
       errString.Clear ();
+      netThread.AddTask ((ENetOpcode) hnoConSuccess, host);
+      RcBump (NULL, true);    // Soft-bump other connections, since we may just have regained network connectivity
     }
     else {
       if (newErrStr.Compare (errString.Get ()) != 0) {
         errString.SetO (newErrStr.Disown ());
         DEBUGF (1, ("Cannot %s '%s': %s - continue trying", port ? "connect to" : "resolve", hostId.Get (), errString.Get ()));
       }
+      netThread.AddTask ((ENetOpcode) hnoConFailed, host);
     }
-    netThread.AddTask ((ENetOpcode) (ok ? hnoConSuccess : hnoConFailed), host);
   }
   Unlock ();
 
@@ -1500,9 +1490,10 @@ CResource *CRcHost::GetResource (const char *rcLid, bool allowWait) {
 }
 
 
-void CRcHost::RequestConnect () {
-  //~ INFOF (("### CRcHost::RequestConnect ('%s')", Id ()));
-  netThread.AddTask ((ENetOpcode) hnoSend, this);
+void CRcHost::RequestConnect (bool soft) {
+  //~ INFOF (("### CRcHost::RequestConnect ('%s', soft=%i)", Id (), (int) soft));
+  if (!soft || state != hcsStandby)
+    netThread.AddTask ((ENetOpcode) hnoSend, this);
 }
 
 
@@ -1639,7 +1630,7 @@ void CRcHost::OnFdReadable () {
   }
 
   while (receiveBuf.ReadLine (&line)) {
-    DEBUGF (3, ("[resources] From server %s: '%s'", Id (), line.Get ()));
+    DEBUGF (3, ("From server %s: '%s'", Id (), line.Get ()));
 
     // Interpret line...
     line.Strip ();
@@ -1671,7 +1662,7 @@ void CRcHost::OnFdReadable () {
           }
           s.SetF ("/host/%s/%s %s", Id (), argv[1], argv[2]);
           //~ INFOF(("### def = '%s'", s.Get ()));
-          rc = CResource::Register (s.Get ());
+          rc = CResource::Register (s.Get (), NULL);
           if (!rc) break;   // invalid resource description => ignore
 
           // (Re-)Submit all subscriptions ...
@@ -1698,7 +1689,7 @@ void CRcHost::OnFdReadable () {
         if (!rc) { error = true; break; }
         vs.SetType (rc->Type ());
         if (!vs.SetFromStrFast (argv[2])) { error = true; break; }
-        //~ INFOF (("### line = '%s', argv[2] = '%s'", line.Get (), argv[2]));
+        //~ INFOF (("### line = '%s', argv[2] = '%s', vs = %s", line.Get (), argv[2], vsToStr ()));
         rc->ReportValueState (&vs);
         rc->NotifySubscribers (rceConnected);
         //~ INFOF (("### Received: '%s'", line.Get ()));
@@ -1770,7 +1761,7 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
    *    which can never be left without any of these two operations.
    */
 
-  DEBUGF (3, ("[resources] CRcHost::NetRun (%s, %i), state = %i", Id (), opcode, state));
+  DEBUGF (3, ("CRcHost::NetRun (%s, %i), state = %i", Id (), opcode, state));
 
   // Reset action flags (selected during opcode interpretation and executed afterwards)
   doConnect = doDisconnect = false;
@@ -1908,16 +1899,16 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
     Lock ();
     if (!sendBuf.IsEmpty ()) {          // Anything to send?
       // Write 'sendBuf' to socket...
-      DEBUGF (3, ("[resources] Sending to server '%s':\n%s", Id (), sendBuf.Get ()));
+      DEBUGF (3, ("Sending to server '%s':\n%s", Id (), sendBuf.Get ()));
       bytesToWrite = sendBuf.Len ();
       bytesWritten = write (fd, sendBuf.Get (), bytesToWrite);
       if (bytesWritten == bytesToWrite) sendBuf.Clear ();
       else {
         // Could not write everything...
-        if (bytesWritten >= 0) DEBUGF (3, ("[resources]   ... written %i out of %i bytes.", bytesWritten, bytesToWrite));
+        if (bytesWritten >= 0) DEBUGF (3, ("  ... written %i out of %i bytes.", bytesWritten, bytesToWrite));
         else {
-          if (errno == EAGAIN || errno == EWOULDBLOCK) DEBUGF (3, ("[resources]   ... would block."));
-          else DEBUGF (3, ("[resources]   ... error: %s", strerror (errno)));
+          if (errno == EAGAIN || errno == EWOULDBLOCK) DEBUGF (3, ("  ... would block."));
+          else DEBUGF (3, ("  ... error: %s", strerror (errno)));
         }
         sendBuf.Del (0, bytesWritten);
       }
@@ -2320,12 +2311,13 @@ static const char *AddHost (const char *id, const char *desc, int defaultPort) {
 }
 
 
-void RcReadConfig (CString *retSignals) {
+void RcReadConfig (CString *retSignals, CString *retAttrs) {
+  CSplitString args;
   CString str;
   const char *fileName, *errStr;
   FILE *f;
-  char buf[256], *p, *q, **argv;
-  int argc, defaultPort;
+  char buf[256], *p, *q;
+  int defaultPort;
   CRcValueState val;
   bool error;
 
@@ -2350,63 +2342,70 @@ void RcReadConfig (CString *retSignals) {
       //~ INFOF (("### Parsing '%s'", buf));
       p = strchr (buf, '#');    // remove comments...
       if (p) p[0] = '\0';
-      StringSplit (buf, &argc, &argv);
-      if (argc > 0) {
-        switch (toupper (argv[0][0])) {
+      for (p = buf; *p && strchr (WHITESPACE, *p); p++);  // skip leading whitespace
+      if (*p) switch (toupper (*p)) {
 
           case 'P':   // Default port ...
-            if (argc != 2) error  = true;
+            args.Set (p);
+            if (args.Entries () != 2) error  = true;
             else {
-              defaultPort = strtol (argv[1], &p, 0);
+              defaultPort = strtol (args[1], &p, 0);
               if (*p != '\0') error  = true;
             }
             break;
 
           case 'H':   // Host ...
-            // Syntax: H <host id>
-            if (argc < 2 || argc > 3) error = true;
-            else errStr = AddHost (argv[1], argc == 3 ? argv[2] : NULL, defaultPort);
+            // Syntax: H <host id> [<port>]
+            args.Set (p);
+            if (args.Entries () < 2 || args.Entries () > 3) error = true;
+            else errStr = AddHost (args[1], args.Entries () == 3 ? args[2] : NULL, defaultPort);
             if (errStr) error = true;
             break;
 
           case 'A':   // Alias ...
-            // Syntax: A <name> <target>
-            if (argc != 3) error = true;
-            else {
-              GetAbsPath (&str, argv[2], "/host");
-              aliasMap.Set (argv[1], &str);
-              if (strncmp (str.Get (), "/host/", 6) == 0) {
-                // Auto-add host...
-                p = q = (char *) str.Get () + 6;
-                while (q[0] && q[0] != '/') q++;
-                q[0] = '\0';
-                errStr = AddHost (p, NULL, defaultPort);
-                if (errStr) error = true;
-              }
+            // Syntax: A <name> <target> [<attrs>]
+            args.Set (p, 4);
+            if (args.Entries () < 3) { error = true; break; }
+            GetAbsPath (&str, args[2], "/alias");
+            aliasMap.Set (args[1], &str);
+            // Store attributes if given ...
+            if (args.Entries () > 3) retAttrs->AppendF ("%s %s\n", str.Get (), args[3]);
+            // Auto-add host ...
+            if (strncmp (str.Get (), "/host/", 6) == 0) {
+              p = q = (char *) str.Get () + 6;
+              while (q[0] && q[0] != '/') q++;
+              q[0] = '\0';
+              errStr = AddHost (p, NULL, defaultPort);
+              if (errStr) error = true;
             }
             break;
 
-          case 'S':   // Signal...
-            // Syntax: S <host id> <name> <type> [<default value>]
-            if (argc < 4 || argc > 5) { error = true; break; }
-            // Store signal...
-            retSignals->AppendF ("%s %s %s %s\n", argv[1], argv[2], argv[3], argc > 4 ? argv[4] : "?");
+          case 'S':   // Signal ...
+            // Syntax: S <host> <name> <type> [<attrs>]
+            //~ INFOF (("### S : '%s'", localHostId.Get (), p));
+            args.Set (p, 5);
+            if (args.Entries () < 4) { error = true; break; }
+            retSignals->AppendF ("%s %s %s\n", args[1], args[2], args[3]);    // store signals
+            // Store attributes if given ...
+            if (args.Entries () > 4) retAttrs->AppendF ("/host/%s/signal/%s %s\n", args[1], args[2], args[4]);
             // Auto-add host...
-            errStr = AddHost (argv[1], NULL, defaultPort);  // auto-add other host
+            errStr = AddHost (args[1], NULL, defaultPort);  // auto-add other host
             if (errStr) error = true;
+            break;
+
+          case 'D':   // Default request / attributes ...
+            // Syntax: D <name> <attrs>
+            args.Set (p, 3);
+            if (args.Entries () < 3) { error = true; break; }
+            retAttrs->AppendF ("%s %s\n", args[1], args[2]);
             break;
 
           default:
             error = true;
-        }
       }
 
       // Cleanup...
       if (error) ERRORF (("%s in file '%s': %s", errStr ? errStr : "Invalid line", fileName, buf));
-      if (argv) {
-        FREEP (argv[0]);
-        free (argv);
-      }
     }
     fclose (f);
   }
@@ -2423,30 +2422,4 @@ void RcReadConfig (CString *retSignals) {
   if (localPort < 0) localHostId.SetF ("%s<%s:%i>", EnvMachineName (), EnvInstanceName (), EnvPid ());
 
   //~ INFOF(("### localHostId = '%s'", localHostId.Get ()));
-}
-
-
-void RcRegisterConfigSignals (CString *signals) {
-  CSplitString lineSet, args;
-  CRcValueState vs;
-  int n;
-
-  lineSet.Set (signals->Get (), INT_MAX, "\n");
-  for (n = 0; n < lineSet.Entries (); n++) {
-    // Syntax: <host id> <name> <type> <default value or '?' if none>
-    args.Set (lineSet [n], 5);
-    ASSERT (args.Entries () == 4);
-    if (localHostId.Compare (args[0]) == 0) {    // for me?
-      vs.SetType (RcTypeGetFromName (args[2]));
-      if (vs.Type () == rctNone) {
-        WARNINGF(("Ignoring invalid signal definition (type error): 'S %s'", lineSet[n]));
-      }
-      else if (!vs.SetFromStr (args[3])) {
-        WARNINGF(("Ignoring invalid signal definition (value error): 'S %s'", lineSet[n]));
-      }
-      else {
-        RcDriversAddSignal (args[1], &vs);
-      }
-    }
-  }
 }

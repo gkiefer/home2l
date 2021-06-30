@@ -691,6 +691,7 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
         if (evIsDown) break;      // button down outside => not our event (break with 'ret == false')
 
         // Have dragged out of the area => cancel and restore selection ...
+        downIdx = -1;             // cancel dragging
         switch (mode) {
           case lmReadOnly:
             break;
@@ -705,7 +706,6 @@ bool CListbox::HandleEvent (SDL_Event *ev) {
             if (downIdx >= 0) SelectItem (downIdx, !itemArr[downIdx].isSelected);
             break;
         }
-        downIdx = -1;             // cancel dragging
         ret = true;               // it remains our event
         break;   // case SDL_MOUSEMOTION:
       }
@@ -789,11 +789,16 @@ void CListbox::ChangedItems (int idx, int num) {
 //
 
 void CListbox::InvalidatePool () {
+  SDL_Surface *surf;
   int n;
 
   if (poolSize <= 0) return;   // fast track for multiple invalidations
   DelAllWidgets ();
-  for (n = 0; n < poolSize; n++) if (pool[n]) delete pool[n];
+  for (n = 0; n < poolSize; n++) if (pool[n]) {
+    surf = pool[n]->GetSurface ();
+    if (surf) SurfaceFree (surf);
+    delete pool[n];
+  }
   FREEA(pool);
   FREEA(poolIdx);
   poolSize = 0;

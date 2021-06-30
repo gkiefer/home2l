@@ -22,9 +22,9 @@
 ############################## Configuration ###################################
 
 
-# IP phone backend (if WITH_PHONE == 1) ...
-PHONE_LIB := linphone
-
+# IP phone backend ...
+PHONE_LIB ?= pjsip
+#~ PHONE_LIB ?= linphone
 
 
 
@@ -72,6 +72,7 @@ OBJ_DOORMAN := $(SRC_DOORMAN:%.C=$(DIR_OBJ)/%.o)
 $(DOORMAN_BIN): $(DEP_CONFIG) $(OBJ_DOORMAN)
 	@echo LD $(DOORMAN)
 	@$(CC) -o $@ $(OBJ_DOORMAN) $(LDFLAGS)
+#~ 	cp $(DOORMAN_BIN) ./$(DOORMAN).$(ARCH)
 
 
 

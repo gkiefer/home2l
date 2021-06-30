@@ -55,6 +55,8 @@
 
 #if ANDROID
 void SystemPreInit ();    ///< Initializes Android Java JNI and must be called before 'EnvInit ()'.
+void *_AndroidGetJavaVM ();
+#define AndroidGetJavaVM() ((JavaVM *) _AndroidGetJavaVM ())
 #else
 static inline void SystemPreInit () {}
 #endif

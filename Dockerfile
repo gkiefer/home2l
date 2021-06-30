@@ -85,8 +85,21 @@
 # Version of the Debian base image ...
 ARG DEBIAN_VERSION=buster
 
+
 # Build version as reported by the tools ...
 ARG BUILD_VERSION=dev
+
+
+# Phone settings ...
+
+#   a) No phone ...
+ARG WITH_PHONE=0
+
+#   b) With phone (Linphone backend - presently unmaintained) ...
+#ARG WITH_PHONE=1
+#ARG PHONE_LIB=linphone
+#ARG PHONE_DEBS_BUILD=liblinphone-dev
+#ARG PHONE_DEBS_RUN=liblinphone9
 
 
 
@@ -99,6 +112,10 @@ FROM debian:$DEBIAN_VERSION AS builder
 
 ARG BUILD_VERSION
 
+ARG WITH_PHONE
+ARG PHONE_LIB
+ARG PHONE_DEBS_BUILD
+
 
 # Install packages ...
 RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
@@ -109,15 +126,15 @@ RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
       libsdl2-dev libsdl2-ttf-dev \
       gettext imagemagick inkscape \
       libmosquitto-dev \
-      liblinphone-dev \
       libmpdclient-dev \
-      gcc-avr avr-libc
+      gcc-avr avr-libc \
+      $PHONE_DEBS_BUILD
 
 
 # Copy source tree, compile and install ...
 WORKDIR /tmp/src
 COPY . .
-RUN make -j8 CFG=demo BUILD_VERSION=$BUILD_VERSION install && \
+RUN make -j8 CFG=demo WITH_PHONE=$WITH_PHONE PHONE_LIB=$PHONE_LIB BUILD_VERSION=$BUILD_VERSION install && \
     mkdir -p /var/opt/home2l && cp -a doc/showcase/var/* /var/opt/home2l/
 
 
@@ -129,6 +146,8 @@ RUN make -j8 CFG=demo BUILD_VERSION=$BUILD_VERSION install && \
 
 FROM debian:$DEBIAN_VERSION AS showcase
 
+ARG PHONE_DEBS_RUN
+
 
 # Install packages ...
 RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
@@ -138,10 +157,10 @@ RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
       python3 curl bsdmainutils \
       libsdl2-2.0-0 libsdl2-ttf-2.0-0 \
       mosquitto mosquitto-clients \
-      liblinphone9 \
-      libmpdclient2 \
-      net-tools remind patch mpd mpc \
+      libmpdclient2 mpd mpc alsa-utils \
+      net-tools remind patch \
       i2c-tools \
+      $PHONE_DEBS_RUN \
     && apt-get clean
 
 
@@ -160,7 +179,8 @@ RUN adduser --uid=5000 --disabled-password --gecos "User for auto-started Home2L
     adduser home2l dialout && \
     chown -R home2l.home2l /var/opt/home2l && \
     chown home2l.root /var/lib/mosquitto /var/log/mosquitto && \
-    /opt/home2l/bin/home2l-install -y -i
+    /opt/home2l/bin/home2l-install -y -i && \
+    echo "export PATH=\$PATH:/opt/home2l/bin:/opt/home2l/bin/`dpkg --print-architecture`" > /home/home2l/.bashrc
 
 
 # Setup image ...

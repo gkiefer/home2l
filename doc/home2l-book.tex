@@ -508,14 +508,11 @@ Chapter~\ref{ch:drvlib} documents the library of drivers supplied with the \text
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-Until now, the \textit{Home2L} project has been developed by a single private person
-in his spare time. The code has been published with the hope that is useful to
-the community.
-
+The project has been published with the hope that is useful to the community.
 To let the project grow further and make available to a wider audience,
 volunteers and partners are needed and welcome.
 
-Great contributions would be:
+Great contributions are:
 
 \begin{enumerate}
 
@@ -529,7 +526,7 @@ Great contributions would be:
 
 \end{enumerate}
 
-For any questions on how to participate, do not hesitate to contact the author
+For any questions on how to participate, do not hesitate to contact us
 via the project page.
 
 
@@ -540,7 +537,7 @@ via the project page.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-For any questions or support requests, feel free to submit an issue labeled with \textit{''support''} on the \href{https://github.com/gkiefer/home2l/issues}{GitHub project page}.
+Feel free to drop a mail to: \lstf{Gundolf Kiefer <gundolf.kiefer@web.de>}
 
 
 
@@ -3013,8 +3010,6 @@ tutorial.
     doorphones using \href{https://www.asterisk.org/}{Asterisk}, \reftool{home2l-wallclock}
     and \reftool{home2l-doorman} instances. The author has such a system in productive use for
     a few years now, but it requires some effort and technical expertise (and patience) to set it up.
-    In order to get video transmission over a PBX system and echo cancellation working properly,
-    the \textit{Liblinphone} library may need to be patched and re-compiled.
 
 \end{enumerate}
 
@@ -4161,7 +4156,7 @@ Applications can participate in the cluster either with or without running a \te
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Resources, Values and States}
 \label{sec:resources-resources}
- \labeltool{home2l-server}
+\labeltool{home2l-server}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -4308,23 +4303,39 @@ a network problem.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The configuration file \reftool{resources.conf} defines hosts,
-aliases, and optionally signals for the \textit{Home2L} cluster.
+The configuration file \reftool{resources.conf} defines hosts and aliases for the \textit{Home2L} cluster. In addition, signals and default requests can be defined here. Generally speaking, this is the place for a commented plan of the home installation. Aliases allow to assign meaningful names to physical URIs.
 
-A \textit{host} in this context is a \textit{Home2L instance} running on a
-machine. In many cases, if there is only one instance serving resources,
-this instance can and should then be identified by its Unix host name in the
-network and listen on the default \textit{Home2L} port (see below).
-If there are multiple serving instances running on the
-same machine, listening ports must be assigned manually for all but one
-of them.
+It is recommended to arranged a \reftool{resources.conf} file along the following sections:
+\begin{itemize}
+  \item \textbf{Network:} Declaration of hosts, their IDs and network ports.
+  \item \textbf{Topic aliases:} A subtree of aliases arranged by topic, mapping meaningful names to physical URIs.
+    Examples for such aliases are:
+    \begin{itemize}
+      \item \texttt{/alias/use}
+      \item \texttt{/alias/tempOutside}
+      \item \texttt{/alias/maindoor/light}
+      \item \texttt{/alias/maindoor/mail}
+      \item \texttt{/alias/maindoor/bell}
+    \end{itemize}
+    Note: the subtree \texttt{/alias/maindoor} collects all resources related to the main door.
+  \item \textbf{Application aliases:} Subtrees of aliases arranged for a certain application. For example, for the
+    \textit{WallClock} floor plan view, a subtree \texttt{/alias/floorplan} may be defined with subtrees named
+    after the rooms of the house, each collecting the resources relevant for the respective room.
+    Application aliases may map to topic aliases or to physical resources.
+\end{itemize}
 
-The default port is defined by the following line:
+
+\subsection{Hosts and Network}
+\label{sec:resources-conf-hosts}
+
+A \textit{(Home2L) host} is a \textit{Home2L instance} running on a machine, not to be confused with a \textit{network host}, which refers to a network interface of a machine or a machine itself. In many cases, if there is only one instance serving resources on a machine, this instance can and should then be identified by its Unix network host name and listen on the default \textit{Home2L} port (see below). If there are multiple serving instances running on the same machine, listening ports must be assigned manually for all but one of them.
+
+The \textbf{default port} is defined by the following line:
 \begin{lstlisting}
 P <port>
 \end{lstlisting}
 
-Hosts are declared as follows:
+\textbf{Hosts} are declared as follows:
 \begin{lstlisting}
 H <host ID> [ <hostspec> ]   : <hostspec> ::= [<instance>@]<net host>[:<port>]
 \end{lstlisting}
@@ -4349,44 +4360,72 @@ H z3-doorman   doorman@z3:4701
           # machine 'z3', and the server listens on port 4701.
 \end{lstlisting}
 
-Servers/hosts are also implicitly declared by the aliases and variables,
-which is equivalent to an explicit declaration without \textit{<hostspec>}.
+Servers/hosts are also implicitly declared by the aliases and variables, which is equivalent to an explicit declaration without \textit{<hostspec>}.
+
+
+\subsection{Aliases}
+\label{sec:resources-aliases}
 
 Aliases are defined with the following syntax:
 \begin{lstlisting}
-A <aliasName> <destPath>
+A <name> <target> [<attrs>]
 \end{lstlisting}
 
-\textit{<destPath>} may be relativ to \textit{/host} or absolute.
+\textit{<target>} may be relative to \textit{/alias} or absolute. If \textit{<default value>} is given, a default request is placed automatically with this value. The optional \textit{<attrs>} arguments allow to define resource attributes as described in Section~\ref{sec:resources-conf-defaults}.
+
 Examples:
 \begin{lstlisting}
-A tempOutside           /host/gatewayhost/weather/tempOutside
-A door/backlight        doorkeeper/gpio/doorBacklight
+A tempOutside     weather/temp
+A door/backlight  /host/doorkeeper/brownies/gpio/07  0
 \end{lstlisting}
 
-These make the current outside temperature (presently delivered via
-internet by host \textit{gatewayhost}) accessible as
-\textit{/alias/tempOutside} and the backlight of the door button as
-\textit{/alias/door/backlight}.
+These make the current outside temperature (presently delivered via internet by host \textit{gatewayhost}) accessible as \textit{/alias/tempOutside} and the backlight of the door button as \textit{/alias/door/backlight}. For the latter, a default request with value 0 is set.
 
-Signals are resources that do not drive any hardware or software, but
-simply report back all values driven to them (similar to loopback
-devices in Unix). They are useful for intermediate values (for example,
-the logical ''and'' of a motion sensor and darkness sensor to indicate
-whether a light should be switched on) or for testing purposes (for
-example, to temporarily replace a real device by the signal resource,
-which can be manipulated manually). They are defined as follows:
+
+\subsection{Signals}
+\label{sec:resources-conf-signals}
+
+Signals are resources that do not drive any hardware or software, but simply report back all values driven to them (similar to loopback devices in Unix). They are useful for intermediate values or for testing purposes (for example, to temporarily replace a real device by the signal resource, which can be manipulated manually).
+
+Signals are defined as follows:
 \begin{lstlisting}
-S <host> <name> <type> [<default value>]
+S <host> <name> <type> [<attrs>]
 \end{lstlisting}
 
-Signals are handled by the \reftool{home2l-drv-signal} driver, all signals are
-read- and writable. Their \textit{URI} is \textit{/host/<host>/signal/<name>}.
+The optional \textit{<attrs>} arguments allow to define resource attributes as described in Section~\ref{sec:resources-conf-defaults}.
+
+Signals are handled by the \reftool{home2l-drv-signal} driver, all signals are read- and writable. Their \textit{URI} is \textit{/host/<host>/signal/<name>}.
+
 Examples:
 \begin{lstlisting}
 S turing testBool  bool
 S turing testInt   int   7
 S turing testFloat float 3.14
+\end{lstlisting}
+
+
+\subsection{Resource Attributes: Default Requests and Persistence}
+\label{sec:resources-conf-defaults}
+
+Depending on the type of resource and context, it may or may not be reasonable to have a permanent \textbf{default request} tying it to a certain value whenever no other request exists. For example, a service should have a default request towards 0 (''not running'') in order to shut down the service whenever it is not needed. On the other hand, for example, electrical blinds which are mainly operated manually may not have a default request to prevent them from moving if the user requests times out.
+
+A \textbf{persistent resource} is a resource for which requests are stored on disk and are not lost when the instance is (re)started (see \refenv{rc.persistent}).
+
+Ressource attributes can be assigned to any single resource as follows:
+\begin{lstlisting}
+D <resource> [<attrs>]
+\end{lstlisting}
+
+\textit{<resource>} is an arbitrary resource URI, either absolute or relative to \textit{/alias}. \textit{<attrs>} can be combination of:
+\begin{itemize}
+  \item a value followed by request attributes (see Section~\ref{sec:resources-requests})
+  \item a \lst{!} to mark the resource as persistent
+\end{itemize}
+
+Examples:
+\begin{lstlisting}
+D /alias/use           vacation      # set default
+D /alias/door/light  ! 0             # set default and make the resource persistent
 \end{lstlisting}
 
 
@@ -4835,10 +4874,10 @@ def DriverFunc (rc, vs):
 
 and resources for it are registered by the function
 \begin{lstlisting}
-RcNewResource (driverName, resourceLID, rcType, writable)
+NewDriverResource (driverName, resourceLID, rcType, writable)
 \end{lstlisting}
 
-To improve code readability, it is allowed to place \refapipython{RcNewResource()} invocations before the driver is registered, in which case the resources are registered later together with the driver. Both drivers and their resources \textit{must} be registered during the elaboration phase before \refapipython{Home2lStart()} or \refapipython{Home2lRun()} is called.
+To improve code readability, it is allowed to place \refapipython{NewDriverResource()} invocations before the driver is registered, in which case the resources are registered later together with the driver. Both drivers and their resources \textit{must} be registered during the elaboration phase before \refapipython{Home2lStart()} or \refapipython{Home2lRun()} is called.
 
 The driver function \textit{DriverFunc()} is responsible for driving values to writable resources and is the similar to the
 \refapic{rcdOpDriveValue} operation in a binary driver. Different from binary drivers, the Python driver function is allowed to call \refapic{CResource::ReportValue()} to indicate its current value.
@@ -4894,8 +4933,8 @@ A \textit{<valueState>} expression must not contain any spaces. Type and timesta
 
 Boolean values (type \textit{bool}) are always output as \lst{0} or \lst{1}, respectively. However, as inputs, any of the following alternative strings are accepted in a case-insensitive way:
 \begin{itemize}
-  \item \lst{0}, \lst{-}, \lst{false}, \lst{off}, \lst{no}
-  \item \lst{1}, \lst{+}, \lst{true}, \lst{on}, \lst{yes}
+  \item \lst{0}, \lst{false}, \lst{off}, \lst{no}
+  \item \lst{1}, \lst{true}, \lst{on}, \lst{yes}
 \end{itemize}
 
 \textbf{Time values} \textit{<time>} -- either as a value or a an start/end/repeat time specification --  can be
@@ -4984,208 +5023,7 @@ For a quick start, it is recommended to read the tutorial (Section~\ref{sec:tuto
 
 Typically, a rules script performs some initialization (\refapipython{Home2lInit()}), declares some triggered functions, and finally calls \refapipython{Home2lRun()} to enter the main event loop of the \textit{Home2L} library/package. While the native \textit{Home2L} library makes use of multi-threading, all Python functions besides \refapipython{CResource.Report...()} (see Section~\ref{sec:resources-drvdev-app-python}) must be called from the main thread.
 
-The following subsections give an overview on the various triggered functions (Section~\ref{sec:rules-events}), on accessing resource values and states (Section~\ref{sec:rules-values}), and on placing requests (Section~\ref{sec:rules-requests}).  Details can be found in the \theapipython{} documentation, which serves as a reference manual for rules writing.
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Triggered Functions}
-\label{sec:rules-events}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-The \textit{Home2L} package defines a number of Python decorators allowing to execute functions at certain occasions.
-
-
-\subsection{Value/State Updates}
-
-Functions decorated with \refapipython{@onUpdate} are executed whenever the value or state of a resource changes:
-\begin{lstlisting}
-  @onUpdate ( <resources> )
-  def MyFunc (a, b, c, ...):
-    # user code
-\end{lstlisting}
-
-\textit{a, b, c, ...} are arbitrary positional arguments, which are filled with the current values of the resources specified by \textit{<resources>}.
-
-In the following example, the function \lst{WallClockDisplayNew (daylight, lock)} is executed whenever any of the resources \textit{rcDaylight} or \textit{rcLock} changes its value or state. The arguments \textit{daylight} and \textit{lock} contain the current values of the two resources on invocation. Both may occasionally be \textit{None} if the respective resource is unavailable. This is taken into account in the \lst{if ...} statement, which compares the arguments with explicit values (\textit{False} or \textit{True}).
-
-\begin{lstlisting}
-  rcDaylight = RcGet ("/alias/daylight")
-  rcLock = RcGet ("/alias/doorlock")
-  rcWallClockActive = RcGet ("/host/wallclock/ui/active")
-
-  @onUpdate (rcDaylight, rcLock)
-  def WallClockDisplayNew (daylight, lock):
-    if daylight == False and locked != True:
-      rcWallClockActive.SetRequest (1)
-    else:
-      rcWallClockActive.DelRequest ()
-\end{lstlisting}
-
-
-\textbf{Note:} If the value or state changes very quickly, the user function may be called only for the latest, most up-to-date value/state. Events may automatically be dropped to optimize performance. In most cases, this is the desired behavior. However, if the precise sequence of events is relevant, the decorator \refapipython{@onEvent} can and must be used instead.
-
-
-
-\subsection{Timed Functions}
-
-To run a function at a certain time or at certain intervals, the \refapipython{@at} decorator can be used:
-\begin{lstlisting}
-  @at ( [ t = <t> ] [ , dt = <interval> ] [, args = <args> ] )
-  def MyFunc ( [ <args> ] ):
-    # user code
-\end{lstlisting}
-
-The argument \textit{t} specifies the time of the (first) invocation. If left unspecified, the function is executed immediately. The \textit{dt} specifies the repetition interval. If unset (\textit{None} or 0), the function is called once only. For specifying times, any data type or string accepted by \refapipython{TicksAbsOf()} (\textit{t}) or \refapipython{TicksRelOf()} (\textit{dt}) can be supplied. See Section~\ref{sec:resources-syntax} for the syntax of time defining strings.
-
-Sometimes, a timed function is to be run multiple times in different situations. The reuse of the user function (\textit{MyFunc()} ) is simplified, if
-\begin{lstlisting}
-RunAt (func, t, dt = 0, data = None)
-\end{lstlisting}
-is used instead of the decorator.
-
-\textbf{Example}
-\begin{lstlisting}
-  @at (dt = "5s")
-  def RefreshWatchdogRequest ():
-    # This function is executed every 5 seconds.
-    ...
-\end{lstlisting}
-
-
-
-
-\subsection{Connectors}
-
-A \textit{connector} is a background task, which continuously monitors a set of source (e.g. sensor) resources  and connects them to a target resource by setting (or deleting) a corresponding request to the target. The kind of connection is specified by a \textit{transfer function}, which allows to cover different use cases. For example,
-\begin{itemize}
-  \item a (Boolean) source value may be transferred ''as is'' to the target (i.e., if the
-    source value is \textit{False} a request with value \textit{False} will be set for the
-    target).
-  \item a Boolean source value may be transferred such that a value of \textit{True} results in
-    a target request with value \textit{True}, whereas in the other case no target request is
-    placed. This is useful if there are multiple ''reasons'' (e.g. motions sensors) for
-    switching on some service (e.g. a light), whereas the absence of a reason shall not force
-    the service to be off.
-  \item multiple source values may be combined by an arbitrary function.
-\end{itemize}
-
-A connector is created by calling
-\begin{lstlisting}
-  Connect ( <target>, <source resources>, <func>, <request attributes> )
-\end{lstlisting}
-or by writing a decorated transfer function:
-\begin{lstlisting}
-  @connect ( <target>, <source resources>, <request attributes> )
-  def ConnectTargetToSource (a, b, c, ...):
-    # Code for the transfer function; a, b, c, ... are the values of the source resources
-    return <result or 'None'>
-\end{lstlisting}
-If \textit{None} is returned by the transfer functions, no request is set (or the request is deleted).
-
-\textbf{Example}
-\begin{lstlisting}
-  Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = "#motion *3", delDelay = "5s")
-\end{lstlisting}
-This example connects the \textit{rcMotion} sensor to the \textit{rcLight} resource by maintaining requests with attributes \lstf{''\#motion *3''} (request ID = ''motion'', priority 3). The function \lst{lambda x: ...} transforms the value of the motion sensor to a requested value for the light. In this case, a motion value of \textit{True} causes the light to be switched on (value '1'). In all other cases, no request is set (value \textit{None}). If a request is deleted, this happens with a delay of 5 seconds (\lstf{delDelay = '5s'}).
-
-An equivalent form using the decorator is:
-\begin{lstlisting}
-  @connect (rcLight, rcMotion, attrs = "#motion *3", delDelay = "5s")
-  def ConnectLightToMotion (motion):
-    if motion == True: return 1
-    else: return None
-\end{lstlisting}
-
-Connectors can always be written by means value/state-triggered functions. The above example is also equivalent to:
-\begin{lstlisting}
-  @onUpdate (rcMotion)
-  def ConnectLightToMotion (motion):
-    rcLight.SetRequest (1 if motion == True else None, attrs = "#motion *3", delDelay = "5s")
-\end{lstlisting}
-
-
-
-\subsection{Gates}
-
-Gates are new read-only resources continuously showing values that are calculated by their \textit{gate function} based on values of other (source) resources. They can be seen as (logical) components in a circuit of automation rules.
-
-They can be defined by
-\begin{lstlisting}
-  NewGate ( <resource LID> , <type>, <source resources>, <func> )
-\end{lstlisting}
-or (decorator variant) as follows:
-\begin{lstlisting}
-  @gate ( <resource LID> , <type>, <source resources>, <func> )
-  def MyGate (a, b, c, ...):
-    # Code for the gate function; a, b, c, ... are the values of the source resources
-    return <result or 'None'>
-\end{lstlisting}
-
-Gates are assigned to the internal driver \lst{gate}, they can be accessed by the URI \lst{/local/gate/<resource LID>} or externally (if the resources server is enabled) by \lst{/host/<instance>/gate/<resource LID>}.
-
-\textbf{Example}
-\begin{lstlisting}
-  @gate ("hotDay", rctBool, rcTempDayMaxOutside, rcRainyWeather)
-  def GateHotDay (temp, rain):
-    if rain == True: return False
-    if temp >= 25.0: return True
-    return False
-\end{lstlisting}
-
-This example represents a new Boolean resource \lst{/local/gate/hotDay} indicating whether it is a hot day depending on raw data from other resources.
-
-\textit{Gates} and \textit{connectors} have some similarities. In particular, their gate and  transfer functions have the same interfaces an may be used interchangeably. The difference is that gates generate a new readable resource, while connectors set requests for an existing target resource.
-
-
-
-\subsection{Daily Requests}
-
-Often, static requests need to be set that are re-calculated on a daily basis. For example, an outdoor light might need to be switched on at night depending on the current sunset and sunrise times. For such cases, \textit{daily rules} may be defined, which set some requests accordingly.
-
-The following decorator defines a function for such daily requests.
-\begin{lstlisting}
-@daily ( <host set> )
-def MyFunc (host):
-  ...
-\end{lstlisting}
-
-As an argument, the decorator expects a set of host IDs, which is a list or tuple of strings. The host set is used to monitor the availability of the hosts and eventually also run the user function after a host has crashed or being restarted and becomes reachable (again).
-
-The user function \textit{MyFunc()} is called with the host ID as an argument on each day, shortly after midnight. It is called once per host, so that it should only set requests for the host identified by the argument.
-
-Note: For getting the time and to detect the presence or absence of a host, the \refapipython{@daily} decorator subscribes to the \refrc{timer/daily} resources of each host of the host set. If no host is passed, \code{/local/timer/daily} is subscribed. Hence, it is required that the \textit{timer} driver is not disabled on any of the hosts.
-
-
-
-\subsection{Precise Event Tracing}
-
-Functions to be run on each event related to a specific set of resources can be defined with the \refapipython{@onEvent()} decorator:
-\begin{lstlisting}
-@onEvent ( <resources> )
-def MyFunc (ev, rc, vs):
-  # user code
-\end{lstlisting}
-
-This allows to receive all events without exceptions in the correct order, and even quick value changes of the same or different resources can be captured precisely. Besides value/state changes, also other events are captured, such as indications whether the connection to a (remote) resource has been established or lost.
-
-As arguments, the decorator expects a set of resources for which events should be delivered. The argument may be a single resource, a tuple, or a list. Each resource may be specified by a string with its URI or by a reference to the resource object previously retrieved by \refapipython{RcGet()}.
-
-The argument \textit{ev} passed to the user function identifies the type of event, which can be:
-\begin{itemize}
-  \item \refapic{rceValueStateChanged}: The value or state has changed.
-  \item \refapic{rceConnected}: The connection has been (re-)established.
-  \item \refapic{rceDisconnected}: The connection has been lost.
-\end{itemize}
-The arguments \textit{rc} and \textit{vs} are the resource and their current value and state (see class \refapic{CRcValueState}), respectively.
-
-\infobox{
-  It is important to always use the passed argument \textit{vs} and to never query \textit{rc}
-  for its value/state inside the function, since that may have changed since the event
-  occurred. Event-triggered functions accessing resources to read values most probably have a
-  design flaw and are prone to race condition bugs!
-}
+The following subsections give an overview on accessing resource values and states (Section~\ref{sec:rules-values}), on placing requests (Section~\ref{sec:rules-requests}), on the various kinds of triggered functions (Section~\ref{sec:rules-events}), and on comfortable ways to define local resources (Section~\ref{sec:rules-resources}). Details can be found in the \theapipython{} documentation, which serves as a reference manual for rules writing.
 
 
 
@@ -5292,6 +5130,275 @@ Please consult the Python API documentation of \refapipython{RcSetRequest()} and
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Triggered Functions}
+\label{sec:rules-events}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+The \textit{Home2L} package defines a number of Python decorators allowing to execute functions at certain occasions.
+
+
+\subsection{Value/State Updates}
+
+Functions decorated with \refapipython{@onUpdate} are executed whenever the value or state of a resource changes:
+\begin{lstlisting}
+  @onUpdate ( <resources> )
+  def MyFunc (a, b, c, ...):
+    # user code
+\end{lstlisting}
+
+\textit{a, b, c, ...} are arbitrary positional arguments, which are filled with the current values of the resources specified by \textit{<resources>}.
+
+In the following example, the function \lst{WallClockDisplayNew (daylight, lock)} is executed whenever any of the resources \textit{rcDaylight} or \textit{rcLock} changes its value or state. The arguments \textit{daylight} and \textit{lock} contain the current values of the two resources on invocation. Both may occasionally be \textit{None} if the respective resource is unavailable. This is taken into account in the \lst{if ...} statement, which compares the arguments with explicit values (\textit{False} or \textit{True}).
+
+\begin{lstlisting}
+  rcDaylight = RcGet ("/alias/daylight")
+  rcLock = RcGet ("/alias/doorlock")
+  rcWallClockActive = RcGet ("/host/wallclock/ui/active")
+
+  @onUpdate (rcDaylight, rcLock)
+  def WallClockDisplayNew (daylight, lock):
+    if daylight == False and locked != True:
+      rcWallClockActive.SetRequest (1)
+    else:
+      rcWallClockActive.DelRequest ()
+\end{lstlisting}
+
+
+\textbf{Note:} If the value or state changes very quickly, the user function may be called only for the latest, most up-to-date value/state. Events may automatically be dropped to optimize performance. In most cases, this is the desired behavior. However, if the precise sequence of events is relevant, the decorator \refapipython{@onEvent} can and must be used instead.
+
+
+
+\subsection{Timed Functions}
+
+To run a function at a certain time or at certain intervals, the \refapipython{@at} decorator can be used:
+\begin{lstlisting}
+  @at ( [ t = <t> ] [ , dt = <interval> ] [, args = <args> ] )
+  def MyFunc ( [ <args> ] ):
+    # user code
+\end{lstlisting}
+
+The argument \textit{t} specifies the time of the (first) invocation. If left unspecified, the function is executed immediately. The \textit{dt} specifies the repetition interval. If unset (\textit{None} or 0), the function is called once only. For specifying times, any data type or string accepted by \refapipython{TicksAbsOf()} (\textit{t}) or \refapipython{TicksRelOf()} (\textit{dt}) can be supplied. See Section~\ref{sec:resources-syntax} for the syntax of time defining strings.
+
+Sometimes, a timed function is to be run multiple times in different situations. The reuse of the user function (\textit{MyFunc()} ) is simplified, if
+\begin{lstlisting}
+RunAt (func, t, dt = 0, data = None)
+\end{lstlisting}
+is used instead of the decorator.
+
+\textbf{Example}
+\begin{lstlisting}
+  @at (dt = "5s")
+  def RefreshWatchdogRequest ():
+    # This function is executed every 5 seconds.
+    ...
+\end{lstlisting}
+
+
+
+\subsection{Connectors}
+
+A \textit{connector} is a background task, which continuously monitors a set of source (e.g. sensor) resources  and connects them to a target resource by setting (or deleting) a corresponding request to the target. The kind of connection is specified by a \textit{transfer function}, which allows to cover different use cases. For example,
+\begin{itemize}
+  \item a (Boolean) source value may be transferred ''as is'' to the target (i.e., if the
+    source value is \textit{False} a request with value \textit{False} will be set for the
+    target).
+  \item a Boolean source value may be transferred such that a value of \textit{True} results in
+    a target request with value \textit{True}, whereas in the other case no target request is
+    placed. This is useful if there are multiple ''reasons'' (e.g. motions sensors) for
+    switching on some service (e.g. a light), whereas the absence of a reason shall not force
+    the service to be off.
+  \item multiple source values may be combined by an arbitrary function.
+\end{itemize}
+
+A connector is created by calling
+\begin{lstlisting}
+  Connect ( <target>, <source resources>, <func>, <request attributes> )
+\end{lstlisting}
+or by writing a decorated transfer function:
+\begin{lstlisting}
+  @connect ( <target>, <source resources>, <request attributes> )
+  def ConnectTargetToSource (a, b, c, ...):
+    # Code for the transfer function; a, b, c, ... are the values of the source resources
+    return <result or 'None'>
+\end{lstlisting}
+If \textit{None} is returned by the transfer functions, no request is set (or the request is deleted).
+
+\textbf{Example}
+\begin{lstlisting}
+  Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = "#motion *3", delDelay = "5s")
+\end{lstlisting}
+This example connects the \textit{rcMotion} sensor to the \textit{rcLight} resource by maintaining requests with attributes \lstf{''\#motion *3''} (request ID = ''motion'', priority 3). The function \lst{lambda x: ...} transforms the value of the motion sensor to a requested value for the light. In this case, a motion value of \textit{True} causes the light to be switched on (value '1'). In all other cases, no request is set (value \textit{None}). If a request is deleted, this happens with a delay of 5 seconds (\lstf{delDelay = '5s'}).
+
+An equivalent form using the decorator is:
+\begin{lstlisting}
+  @connect (rcLight, rcMotion, attrs = "#motion *3", delDelay = "5s")
+  def ConnectLightToMotion (motion):
+    if motion == True: return 1
+    else: return None
+\end{lstlisting}
+
+Connectors can always be written by means value/state-triggered functions. The above example is also equivalent to:
+\begin{lstlisting}
+  @onUpdate (rcMotion)
+  def ConnectLightToMotion (motion):
+    rcLight.SetRequest (1 if motion == True else None, attrs = "#motion *3", delDelay = "5s")
+\end{lstlisting}
+
+
+
+\subsection{Daily Requests}
+
+Often, static requests need to be set that are re-calculated on a daily basis. For example, an outdoor light might need to be switched on at night depending on the current sunset and sunrise times. For such cases, \textit{daily rules} may be defined, which set some requests accordingly.
+
+The following decorator defines a function for such daily requests.
+\begin{lstlisting}
+@daily ( <host set> )
+def MyFunc (host):
+  ...
+\end{lstlisting}
+
+As an argument, the decorator expects a set of host IDs, which is a list or tuple of strings. The host set is used to monitor the availability of the hosts and eventually also run the user function after a host has crashed or being restarted and becomes reachable (again).
+
+The user function \textit{MyFunc()} is called with the host ID as an argument on each day, shortly after midnight. It is called once per host, so that it should only set requests for the host identified by the argument.
+
+Note: For getting the time and to detect the presence or absence of a host, the \refapipython{@daily} decorator subscribes to the \refrc{timer/daily} resources of each host of the host set. If no host is passed, \code{/local/timer/daily} is subscribed. Hence, it is required that the \textit{timer} driver is not disabled on any of the hosts.
+
+
+
+\subsection{Precise Event Tracing}
+
+Functions to be run on each event related to a specific set of resources can be defined with the \refapipython{@onEvent()} decorator:
+\begin{lstlisting}
+@onEvent ( <resources> )
+def MyFunc (ev, rc, vs):
+  # user code
+\end{lstlisting}
+
+This allows to receive all events without exceptions in the correct order, and even quick value changes of the same or different resources can be captured precisely. Besides value/state changes, also other events are captured, such as indications whether the connection to a (remote) resource has been established or lost.
+
+As arguments, the decorator expects a set of resources for which events should be delivered. The argument may be a single resource, a tuple, or a list. Each resource may be specified by a string with its URI or by a reference to the resource object previously retrieved by \refapipython{RcGet()}.
+
+The argument \textit{ev} passed to the user function identifies the type of event, which can be:
+\begin{itemize}
+  \item \refapic{rceValueStateChanged}: The value or state has changed.
+  \item \refapic{rceConnected}: The connection has been (re-)established.
+  \item \refapic{rceDisconnected}: The connection has been lost.
+\end{itemize}
+The arguments \textit{rc} and \textit{vs} are the resource and their current value and state (see class \refapic{CRcValueState}), respectively.
+
+\infobox{
+  It is important to always use the passed argument \textit{vs} and to never query \textit{rc}
+  for its value/state inside the function, since that may have changed since the event
+  occurred. Event-triggered functions accessing resources to read values most probably have a
+  design flaw and are prone to race condition bugs!
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Local Resources}
+\label{sec:rules-resources}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\subsection{General-Purpose Resources}
+
+Inside a rules script, arbitrary local resources can be defined by
+\begin{lstlisting}
+  NewResource ( <resource LID> , <type> [, <func>] [, <data>] )
+\end{lstlisting}
+or (decorator variant) as follows:
+\begin{lstlisting}
+  @resource ( <resource LID> , <type> [, <data>] )
+  def MyDriveFunc (rc, vs):
+    # Code to perform some actions based on the driven value given by 'vs'.
+    ...
+\end{lstlisting}
+
+General-purpose resources can be used to access input or output devices or interface to some other software running on the machine. Output actions can be performed inside the \textit{drive} function ( \textit{<func>} ). Input data can be reported by calling \refapipython{ReportValue()} or variants of this method on the \refapipython{CResource} object.
+
+Local resources are assigned to the internal driver \lst{resource}, they can be accessed by the URI \lst{/local/resource/<LID>} or externally (if the resources server is enabled) by \lst{/host/<instance>/resource/<LID>}.
+
+\subsubsection*{Example}
+
+The following example implements a resource for an electrically garage gate connected to a \textit{Hörmann UAP 1} interface. The \textit{UAP 1} interface has a number of binary contact sensors to detect whether the gate is fully open or closed (\textit{senseUp}, \textit{senseDown}) and impulse outputs to trigger certain actions like opening/closing the gate or to stop the current movement. The sensor inputs and impulse outputs can be connected via GPIO pins (see Section~\ref{sec:drvlib-gpio}) or \textit{Brownies} (see Section~\ref{sec:drvlib-brownies}). The ''garage'' resource (\textit{rcGarage}) is modeled precisely in the sense that a half-open gate is reported as ''busy'' and that the gate movement automatically stops if no pending requests exist.
+
+\begin{lstlisting}
+  @onUpdate (rcUapSenseUp, rcUapSenseDown)
+  def GarageUpdate (senseUp, senseDown):
+    """Update function to report the current state of the garage gate."""
+    if senseUp == True:     rcGarageState.ReportValue (True)
+    elif senseDown == True: rcGarageState.ReportValue (False)
+    else:                   rcGarageState.ReportBusy ()
+
+  def GarageSouthDrive (rc, val):
+    """Drive function to generate 1 second impulses for the open/close/stop actors."""
+    if   val == True:  rcUapActUp.SetRequest ("1 -1s")
+    elif val == False: rcUapActDown.SetRequest ("1 -1s")
+    else:              rcUapActStop.SetRequest ("1 -1s")
+
+  rcGarage = NewResource ("garage", rctBool, GarageDrive)
+\end{lstlisting}
+
+
+
+\subsection{Gates}
+
+Gates are read-only resources continuously showing values that are calculated by their \textit{gate function} based on values of other (source) resources. They can be seen as (logical) components in a circuit of automation rules.
+
+They can be defined by
+\begin{lstlisting}
+  NewGate ( <resource LID> , <type>, <source resources>, <func> )
+\end{lstlisting}
+or (decorator variant) as follows:
+\begin{lstlisting}
+  @gate ( <resource LID> , <type>, <source resources>, <func> )
+  def MyGate (a, b, c, ...):
+    # Code for the gate function; a, b, c, ... are the values of the source resources
+    return <result or 'None'>
+\end{lstlisting}
+
+Gates are assigned to the internal driver \lst{gate}, they can be accessed by the URI \lst{/local/gate/<resource LID>} or externally (if the resources server is enabled) by \lst{/host/<instance>/gate/<resource LID>}.
+
+\textbf{Example}
+\begin{lstlisting}
+  @gate ("hotDay", rctBool, rcTempDayMaxOutside, rcRainyWeather)
+  def GateHotDay (temp, rain):
+    if rain == True: return False
+    if temp >= 25.0: return True
+    return False
+\end{lstlisting}
+
+This example represents a new Boolean resource \lst{/local/gate/hotDay} indicating whether it is a hot day depending on raw data from other resources.
+
+\textit{Gates} and \textit{connectors} have some similarities. In particular, their gate and  transfer functions have the same interfaces an may be used interchangeably. The difference is that gates generate a new readable resource, while connectors set requests for an existing target resource.
+
+
+
+\subsection{Signals}
+
+Signals are resources that do not drive any hardware or software, but simply report back all values driven to them (see Section~\ref{sec:resources-conf-signals}). They are useful for intermediate values or for testing purposes. For example, during rules development they are handy to temporarily replace the real device.
+
+Signals can be created locally by calling
+\begin{lstlisting}
+  NewSignal ( <name> , <type> [, <default value>] )
+\end{lstlisting}
+
+Local signals are handled by the signal driver (see Section~\ref{sec:drvlib-signal}). They can be accessed by the URI \lst{/local/signal/<LID>} or externally (if the resources server is enabled) by \lst{/host/<instance>/signal/<LID>}.
+
+
+
+\subsection{Custom Drivers}
+
+Besides the ways sketched in the previous subsection, it is also possible to define custom drivers for complete sets of resources using the \refapipython{@driver} decorator or by calling \refapipython{NewDriver()} and \refapipython{NewDriverResource()}.
+
+See Section~\ref{sec:resources-drvdev-app-python} for details on this.
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5321,8 +5428,6 @@ Brownies in mythology are said to be
   \item they leave the home if insulted.
 \end{itemize}
 
-
-%\subsection*{What is a \textit{Home2L Brownie}?}
 
 \textit{Home2L Brownies} are
 \begin{itemize}
@@ -5467,7 +5572,7 @@ Table~\ref{tab:brownies-costs} summarizes some characteristics and estimations r
 \subsection{Topology}
 \label{sec:brownies-bus-topology}
 
-Figure~\ref{fig:brownies-topology} shows an example topology for a \textit{Brownie} network, referred to as a \textit{bus tree}. The tree is controlled by a Linux host with an \textit{i2c} interface, which is directly connected to a set of \textit{root (or A-type) hubs}. The root hubs each have a \textit{Home2L bus} master interface, to which multiple \textit{Brownies} can be attached. Some of these may act as \textit{intermediate (or B-type) hubs}, connecting other \textit{Home2L} buses or \textit{Brownie subnets}.
+Figure~\ref{fig:brownies-topology} shows an example topology for a \textit{Home2L Brownie} network, referred to as a \textit{bus tree}. The tree is controlled by a Linux host with an \textit{i2c} interface, which is directly connected to a set of \textit{root (or A-type) hubs}. The root hubs each have a \textit{Home2L bus} master interface, to which multiple \textit{Brownies} can be attached. Some of these may act as \textit{intermediate (or B-type) hubs}, connecting other \textit{Home2L} buses or \textit{Brownie subnets}.
 
 \begin{figure}[ht]
   \centering
@@ -5508,8 +5613,7 @@ Figure~\ref{fig:brownies-electrical} shows the recommended circuitry. The supply
 
 As for the wire assignments in cables, the SDA and SCL signals should be assigned to wires with maximum distance in order to minimize cross-talk effects.
 
-Besides the host notification feature, the bus is a pure single-master bus. Clock stretching is used and must be supported by all devices. The bit rate is typically lower than the \textit{i2c}
-rate of 100~kBit/s (which is no violation of the \textit{i2c} specification). The default speed is approximately 30~kBit/s on \textit{ATtiny} controllers running at 1~MHz. The rate can be reduced explicitly by the \lst{hub_speed} configuration option (see Table~\ref{tab:brownies-config}).
+Besides the host notification feature, the bus is a pure single-master bus. Clock stretching is used and must be supported by all devices. The bit rate is typically lower than the \textit{i2c} rate of 100~kBit/s (which is no violation of the \textit{i2c} specification). The default speed is approximately 30~kBit/s on \textit{ATtiny} controllers running at 1~MHz. The rate can be reduced explicitly by the \lst{hub_speed} configuration option (see Table~\ref{tab:brownies-config}).
 
 
 
@@ -5612,7 +5716,7 @@ Slaves performing host notification cannot be used on a standard \textit{i2c} bu
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
-\section{The Brownie Firmware}
+\section{The \textit{Brownie} Firmware}
 \label{sec:brownies-firmware}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5873,8 +5977,8 @@ The \textit{Brownie database} represents the plan of a \textit{Brownie} bus tree
     \textit{version}    & Version number \\
     \textit{features}   & Feature code \\
     \hline
-    \textit{id}         & Brownie ID string \\
-    \textit{adr}        & Brownie TWI address \\
+    \textit{id}         & \textit{Brownie} ID string \\
+    \textit{adr}        & \textit{Brownie} TWI address \\
 
     \textit{osccal}     & Timer calibration: OSCCAL register \\
 
@@ -5922,7 +6026,7 @@ A \textit{Brownie} database always refers to one bus tree with a single root mas
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Brownie Device Features}
+\section{\textit{Brownie} Device Features}
 \label{sec:brownies-features}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5966,7 +6070,9 @@ In addition, the \textit{matrix} module can combine the information of two windo
 \subsection{Analog Sensing (\textit{adc})}
 \label{sec:brownies-features-adc}
 
-\textit{The ADC feature is not implemented yet. This section is under construction.}
+The \textit{adc} module (ADC = analog-to-digital converter) can drive up to two analog input ports and provide their converted analog value as read-only resources of type \refapic{rctPercent}. The inputs are configured as single-ended inputs with a reference voltage of \textit{VCC} (= 100\%).
+
+Optionally, for each ADC input a strobe output can be defined, which is activated for a given amount of time before the analog input is converted (see \refapic{P\_ADC\_0\_STROBE} or \refapic{ADC\_0\_STROBE\_TICKS}). This allows, for example, to operate a light barrier at low power by activating its light source only for short periods of time before each sampling.
 
 
 
@@ -6289,7 +6395,6 @@ Gadgets and their resources are identified by their \textit{object IDs} in the S
         be used and all objects should be aligned to pixel boundaries.
       \item[Layer 'gadgets'] contains all gadgets. Refer to the documentation in the
         file for how they may be scaled and rotated.
-      \item[Layer 'zoom'] is reserved for future use.
     \end{description}
 \end{itemize}
 
@@ -6542,8 +6647,7 @@ for details.
 
 \textit{DoorMan} is a doorbell and doorphone service operated on the
 command line or as a background service. It must be linked with an IP
-phone library (presently \textit{Liblinphone}, \textit{PJSIP} support is
-planned).
+phone library (\textit{PJSIP} or \textit{Liblinphone}).
 
 
 
@@ -6576,11 +6680,7 @@ planned).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-This chapter is the reference documentation of all supplied drivers. The driver library is still under construction. Drivers planned to be implemented next are:
-\begin{itemize}
-  \item \textbf{MQTT:} Talk to MQTT brokers and devices by the MQTT protocol.
-  \item \textbf{Service:} System services (SysV / systemd) suitable to export any system service as a resource, for example, Wifi access points (hostapd) or video recorder services (vdr).
-\end{itemize}
+This chapter is the reference documentation of all supplied drivers.
 
 
 
@@ -6598,7 +6698,7 @@ which just report back any driven value without any technical functionality.
 Signals can serve as intermediate resources or for testing purposes.
 
 They can be defined inside a \reftool{resources.conf} configuration file
-(see Section~\ref{sec:resources-conf}) or by the API calls
+(see Section~\ref{sec:resources-conf-signals}) or by the API calls
 \refapic{RcRegisterSignal()} (C/C++) or \refapipython{NewSignal()} (Python).
 
 

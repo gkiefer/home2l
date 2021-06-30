@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -196,11 +196,11 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__basics.html#ga6bffc62a81adfde17e9d845a2fea7ba0">CLEAR</a>(X)&#160;&#160;&#160;bzero (&amp;(X), sizeof (X))</td></tr>
 <tr class="memdesc:ga6bffc62a81adfde17e9d845a2fea7ba0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable/object 'X' to all-zero. <br /></td></tr>
 <tr class="separator:ga6bffc62a81adfde17e9d845a2fea7ba0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga6ed6df5c92e2efc8c289fecf289ee382">DEBUG</a>(LEVEL,  MSG)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG&quot;, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)</td></tr>
+<tr class="memitem:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga6ed6df5c92e2efc8c289fecf289ee382">DEBUG</a>(LEVEL,  MSG)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG-&quot; #LEVEL, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)</td></tr>
 <tr class="memdesc:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a debug message. This is only effective if the tool was compiled with WITH_DEBUG == 1 and the configuration parameter 'debug' is set to a value &gt; 0.  <a href="group__common__logging.html#ga6ed6df5c92e2efc8c289fecf289ee382">More...</a><br /></td></tr>
 <tr class="separator:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0574d1a6648679b0bd4e77e24396779e"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga0574d1a6648679b0bd4e77e24396779e">DEBUGF</a>(LEVEL,  FMT)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG&quot;, __FILE__, __LINE__); LogPrintf FMT; } } while (0)</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga0574d1a6648679b0bd4e77e24396779e">DEBUGF</a>(LEVEL,  FMT)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG-&quot; #LEVEL, __FILE__, __LINE__); LogPrintf FMT; } } while (0)</td></tr>
 <tr class="memdesc:ga0574d1a6648679b0bd4e77e24396779e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a formatted debug message. The argument must contain a parantheses with arguments, which will then be passed to a printf() function variant. For example: <code>DEBUGF(("Current value is %i", my_value))</code> <br /></td></tr>
 <tr class="separator:ga0574d1a6648679b0bd4e77e24396779e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab00aa1228ee77e56e9f25b3ab45bdf7e"><td class="memItemLeft" align="right" valign="top">
@@ -274,15 +274,15 @@ Macros</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader">Atomic read and write operations ...</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>(presently GCC-specific) </p>
 </div></td></tr>
-<tr class="memitem:gac2cc5b0f8085c2a032023c33394e9bfa"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_READ</b>(PTR)&#160;&#160;&#160;__sync_fetch_and_add (&amp;(PTR), 0)</td></tr>
-<tr class="separator:gac2cc5b0f8085c2a032023c33394e9bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4a0031ba30915f0687a0f4838be4a27d"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_WRITE</b>(PTR,  VAL)&#160;&#160;&#160;__sync_bool_compare_and_swap (&amp;(PTR), PTR, VAL)</td></tr>
-<tr class="separator:ga4a0031ba30915f0687a0f4838be4a27d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga575fcc76571c0dcd6964ff980a95d94a"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_INC</b>(PTR,  N)&#160;&#160;&#160;__sync_fetch_and_add ((&amp;PTR), (N))</td></tr>
-<tr class="separator:ga575fcc76571c0dcd6964ff980a95d94a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac87c9d88167fbf1fb937744e05cdbefc"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_READ</b>(OBJ)&#160;&#160;&#160;__atomic_load_n (&amp;(OBJ), __ATOMIC_RELAXED)</td></tr>
+<tr class="separator:gac87c9d88167fbf1fb937744e05cdbefc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3cd251c3e978aa5e8d50e26cb64da654"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_WRITE</b>(OBJ,  VAL)&#160;&#160;&#160;__atomic_store_n (&amp;(OBJ), VAL, __ATOMIC_RELAXED)</td></tr>
+<tr class="separator:ga3cd251c3e978aa5e8d50e26cb64da654"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab753a735e377f811778c91c796227749"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ATOMIC_INC</b>(OBJ,  N)&#160;&#160;&#160;__atomic_exchange_n (&amp;(OBJ), (OBJ) + (N), __ATOMIC_RELAXED)</td></tr>
+<tr class="separator:gab753a735e377f811778c91c796227749"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">C-style Allocation ...</div></td></tr>
 <tr class="memitem:ga3933bc3cd585b42094d348f1b2f38e3c"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__heap.html#ga3933bc3cd585b42094d348f1b2f38e3c">MALLOC</a>(T,  N)&#160;&#160;&#160;(T*) malloc (sizeof (T) * (N))</td></tr>
@@ -399,6 +399,14 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaf0683c3ae569efb795598e64806dab48">StringF</a> (const char *fmt,...)</td></tr>
 <tr class="memdesc:gaf0683c3ae569efb795598e64806dab48"><td class="mdescLeft">&#160;</td><td class="mdescRight">(TTS) Create a formatted string (linke <code>sprinf()</code>, but with inlimited length). Returned pointer is valid until the next TTS usage. <br /></td></tr>
 <tr class="separator:gaf0683c3ae569efb795598e64806dab48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga64fd14280479b0e9975c9c11b66e3835"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga64fd14280479b0e9975c9c11b66e3835">BoolFromString</a> (const char *str, bool *ret)</td></tr>
+<tr class="memdesc:ga64fd14280479b0e9975c9c11b66e3835"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a Boolean value. On success, '*ret' is set accordingly and 'true' is returned. On failure, 'false' is returned and '*ret' remains unchanged. <br /></td></tr>
+<tr class="separator:ga64fd14280479b0e9975c9c11b66e3835"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa9577bb8af7283602da10ce5d4d7b432"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaa9577bb8af7283602da10ce5d4d7b432">ValidBoolFromString</a> (const char *str, bool defaultVal)</td></tr>
+<tr class="memdesc:gaa9577bb8af7283602da10ce5d4d7b432"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a Boolean value. On failure, 'defaultVal' is returned. <br /></td></tr>
+<tr class="separator:gaa9577bb8af7283602da10ce5d4d7b432"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadecde891c6c5670fbec5182208e3f626"><td class="memItemLeft" align="right" valign="top">
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gadecde891c6c5670fbec5182208e3f626">IntFromString</a> (const char *str, int *ret, int radix=0)</td></tr>
 <tr class="memdesc:gadecde891c6c5670fbec5182208e3f626"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an integer using 'strtol'. On success, '*ret' is set accordingly and 'true' is returned. On failure, 'false' is returned and '*ret' remains unchanged. If 'radix == 0', it is auto-detected from the string (16 with a preceeding "0x", 10 otherwise). <br /></td></tr>
@@ -430,6 +438,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="memitem:ga53187daef823121298c2f01c5bdf040d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d">StringSplit</a> (const char *str, int *retArgc, char ***retArgv, int maxArgc=INT_MAX, const char *sepChars=NULL, char **retRef=NULL)</td></tr>
 <tr class="memdesc:ga53187daef823121298c2f01c5bdf040d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split a string into (whitespace-)separated arguments.  <a href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d">More...</a><br /></td></tr>
 <tr class="separator:ga53187daef823121298c2f01c5bdf040d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaaaed1d11d22544b31624093745ff4d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaaaaed1d11d22544b31624093745ff4d9">StringSplitFree</a> (char ***argv)</td></tr>
+<tr class="memdesc:gaaaaed1d11d22544b31624093745ff4d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory allocated by <a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d" title="Split a string into (whitespace-)separated arguments. ">StringSplit()</a>.  <a href="group__common__strings.html#gaaaaed1d11d22544b31624093745ff4d9">More...</a><br /></td></tr>
+<tr class="separator:gaaaaed1d11d22544b31624093745ff4d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac7fd872b1a286c4b50db018851e1d48f"><td class="memItemLeft" align="right" valign="top">
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gac7fd872b1a286c4b50db018851e1d48f">CharIsWhiteSpace</a> (char c)</td></tr>
 <tr class="memdesc:gac7fd872b1a286c4b50db018851e1d48f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicate whether the given character is white space (see WHITSPACE). <br /></td></tr>
@@ -605,8 +616,16 @@ Ticks (real and monotonic) ...</h2></td></tr>
 <tr class="separator:gae3cec4def438f60ce079aef1eae8e21f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#gac42a6701f8b9abb6efa13aa16a99fd58">SECONDS_FROM_TICKS</a>(T)&#160;&#160;&#160;(((<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>) (T) + 500) / 1000)</td></tr>
-<tr class="memdesc:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert seconds (integer!) to ticks. <br /></td></tr>
+<tr class="memdesc:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert ticks to seconds. <br /></td></tr>
 <tr class="separator:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8205d957c97028a3d623805b2633a5b2"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga8205d957c97028a3d623805b2633a5b2">TICKS_FROM_MILLIS</a>(MS)&#160;&#160;&#160;((<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>) (MS))</td></tr>
+<tr class="memdesc:ga8205d957c97028a3d623805b2633a5b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert milliseconds (integer!) to ticks. <br /></td></tr>
+<tr class="separator:ga8205d957c97028a3d623805b2633a5b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0feb2e07c3ffd29f9f3c1a853dda80d1"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga0feb2e07c3ffd29f9f3c1a853dda80d1">MILLIS_FROM_TICKS</a>(T)&#160;&#160;&#160;((int) (T))</td></tr>
+<tr class="memdesc:ga0feb2e07c3ffd29f9f3c1a853dda80d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert ticks to milliseconds. <br /></td></tr>
+<tr class="separator:ga0feb2e07c3ffd29f9f3c1a853dda80d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga69dd2657852c9b3c796643a1709ef296"><td class="memItemLeft" align="right" valign="top">
 typedef int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a></td></tr>
 <tr class="memdesc:ga69dd2657852c9b3c796643a1709ef296"><td class="mdescLeft">&#160;</td><td class="mdescRight">Real time; number of milliseconds since the Epoch (1970-01-01-000000 UTC) <br /></td></tr>

@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -111,11 +111,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetColor</b> (TColor 
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetColor</b> (TColor _colNorm, TColor _colDown)</td></tr>
 <tr class="separator:ae60416f663a5ed2c430df71a308d310f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07cfd2bca03d23052202540cace591f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a07cfd2bca03d23052202540cace591f6">SetLabel</a> (SDL_Surface *_icon, SDL_Rect *srcRect=NULL, bool takeOwnership=false)</td></tr>
-<tr class="memdesc:a07cfd2bca03d23052202540cace591f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set '_icon' as tbe button label.  <a href="#a07cfd2bca03d23052202540cace591f6">More...</a><br /></td></tr>
+<tr class="memdesc:a07cfd2bca03d23052202540cace591f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set '_icon' as the button label.  <a href="#a07cfd2bca03d23052202540cace591f6">More...</a><br /></td></tr>
 <tr class="separator:a07cfd2bca03d23052202540cace591f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e5fc052784829041736e25f33e9bf6e"><td class="memItemLeft" align="right" valign="top"><a id="a0e5fc052784829041736e25f33e9bf6e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a0e5fc052784829041736e25f33e9bf6e">SetLabel</a> (const char *text, TColor textColor=WHITE, TTF_Font *font=NULL)</td></tr>
-<tr class="memdesc:a0e5fc052784829041736e25f33e9bf6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set text-only label. <br /></td></tr>
+<tr class="memdesc:a0e5fc052784829041736e25f33e9bf6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a text-only label. <br /></td></tr>
 <tr class="separator:a0e5fc052784829041736e25f33e9bf6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4766b00ba43d9d74e175dff19974746f"><td class="memItemLeft" align="right" valign="top"><a id="a4766b00ba43d9d74e175dff19974746f"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a4766b00ba43d9d74e175dff19974746f">SetLabel</a> (SDL_Surface *_icon, const char *text, TColor textColor=WHITE, TTF_Font *font=NULL)</td></tr>
@@ -144,6 +144,9 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>OnPushed</b> 
 <tr class="memitem:ac01712bbdb4a1b8395f9cd80b67a4b27"><td class="memItemLeft" align="right" valign="top"><a id="ac01712bbdb4a1b8395f9cd80b67a4b27"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetCbPushed</b> (<a class="el" href="group__ui__widgets__button.html#ga65824a26e458b0479c9cce9e781408fa">FCbButtonPushed</a> *cb, void *_data=NULL)</td></tr>
 <tr class="separator:ac01712bbdb4a1b8395f9cd80b67a4b27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af766965e80b02e88a50026fa5e7fb728"><td class="memItemLeft" align="right" valign="top"><a id="af766965e80b02e88a50026fa5e7fb728"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>GetCbPushedData</b> ()</td></tr>
+<tr class="separator:af766965e80b02e88a50026fa5e7fb728"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Callbacks...</div></td></tr>
 <tr class="memitem:add52c386a1f9e1968650e544d0f33bb3"><td class="memItemLeft" align="right" valign="top"><a id="add52c386a1f9e1968650e544d0f33bb3"></a>
 virtual SDL_Surface *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#add52c386a1f9e1968650e544d0f33bb3">GetSurface</a> ()</td></tr>
@@ -253,8 +256,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
       </table>
 </div><div class="memdoc">
 
-<p>Set '_icon' as tbe button label. </p>
-<p>By default, the object keeps a reference to '_icon' internally, and the caller must keep the icon valid as long as the button object lives or until another label is set. If 'takeOwnership == true', the button object will free the surface as soon as appropriate (which may be later or very soon, e.g. during this call!). Hence, if the caller cannot conveniently keep '_icon' valid, the caller should make a copy (SurfaceDup() ) and pass 'takeOwenership = true' here. </p>
+<p>Set '_icon' as the button label. </p>
+<p>By default, the object keeps a reference to '_icon' internally, and the caller must keep the icon valid as long as the button object lives or until another label is set. If 'takeOwnership == true', the button object will free the surface as soon as appropriate (which may be later or very soon, e.g. during this call!). Hence, if the caller cannot conveniently keep '_icon' valid, the caller should make a copy (SurfaceDup() ) and pass 'takeOwnership = true' here.</p>
+<p><b>Note:</b> It is legal to not call any of the <a class="el" href="classCButton.html#a07cfd2bca03d23052202540cace591f6" title="Set &#39;_icon&#39; as the button label. ">SetLabel()</a> methods and have no label at all. This is, for example, used in the floor plan view, where the "labels" are actually parts of other (background) widgets. </p>
 
 </div>
 </div>

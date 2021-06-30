@@ -107,11 +107,11 @@ typedef int TTicksMonotonic;  // should be 'int32_t'
 ## @defgroup home2l_time Time
 ## Date and time helpers
 ##
-## @defgroup home2l_drivers Drivers
-## Defining custom drivers for resources.
+## @defgroup home2l_resources Resources
+## Defining local resources and custom drivers
 ##
 ## @defgroup home2l_rules Rules
-## Running functions on resource events/updates or at certain times.
+## Running functions on resource updates, on events or at certain times
 ##
 %}
 
@@ -119,20 +119,232 @@ typedef int TTicksMonotonic;  // should be 'int32_t'
 
 
 
-// **************************** Drivers *****************************************
+// **************************** Local Resources ********************************
 
 
 %pythoncode %{
-
-## @addtogroup home2l_drivers
+## @addtogroup home2l_resources
 ## @{
+
+
+
+
+
+# ****************** Resources *****************************
+
+
+_RESOURCES_DRV = "resource"   # name of the (standard) resources driver
+
+_resourcesHaveDriver = False  # mark if we already have a driver for resources
+_resourcesDict = {}           # dictionary to map decorated functions to resources
+
+
+def _resourcesDriverFunc (rc, vs):
+  func, data, _rc = _resourcesDict[rc.Lid()]
+  if func.__code__.co_argcount == 2:  func (rc, vs.Value ())     # tolerate functions without the 'data' argument
+  else:                               func (rc, vs.Value (), data)
+
+
+## Define a new local resource.
+def NewResource (rcName, rcType, func = None, data = None):
+  """Define a new local resource at '/local/resource/<rcName>'.\n\
+  \n\
+  'rcName' is the name of the resource, 'rcType' is its type. The resource will\n\
+  be assigned to the built-in 'resource' driver.\n\
+  \n\
+  'func' is a function to drive new values and will be called as follows:\n\
+  \n\
+      func (rc, val [, data] )\n\
+  \n\
+  where 'rc' is the resource to be driven and 'val' is the new value to be driven.\n\
+  'val' can be 'None', which indicates that presently no valid request exists.\n\
+  For details, see the C API documentation on 'CRcDriver::DriveValue()'.\n\
+  \n\
+  If 'func == None', the resource is generated as a read-only resource.
+  \n\
+  'data' is an optional reference to user data that will be passed unchanged\n\
+  to any 'func' invocations.\n\
+  \n\
+  For reporting values from the resource, the 'CResource::Report...' methods\n\
+  have to be used.\n\
+  \n\
+  The drive function 'func' is responsible for immediately reporting any\n\
+  value/state changes resulting from a drive operation. If the driven value\n\
+  immediately reflects the actual state of the resource, this can be done by\n\
+  calling 'CResource::ReportValue()'. If the new real value is not known\n\
+  immediately, 'CResource::ReportBusy()' should be called now and the final\n\
+  up-to-date value be reported later.\n\
+  """
+  global _resourcesHaveDriver
+  if not _resourcesHaveDriver:
+    RcRegisterDriver (_RESOURCES_DRV, rcsNoReport).SetInSelectSet (True)
+    _driverDict[_RESOURCES_DRV] = (_resourcesDriverFunc, None)
+    _resourcesHaveDriver = True
+  rc = RcRegisterResource (_RESOURCES_DRV, rcName, rcType, False if func == None else True)
+  _resourcesDict[rcName] = (func, data, rc)
+  return rc
+
+
+## Decorator to define a new local resource.
+def resource (rcName, rcType, data = None):
+  """Decorator variant of 'NewResource()'.\n\
+  \n\
+  This decorator allows to easily define a local writable resource as follows:\n\
+  \n\
+  |   @resource ( <rcName>, <type> [, <data>] )\n\
+  |   def MyDriveFunc (rc, val [, data]):\n\
+  |     ...\n\
+  \n\
+  """
+  def _Decorate (func):
+    NewResource (rcName, rcType, func, data)
+    return func
+  return _Decorate
+
+
+
+
+
+# ****************** Gates *********************************
+
+
+_GATES_DRV = "gate"       # name of the gates driver
+
+_gatesHaveDriver = False  # mark if we already have a driver for gates
+_gatesDict = {}           # dictionary to map decorated functions to resources
+
+
+## Define a new gate.
+def NewGate (rcName, rcType, rcSet, func, subscrId = None):
+  """Define a new gate at '/local/gate/<rcName>'.\n\
+  \n\
+  A gate is a read-only resource showing a value that is calculated by the\n\
+  gate function based on values of other resources.\n\
+  \n\
+  'rcName' is the name of the gate, 'rcType' is its type. The gate will be\n\
+  assigned to the built-in 'gate' driver.
+  \n\
+  'rcSet' specifies the resource(s) the gate function depends on.\n\
+  It may be a single resource or a tuple or list of multiple resources.\n\
+  \n\
+  'func' is the gate function. It is called as:\n\
+  \n\
+      value = func (a, b, c, ...)\n\
+  \n\
+  'a, b, c, ...' are positional arguments with arbitrary names by which the\n\
+  values of the 'rcSet' resources are passed. The function must return the\n\
+  actual value to be reported. If 'None' is returned, a state of 'rcsUnkown'\n\
+  is reported. A state of 'rcsBusy' is never reported.\n\
+  \n\
+  'NewGate()' returns a reference to the newly created resource.\n\
+  \n\
+  Notes on writing gate functions ('func'):
+  \n\
+  1. Any of the arguments 'a, b, c, ...' may also be 'None' if the respective\n\
+     resource has a state of 'rcsUnkown'. This must be considered when writing\n\
+     gate functions. For example, to check whether a Boolean resource x is known\n\
+     and false, the expression should be 'if x == False: ...' instead of\n\
+     'if not x: ...', since in the latter case 'not x' would evaluate as true,\n\
+     if x is 'None'. In general, Boolean resource values should always be used\n\
+     in conjunction with a comparision. For example, an expression like\n\
+     'a and b' may be written as '(a == True) and (b != False)', which implies,\n\
+     that a value of 'None' is treated like 'False' for 'a', but like 'True'\n\
+     for 'b'.\n\
+  \n\
+  2. To facilitate gate function writing, especially if the source resources have\n\
+     numerical types, 'TypeError' exceptions are caught by the caller and result\n\
+     in a return value of 'None'. 'TypeError' exceptions are typically raised\n\
+     if one of the arguments of an arithmetic exception is 'None'.
+  \n\
+  3. The gate function is evaluated whenever a value/state change occurs for\n\
+     any of the resources of 'rcSet', but only then. If resources are read\n\
+     inside the gate function, they usually must be contained in 'rcSet'.\n\
+     It is good practice to not read out resources directly, but only rely\n\
+     on the arguments passed to the gate function.\n\
+  """
+
+  # Create driver and resource ...
+  global _gatesHaveDriver
+  if not _gatesHaveDriver:
+    RcRegisterDriver (_GATES_DRV, rcsValid)
+    # We skip adding it to '_driverDict', since all the resources are read-only
+    _gatesHaveDriver = True
+  rc = RcRegisterResource (_GATES_DRV, rcName, rcType, False)
+
+  # Callback suitable for RunOnUpdate(), use closure to include 'rc' ...
+  def _OnUpdateFunc (*args):
+    try:              value = func (*args)
+    except TypeError: value = None
+    rc.ReportValue (value)
+    # ~ print ("### NewGate._OnUpdateFunc (" + str (args) + "): value = " + str (value))
+
+  # Register callback and finish ...
+  if not subscrId: subscrId = _SubscrIdFromFunc (func)
+  RunOnUpdate (_OnUpdateFunc, rcSet, subscrId)
+  return rc
+
+
+## Decorator to define a new gate.
+def gate (rcName, rcType, *rcSet):
+  """Decorator variant of 'NewGate()'.\n\
+  \n\
+  This decorator allows to easily define a gate as follows:\n\
+  \n\
+  |   @gate ( <gate name>, <type>, <source resources> )\n\
+  |   def MyGateFunc (a, b, c, ...):\n\
+  |     ...\n\
+  |     return ...\n\
+  \n\
+  """
+  def _Decorate (func):
+    _gatesDict[func.__name__] = NewGate (rcName, rcType, rcSet, func)
+    return func
+  return _Decorate
+
+
+## Get resource reference of a decorated local resource or gate.
+def GetLocalRc (func):
+  """Get a resource reference of a local resource or gate by its decorated function.\n\
+  \n\
+  This function allows to query a resource object defined by the '@gate' or '@resource'\n\
+  decorator by a reference to the decorated function.\n\
+  """
+  # ~ print ("### GetRateRc (" + func.__name__ + "): _gatesDict = " + str (_gatesDict))
+  if func.__name__ in _gatesDict: return _gatesDict[func.__name__]
+  for key, val in _resourcesDict.items():
+    if val[0] == func: return val[2]
+  raise KeyError ("No resource found for function '" + func.__name__ + "'.")
+
+
+
+
+
+# ****************** Signals *******************************
+
+
+## Define a new signal.
+def NewSignal (sigName, rcType, defaultVal = None):
+  """Define a signal resource under '/local/signal/<sigName>."""
+  if defaultVal == None:
+    return RcRegisterSignal (sigName, rcType)
+  else:
+    return RcRegisterSignal (sigName, CRcValueState (rcType, defaultVal))
+
+
+
+
+
+
+
+# ****************** Custom Drivers ************************
+
 
 _driverDict = {}
 _bufferedResources = {}   # stored lists of resources
 
 
 ## Define a new driver.
-def NewDriver (drvName, func = None, successState = rcsBusy, data = None):
+def NewDriver (drvName, func = None, successState = rcsNoReport, data = None):
   """Define a new event-based driver.\n\
   \n\
   'drvName' is the unique local id (LID) of the new driver.\n\
@@ -141,30 +353,33 @@ def NewDriver (drvName, func = None, successState = rcsBusy, data = None):
   \n\
       func (rc, vs [, data] )\n\
   \n\
-  '(ERcState) successState' determines the automatic reply sent out to the\n\
-  system before 'func' is invoked. Possible values are:\n\
-  \n\
-    - 'rcsBusy':    (default) 'rcsBusy' with the *old* value is reported;\n\
-                    the application must report a valid and new value later.\n\
-  \n\
-    - 'rcsValid':   the driven value is reported back; no further action by\n\
-                    the driver necessary, but no errors are allowed to happen.\n\
-  \n\
-    - 'rcsUnknown' or 'rcsNoReport':\n\
-                    nothing is reported back now; the application must report\n\
-                    something soon and should report a valid and new value later.\n\
+  where 'rc' is the resource to be driven and 'vs' (type 'CRcValueState')\n\
+  is the new value to be driven. 'vs' can (only) have the states 'rcsValid'\n\
+  or 'rcsUnknown', where the latter indicates that presently no valid request\n\
+  exists. For details, see the C API documentation on 'CRcDriver::DriveValue()'.\n\
   \n\
   'data' is an optional reference to user data that can be passed\n\
   unchanged to any 'func' invocations.\n\
   \n\
-  where 'rc' is the resource to be driven and '(CRcValue) value' is the\n\
-  new value to be driven.\n\
+  '(ERcState) successState' determines the automatic reply sent out to the\n\
+  system before 'func' is invoked. Possible values are:\n\
+  \n\
+    - 'rcsNoReport' or 'rcsUnknown' (default):\n\
+                    nothing is reported back now; the application must report\n\
+                    something soon and should report a valid and up-to-date value\n\
+                    later.\n\
+  \n\
+    - 'rcsBusy':    'rcsBusy' with the *old* value is reported;\n\
+                    the application must report a valid and up-to-date value later.\n\
+  \n\
+    - 'rcsValid':   the driven value is reported back; no further action by\n\
+                    the driver necessary, but no errors are allowed to happen.\n\
   \n\
   For reporting values from the resource, the 'CResource::Report...'\n\
   methods have to be used.\n\
   """
-  if drvName in ("signal", _GATES_DRV):
-    print ("WARNING: Failed to register driver with reserved name ('signal' or '" + _GATES_DRV + "').")
+  if drvName in ("signal", _GATES_DRV, _RESOURCES_DRV):
+    print ("WARNING: Failed to register driver with reserved name '" + drvName + "'.")
     return
   RcRegisterDriver (drvName, successState).SetInSelectSet (True)
   _driverDict[drvName] = (func, data)
@@ -181,9 +396,9 @@ def driver (drvName, successState = rcsBusy, data = None):
   \n\
   This decorator allows to easily define a driver as follows:\n\
   \n\
-      @driver ( <driver name> [, <success state>] [, <data>] )\n\
-      def MyDriverFunc (rc, vs [, data]):\n\
-        ...\n\
+  |   @driver ( <driver name> [, <success state>] [, <data>] )\n\
+  |   def MyDriverFunc (rc, vs [, data]):\n\
+  |     ...\n\
   \n\
   """
   def _Decorate (func):
@@ -193,8 +408,8 @@ def driver (drvName, successState = rcsBusy, data = None):
 
 
 ## Define a new resource.
-def NewResource (drvName, rcName, rcType, writable = True):
-  """Define a new resource managed by a driver defined by 'NewDriver()'."""
+def NewDriverResource (drvName, rcName, rcType, writable = True):
+  """Define a new resource managed by a custom driver defined by 'NewDriver()'."""
   if drvName in _driverDict:
     return RcRegisterResource (drvName, rcName, rcType, writable)
   else:
@@ -203,27 +418,17 @@ def NewResource (drvName, rcName, rcType, writable = True):
     return RcGetResource ("/local/" + drvName + "/" + rcName)
 
 
-## Define a new signal.
-def NewSignal (sigName, rcType, defaultVal = None):
-  """Define a signal resource under '/local/signal/<sigName>."""
-  if defaultVal == None:
-    return RcRegisterSignal (sigName, rcType)
-  else:
-    return RcRegisterSignal (sigName, CRcValueState (rcType, defaultVal))
-
-
-## @}   # home2l_drivers
-%} // %pythoncode
+## @}
+%} // %pythoncode (home2l_resources)
 
 
 
 
 
-// *************************** Rules *******************************************
+// *************************** Triggered Functions *****************************
 
 
 %pythoncode %{
-
 ## @addtogroup home2l_rules
 ## @{
 
@@ -311,9 +516,9 @@ def onEvent (*rcSet):
   This decorator allows to easily let a function be executed on given events\n\
   as follows:\n\
   \n\
-      @onEvent (<resource set>)\n\
-      def MyFunc (ev, rc, vs):\n\
-        ...\n\
+  |   @onEvent (<resource set>)\n\
+  |   def MyFunc (ev, rc, vs):\n\
+  |     ...\n\
   \n\
   """
   def _Decorate (func):
@@ -390,9 +595,9 @@ def onUpdate (*rcSet):
   This decorator allows to easily define a function executed on value changes\n\
   as follows:\n\
   \n\
-      @onUpdate ( <resource set> )\n\
-      def MyFunc ():\n\
-        ...\n\
+  |   @onUpdate ( <resource set> )\n\
+  |   def MyFunc ():\n\
+  |     ...\n\
   \n\
   """
   def _Decorate (func):
@@ -468,26 +673,26 @@ def Connect (target, rcSet, func = lambda x: x, attrs = None, id = None, priorit
   - Let a light be switched on for 5 seconds if a motion sensor is activated, but only\n\
     at night time:\n\
   \n\
-      rcLight = RcGet ('/alias/light')  # get reference to the light resource\n\
-      rcLight.SetDefault (0)            # set default request: light off (0)\n\
-      Connect (rcLight, '/alias/day', lamda x: 0 if x == True else None, attrs = '#daytime *3')\n\
-          # keep light off (0) at day time (True) at high priority (*3)\n\
-      Connect (rcLight, '/alias/motion', lamda x: 1 if x == True else None, attrs = '#motion *2', delDelay = '5s')\n\
-          # switch light on (1) if the motion detector is active at a lower\n\
-          # priority (*2); after the motion sensor becomes inactive, the request\n\
-          # is deleted with a delay of 5 seconds ('5s')
+    |   rcLight = RcGet ('/alias/light')  # get reference to the light resource\n\
+    |   rcLight.SetDefault (0)            # set default request: light off (0)\n\
+    |   Connect (rcLight, '/alias/day', lamda x: 0 if x == True else None, attrs = '#daytime *3')\n\
+    |     # keep light off (0) at day time (True) at high priority (*3)\n\
+    |   Connect (rcLight, '/alias/motion', lamda x: 1 if x == True else None, attrs = '#motion *2', delDelay = '5s')\n\
+    |     # switch light on (1) if the motion detector is active at a lower\n\
+    |     # priority (*2); after the motion sensor becomes inactive, the request\n\
+    |     # is deleted with a delay of 5 seconds ('5s')
   \n\
   - Force the light off at day time, but during rainy weather:
   \n\
-      Connect (rcLight, ('/alias/motion', '/alias/rain'), lamda m, r: 0 if m == True and not r == True else None)\n\
+    |   Connect (rcLight, ('/alias/motion', '/alias/rain'), lamda m, r: 0 if m == True and not r == True else None)\n\
   \n\
     or alternatively (decorator variant):
   \n\
-      @connect (rcLight, ('/alias/motion', '/alias/rain')):\n\
-      def LightOffDuringDayAndGoodWeather (motion, rain):\n\
-        # (some additional code may be added here)
-        if motion == True and not rain == True: return 0\n\
-        else: return None\n\
+    |   @connect (rcLight, ('/alias/motion', '/alias/rain')):\n\
+    |   def LightOffDuringDayAndGoodWeather (motion, rain):\n\
+    |     # (some additional code may be added here)
+    |     if motion == True and not rain == True: return 0\n\
+    |     else: return None\n\
   """
 
   # Convert 'target' into a resource object for faster access later ...
@@ -513,10 +718,10 @@ def connect (target, rcSet, attrs = None, id = None, priority = None, t0 = None,
   which continuously updates requests for the target resource 'target' depending\n\
   on the values of the resources given by 'rcSet':\n\
   \n\
-      @connect ( <target>, <rcSet> [, <request attrs>] )\n\
-      def TransferFunc (a, b, c, ...):\n\
-        ...\n\
-        return <value>
+  |   @connect ( <target>, <rcSet> [, <request attrs>] )\n\
+  |   def TransferFunc (a, b, c, ...):\n\
+  |     ...\n\
+  |     return <value>
   \n\
   """
   def _Decorate (func):
@@ -550,117 +755,6 @@ def connect (target, rcSet, attrs = None, id = None, priority = None, t0 = None,
 # ~ def Connect01 (target, source, attrs = None, id = None, priority = None, t0 = None, hysteresis = None, delDelay = None, subscrId = None):
   # ~ """Connect with funktion '1 if source > 0 else 1'"""
   # ~ Connect (target, source, lambda x: 0 if x > 0 else 1, attrs, id, priority, t0, hysteresis, delDelay, subscrId)
-
-
-
-
-
-# ****************** Gates *********************************
-
-
-_GATES_DRV = "gate"       # name of the gates driver
-
-_gatesHaveDriver = False  # mark if we already have a driver for gates
-_gatesDict = {}           # dictionary to map decorated functions to resources
-
-
-## Define a new gate.
-def NewGate (rcName, rcType, rcSet, func, subscrId = None):
-  """Define a new gate.\n\
-  \n\
-  A gate is a read-only resource showing a value that is calculated by the\n\
-  gate function based on values of other resources.\n\
-  \n\
-  'rcName' is the name of the gate, 'rcType' is its type. The gate will be\n\
-  assigned to the 'gates' driver.
-  \n\
-  'rcSet' specifies the resource(s) the gate function depends on.\n\
-  It may be a single resource or a tuple or list of multiple resources.\n\
-  \n\
-  'func' is the gate function. It is called as:\n\
-  \n\
-      value = func (a, b, c, ...)\n\
-  \n\
-  'a, b, c, ...' are positional arguments with arbitrary names by which the\n\
-  values of the 'rcSet' resources are passed. The function must return the\n\
-  actual value to be reported. If 'None' is returned, a state of 'rcsUnkown'\n\
-  is reported. A state of 'rcsBusy' is never reported.\n\
-  \n\
-  'NewGate()' returns a reference to the newly created resource.\n\
-  \n\
-  Notes on writing gate functions ('func'):
-  \n\
-  1. Any of the arguments 'a, b, c, ...' may also be 'None' if the respective\n\
-     resource has a state of 'rcsUnkown'. This must be considered when writing\n\
-     gate functions. For example, to check whether a Boolean resource x is known\n\
-     and false, the expression should be 'if x == False: ...' instead of\n\
-     'if not x: ...', since in the latter case 'not x' would evaluate as true,\n\
-     if x is 'None'. In general, Boolean resource values should always be used\n\
-     in conjunction with a comparision. For example, an expression like\n\
-     'a and b' may be written as '(a == True) and (b != False)', which implies,\n\
-     that a value of 'None' is treated like 'False' for 'a', but like 'True'\n\
-     for 'b'.\n\
-  \n\
-  2. To facilitate gate function writing, especially if the source resources have\n\
-     numerical types, 'TypeError' exceptions are caught by the caller and result\n\
-     in a return value of 'None'. 'TypeError' exceptions are typically raised\n\
-     if one of the arguments of an arithmetic exception is 'None'.
-  \n\
-  3. The gate function is evaluated whenever a value/state change occurs for\n\
-     any of the resources of 'rcSet', but only then. If resources are read\n\
-     inside the gate function, they usually must be contained in 'rcSet'.\n\
-     It is good practice to not read out resources directly, but only rely\n\
-     on the arguments passed to the gate function.
-  """
-
-  # Create driver and resource ...
-  global _gatesHaveDriver
-  if not _gatesHaveDriver:
-    RcRegisterDriver (_GATES_DRV, rcsValid)
-    _gatesHaveDriver = True
-  rc = RcRegisterResource (_GATES_DRV, rcName, rcType, False)
-
-  # Callback suitable for RunOnUpdate(), use closure to include 'rc' ...
-  def _OnUpdateFunc (*args):
-    try:              value = func (*args)
-    except TypeError: value = None
-    rc.ReportValue (value)
-    # ~ print ("### NewGate._OnUpdateFunc (" + str (args) + "): value = " + str (value))
-
-  # Register callback and finish ...
-  if not subscrId: subscrId = _SubscrIdFromFunc (func)
-  RunOnUpdate (_OnUpdateFunc, rcSet, subscrId)
-  return rc
-
-
-## Decorator to define a new gate.
-def gate (rcName, rcType, *rcSet):
-  """Decorator variant of 'NewGate()'.\n\
-  \n\
-  This decorator allows to easily define a gate as follows:\n\
-  \n\
-      @gate ( <gate name>, <type>, <source resources> )\n\
-      def MyGateFunc (a, b, c, ...):\n\
-        ...\n\
-        return ...\n\
-  \n\
-  """
-  def _Decorate (func):
-    _gatesDict[func.__name__] = NewGate (rcName, rcType, rcSet, func)
-    return func
-  return _Decorate
-
-
-## Get resource reference of a gate.
-def GetGateRc (func):
-  """Lookup resource of a gate by its decorated function.
-  \n\
-  Usually, the URI of a gate is 'local/gates/<gate name>'. This function\n\
-  allows to query a resource defined by the '@gate' decorator by a reference\n\
-  to the decorated function.
-  """
-  # ~ print ("### GetRateRc (" + func.__name__ + "): _gatesDict = " + str (_gatesDict))
-  return _gatesDict[func.__name__]
 
 
 
@@ -713,9 +807,9 @@ def at (t = 0, dt = 0, args = None):
   This decorator allows to execute a function at given times\n\
   as follows:\n\
   \n\
-      @at ( t = <t> [, dt = <interval>] [, args = <args>] )\n\
-      def MyTimedFunc ( [<args>] ):\n\
-        ...\n\
+  |   @at ( t = <t> [, dt = <interval>] [, args = <args>] )\n\
+  |   def MyTimedFunc ( [<args>] ):\n\
+  |     ...\n\
   \n\
   """
   def _Decorate (func):
@@ -777,9 +871,9 @@ def daily (*hostSet):
   This decorator allows to easily define a function executed daily or whenever
   a host becomes reachable (again) as follows:\n\
   \n\
-      @daily ( [ <host set> ] )\n\
-      def MyFunc (host):\n\
-        ...\n\
+  |   @daily ( [ <host set> ] )\n\
+  |   def MyFunc (host):\n\
+  |     ...\n\
   \n\
   """
   def _Decorate (func):
@@ -789,9 +883,8 @@ def daily (*hostSet):
 
 
 
-## @}   # home2l_rules
-
-%} // %pythoncode
+## @}
+%} // %pythoncode (home2l_rules)
 
 
 
@@ -1261,13 +1354,12 @@ def Home2lStop ():
   #       'NewDriver'. These functions are always called between 'Select' and the next check of 'doStop'.
 
 
-## @} # home2l_general
+## @}
 
-## @} # home2l (Main)
+## @}
 
 
-%}   // %pythoncode
+%}   // %pythoncode (home2l_general, home2l)
 
 
 #endif  // _HOME2L_PYTHON_
-

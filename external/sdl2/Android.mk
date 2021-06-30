@@ -34,8 +34,17 @@ LOCAL_EXPORT_LDLIBS := -Wl,--undefined=Java_org_libsdl_app_SDLActivity_nativeIni
 include $(PREBUILT_STATIC_LIBRARY)
 
 
+#~ # HID API (would be required by SDL2 >= 2.0.9) ...
+#~ include $(CLEAR_VARS)
 
-##### SDL2_ttf #####
+#~ LOCAL_MODULE := hidapi_static
+#~ LOCAL_SRC_FILES += $(LOCAL_PATH)/usr/android/lib/libhidapi.a
+
+#~ include $(PREBUILT_STATIC_LIBRARY)
+
+
+
+##### SDL2_ttf (+ freetype) #####
 
 include $(CLEAR_VARS)
 
@@ -43,3 +52,11 @@ LOCAL_MODULE := SDL2_ttf_static
 LOCAL_SRC_FILES := $(LOCAL_PATH)/usr/android/lib/libSDL2_ttf.a
 
 include $(PREBUILT_STATIC_LIBRARY)
+
+
+#~ include $(CLEAR_VARS)
+
+#~ LOCAL_MODULE := freetype
+#~ LOCAL_SRC_FILES += $(LOCAL_PATH)/usr/android/lib/libfreetype.a
+
+#~ include $(PREBUILT_STATIC_LIBRARY)

@@ -29,7 +29,7 @@
 
 
 struct TAppDesc {
-  const FAppFunc *func;
+  FAppFunc *func;
   const char *enableKey;
   bool enabled;
 };

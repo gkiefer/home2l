@@ -62,39 +62,37 @@ static class CScreenPhone *scrPhone = NULL;
 ENV_PARA_NOVAR ("phone.enable", bool, envPhoneEnable, NULL);
   /* Enable the phone applet
    */
-ENV_PARA_PATH ("phone.linphonerc", envPhoneLinphonerc, NULL);
-  /* Linphone RC file (Linphone backend only)
-   *
-   * With the Linphone backend, all settings not directly accessible by Home2L
-   * settings are made in the (custom) Linphone RC file.
-   */
-ENV_PARA_NOVAR ("phone.register", const char *, envPhoneRegister, NULL);
-  /* Phone registration string
-   */
-ENV_PARA_NOVAR ("phone.secret", const char *, envPhoneSecret, NULL);
-  /* Phone registration password
-   */
+
 ENV_PARA_PATH ("phone.ringFile", envPhoneRingFile, "share/sounds/phone-classic.wav");
   /* Ring tone file
+   */
+ENV_PARA_PATH ("phone.ringFileDoor", envPhoneRingFileDoor, "share/sounds/dingdong-classic.wav");
+  /* Ring tone file for door phones calling
    */
 ENV_PARA_INT ("phone.ringGap", envPhoneRingGap, 2000);
   /* Number of milliseconds to wait between two rings.
    */
 
-ENV_PARA_INT ("phone.rotation", envPhoneRotation, 0);
-  /* Phone video rotation
+ENV_PARA_STRING ("phone.camRegex", envPhoneCamRegex, NULL);
+  /* Regex to decide whether the camera should be enabled for a peer
+   *
+   * For peers matched by this regular expression, the camera is enabled by default.
+   * This may be useful if the WallClock is used for both in-house and external communication.
+   *
+   * By default, the camera is always disabled on start of a call and must be
+   * enabled during the call by pushing the camera icon.
+   *
+   * To always start a call with the camera enabled, enter "." (a single period) here.
    */
-ENV_PARA_NOVAR ("phone.doorRegex", const char *, envPhoneDoorRegex, NULL);
-  /* Regex to decide whether a caller is a door phone
-   */
-ENV_PARA_PATH ("phone.ringFileDoor", envPhoneRingFileDoor, "share/sounds/dingdong-classic.wav");
-  /* Ring tone file for door phones calling
+
+ENV_PARA_STRING ("phone.doorRegex", envPhoneDoorRegex, NULL);
+  /* Regex to decide whether a peer is a door phone
    */
 ENV_PARA_STRING ("phone.openerDtmf", envPhoneOpenerDtmf, NULL);
   /* DTMF sequence to send if the opener button is pushed
    */
 ENV_PARA_STRING ("phone.openerRc", envPhoneOpenerRc, NULL);
-  /* Resource (type 'bool') to activat if the opener button is pushed
+  /* Resource (type 'bool') to activate if the opener button is pushed
    */
 ENV_PARA_INT ("phone.openerDuration", envPhoneOpenerDuration, 1000);
   /* Duration of the opener signal
@@ -122,6 +120,23 @@ ENV_PARA_SPECIAL ("phone.fav<n>", const char *, NULL);
 // ***************** CWidgetVideo **************************
 
 
+static Uint32 SdlPixelFormatOf (EPhoneVideoFormat x) {
+  switch (x) {
+    case pvfABGR8888: return SDL_PIXELFORMAT_ABGR8888;
+    case pvfBGR24:    return SDL_PIXELFORMAT_BGR24;
+    case pvfARGB8888: return SDL_PIXELFORMAT_ARGB8888;
+    case pvfRGB24:    return SDL_PIXELFORMAT_RGB24;
+    case pvfYUY2:     return SDL_PIXELFORMAT_YUY2;
+    case pvfUYVY:     return SDL_PIXELFORMAT_UYVY;
+    case pvfYVYU:     return SDL_PIXELFORMAT_YVYU;
+    case pvfIYUV:     return SDL_PIXELFORMAT_IYUV;
+    case pvfYV12:     return SDL_PIXELFORMAT_YV12;
+    default: break;
+  }
+  return SDL_PIXELFORMAT_UNKNOWN;
+}
+
+
 class CWidgetVideo: public CWidget {
   public:
     CWidgetVideo () { phone = NULL; streamId = -1;  texVideo = NULL; surfInCall = NULL; }
@@ -133,7 +148,7 @@ class CWidgetVideo: public CWidget {
 
     void Iterate ();
 
-    virtual SDL_Texture *GetTexture () { return texVideo; }
+    virtual void Render (SDL_Renderer *ren);
 
   protected:
     CPhone *phone;
@@ -164,6 +179,7 @@ void CWidgetVideo::Iterate () {
   TPhoneVideoFrame *p;
   SDL_Rect r;
   int texW, texH;
+  Uint32 texFormat;
 
   // Lock video and obtain picture...
   p = phone->VideoLockFrame (streamId);
@@ -173,8 +189,8 @@ void CWidgetVideo::Iterate () {
 
     // Check if the texture format is outdated...
     if (texVideo) {
-      SDL_QueryTexture (texVideo, NULL, NULL, &texW, &texH);
-      if (p->w != texW || p->h != texH) {
+      SDL_QueryTexture (texVideo, &texFormat, NULL, &texW, &texH);
+      if (SdlPixelFormatOf (p->format) != texFormat || p->w != texW || p->h != texH) {
         // Format changed -> need to recreate the texture...
         SDL_DestroyTexture (texVideo);
         texVideo = NULL;
@@ -183,15 +199,19 @@ void CWidgetVideo::Iterate () {
 
     // Create texture object (again) if necessary...
     if (!texVideo) {
-      texVideo = SDL_CreateTexture (UiGetSdlRenderer (),
-                    SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STATIC, p->w, p->h);
+      texFormat = SdlPixelFormatOf (p->format);
+      texW = p->w;
+      texH = p->h;
+      texVideo = SDL_CreateTexture (
+                    UiGetSdlRenderer (),
+                    texFormat,
+                    SDL_TEXTUREACCESS_STATIC,
+                    texW, texH);
         // Texture parameters taken from https://forums.libsdl.org/viewtopic.php?t=9898, "SDL 2.0 and ffmpeg. How to render texture in new version."
       if (!texVideo)
         ERRORF(("'SDL_CreateTexture' failed for video texture: %s", SDL_GetError ()));
       SDL_SetTextureBlendMode (texVideo, SDL_BLENDMODE_NONE);
-      DEBUGF (1, ("Received resolution of view #%i: %i x %i pixels.\n", streamId, p->w, p->h));
-      texW = p->w;
-      texH = p->h;
+      DEBUGF (1, ("Received format of view #%i: %s, %i x %i pixels.\n", streamId, StrPhoneVideoFormat (p->format), texW, texH));
 
       // Calculate actual area...
       r = maxArea;
@@ -209,12 +229,20 @@ void CWidgetVideo::Iterate () {
     }
 
     // Update the texture...
-    if (SDL_UpdateYUVTexture (texVideo, NULL, p->planeY, p->pitchY, p->planeU, p->pitchU, p->planeV, p->pitchV) != 0)
-      ERRORF(("'SDL_UpdateYUVTexture' failed: %s", SDL_GetError ()));
+    if (p->data) {
+      if (SDL_UpdateTexture (texVideo, NULL, p->data, p->pitch) != 0)
+        ERRORF(("'SDL_UpdateTexture' failed: %s", SDL_GetError ()));
+    }
+    else if (p->planeY) {
+      if (SDL_UpdateYUVTexture (texVideo, NULL, p->planeY, p->pitchY, p->planeU, p->pitchU, p->planeV, p->pitchV) != 0)
+        ERRORF(("'SDL_UpdateYUVTexture' failed: %s", SDL_GetError ()));
+    }
 
     // Trigger drawing...
-    Changed ();
-    missingVideoTime = TicksMonotonicNow ();
+    if (p->data || p->planeY) {
+      Changed ();
+      missingVideoTime = TicksMonotonicNow ();
+    }
   }
   else {
 
@@ -237,7 +265,7 @@ void CWidgetVideo::Iterate () {
         RectCenter (&r, maxArea);
         SetArea (r);
         texVideo = SDL_CreateTextureFromSurface (UiGetSdlRenderer (), surfInCall);
-        SDL_SetTextureBlendMode (texture, SDL_BLENDMODE_NONE);
+        SDL_SetTextureBlendMode (texVideo, SDL_BLENDMODE_NONE);
         Changed ();
       }
     }
@@ -245,6 +273,19 @@ void CWidgetVideo::Iterate () {
 
   // Unlock picture mutex...
   phone->VideoUnlock ();
+}
+
+
+void CWidgetVideo::Render (SDL_Renderer *ren) {
+  SDL_Rect r;
+
+  if (ren && texVideo) {
+    GetRenderArea (&r);
+    if (streamId == 1)    // Self display: mirror ...
+      SDL_RenderCopyEx (ren, texVideo, NULL, &r, 0.0, NULL, SDL_FLIP_HORIZONTAL);
+    else                  // Default ...
+      SDL_RenderCopy (ren, texVideo, NULL, &r);
+  }
 }
 
 
@@ -293,7 +334,7 @@ class CScreenPhone: public CScreen {
     void OnFavButton (int favId);
 
     // High-level actions...
-    bool Dial (const char *url, CScreen *_returnScreen = NULL) { returnScreen = _returnScreen; return phone.Dial (url); }
+    bool Dial (const char *url, CScreen *_returnScreen = NULL);
 
   protected:
     void SetMicOn (bool on);
@@ -331,7 +372,7 @@ class CScreenPhone: public CScreen {
     CWidgetVideo wdgVideoMain, wdgVideoSmall;
 
     // Door-related...
-    CRegex doorRegex;
+    CRegex camRegex, doorRegex;
     bool peerIsDoor;    // set, if the peer has been identified as a door phone
     bool openDoor;      // if set, the "open door" sequence is in progress
     TTicks tHangup;     // time for auto-hangup (-1 = no auto-hangup)
@@ -407,17 +448,16 @@ void CScreenPhone::Setup () {
   //~ INFOF (("### tmpDir = '%s'", tmpDir.Get ()));
   EnvMkTmpDir (tmpDir.Get ());
   phone.Setup (
-      EnvExecName (),
+      EnvInstanceName (),
       pmAll,
       envDebug >= 3,
-      tmpDir.Get (),
-      envPhoneLinphonerc
+      tmpDir.Get ()
     );
-  phone.Register (EnvGet (envPhoneRegisterKey), EnvGet (envPhoneSecretKey));
-  phone.SetCamRotation (envPhoneRotation);
+  phone.Register ();
 
   // Read configuration variables...
-  doorRegex.SetPattern (EnvGet (envPhoneDoorRegexKey), REG_EXTENDED | REG_NOSUB);
+  camRegex.SetPattern (envPhoneCamRegex, REG_EXTENDED | REG_NOSUB);
+  doorRegex.SetPattern (envPhoneDoorRegex, REG_EXTENDED | REG_NOSUB);
 
   // Read favorites...
   for (n = 0; n < 10; n++) {
@@ -533,9 +573,6 @@ void CScreenPhone::Setup () {
 
   // Draw Screen...
   OnPhoneStateChanged (psIdle);
-
-  // DEBUG: Print setting...
-  //~ phone.DumpSettings ();
 }
 
 
@@ -689,6 +726,8 @@ void CScreenPhone::OnPhoneStateChanged (EPhoneState oldState) {
         btnDoor.SetArea (layout[3]); AddWidget (&btnDoor);
       }
       free (layout);
+      DEBUGF (1, ("Receiving call from '%s' => camRegex matches: %i", phone.GetPeerUrl (), (int) camRegex.Match (phone.GetPeerUrl ())));
+      SetCamOn (camRegex.Match (phone.GetPeerUrl ()) && !peerIsDoor);
 
       // Blinking image...
       SetImage (IconGet (peerIsDoor ? "phone-ringing-door" : "phone-ringing"), true);
@@ -722,11 +761,10 @@ void CScreenPhone::OnPhoneStateChanged (EPhoneState oldState) {
       SetMicOn (phone.GetMicOn ());
 
       if (!peerIsDoor) {
-        btnCam.SetArea (layout[n++]); AddWidget (&btnCam);
-        SetCamOn (phone.GetCamOn ());
+        btnCam.SetArea (layout[n++]);
+        AddWidget (&btnCam);
       }
-      else
-        SetCamOn (false);       // We do not offer a camera image to the door
+      else SetCamOn (false);       // We do not offer a camera image to the door
 
       btnHangup.SetArea (layout[n++]); AddWidget (&btnHangup);
 
@@ -852,11 +890,10 @@ void CScreenPhone::OnActionButton (EPhoneAction action) {
 
     case paCall:
       SetMicOn (true);
-      SetCamOn (true);
       switch (state) {
         case psIdle:
         case psTransferIdle:
-          phone.Dial (input);
+          Dial (input, returnScreen);
           break;
         case psRinging:
           phone.AcceptCall ();
@@ -929,7 +966,15 @@ void CScreenPhone::OnFavButton (int favId) {
   strncpy (input, favUrls[favId], MAX_URL);
   input[MAX_URL] = '\0';
   UpdateInputLine ();
-  phone.Dial (input);
+  Dial (input, returnScreen);
+}
+
+
+bool CScreenPhone::Dial (const char *url, CScreen *_returnScreen) {
+  returnScreen = _returnScreen;
+  DEBUGF (1, ("Dialing '%s' - camRegex matches: %i", url, (int) camRegex.Match (url)));
+  SetCamOn (camRegex.Match (url) && !doorRegex.Match (url));
+  return phone.Dial (url);
 }
 
 

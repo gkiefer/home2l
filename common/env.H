@@ -321,9 +321,13 @@ static inline void EnvDel (const char *key) { EnvPut (key, (const char *) NULL);
 /// @name Get with type ...
 /// These functions get an environment parameter and convert them to a given type.
 /// For each type, there are two variants:
-/// 1. An advanced function returning the success status and - only on success - writing the result back via a pointer
+/// 1. An advanced function returning the success status and - only on success - writing the result back via a pointer.
 /// 2. A simple function returning that type; On error, the type's default value is returned.
-/// In all variants, a warning is emitted on error or non-existence, if the parameter 'warn' is set.
+/// In all variants, a warning is emitted in case of a syntax error.
+/// If a parameter does not existence, 'false' is returned as a success code, and a warning is emitted if 'warnIfMissing'
+/// is set. Most parameters have reasonable defaults, so that 'warnIfMissing' is set to 'false' by default.
+/// To help with the discovery of typos in parameter keys, all accesses to non-existent parameters are logged
+/// as debug messages of level 1 in @ref EnvGet().
 ///
 /// **Note:** The functions with implicit translation capabilities ('EnvGetPath*' and 'EnvGetHost*') convert
 ///   their strings in place. This means:
@@ -331,36 +335,36 @@ static inline void EnvDel (const char *key) { EnvPut (key, (const char *) NULL);
 ///   2. These functions may only be called from the main thread.
 /// @{
 
-bool EnvGetString (const char *key, const char **ret, bool warn = false);
+bool EnvGetString (const char *key, const char **ret, bool warnIfMissing = false);
   ///< @brief Read a string (advanced variant).
-const char *EnvGetString (const char *key, const char *defaultVal, bool warn = false);
+const char *EnvGetString (const char *key, const char *defaultVal, bool warnIfMissing = false);
   ///< @brief Read a string (simple variant).
-static inline const char *EnvGetString (const char *key, bool warn) { return EnvGetString (key, (const char *) NULL, warn); }
+static inline const char *EnvGetString (const char *key, bool warnIfMissing) { return EnvGetString (key, (const char *) NULL, warnIfMissing); }
   ///< @brief Read a string (simple variant) without default.
 static inline const char *EnvGetString (const char *key) { return EnvGet (key); }
-  ///< @brief Accelerator for 'EnvGetString (key, warn = false)'.
+  ///< @brief Accelerator for 'EnvGetString (key, warnIfMissing = false)'.
 
-bool EnvGetPath (const char *key, const char **ret, const char *path = NULL, bool warn = false);
+bool EnvGetPath (const char *key, const char **ret, const char *path = NULL, bool warnIfMissing = false);
   ///< @brief Read a path, eventually convert value to an absolute path before (advanced).
   /// The returned path is always absolute. Relative paths are interpreted as relative to 'path' or HOME2L_ROOT and made absolute.
-const char *EnvGetPath (const char *key, const char *defaultVal, const char *path = NULL, bool warn = false);
+const char *EnvGetPath (const char *key, const char *defaultVal, const char *path = NULL, bool warnIfMissing = false);
   ///< @brief Read a path, eventually convert value to an absolute path before (simple).
-static inline const char *EnvGetPath (const char *key, const char *path = NULL, bool warn = false) { return EnvGetPath (key, (const char *) NULL, path, warn); }
+static inline const char *EnvGetPath (const char *key, const char *path = NULL, bool warnIfMissing = false) { return EnvGetPath (key, (const char *) NULL, path, warnIfMissing); }
   ///< @brief Read a path (simple variant) without default.
-bool EnvGetHostAndPort (const char *key, CString *retHost, int *retPort = NULL, int defaultPort = 0, bool warn = false);
+bool EnvGetHostAndPort (const char *key, CString *retHost, int *retPort = NULL, int defaultPort = 0, bool warnIfMissing = false);
   ///< @brief Get a host + port combination; host names are translated using the 'net.resolve.\<name\>' settings.
-static inline bool EnvGetHost (const char *key, CString *retHost, bool warn = false) { return EnvGetHostAndPort (key, retHost, NULL, 0, warn); }
+static inline bool EnvGetHost (const char *key, CString *retHost, bool warnIfMissing = false) { return EnvGetHostAndPort (key, retHost, NULL, 0, warnIfMissing); }
   ///< @brief Get a host name; host names are translated using the 'net.resolve.\<name\>' settings.
 
 
-bool EnvGetInt (const char *key, int *ret, bool warn = false);                  ///< Read an integer (advanced).
-int EnvGetInt (const char *key, int defaultVal = 0, bool warn = false);         ///< Read an integer (simple).
+bool EnvGetInt (const char *key, int *ret, bool warnIfMissing = false);                  ///< Read an integer (advanced).
+int EnvGetInt (const char *key, int defaultVal = 0, bool warnIfMissing = false);         ///< Read an integer (simple).
 
-bool EnvGetFloat (const char *key, float *ret, bool warn = false);              ///< Read a float value (advanced).
-float EnvGetFloat (const char *key, float defaultVal = 0.0, bool warn = false); ///< Read a float value (simple).
+bool EnvGetFloat (const char *key, float *ret, bool warnIfMissing = false);              ///< Read a float value (advanced).
+float EnvGetFloat (const char *key, float defaultVal = 0.0, bool warnIfMissing = false); ///< Read a float value (simple).
 
-bool EnvGetBool (const char *key, bool *ret, bool warn = false);                ///< Read a boolean value (advanced).
-bool EnvGetBool (const char *key, bool defaultVal = false, bool warn = false);  ///< Read a boolean value (simple).
+bool EnvGetBool (const char *key, bool *ret, bool warnIfMissing = false);                ///< Read a boolean value (advanced).
+bool EnvGetBool (const char *key, bool defaultVal = false, bool warnIfMissing = false);  ///< Read a boolean value (simple).
 
 /// @}
 

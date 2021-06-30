@@ -213,12 +213,12 @@ static void PinsInit (CRcDriver *drv) {
       }
     }
 
-    // Create GPIO record...
+    // Create resource and GPIO record...
     if (ok) {
       lid.Set (dirEntry->d_name, q - dirEntry->d_name);
       rc = CResource::Register (drv, lid.Get (), rctBool, !isInput);    // [RC:-]
       pin = new CGpioPin (rc, fd, isInput);
-      rc->SetDriverData (pin);
+      rc->SetUserData (pin);
       if (isInput) {
         // Input: Link to local list of pins to be polled...
         pin->next = pinInList;
@@ -249,13 +249,13 @@ static void PinsDone () {
   while (pinInList) {
     pin = pinInList;
     pinInList = pinInList->next;
-    pin->rc->SetDriverData (NULL);
+    pin->rc->SetUserData (NULL);
     delete pin;
   }
   while (pinOutList) {
     pin = pinOutList;
-    pinInList = pinOutList->next;
-    pin->rc->SetDriverData (NULL);
+    pinOutList = pinOutList->next;
+    pin->rc->SetUserData (NULL);
     delete pin;
   }
 }
@@ -281,7 +281,8 @@ HOME2L_DRIVER(gpio) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcVa
       break;
 
     case rcdOpDriveValue:
-      pin = (CGpioPin *) rc->DriverData ();
+      pin = (CGpioPin *) rc->UserData ();
+      ASSERT (pin != NULL);
       pin->DriveValue (vs);
       break;
   }

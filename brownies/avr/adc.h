@@ -28,9 +28,29 @@
 EMPTY_MODULE(Adc)
 #else  // WITH_ADC
 
-#error "ADC module not implemented yet!"
+
+
+// *************************** Interface Calls *********************************
+
+
+void AdcInit ();
+
+#if ADC_PERIOD > 0
+
+void AdcIterate ();
+static inline void AdcOnRegRead (uint8_t reg) {}
+
+#else
+
+static inline void AdcIterate () {}
+void AdcOnRegRead (uint8_t reg);
 
 #endif
 
+static inline void AdcOnRegWrite (uint8_t reg, uint8_t val) {}
+
+
+
+#endif // WITH_ADC
 
 #endif // _ADC_

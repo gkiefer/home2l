@@ -34,8 +34,6 @@
 #include <dirent.h>     // for 'readdir' & friends
 #include <pwd.h>
 
-
-
 #include "env.H"
 
 
@@ -351,20 +349,14 @@ void LogPara (const char *_logHead, const char* _logFile, int _logLine) {
 }
 
 
-void LogPrintf (const char *format, ...) {
-  char buf [1024];
+static void LogPrintLine (const char *buf) {
+  int prio;
 #if ANDROID
   char msg[1024];
 #endif
-  va_list ap;
-  int prio;
-
-  if (logHead[0] == 'D' && !envDebug) return;   // do not output debug messages
-
-  va_start (ap, format);
-  vsnprintf (buf, sizeof(buf), format, ap);
 
 #if ANDROID
+
   switch (logHead[0]) {
     case 'I':
       if (logCbToast)
@@ -388,7 +380,9 @@ void LogPrintf (const char *format, ...) {
       prio = ANDROID_LOG_DEBUG;
   }
   __android_log_print (prio, "home2l", logHead[0] == 'S' ? "%s:%i: SECURITY: %s\n" : "%s:%i: %s\n", logFile, logLine, buf);
-#else
+
+#else //  ANDROID
+
   //~ fprintf (stderr, "%s %s:%i: %s\n", logHead, logFile, logLine, buf);
   if (syslogOpen) {
     switch (logHead[0]) {
@@ -408,9 +402,27 @@ void LogPrintf (const char *format, ...) {
     syslog (prio, "%s%s [%s:%i]\n", logHead[0] == 'S' ? "SECURITY: " : "", buf, logFile, logLine);
   }
   else
-    fprintf (stderr, "%s:%i: [%s] %s: %s\n", logFile, logLine, EnvExecName (), logHead, buf);
+    fprintf (stderr, "[%s] %s (%s:%i): %s\n", EnvExecName (), logHead, logFile, logLine, buf);
   fflush (stderr);
+
 #endif
+}
+
+
+void LogPrintf (const char *format, ...) {
+  static pthread_mutex_t logMutex = PTHREAD_MUTEX_INITIALIZER;
+  static CString logBuf;
+  static CSplitString logLines;
+  va_list ap;
+  int i;
+
+  va_start (ap, format);
+  pthread_mutex_lock (&logMutex);   // we do not care if it fails, which is the best thing to do here
+  logBuf.SetFV (format, ap);
+  logBuf.Split (&logLines, INT_MAX, "\n");
+  for (i = 0; i < logLines.Entries (); i++)
+    LogPrintLine (logLines [i]);
+  pthread_mutex_unlock (&logMutex);
 }
 
 
@@ -744,6 +756,31 @@ const char *StringF (const char *fmt, ...) {
 }
 
 
+bool BoolFromString (const char *str, bool *ret) {
+  static const struct { const char *str; bool val; }
+    lut[] = {
+      { "1",    true }, { "0",     false },
+      { "true", true }, { "false", false },
+      { "on",   true }, { "off",   false },
+      { "yes",  true }, { "no",    false }
+    };
+  int i;
+
+  for (i = 0; i < ENTRIES(lut); i++)
+    if (strcasecmp (str, lut[i].str) == 0) {
+      *ret = lut[i].val;
+      return true;
+    }
+  return false;
+}
+
+
+bool ValidBoolFromString (const char *str, bool defaultVal) {
+  BoolFromString (str, &defaultVal);
+  return defaultVal;
+}
+
+
 bool IntFromString (const char *str, int *ret, int radix) {
   long lRet;
   char *endPtr;
@@ -840,9 +877,9 @@ void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, c
   // Copy and strip...
   buf = strdup (str);
   src = dst = buf;
-  while (src[0] && strchr (WHITESPACE, src[0])) src++;
+  if (sepMerge) while (src[0] && strchr (sepChars, src[0])) src++;
   while (src[0]) *dst++ = *src++;
-  while (dst > buf && strchr (WHITESPACE, dst[-1])) dst--;
+  if (sepMerge) while (dst > buf && strchr (sepChars, dst[-1])) dst--;
   *dst = '\0';
   if (!buf[0]) {      // buffer empty => return empty array
     free (buf);
@@ -858,20 +895,31 @@ void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, c
 
   // Pass 1: Count arguments (= word beginnings)...
   argc = 1;
-  for (c = buf + 1; c[0]; c++)
-    if (c[-1] == sep && (!sepMerge || (c[0] != sep))) argc++;
+  for (c = buf; c[0]; c++)
+    if (c[0] == sep && (!sepMerge || (c[1] != sep))) argc++;
   *retArgc = MIN (argc, maxArgc);
 
   // Pass 2: Write out word beginnings...
   *retArgv = MALLOC (char *, argc);
   (*retArgv) [0] = buf;
   argc = 1;
-  for (c = buf + 1; c[0] && argc < maxArgc; c++)
-    if (c[-1] == sep && (!sepMerge || (c[0] != sep))) (*retArgv) [argc++] = c;
+  for (c = buf; c[0] && argc < maxArgc; c++)
+    if (c[0] == sep && (!sepMerge || (c[1] != sep))) (*retArgv) [argc++] = c + 1;
 
   // Pass 3: Generate terminating null-characters...
-  for (c = buf + 1; c < (*retArgv) [argc-1]; c++)
+  for (c = buf; c < (*retArgv) [argc-1]; c++)
     if (c[0] == sep) c[0] = '\0';
+}
+
+
+void StringSplitFree (char ***argv) {
+  if (argv) {
+    if (*argv) {
+      free (*argv[0]);
+      free (*argv);
+      *argv = NULL;
+    }
+  }
 }
 
 
@@ -1208,6 +1256,7 @@ int CString::RFind (char c) {
 
 
 int CString::Compare (const char *str2) {
+  //~ INFOF (("### Comparing this = '%s' with '%s'.", ptr, str2));
   return strcmp (ptr, str2);
 }
 
@@ -1738,14 +1787,14 @@ TTicks TicksNow () {
 
 
 TTicksMonotonic TicksMonotonicNow () {
-  static int initSeconds = -1;
+  static int initSeconds = INT_MIN;
   struct timespec ts;
   TTicksMonotonic ret;
 
   clock_gettime (CLOCK_MONOTONIC, &ts);
-  if (initSeconds < 0) initSeconds = ts.tv_sec;
+  if (initSeconds == INT_MIN) initSeconds = ts.tv_sec - 1;   // must substract one to ensure that the return value is >0, even for a small 'ts.tv_nsec'
   ret = ( (ts.tv_sec - initSeconds) * 1000) + ts.tv_nsec / 1000000;
-  ASSERT (ret > 0);
+  ASSERT (ret > 0);   // 0 and negativ values may be interpreted as special values
   return ret;
 }
 
@@ -2383,7 +2432,7 @@ CMutex::CMutex () {
 
 
 CMutex::~CMutex () {
-   pthread_mutex_destroy(&mutex);
+   pthread_mutex_destroy (&mutex);
 }
 
 
@@ -2879,6 +2928,12 @@ bool CShellBare::ReadLine (CString *str) {
   }
   readBufMayContainLine = false;
   return false;
+}
+
+
+void CShellBare::SetHost (const char *_host) {
+  host.Clear ();
+  if (_host) EnvNetResolve (_host, &host);
 }
 
 

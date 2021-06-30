@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -128,6 +128,14 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaf0683c3ae569efb795598e64806dab48">StringF</a> (const char *fmt,...)</td></tr>
 <tr class="memdesc:gaf0683c3ae569efb795598e64806dab48"><td class="mdescLeft">&#160;</td><td class="mdescRight">(TTS) Create a formatted string (linke <code>sprinf()</code>, but with inlimited length). Returned pointer is valid until the next TTS usage. <br /></td></tr>
 <tr class="separator:gaf0683c3ae569efb795598e64806dab48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga64fd14280479b0e9975c9c11b66e3835"><td class="memItemLeft" align="right" valign="top"><a id="ga64fd14280479b0e9975c9c11b66e3835"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga64fd14280479b0e9975c9c11b66e3835">BoolFromString</a> (const char *str, bool *ret)</td></tr>
+<tr class="memdesc:ga64fd14280479b0e9975c9c11b66e3835"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a Boolean value. On success, '*ret' is set accordingly and 'true' is returned. On failure, 'false' is returned and '*ret' remains unchanged. <br /></td></tr>
+<tr class="separator:ga64fd14280479b0e9975c9c11b66e3835"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa9577bb8af7283602da10ce5d4d7b432"><td class="memItemLeft" align="right" valign="top"><a id="gaa9577bb8af7283602da10ce5d4d7b432"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaa9577bb8af7283602da10ce5d4d7b432">ValidBoolFromString</a> (const char *str, bool defaultVal)</td></tr>
+<tr class="memdesc:gaa9577bb8af7283602da10ce5d4d7b432"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to a Boolean value. On failure, 'defaultVal' is returned. <br /></td></tr>
+<tr class="separator:gaa9577bb8af7283602da10ce5d4d7b432"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gadecde891c6c5670fbec5182208e3f626"><td class="memItemLeft" align="right" valign="top"><a id="gadecde891c6c5670fbec5182208e3f626"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gadecde891c6c5670fbec5182208e3f626">IntFromString</a> (const char *str, int *ret, int radix=0)</td></tr>
 <tr class="memdesc:gadecde891c6c5670fbec5182208e3f626"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a string to an integer using 'strtol'. On success, '*ret' is set accordingly and 'true' is returned. On failure, 'false' is returned and '*ret' remains unchanged. If 'radix == 0', it is auto-detected from the string (16 with a preceeding "0x", 10 otherwise). <br /></td></tr>
@@ -159,6 +167,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="grou
 <tr class="memitem:ga53187daef823121298c2f01c5bdf040d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d">StringSplit</a> (const char *str, int *retArgc, char ***retArgv, int maxArgc=INT_MAX, const char *sepChars=NULL, char **retRef=NULL)</td></tr>
 <tr class="memdesc:ga53187daef823121298c2f01c5bdf040d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split a string into (whitespace-)separated arguments.  <a href="#ga53187daef823121298c2f01c5bdf040d">More...</a><br /></td></tr>
 <tr class="separator:ga53187daef823121298c2f01c5bdf040d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaaaaed1d11d22544b31624093745ff4d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gaaaaed1d11d22544b31624093745ff4d9">StringSplitFree</a> (char ***argv)</td></tr>
+<tr class="memdesc:gaaaaed1d11d22544b31624093745ff4d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory allocated by <a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d" title="Split a string into (whitespace-)separated arguments. ">StringSplit()</a>.  <a href="#gaaaaed1d11d22544b31624093745ff4d9">More...</a><br /></td></tr>
+<tr class="separator:gaaaaed1d11d22544b31624093745ff4d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac7fd872b1a286c4b50db018851e1d48f"><td class="memItemLeft" align="right" valign="top"><a id="gac7fd872b1a286c4b50db018851e1d48f"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__strings.html#gac7fd872b1a286c4b50db018851e1d48f">CharIsWhiteSpace</a> (char c)</td></tr>
 <tr class="memdesc:gac7fd872b1a286c4b50db018851e1d48f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicate whether the given character is white space (see WHITSPACE). <br /></td></tr>
@@ -251,7 +262,33 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <p>Split a string into (whitespace-)separated arguments. </p>
 <p>The number of extracted words is written to <code>*retArgc</code>, an array of that size is returned via <code>***retArgv</code>. If <code>maxArgc-1</code> strings have been split, the complete remaining string is returned as argument #<code>(maxArgc-1)</code>.</p>
 <p>If <code>sepChars == NULL</code>, whitespace characters are used as separators, and multiple of them count as a single separation. In all other cases, each individual separation character splits up a new argument, so that empty arguments are possible.</p>
-<p>The resulting (sub-)strings will be placed into a single chunk of heap-allocated memory. The caller must later (only) free <code>**retArgv[0]</code> and <code>*retArgv</code>. <code>str</code> remains unchanged and owned by the caller. If 'retRef' is not NULL, a reference pointer is returned by which the caller can determine the original location of some argument or character. <em>To avoid confusion about memory handling, it is recommended to use the class <code><a class="el" href="classCSplitString.html" title="Factory class to split a string into substrings. ">CSplitString</a></code> instead of this function.</em> </p>
+<p>The resulting (sub-)strings will be placed into a single chunk of heap-allocated memory. The caller must later (only) free <code>*retArgv[0]</code> and <code>*retArgv</code> or call <a class="el" href="group__common__strings.html#gaaaaed1d11d22544b31624093745ff4d9" title="Free memory allocated by StringSplit(). ">StringSplitFree()</a> on <code>retArgv</code>. <code>str</code> remains unchanged and owned by the caller. If 'retRef' is not NULL, a reference pointer is returned by which the caller can determine the original location of some argument or character. <em>To avoid confusion about memory handling, it is recommended to use the class <code><a class="el" href="classCSplitString.html" title="Factory class to split a string into substrings. ">CSplitString</a></code> instead of this function.</em> </p>
+
+</div>
+</div>
+<a id="gaaaaed1d11d22544b31624093745ff4d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaaaaed1d11d22544b31624093745ff4d9">&#9670;&nbsp;</a></span>StringSplitFree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void StringSplitFree </td>
+          <td>(</td>
+          <td class="paramtype">char ***&#160;</td>
+          <td class="paramname"><em>argv</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Free memory allocated by <a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d" title="Split a string into (whitespace-)separated arguments. ">StringSplit()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">argv</td><td>is the argument <code>regArgv</code> passed to <a class="el" href="group__common__strings.html#ga53187daef823121298c2f01c5bdf040d" title="Split a string into (whitespace-)separated arguments. ">StringSplit()</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

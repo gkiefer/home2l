@@ -133,7 +133,7 @@ bool CMpdMonitor::CheckError () {
 
 void CMpdMonitor::Iterate () {
   ERctPlayerState playerState;
-  const struct mpd_status *mpdStatus;
+  struct mpd_status *mpdStatus;
 
   // Open/close as requested by the keeper ...
   if (keeper.OpenAttemptNow ()) {
@@ -156,7 +156,7 @@ void CMpdMonitor::Iterate () {
     keeper.ReportClosed ();
   }
 
-  // Query and report player state ...
+  // Query MPD status ...
   mpdStatus = NULL;
   if (keeper.IsOpen ()) {
     mpdStatus = mpd_run_status (mpdConnection);
@@ -166,6 +166,7 @@ void CMpdMonitor::Iterate () {
     }
   }
 
+  // Report player state ...
   if (mpdStatus) {
     switch (mpd_status_get_state (mpdStatus)) {
       case MPD_STATE_PLAY:  playerState = rcvPlayerPlaying; break;
@@ -187,6 +188,9 @@ void CMpdMonitor::Iterate () {
     }
     else tStopPause = NEVER;
   }
+
+  // Cleanup ...
+  if (mpdStatus) mpd_status_free (mpdStatus);
 }
 
 

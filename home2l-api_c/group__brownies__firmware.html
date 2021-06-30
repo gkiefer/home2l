@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -307,7 +307,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="g
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Interface Functions of the "core" Module ...</h2></td></tr>
-<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp037bedce4c14657f1270e4c1c70cacbd"></a>The feature modules (e.g. gpio.[hc], shades.[hc]) have a common set of interface functions. These are the functions for the core functionality which is seen as a pseudo-module "core" here.</p>
+<tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp037bedce4c14657f1270e4c1c70cacbd"></a>The feature modules (e.g. gpio.[hc], shades.[hc]) have a common set of interface functions. The following functions are the interface for the pseudo-module "core", which implements some core functionality.</p>
 <p><b>If you are developing a feature module: Never call these functions directly. they are only documented here in order to document the general module interface functions.</b> </p>
 </td></tr>
 <tr class="memitem:ga44a86a1ce71dc1cf546b9ad44e27ec33"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__firmware.html#ga44a86a1ce71dc1cf546b9ad44e27ec33">CoreInit</a> ()</td></tr>
@@ -475,7 +475,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="g
 
 <p>Update a register when it is read. </p>
 <p>The ...OnRegRegRead() functions are called whenever the <em>Brownie</em> has received a "register read" request just before it is answered. The function must check if 'reg' references a register maintained by this module and may then update the register content. For example, the GPIO module reads the GPIO inputs then.</p>
-<p>This function handles reads from the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register (i.e. </p>
+<p>This function handles reads from the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register (i.e. auto-resets it on read) and reads from the timer registers (i.e. latches the 16-bit time value on access to <a class="el" href="group__brownies__interface__registers.html#ga5e0304db8ce018e5817b3a3fecdcd0ad">BR_REG_TICKS_LO</a>). </p>
 
 </div>
 </div>
@@ -506,7 +506,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="g
 </div><div class="memdoc">
 
 <p>Write a register. </p>
-<p>auto-resets it on read) and reads from the timer registers (i.e. latches the 16-bit time value on access to <a class="el" href="group__brownies__interface__registers.html#ga5e0304db8ce018e5817b3a3fecdcd0ad">BR_REG_TICKS_LO</a>).The ...OnRegRegWrite() functions are called whenever the <em>Brownie</em> has received a "register write" request. The function must check, if 'reg' references a register maintained by this module and perform the repective action. Also, the passed value must be written into the respective register.</p>
+<p>The ...OnRegRegWrite() functions are called whenever the <em>Brownie</em> has received a "register write" request. The function must check, if 'reg' references a register maintained by this module and perform the repective action. Also, the passed value must be written into the respective register.</p>
 <p>This function handles writes to the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register. </p>
 
 </div>

@@ -1,6 +1,24 @@
+#~ LOCAL_PATH := $(call my-dir)
+
+#~ HIDAPI_ROOT_ABS:= $(LOCAL_PATH)/../../src/SDL2/src/hidapi/android
+
+
 ##### SDL2 #####
 
 include ../../src/SDL2/Android.mk
+
+
+# Create a static version of the HID API (would be required by SDL2 >= 2.0.9) ...
+include $(CLEAR_VARS)
+
+LOCAL_CPPFLAGS += -std=c++11
+
+LOCAL_SRC_FILES := $(HIDAPI_ROOT_ABS)/hid.cpp
+
+LOCAL_MODULE := hidapi_static
+LOCAL_MODULE_FILENAME := libhidapi
+
+include $(BUILD_STATIC_LIBRARY)
 
 
 

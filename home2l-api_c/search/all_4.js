@@ -1,7 +1,7 @@
 var searchData=
 [
   ['date_20and_20time',['Date and Time',['../group__common__datetime.html',1,'']]],
-  ['data',['data',['../structSBrRequest.html#aacccff1ade335508ef0dd65bbac074dc',1,'SBrRequest::data()'],['../structSBrReply.html#a83600982b68422f54a4a12d519acb5c5',1,'SBrReply::data()'],['../classCListboxItem.html#a911481690e6bf833ff83e43d8faabe99',1,'CListboxItem::data()']]],
+  ['data',['data',['../structTPhoneVideoFrame.html#a95676865688cc3d09cc9e8ffd1ba1158',1,'TPhoneVideoFrame::data()'],['../structSBrRequest.html#aacccff1ade335508ef0dd65bbac074dc',1,'SBrRequest::data()'],['../structSBrReply.html#a83600982b68422f54a4a12d519acb5c5',1,'SBrReply::data()'],['../classCListboxItem.html#a911481690e6bf833ff83e43d8faabe99',1,'CListboxItem::data()']]],
   ['databasestring',['DatabaseString',['../classCBrownie.html#a6feebcccb42afdc63336ff68579d2b0a',1,'CBrownie']]],
   ['datacheck',['dataCheck',['../structSBrReply.html#ad68f05fd455a44acb539ce491108a336',1,'SBrReply']]],
   ['dayname',['DayName',['../group__common__datetime.html#ga4d2e08daee44dfa520b65c24ab146c71',1,'base.H']]],
@@ -18,7 +18,6 @@ var searchData=
   ['doopen',['DoOpen',['../classCServiceKeeper.html#a2955e2ad88596cbbb66f75702ceaf438',1,'CServiceKeeper']]],
   ['drivevalue',['DriveValue',['../classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2',1,'CRcDriver::DriveValue()'],['../classCRcEventDriver.html#a20a39acbd142e14a0c0a36dfe3227ab1',1,'CRcEventDriver::DriveValue()']]],
   ['dump',['Dump',['../classCDictRaw.html#a4f3263da53f2f5cd5f7470a4a0e1bec6',1,'CDictRaw']]],
-  ['dumpsettings',['DumpSettings',['../classCPhone.html#abe040d1a5f71a5a9b9654094f6a7246b',1,'CPhone']]],
   ['declaration',['Declaration',['../group__env__declaration.html',1,'']]],
   ['dynamic_20settings',['Dynamic Settings',['../group__env__dictionary.html',1,'']]],
   ['directory_20services',['Directory Services',['../group__resources__directory.html',1,'']]],

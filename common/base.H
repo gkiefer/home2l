@@ -90,9 +90,9 @@
 /// @name Atomic read and write operations ...
 ///   (presently GCC-specific)
 /// @{
-#define ATOMIC_READ(PTR) __sync_fetch_and_add (&(PTR), 0)
-#define ATOMIC_WRITE(PTR, VAL) __sync_bool_compare_and_swap (&(PTR), PTR, VAL)
-#define ATOMIC_INC(PTR, N) __sync_fetch_and_add ((&PTR), (N))
+#define ATOMIC_READ(OBJ)        __atomic_load_n (&(OBJ), __ATOMIC_RELAXED)
+#define ATOMIC_WRITE(OBJ, VAL)  __atomic_store_n (&(OBJ), VAL, __ATOMIC_RELAXED)
+#define ATOMIC_INC(OBJ, N)      __atomic_exchange_n (&(OBJ), (OBJ) + (N), __ATOMIC_RELAXED)
 /// @}
 
 
@@ -207,7 +207,7 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
 
 
 #if WITH_DEBUG == 1
-#define DEBUG(LEVEL, MSG) do { if (envDebug >= LEVEL) { LogPara ("DEBUG", __FILE__, __LINE__); LogPrintf (MSG); } } while (0)
+#define DEBUG(LEVEL, MSG) do { if (envDebug >= LEVEL) { LogPara ("DEBUG-" #LEVEL, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)
   ///< @brief Print a debug message.
   /// This is only effective if the tool was compiled with WITH_DEBUG == 1 and the
   /// configuration parameter 'debug' is set to a value > 0.
@@ -218,7 +218,7 @@ void LogPrintf (const char *format, ...);     // Helper only; use the following 
   /// - 3: Details: Network conversation (Resources), debug output of underlying libs (ALSA, GStreamer, PJSIP, Linphone)
   ///
   /// Messages of level 3 or more must have a topic-related prefix "[<topic>]" to allow later filtering,
-#define DEBUGF(LEVEL, FMT) do { if (envDebug >= LEVEL) { LogPara ("DEBUG", __FILE__, __LINE__); LogPrintf FMT; } } while (0)
+#define DEBUGF(LEVEL, FMT) do { if (envDebug >= LEVEL) { LogPara ("DEBUG-" #LEVEL, __FILE__, __LINE__); LogPrintf FMT; } } while (0)
   ///< @brief Print a formatted debug message.
   /// The argument must contain a parantheses with arguments, which will then be
   /// passed to a printf() function variant. For example:
@@ -512,6 +512,13 @@ const char *StringF (const char *fmt, ...);
   ///< @brief (TTS) Create a formatted string (linke `sprinf()`, but with inlimited length).
   /// Returned pointer is valid until the next TTS usage.
 
+
+bool BoolFromString (const char *str, bool *ret);
+  ///< @brief Convert a string to a Boolean value.
+  /// On success, '*ret' is set accordingly and 'true' is returned.
+  /// On failure, 'false' is returned and '*ret' remains unchanged.
+bool ValidBoolFromString (const char *str, bool defaultVal);
+  ///< @brief Convert a string to a Boolean value. On failure, 'defaultVal' is returned.
 bool IntFromString (const char *str, int *ret, int radix = 0);
   ///< @brief Convert a string to an integer using 'strtol'. On success, '*ret' is set accordingly and 'true' is returned.
   /// On failure, 'false' is returned and '*ret' remains unchanged.
@@ -546,13 +553,17 @@ void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc = 
   /// character splits up a new argument, so that empty arguments are possible.
   ///
   /// The resulting (sub-)strings will be placed into a single chunk of heap-allocated
-  /// memory. The caller must later (only) free `**retArgv[0]` and `*retArgv`.
+  /// memory. The caller must later (only) free `*retArgv[0]` and `*retArgv` or
+  /// call StringSplitFree() on `retArgv`.
   /// `str` remains unchanged and owned by the caller.
   /// If 'retRef' is not NULL, a reference pointer is returned by which the caller
   /// can determine the original location of some argument or character.
   /// *To avoid confusion about memory handling, it is recommended to use the
   /// class `CSplitString` instead of this function.*
   ///
+void StringSplitFree (char ***argv);
+  ///< @brief Free memory allocated by StringSplit().
+  /// @param argv is the argument `regArgv` passed to StringSplit().
 
 bool CharIsWhiteSpace (char c);
   ///< @brief Indicate whether the given character is white space (see WHITSPACE).
@@ -851,6 +862,8 @@ class CRegex {
       ///   `REG_NOTEOL`: The match-end-of-line operator always fails
       /// @param maxMatches At most this many matches are returned
       /// @param retMatchList If not `NULL`, the list of matches is written into `*retMatchList` (see `regexp(3)`)
+      /// @return `true` if and only if the regular expression matched. If no pattern has been set before,
+      ///   `false` is returned.
 
     /// @name Error handling ...
     bool IsValid () { return reValid; }
@@ -1199,7 +1212,9 @@ static inline bool TicksRelFromString (const char *str, TTicks *ret) { return Ti
 void TicksMonotonicToStructTimeval (TTicksMonotonic t, struct timeval *retTv);
 
 #define TICKS_FROM_SECONDS(S) (((TTicks) (S)) * 1000)         ///< Convert seconds (integer!) to ticks
-#define SECONDS_FROM_TICKS(T) (((TTicks) (T) + 500) / 1000)   ///< Convert seconds (integer!) to ticks
+#define SECONDS_FROM_TICKS(T) (((TTicks) (T) + 500) / 1000)   ///< Convert ticks to seconds
+#define TICKS_FROM_MILLIS(MS) ((TTicks) (MS))                 ///< Convert milliseconds (integer!) to ticks
+#define MILLIS_FROM_TICKS(T)  ((int) (T))                     ///< Convert ticks to milliseconds
 
 /// @}
 
@@ -1775,7 +1790,7 @@ class CShellBare: public CShell {
 
     /// @name Extra features...
     /// @{
-    void SetHost (const char *_host) { host.Set (_host); }
+    void SetHost (const char *_host);
       ///< @brief Set host to run subsequent commands on; 'NULL' represents the local host.
     const char *Host () { return host; }
     void SetNewProcessGroup (bool on = true) { newProcessGroup = on; }

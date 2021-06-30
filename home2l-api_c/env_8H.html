@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -273,74 +273,74 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 <tr class="separator:gac5c35670bde6265de45bc2d852290ead"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Get with type ...</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>These functions get an environment parameter and convert them to a given type. For each type, there are two variants:</p><ol type="1">
-<li>An advanced function returning the success status and - only on success - writing the result back via a pointer</li>
-<li>A simple function returning that type; On error, the type's default value is returned. In all variants, a warning is emitted on error or non-existence, if the parameter 'warn' is set.</li>
+<li>An advanced function returning the success status and - only on success - writing the result back via a pointer.</li>
+<li>A simple function returning that type; On error, the type's default value is returned. In all variants, a warning is emitted in case of a syntax error. If a parameter does not existence, 'false' is returned as a success code, and a warning is emitted if 'warnIfMissing' is set. Most parameters have reasonable defaults, so that 'warnIfMissing' is set to 'false' by default. To help with the discovery of typos in parameter keys, all accesses to non-existent parameters are logged as debug messages of level 1 in <a class="el" href="group__env__dictionary.html#ga5b22e8c1afd51a0f2f885e0ce244cc5b">EnvGet()</a>.</li>
 </ol>
 <p><b>Note:</b> The functions with implicit translation capabilities ('EnvGetPath*' and 'EnvGetHost*') convert their strings in place. This means:</p><ol type="1">
 <li>Later retrievals by <a class="el" href="group__env__dictionary.html#ga5b22e8c1afd51a0f2f885e0ce244cc5b" title="Generically read a setting; Returns &#39;NULL&#39; on non-existence and never prints warnings. ">EnvGet()</a> will return the absolute path, not the original string, e.g. from the configuration file.</li>
 <li>These functions may only be called from the main thread. </li>
 </ol>
 </div></td></tr>
-<tr class="memitem:gac5057cce49d750b13570b5d20eb2f3aa"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gac5057cce49d750b13570b5d20eb2f3aa">EnvGetString</a> (const char *key, const char **ret, bool warn=false)</td></tr>
-<tr class="memdesc:gac5057cce49d750b13570b5d20eb2f3aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string (advanced variant). <br /></td></tr>
-<tr class="separator:gac5057cce49d750b13570b5d20eb2f3aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga278a4b3702e647210749ac8a1f45d28d"><td class="memItemLeft" align="right" valign="top">
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga278a4b3702e647210749ac8a1f45d28d">EnvGetString</a> (const char *key, const char *defaultVal, bool warn=false)</td></tr>
-<tr class="memdesc:ga278a4b3702e647210749ac8a1f45d28d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string (simple variant). <br /></td></tr>
-<tr class="separator:ga278a4b3702e647210749ac8a1f45d28d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga9f1dfa085e479041415676edba25a786"><td class="memItemLeft" align="right" valign="top">
-static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga9f1dfa085e479041415676edba25a786">EnvGetString</a> (const char *key, bool warn)</td></tr>
-<tr class="memdesc:ga9f1dfa085e479041415676edba25a786"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string (simple variant) without default. <br /></td></tr>
-<tr class="separator:ga9f1dfa085e479041415676edba25a786"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga299864dc670630ce9b9607fc399af024"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga299864dc670630ce9b9607fc399af024">EnvGetString</a> (const char *key, const char **ret, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga299864dc670630ce9b9607fc399af024"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string (advanced variant). <br /></td></tr>
+<tr class="separator:ga299864dc670630ce9b9607fc399af024"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaefdadf66ab0eef0a0993c25d8334a8f2"><td class="memItemLeft" align="right" valign="top">
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gaefdadf66ab0eef0a0993c25d8334a8f2">EnvGetString</a> (const char *key, const char *defaultVal, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:gaefdadf66ab0eef0a0993c25d8334a8f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string (simple variant). <br /></td></tr>
+<tr class="separator:gaefdadf66ab0eef0a0993c25d8334a8f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae6a58e4d2db32e59ac311cf7fa1a9989"><td class="memItemLeft" align="right" valign="top">
+static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gae6a58e4d2db32e59ac311cf7fa1a9989">EnvGetString</a> (const char *key, bool warnIfMissing)</td></tr>
+<tr class="memdesc:gae6a58e4d2db32e59ac311cf7fa1a9989"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a string (simple variant) without default. <br /></td></tr>
+<tr class="separator:gae6a58e4d2db32e59ac311cf7fa1a9989"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga168e4ef20fbb560941ec1435da2ed8aa"><td class="memItemLeft" align="right" valign="top">
 static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga168e4ef20fbb560941ec1435da2ed8aa">EnvGetString</a> (const char *key)</td></tr>
-<tr class="memdesc:ga168e4ef20fbb560941ec1435da2ed8aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accelerator for 'EnvGetString (key, warn = false)'. <br /></td></tr>
+<tr class="memdesc:ga168e4ef20fbb560941ec1435da2ed8aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accelerator for 'EnvGetString (key, warnIfMissing = false)'. <br /></td></tr>
 <tr class="separator:ga168e4ef20fbb560941ec1435da2ed8aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadccdfe669dd32e4557899beafe8964fb"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gadccdfe669dd32e4557899beafe8964fb">EnvGetPath</a> (const char *key, const char **ret, const char *path=NULL, bool warn=false)</td></tr>
-<tr class="memdesc:gadccdfe669dd32e4557899beafe8964fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a path, eventually convert value to an absolute path before (advanced). The returned path is always absolute. Relative paths are interpreted as relative to 'path' or HOME2L_ROOT and made absolute. <br /></td></tr>
-<tr class="separator:gadccdfe669dd32e4557899beafe8964fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7ba229f22bf3d20d5dd50d27f9591b16"><td class="memItemLeft" align="right" valign="top">
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga7ba229f22bf3d20d5dd50d27f9591b16">EnvGetPath</a> (const char *key, const char *defaultVal, const char *path=NULL, bool warn=false)</td></tr>
-<tr class="memdesc:ga7ba229f22bf3d20d5dd50d27f9591b16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a path, eventually convert value to an absolute path before (simple). <br /></td></tr>
-<tr class="separator:ga7ba229f22bf3d20d5dd50d27f9591b16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gab40f7d2d3d1ac9c87efbf6dcddb8fde1"><td class="memItemLeft" align="right" valign="top">
-static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gab40f7d2d3d1ac9c87efbf6dcddb8fde1">EnvGetPath</a> (const char *key, const char *path=NULL, bool warn=false)</td></tr>
-<tr class="memdesc:gab40f7d2d3d1ac9c87efbf6dcddb8fde1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a path (simple variant) without default. <br /></td></tr>
-<tr class="separator:gab40f7d2d3d1ac9c87efbf6dcddb8fde1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga3ad2eb954af0e5633b23ed962a8db7eb"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga3ad2eb954af0e5633b23ed962a8db7eb">EnvGetHostAndPort</a> (const char *key, <a class="el" href="classCString.html">CString</a> *retHost, int *retPort=NULL, int defaultPort=0, bool warn=false)</td></tr>
-<tr class="memdesc:ga3ad2eb954af0e5633b23ed962a8db7eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a host + port combination; host names are translated using the 'net.resolve.&lt;name&gt;' settings. <br /></td></tr>
-<tr class="separator:ga3ad2eb954af0e5633b23ed962a8db7eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga01b508d0a7755e66f622b4844870b916"><td class="memItemLeft" align="right" valign="top">
-static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga01b508d0a7755e66f622b4844870b916">EnvGetHost</a> (const char *key, <a class="el" href="classCString.html">CString</a> *retHost, bool warn=false)</td></tr>
-<tr class="memdesc:ga01b508d0a7755e66f622b4844870b916"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a host name; host names are translated using the 'net.resolve.&lt;name&gt;' settings. <br /></td></tr>
-<tr class="separator:ga01b508d0a7755e66f622b4844870b916"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga58a6548d2ef1237cd2c68d0eafbae0be"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga58a6548d2ef1237cd2c68d0eafbae0be">EnvGetInt</a> (const char *key, int *ret, bool warn=false)</td></tr>
-<tr class="memdesc:ga58a6548d2ef1237cd2c68d0eafbae0be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read an integer (advanced). <br /></td></tr>
-<tr class="separator:ga58a6548d2ef1237cd2c68d0eafbae0be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gada6fe8891565c1201d6de87229b61fd4"><td class="memItemLeft" align="right" valign="top">
-int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gada6fe8891565c1201d6de87229b61fd4">EnvGetInt</a> (const char *key, int defaultVal=0, bool warn=false)</td></tr>
-<tr class="memdesc:gada6fe8891565c1201d6de87229b61fd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read an integer (simple). <br /></td></tr>
-<tr class="separator:gada6fe8891565c1201d6de87229b61fd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga62805d787f16f284b58fcfcf0845a690"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga62805d787f16f284b58fcfcf0845a690">EnvGetFloat</a> (const char *key, float *ret, bool warn=false)</td></tr>
-<tr class="memdesc:ga62805d787f16f284b58fcfcf0845a690"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a float value (advanced). <br /></td></tr>
-<tr class="separator:ga62805d787f16f284b58fcfcf0845a690"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga4a27ce4a25964d1aad7691b46c6a1230"><td class="memItemLeft" align="right" valign="top">
-float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga4a27ce4a25964d1aad7691b46c6a1230">EnvGetFloat</a> (const char *key, float defaultVal=0.0, bool warn=false)</td></tr>
-<tr class="memdesc:ga4a27ce4a25964d1aad7691b46c6a1230"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a float value (simple). <br /></td></tr>
-<tr class="separator:ga4a27ce4a25964d1aad7691b46c6a1230"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga01dd2c404a6cb43ef11682da8b03d901"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga01dd2c404a6cb43ef11682da8b03d901">EnvGetBool</a> (const char *key, bool *ret, bool warn=false)</td></tr>
-<tr class="memdesc:ga01dd2c404a6cb43ef11682da8b03d901"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a boolean value (advanced). <br /></td></tr>
-<tr class="separator:ga01dd2c404a6cb43ef11682da8b03d901"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga08cb227316f564fa6411e6e06f617552"><td class="memItemLeft" align="right" valign="top">
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga08cb227316f564fa6411e6e06f617552">EnvGetBool</a> (const char *key, bool defaultVal=false, bool warn=false)</td></tr>
-<tr class="memdesc:ga08cb227316f564fa6411e6e06f617552"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a boolean value (simple). <br /></td></tr>
-<tr class="separator:ga08cb227316f564fa6411e6e06f617552"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae4f8b3d01cf21c8fe9da883f19e661da"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gae4f8b3d01cf21c8fe9da883f19e661da">EnvGetPath</a> (const char *key, const char **ret, const char *path=NULL, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:gae4f8b3d01cf21c8fe9da883f19e661da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a path, eventually convert value to an absolute path before (advanced). The returned path is always absolute. Relative paths are interpreted as relative to 'path' or HOME2L_ROOT and made absolute. <br /></td></tr>
+<tr class="separator:gae4f8b3d01cf21c8fe9da883f19e661da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga42d264543100a070be2762742eb356b9"><td class="memItemLeft" align="right" valign="top">
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga42d264543100a070be2762742eb356b9">EnvGetPath</a> (const char *key, const char *defaultVal, const char *path=NULL, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga42d264543100a070be2762742eb356b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a path, eventually convert value to an absolute path before (simple). <br /></td></tr>
+<tr class="separator:ga42d264543100a070be2762742eb356b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6a4b7074ae78076eca112bba469ad2e5"><td class="memItemLeft" align="right" valign="top">
+static const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga6a4b7074ae78076eca112bba469ad2e5">EnvGetPath</a> (const char *key, const char *path=NULL, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga6a4b7074ae78076eca112bba469ad2e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a path (simple variant) without default. <br /></td></tr>
+<tr class="separator:ga6a4b7074ae78076eca112bba469ad2e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga86a077858484384f112d03202c09808a"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga86a077858484384f112d03202c09808a">EnvGetHostAndPort</a> (const char *key, <a class="el" href="classCString.html">CString</a> *retHost, int *retPort=NULL, int defaultPort=0, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga86a077858484384f112d03202c09808a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a host + port combination; host names are translated using the 'net.resolve.&lt;name&gt;' settings. <br /></td></tr>
+<tr class="separator:ga86a077858484384f112d03202c09808a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafe449f707c7fce0890a86eb9e18139f1"><td class="memItemLeft" align="right" valign="top">
+static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gafe449f707c7fce0890a86eb9e18139f1">EnvGetHost</a> (const char *key, <a class="el" href="classCString.html">CString</a> *retHost, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:gafe449f707c7fce0890a86eb9e18139f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a host name; host names are translated using the 'net.resolve.&lt;name&gt;' settings. <br /></td></tr>
+<tr class="separator:gafe449f707c7fce0890a86eb9e18139f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa29b91f51ac09d92b3f29453a4ae8b90"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gaa29b91f51ac09d92b3f29453a4ae8b90">EnvGetInt</a> (const char *key, int *ret, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:gaa29b91f51ac09d92b3f29453a4ae8b90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read an integer (advanced). <br /></td></tr>
+<tr class="separator:gaa29b91f51ac09d92b3f29453a4ae8b90"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0a8ed7063b1e1b1edfd824618db4da24"><td class="memItemLeft" align="right" valign="top">
+int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga0a8ed7063b1e1b1edfd824618db4da24">EnvGetInt</a> (const char *key, int defaultVal=0, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga0a8ed7063b1e1b1edfd824618db4da24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read an integer (simple). <br /></td></tr>
+<tr class="separator:ga0a8ed7063b1e1b1edfd824618db4da24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga93e6c28fd3f8dbf971257178bd343108"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga93e6c28fd3f8dbf971257178bd343108">EnvGetFloat</a> (const char *key, float *ret, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga93e6c28fd3f8dbf971257178bd343108"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a float value (advanced). <br /></td></tr>
+<tr class="separator:ga93e6c28fd3f8dbf971257178bd343108"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga69e91316016c915aaf8133e7b612d41f"><td class="memItemLeft" align="right" valign="top">
+float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga69e91316016c915aaf8133e7b612d41f">EnvGetFloat</a> (const char *key, float defaultVal=0.0, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga69e91316016c915aaf8133e7b612d41f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a float value (simple). <br /></td></tr>
+<tr class="separator:ga69e91316016c915aaf8133e7b612d41f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf0ab7311eda1a5c9f145dce210ef0724"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#gaf0ab7311eda1a5c9f145dce210ef0724">EnvGetBool</a> (const char *key, bool *ret, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:gaf0ab7311eda1a5c9f145dce210ef0724"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a boolean value (advanced). <br /></td></tr>
+<tr class="separator:gaf0ab7311eda1a5c9f145dce210ef0724"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2c1aa35e958fa3e17209798dda707479"><td class="memItemLeft" align="right" valign="top">
+bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__env__dictionary.html#ga2c1aa35e958fa3e17209798dda707479">EnvGetBool</a> (const char *key, bool defaultVal=false, bool warnIfMissing=false)</td></tr>
+<tr class="memdesc:ga2c1aa35e958fa3e17209798dda707479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a boolean value (simple). <br /></td></tr>
+<tr class="separator:ga2c1aa35e958fa3e17209798dda707479"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Advanced access to the dictionary ...</div></td></tr>
 <tr class="memitem:ga405be6a28d216b9335431c40100f1d12"><td class="memItemLeft" align="right" valign="top">
 void&#160;</td><td class="memItemRight" valign="bottom"><b>EnvGetPrefixInterval</b> (const char *prefix, int *retIdx0, int *retIdx1)</td></tr>

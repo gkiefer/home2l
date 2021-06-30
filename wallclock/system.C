@@ -296,7 +296,7 @@ static void AndroidExceptionCheck () {
 
 
 
-// ***** Android storage prepartation *****
+// ***** Android storage preparation *****
 
 
 static bool AndroidAssetLoadTextFile (const char *relPath, CString *ret) {
@@ -583,6 +583,9 @@ static inline void AndroidPreInit () {
     // requires this to work!
   AndroidPrepareHome2lRoot ();
 }
+
+
+void *_AndroidGetJavaVM () { return javaVM; }
 
 
 
@@ -1023,7 +1026,7 @@ static inline void AndroidInit () {
     // Analyes parameters, resolve executable ...
     withSu = (envAndroidAutostart[0] == '!');
     args.Set (envAndroidAutostart + (withSu ? 1 : 0), 2);
-    if (args.Entries () < 1) ERROR (("Illegal setting: %s", envAndroidAutostartKey));
+    if (args.Entries () < 1) ERRORF (("Illegal setting: %s", envAndroidAutostartKey));
     withArgs = (args.Entries () > 1);
     EnvGetHome2lRootPath (&execName, args.Get (0));
 

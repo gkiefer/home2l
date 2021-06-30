@@ -28,7 +28,7 @@
  * @addtogroup common_phone
  *
  * This module provides a wrapper for IP phone functionality, which is presently
- * required by the *Home2L* applications *WallClock* and *DoorMan*.
+ * used by the *Home2L* applications *WallClock* and *DoorMan*.
  * Presently, two possible backends are supported: *Linphone* and *PJSIP*.
  * Depending on the backend to be used, the following .C files have to be
  * compiled, which contain alternative implementations to @ref phone.H :
@@ -58,8 +58,34 @@
 
 
 // (read-only; primarily needed by the phone drivers themselves)
+extern const char *envPhoneLinphonerc;
+
+extern int envPhoneSipPort;
+
+extern const char *envPhoneAudioDriver;
+extern const char *envPhoneAudioDevice;
+extern const char *envPhoneAudioInDevice;
+extern const char *envPhoneAudioOutDevice;
+extern float envPhoneAudioInGain;
+extern float envPhoneAudioOutGain;
+extern const char *envPhoneAudioCodec;
+
+extern int envPhoneEchoTail;
+extern int envPhoneEchoAlgo;
+extern int envPhoneEchoAggressiveness;
+extern bool envPhoneEchoNoiseSuppression;
+
+extern const char *envPhoneVideoDriver;
+extern const char *envPhoneVideoDevice;
+extern const char *envPhoneVideoCodec;
+
+extern const char *envPhoneRegister;
+extern const char *envPhoneSecret;
+
 extern const char *envPhoneRingbackFile;
-extern const char *envPhonePlayFile;
+extern float envPhoneRingbackLevel;
+
+extern int envPhoneRotation;
 
 
 
@@ -68,17 +94,65 @@ extern const char *envPhonePlayFile;
 // *************************** Video driver(s) *********************************
 
 
-/// Data structure(s) to pass video frames to the UI.
-struct TPhoneVideoFrame {
-  bool changed;         ///< Set on change, reset on fetching.
-  int w, h;             ///< Image dimensions.
+/// @brief Video frame pixel format.
+/// The values refer to the respective SDL pixel format types of a similar name.
+/// (see 'SDL_PixelFormatEnum' and the 'SDL_PIXELFORMAT_*' values in the SDL2 documentation).
+enum EPhoneVideoFormat {
+  pvfNone = 0,
+  pvfABGR8888,
+  pvfBGR24,
+  pvfARGB8888,
+  pvfRGB24,
+  pvfYUY2,
+  pvfUYVY,
+  pvfYVYU,
+  pvfIYUV,
+  pvfYV12
+};
 
-  /// @name The following fields describe an image in a YUV12 format as accepted by 'SDL_UpdateYUVTexture()'.
+
+const char *StrPhoneVideoFormat (EPhoneVideoFormat x);
+  ///< Get a readable string for the format.
+
+
+/// @brief Data structure to pass video frames to the UI.
+struct TPhoneVideoFrame {
+  bool changed;              ///< Set on change, reset on fetching.
+
+  /// @name Frame format.
+  ///
   /// @{
-  uint8_t *planeY, *planeU, *planeV;   ///< color planes (Y, U, V)
-  int pitchY, pitchU, pitchV;          ///< number of bytes between rows
+  EPhoneVideoFormat format;  ///< Pixel format.
+  int w, h;                  ///< Image dimensions.
+  /// @}
+
+  /// @name Frame data references.
+  ///
+  /// The following fields describe an image either by a single chunk suitable for 'SDL_UpdateTexture()'
+  /// or in separate planes as accepted by 'SDL_UpdateYUVTexture()'. The plane references are
+  /// used if 'data == NULL' and 'planeY != NULL'.
+  /// @{
+  uint8_t *data;                      ///< Data, if all planes contiguous in memory (for 'SDL_UpdateTexture()')
+  int pitch;                          ///< number of bytes between rows (for 'data != NULL')
+
+  uint8_t *planeY, *planeU, *planeV;  ///< color planes (Y, U, V) (for 'SDL_UpdateYUVTexture()')
+  int pitchY, pitchU, pitchV;         ///< number of bytes between rows (for 'SDL_UpdateYUVTexture()')
   /// @}
 };
+
+
+static inline void PhoneVideoFrameInit (TPhoneVideoFrame *vf) {
+  vf->changed = false;
+
+  vf->format = pvfNone;
+  vf->w = vf->h = 0;
+
+  vf->data = NULL;
+  vf->pitch = 0;
+
+  vf->planeY = vf->planeU = vf->planeV = NULL;
+  vf->pitchY = vf->pitchU = vf->pitchV = 0;
+}
 
 
 
@@ -86,10 +160,7 @@ struct TPhoneVideoFrame {
 
 // *************************** CPhone ******************************************
 
-// DEPRECATED COMMENT: Check and update (TBD)
-//
-// The class 'CPhone' represents a telephone and corresponds to a
-// 'LinphoneCore' object. It contains hard-coded two "Call"
+// The class 'CPhone' represents a telephone. It contains two "Call"
 // objects (#0 and #1). This is to support the following scenarios:
 //
 // a) Simple calls: only call #0 is used, #1 remains inactive.
@@ -102,26 +173,26 @@ struct TPhoneVideoFrame {
 //    Current solution for door cam: Use primary call (no second call),
 //    accept with mic muted. Drawback: Visitor recognizes accept action.
 //
-// d) Machines with multiple logical phones (door/gate phone): Use multiple
-//    'CPhone' objects?
+// d) Machines with multiple logical phones (door/gate phone) may use multiple
+//    'CPhone' objects.
 //
 // NOTE on the use of audio / camera devices by other program modules / threads
-//   (e.g. application-programmed ringing, music playback):
+// (e.g. application-programmed ringing, music playback):
 //
-//   1. To avoid conflicts, other modules must ensure that during the invocation
-//      of any action ('Dial', 'AcceptCall', enabling auto-acceptance),
-//      such devices are closed by the other modules.
+// 1. To avoid conflicts, other modules must ensure that during the invocation
+//    of any action ('Dial', 'AcceptCall', enabling auto-acceptance),
+//    such devices are closed by the other modules.
 //
-//   2. Devices may be used by the other modules only after a "device-permitting"
-//      state has been reported again via 'ReportState ()'. The "device-permitting"
-//      states are: 'psIdle', 'psRinging'.
+// 2. Devices may be used by the other modules only after a "device-permitting"
+//    state has been reported again via 'ReportState ()'. The "device-permitting"
+//    states are: 'psIdle', 'psRinging'.
 //
-//   To avoid race conditions, the following contract applies:
-//   - After returning from 'CPhone::Dial ()', the state is already 'psDialing'
-//     (i.e. 'ReportState ()' is called from 'CPhone::Dial ()').
-//   - 'AcceptCall ()' is only called when in state 'psRinging'.
-//   - If 'SetIncomingCallAction (psInCall)' is called, the application does
-//     not use any device at all.
+// To avoid race conditions, the following contract applies:
+// - After returning from 'CPhone::Dial ()', the state is already 'psDialing'
+//   (i.e. 'ReportState ()' is called from 'CPhone::Dial ()').
+// - 'AcceptCall ()' is only called when in state 'psRinging'.
+// - If 'SetIncomingCallAction (psInCall)' is called, the application does
+//   not use any device at all.
 
 
 /// @brief Current phone state.
@@ -139,8 +210,8 @@ enum EPhoneState {
 
 
 static inline bool PhoneStateIsDevicePermitting (EPhoneState s) { return s == psIdle || s == psRinging; }
-  ///< @brief Return whether the caller is allowed to use the media (audio/video) devices that may be
-  /// occupied by the respective phone.
+  ///< @brief Return whether the caller is allowed to use the media (audio/video) devices that may
+  /// otherwise be occupied by the respective phone.
 
 
 /// @brief Media mask.
@@ -159,6 +230,8 @@ enum EPhoneMedia {
 
 
 /// @brief IP Telephone.
+///
+/// **Note:** The instantiation of multiple instances is not fully supported in some backends.
 class CPhone {
   public:
     CPhone () { Init (); }
@@ -178,33 +251,36 @@ class CPhone {
     /// @{
 
     void Setup (const char *agentName, int _mediaSelected, int withLogging,
-                const char *tmpDir,
-                const char *lpLinphoneRcFile);
+                const char *tmpDir);
       ///< @brief Setup phone object.
       ///
-      /// @param agentName is the name of the phone agent.
+      /// @param agentName is the reference to the name of the phone agent. The pointer must remain valid for
+      ///        the life time of the object.
       /// @param _mediaSelected is set of initially enabled media.
       /// @param withLogging enables logging, and should be set to the 'envDebug' setting.
       /// @param tmpDir is the root temporary directory. It should be set to some path below EnvHome2lTmp().
       ///        To disallow the generation of temporary files (e.g. database for noise cancellation), NULL
       ///        may be passed here.
-      /// @param lpLinphoneRcFile (*Linphone* only) The (read-only) linphone config file.
       ///
       /// A call to this function finally causes a "state changed" event from 'psNone' to 'psIdle'.
       /// If the callback handlers are set before, this can be caught for initialization purposes.
+      ///
+      /// A registration does not happen automatically here. To register, call Register() afterwards.
       ///
       /// **Note:** (2017-01-15) Persistent echo cancellation with *Linphone* requires a patched version
       ///        of *Linphone* (see `external/linphone`).
       ///
 
-    bool Register (const char *identity, const char *secret);
+    bool Register (const char *identity = NULL, const char *secret = NULL);
       ///< @brief Register phone with a registrar.
-
-    void SetCamRotation (int rot);
-      ///< @brief Set rotation of video (in degree); relevant for the format of a built-in camera.
-
-    void DumpSettings ();
-      ///< @brief (For debugging) Dump the phone settings as INFO log messages.
+      ///
+      /// @param identity is a string containing the user name and eventually domain of the identity,
+      ///     for example: "Joe Miller <joe@example.org>".
+      /// @param secret is the password.
+      ///
+      /// Both arguments are references and must remain valid for the lifetime of the object.
+      /// If NULL is passed for the identity, the default/main account defined by 'phone.register'
+      /// and 'phone.secret' is registered.
 
     /// @}
 
@@ -382,7 +458,8 @@ class CPhone {
     TPhoneVideoFrame picInfo;   // contains 'updated' field
 
     // Library-specific data...
-    void *libData [32];
+#define LIBDATA_SIZE 64
+    uint8_t libData [LIBDATA_SIZE];
 };
 
 

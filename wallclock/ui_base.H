@@ -267,9 +267,9 @@ TColor ColorBrighter (TColor color, int d);
 static inline TColor ColorDarker (TColor color, int d) { return ColorBrighter (color, -d); }
   ///< @brief Decreas all color components by `d` with saturation; `d` may be negative.
 TColor ColorScale (TColor color, int factor);
-  ///< @brief Multiply all components with a factor. 'factor' is a fixpoint number with 8 fractional bits (1.0 == 0x100).
+  ///< @brief Multiply all components with a factor. 'factor' is a fixed point number with 8 fractional bits (1.0 == 0x100).
 TColor ColorBlend (TColor color0, TColor color1, int weight1);
-  ///< @brief Blend two colors; 'factor' is a fixpoint-8 number.
+  ///< @brief Blend two colors; 'weight' is a fixed point number with 8 fractional bits (1.0 == 0x100) and refers to 'color1'.
 
 
 /// @}

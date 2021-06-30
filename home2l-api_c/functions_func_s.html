@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -73,6 +73,15 @@ $(function() {
 <li>Select()
 : <a class="el" href="classCRcEventProcessor.html#af5265a0434478dd692cfb6e334ef2074">CRcEventProcessor</a>
 </li>
+<li>SelectAll()
+: <a class="el" href="classCListbox.html#a6a63a8de7e6cffdef3d9c58d6bdb24fa">CListbox</a>
+</li>
+<li>SelectItem()
+: <a class="el" href="classCListbox.html#a429072b4066da773ffa37c52dd0394a9">CListbox</a>
+</li>
+<li>SelectNone()
+: <a class="el" href="classCListbox.html#aa225aed4dd597cfd80946d72f93f1a15">CListbox</a>
+</li>
 <li>SendDtmf()
 : <a class="el" href="classCPhone.html#a3a8f4270cab7600b8e0952c6a739f2de">CPhone</a>
 </li>
@@ -96,7 +105,7 @@ $(function() {
 , <a class="el" href="classCRcRequest.html#ae604c0e65c439397c555d6802f0ba60f">CRcRequest</a>
 , <a class="el" href="classCSplitString.html#a93897a5675f0534a412210119286d888">CSplitString</a>
 , <a class="el" href="classCString.html#ab68926267ea57e18fe54b75ae3fafc75">CString</a>
-, <a class="el" href="classCTimer.html#a70f86ce698d51043ceb84a4153335873">CTimer</a>
+, <a class="el" href="classCTimer.html#a9bccd1fe9cff22191b4ca74f59ff1e31">CTimer</a>
 </li>
 <li>SetAsIso8859()
 : <a class="el" href="classCString.html#a56f9cc9c7c6dea3be93505c6d60ffe25">CString</a>
@@ -106,9 +115,6 @@ $(function() {
 </li>
 <li>SetC()
 : <a class="el" href="classCString.html#ac4f57cbb47630e03b91c660bfa3c6a22">CString</a>
-</li>
-<li>SetCamRotation()
-: <a class="el" href="classCPhone.html#ad0c8f1112685a894a1a6c988face2364">CPhone</a>
 </li>
 <li>SetCbDtmfReceived()
 : <a class="el" href="classCPhone.html#aa40cbd2cf75328cf3a7541ff51b996f8">CPhone</a>
@@ -136,6 +142,9 @@ $(function() {
 </li>
 <li>SetFormat()
 : <a class="el" href="classCListbox.html#a6d747294e49bc9a16b9a68d96aa48bcd">CListbox</a>
+</li>
+<li>SetForTrigger()
+: <a class="el" href="classCRcRequest.html#a34f8452d774ea43d7656eccc30b28f87">CRcRequest</a>
 </li>
 <li>SetFromIso8859()
 : <a class="el" href="classCString.html#a26f88ca71e25982dcbe3cc61260139d7">CString</a>
@@ -251,7 +260,7 @@ $(function() {
 : <a class="el" href="classCRcValueState.html#a1643547d6e810bca096473fe8dbe4056">CRcValueState</a>
 </li>
 <li>SetTrigger()
-: <a class="el" href="classCResource.html#a066645497af8443e586bef3c3a907067">CResource</a>
+: <a class="el" href="classCResource.html#a7c0bdf2bb955390943a111d5ec96de59">CResource</a>
 </li>
 <li>SetTriggerFromStr()
 : <a class="el" href="classCResource.html#a15cc219dcedb7a8fa7382278a92dd74d">CResource</a>
@@ -265,9 +274,12 @@ $(function() {
 <li>Setup()
 : <a class="el" href="classCInputScreen.html#a51224eda822b3571e032f9cc8f1975cb">CInputScreen</a>
 , <a class="el" href="classCMessageBox.html#a5dfb23217d653d36110c3d0880316f11">CMessageBox</a>
-, <a class="el" href="classCPhone.html#a286078d54d786b6302c534f4c8d23946">CPhone</a>
+, <a class="el" href="classCPhone.html#aaf46d79aff646698af4bfb90fb785cfe">CPhone</a>
 , <a class="el" href="classCServiceKeeper.html#afd6f80dabf686024bd8b84b52ebdac88">CServiceKeeper</a>
 , <a class="el" href="classCWidgetFloorplan.html#a34c29c8ae22bc725cabbbea558cf073b">CWidgetFloorplan</a>
+</li>
+<li>SetUserData()
+: <a class="el" href="classCResource.html#a620f2aa8eebc792b07b2f24da28eadea">CResource</a>
 </li>
 <li>SetValue()
 : <a class="el" href="classCRcRequest.html#a0f90f8762aff06860522d288235b3b39">CRcRequest</a>
@@ -292,7 +304,7 @@ $(function() {
 , <a class="el" href="classCShell.html#a6ace5a8de2dea49fe4401de4d44f7a0e">CShell</a>
 , <a class="el" href="classCShellBare.html#a1e3648ad21510a66b585f4b68c062df9">CShellBare</a>
 , <a class="el" href="classCShellSession.html#a3bf33f9469e9f5c90f2857789e288190">CShellSession</a>
-, <a class="el" href="classCThread.html#ae1993a668ae1c1b707da8d4a4b2e0576">CThread</a>
+, <a class="el" href="classCThread.html#ab0e4ab268cf08a31424b4fca27f37991">CThread</a>
 </li>
 <li>StartRestricted()
 : <a class="el" href="classCShell.html#a86f2aae0cbfb405755781940158de5bb">CShell</a>

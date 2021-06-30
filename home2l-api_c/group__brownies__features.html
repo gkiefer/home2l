@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -175,8 +175,31 @@ Matrix ...</h2></td></tr>
 ADCs ...</h2></td></tr>
 <tr class="memitem:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memItemLeft" align="right" valign="top"><a id="gad3629f7b30386a42cafbd821d0fdb63e"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gad3629f7b30386a42cafbd821d0fdb63e">ADC_PORTS</a>&#160;&#160;&#160;0</td></tr>
-<tr class="memdesc:gad3629f7b30386a42cafbd821d0fdb63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET) <br /></td></tr>
+<tr class="memdesc:gad3629f7b30386a42cafbd821d0fdb63e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of ADC input ports (max. 2) <br /></td></tr>
 <tr class="separator:gad3629f7b30386a42cafbd821d0fdb63e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae068bb96d2ffb6dbc0716405a20eae0c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gae068bb96d2ffb6dbc0716405a20eae0c">ADC_PERIOD</a>&#160;&#160;&#160;1024</td></tr>
+<tr class="memdesc:gae068bb96d2ffb6dbc0716405a20eae0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample period in ticks (max. 32767)  <a href="#gae068bb96d2ffb6dbc0716405a20eae0c">More...</a><br /></td></tr>
+<tr class="separator:gae068bb96d2ffb6dbc0716405a20eae0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad3516b3cb7e10cf59f7b6f8a311a22e3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gad3516b3cb7e10cf59f7b6f8a311a22e3">P_ADC_0_STROBE</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gad3516b3cb7e10cf59f7b6f8a311a22e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pin to output a strobe signal before each sampling (0 = no strobe)  <a href="#gad3516b3cb7e10cf59f7b6f8a311a22e3">More...</a><br /></td></tr>
+<tr class="separator:gad3516b3cb7e10cf59f7b6f8a311a22e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga5c7c129260123a27f0d9fbbd800dbc4c"><td class="memItemLeft" align="right" valign="top"><a id="ga5c7c129260123a27f0d9fbbd800dbc4c"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga5c7c129260123a27f0d9fbbd800dbc4c">ADC_0_STROBE_VALUE</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:ga5c7c129260123a27f0d9fbbd800dbc4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Strobe value (the other times, the pin drives the opposite value) <br /></td></tr>
+<tr class="separator:ga5c7c129260123a27f0d9fbbd800dbc4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae4b7f271408ca3958c511aeb9d41fac0"><td class="memItemLeft" align="right" valign="top"><a id="gae4b7f271408ca3958c511aeb9d41fac0"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gae4b7f271408ca3958c511aeb9d41fac0">ADC_0_STROBE_TICKS</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:gae4b7f271408ca3958c511aeb9d41fac0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Duration of a strobe if ADC_STROBE_PIN != 0. <br /></td></tr>
+<tr class="separator:gae4b7f271408ca3958c511aeb9d41fac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0844d86999ddfb7454d5e646967fbe83"><td class="memItemLeft" align="right" valign="top"><a id="ga0844d86999ddfb7454d5e646967fbe83"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>P_ADC_1_STROBE</b>&#160;&#160;&#160;0</td></tr>
+<tr class="separator:ga0844d86999ddfb7454d5e646967fbe83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga003481726670e80edd8514d6df99d2a2"><td class="memItemLeft" align="right" valign="top"><a id="ga003481726670e80edd8514d6df99d2a2"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ADC_1_STROBE_VALUE</b>&#160;&#160;&#160;1</td></tr>
+<tr class="separator:ga003481726670e80edd8514d6df99d2a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3472f77042eae1bc061e41982b0f9d1d"><td class="memItemLeft" align="right" valign="top"><a id="ga3472f77042eae1bc061e41982b0f9d1d"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>ADC_1_STROBE_TICKS</b>&#160;&#160;&#160;0</td></tr>
+<tr class="separator:ga3472f77042eae1bc061e41982b0f9d1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 UART ...</h2></td></tr>
@@ -329,6 +352,45 @@ Shades ...</h2></td></tr>
 
 </div>
 </div>
+<a id="gae068bb96d2ffb6dbc0716405a20eae0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gae068bb96d2ffb6dbc0716405a20eae0c">&#9670;&nbsp;</a></span>ADC_PERIOD</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define ADC_PERIOD&#160;&#160;&#160;1024</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sample period in ticks (max. 32767) </p>
+<p>If set to 0, the ADCs are driven in passive mode, in which sampling is performed (only) on demand at the time the respective register is read. This may have a negative impact on the TWI communication, which is stalled for the time of an eventual strobe and the ADC readout time. If set &gt;0, the ADC is read out periodically with this period, an the <a class="el" href="group__brownies__interface__registers.html#ga30eb9e115fc775c0df6168b9b4132895">BR_CHANGED_ADC</a> bit is set whenever a new value has been read. The feature flag <a class="el" href="group__brownies__interface__memory.html#ga618177b74a4059778392d9b896482f1a">BR_FEATURE_ADC_PASSIVE</a> indicates whether the ADCs operate in passive mode.</p>
+<p><b>Note:</b> Passive mode is presently not supported by the Brownies Resource driver. </p>
+
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00245">245</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
+
+</div>
+</div>
+<a id="gad3516b3cb7e10cf59f7b6f8a311a22e3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gad3516b3cb7e10cf59f7b6f8a311a22e3">&#9670;&nbsp;</a></span>P_ADC_0_STROBE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define P_ADC_0_STROBE&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pin to output a strobe signal before each sampling (0 = no strobe) </p>
+<p>The strobe pin may be any pin that can be used as a GPIO. It must be excluded from use as a GPIO and will be configured as a digital output by the ADC feature module. </p>
+
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00258">258</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
+
+</div>
+</div>
 <a id="ga4b97db4b3505a0d76f982067b16c87f0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga4b97db4b3505a0d76f982067b16c87f0">&#9670;&nbsp;</a></span>SHADES_TIMEOUT</h2>
 
@@ -348,7 +410,7 @@ Shades ...</h2></td></tr>
 </ul>
 <p>A value of 0 means "no timeout". </p>
 
-<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00337">337</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00376">376</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>
@@ -374,7 +436,7 @@ Shades ...</h2></td></tr>
 <li>after the first successful read or write access to any of the shades registers or the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register: if no further such access happens within the time period specified by <a class="el" href="group__brownies__features.html#ga4b97db4b3505a0d76f982067b16c87f0">SHADES_TIMEOUT</a>. </li>
 </ul>
 
-<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00356">356</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00395">395</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>

@@ -38,7 +38,9 @@ BROWNIE_FAMILY = init.t85 init.t84 init.t861 \
                  gpio4.t84 \
                  mat4x8.t861 mat1x7.t861 mat2x6.t861 \
                  mat4x8t.t861 mat1x7t.t861 mat2x6t.t861 \
-                 gpio5uart.t84
+                 gpio5uart.t84 \
+                 gatekeeper.t861 \
+                 garage.t861
 
 
 
@@ -181,13 +183,32 @@ endif
 ifeq ($(BROWNIE_VARIANT),gpio5uart)
 	BROWNIE_CFG ?= GPIO_OUT_PRESENCE=0x0f GPIO_OUT_PRESET=0x00 GPIO_IN_PRESENCE=0x80 GPIO_IN_PULLUP=0x00 \
 	               WITH_UART=1 UART_BAUDRATE=9600
-# (debug) For sample timing calibration: Set GPIO7 as output ...
+# (Debug) For UART sample timing calibration: Set GPIO7 as output ...
 #~ 	BROWNIE_CFG ?= GPIO_OUT_PRESENCE=0x8f GPIO_OUT_PRESET=0x00 GPIO_IN_PRESENCE=0x00 GPIO_IN_PULLUP=0x00 \
 #~ 	               WITH_UART=1 UART_BAUDRATE=9600
 endif
 
 
+# gatekeeper (t861): ADC for an optical mail sensor, 8 GPIs, 2 GPOs, temperature support ...
+ifeq ($(BROWNIE_VARIANT),gatekeeper)
+	BROWNIE_CFG ?= GPIO_IN_PRESENCE=0x0ff GPIO_IN_PULLUP=0x000 GPIO_OUT_PRESENCE=0x300 GPIO_OUT_PRESET=0x000 \
+	               ADC_PORTS=1 ADC_PERIOD=1024 P_ADC_0_STROBE=P_B6 ADC_0_STROBE_TICKS=1 \
+	               WITH_TEMP_ZACWIRE=1
+# (Debug)
+#~ 	BROWNIE_CFG ?= GPIO_IN_PRESENCE=0x03f GPIO_IN_PULLUP=0x000 GPIO_OUT_PRESENCE=0x300 GPIO_OUT_PRESET=0x000 \
+#~ 	               ADC_PORTS=2 ADC_PERIOD=1024 P_ADC_0_STROBE=P_A6 ADC_0_STROBE_TICKS=128 P_ADC_1_STROBE=P_A7 ADC_1_STROBE_TICKS=256 ADC_1_STROBE_VALUE=0 \
+#~ 	               WITH_TEMP_ZACWIRE=1
+#~ 	BROWNIE_CFG ?= GPIO_IN_PRESENCE=0x03f GPIO_IN_PULLUP=0x000 GPIO_OUT_PRESENCE=0x300 GPIO_OUT_PRESET=0x000 \
+#~ 	               ADC_PORTS=2 ADC_PERIOD=0 \
+#~ 	               WITH_TEMP_ZACWIRE=1
+endif
 
+
+# garage (t861): General-purpose with
+ifeq ($(BROWNIE_VARIANT),garage)
+	BROWNIE_CFG ?= GPIO_IN_PRESENCE=0xee0 GPIO_IN_PULLUP=0x000 GPIO_OUT_PRESENCE=0x00f GPIO_OUT_PRESET=0x000 \
+	               WITH_TEMP_ZACWIRE=1
+endif
 
 
 

@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -84,11 +84,11 @@ Collaboration diagram for Logging:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga6ed6df5c92e2efc8c289fecf289ee382">DEBUG</a>(LEVEL,  MSG)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG&quot;, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)</td></tr>
+<tr class="memitem:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga6ed6df5c92e2efc8c289fecf289ee382">DEBUG</a>(LEVEL,  MSG)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG-&quot; #LEVEL, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)</td></tr>
 <tr class="memdesc:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a debug message. This is only effective if the tool was compiled with WITH_DEBUG == 1 and the configuration parameter 'debug' is set to a value &gt; 0.  <a href="#ga6ed6df5c92e2efc8c289fecf289ee382">More...</a><br /></td></tr>
 <tr class="separator:ga6ed6df5c92e2efc8c289fecf289ee382"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga0574d1a6648679b0bd4e77e24396779e"><td class="memItemLeft" align="right" valign="top"><a id="ga0574d1a6648679b0bd4e77e24396779e"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga0574d1a6648679b0bd4e77e24396779e">DEBUGF</a>(LEVEL,  FMT)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG&quot;, __FILE__, __LINE__); LogPrintf FMT; } } while (0)</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__logging.html#ga0574d1a6648679b0bd4e77e24396779e">DEBUGF</a>(LEVEL,  FMT)&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG-&quot; #LEVEL, __FILE__, __LINE__); LogPrintf FMT; } } while (0)</td></tr>
 <tr class="memdesc:ga0574d1a6648679b0bd4e77e24396779e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print a formatted debug message. The argument must contain a parantheses with arguments, which will then be passed to a printf() function variant. For example: <code>DEBUGF(("Current value is %i", my_value))</code> <br /></td></tr>
 <tr class="separator:ga0574d1a6648679b0bd4e77e24396779e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab00aa1228ee77e56e9f25b3ab45bdf7e"><td class="memItemLeft" align="right" valign="top"><a id="gab00aa1228ee77e56e9f25b3ab45bdf7e"></a>
@@ -199,7 +199,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td>&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG&quot;, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)</td>
+          <td></td><td>&#160;&#160;&#160;do { if (<a class="el" href="group__common__logging.html#ga628af13dab761b6bebd00879a204003d">envDebug</a> &gt;= LEVEL) { LogPara (&quot;DEBUG-&quot; #LEVEL, __FILE__, __LINE__); LogPrintf (MSG); } } while (0)</td>
         </tr>
       </table>
 </div><div class="memdoc">

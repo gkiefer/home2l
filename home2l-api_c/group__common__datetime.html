@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -156,8 +156,16 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>TicksMonotonicToStruc
 <tr class="separator:gae3cec4def438f60ce079aef1eae8e21f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="memItemLeft" align="right" valign="top"><a id="gac42a6701f8b9abb6efa13aa16a99fd58"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#gac42a6701f8b9abb6efa13aa16a99fd58">SECONDS_FROM_TICKS</a>(T)&#160;&#160;&#160;(((<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>) (T) + 500) / 1000)</td></tr>
-<tr class="memdesc:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert seconds (integer!) to ticks. <br /></td></tr>
+<tr class="memdesc:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert ticks to seconds. <br /></td></tr>
 <tr class="separator:gac42a6701f8b9abb6efa13aa16a99fd58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8205d957c97028a3d623805b2633a5b2"><td class="memItemLeft" align="right" valign="top"><a id="ga8205d957c97028a3d623805b2633a5b2"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga8205d957c97028a3d623805b2633a5b2">TICKS_FROM_MILLIS</a>(MS)&#160;&#160;&#160;((<a class="el" href="group__common__datetime.html#ga69dd2657852c9b3c796643a1709ef296">TTicks</a>) (MS))</td></tr>
+<tr class="memdesc:ga8205d957c97028a3d623805b2633a5b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert milliseconds (integer!) to ticks. <br /></td></tr>
+<tr class="separator:ga8205d957c97028a3d623805b2633a5b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0feb2e07c3ffd29f9f3c1a853dda80d1"><td class="memItemLeft" align="right" valign="top"><a id="ga0feb2e07c3ffd29f9f3c1a853dda80d1"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__common__datetime.html#ga0feb2e07c3ffd29f9f3c1a853dda80d1">MILLIS_FROM_TICKS</a>(T)&#160;&#160;&#160;((int) (T))</td></tr>
+<tr class="memdesc:ga0feb2e07c3ffd29f9f3c1a853dda80d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert ticks to milliseconds. <br /></td></tr>
+<tr class="separator:ga0feb2e07c3ffd29f9f3c1a853dda80d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Date/time: Types ...</h2></td></tr>

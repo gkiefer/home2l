@@ -216,6 +216,12 @@ class CResourceLink;
 extern const char *const rcDefaultRequestId;    ///< Request ID for default requests ("default")
 
 
+#define RCREQ_NONE INT_MAX
+  ///< Special value meaning "none" for request attributes: priority, t0, t1, repeat, hysteresis
+#define RCREQ_NOVALUE ((CRcValueState *) NULL)
+  ///< Special value meaning "none" for request values
+
+
 /// @}  // resources_requests
 #ifdef SWIG
 %pythoncode %{
@@ -547,7 +553,7 @@ class CRcValueState {
     bool SetString (const char *_val, ERcState _state = rcsValid)   { return SetGenericString (_val, rctMutex, _state);   }
     void SetTime (TTicks _val, ERcState _state = rcsValid);
 
-    void SetTrigger (int _val = 0, ERcState _state = rcsValid)      { SetGenericInt    (_val, rctTrigger, _state); }
+    void SetTrigger (int _val = 1, ERcState _state = rcsValid)      { SetGenericInt    (_val, rctTrigger, _state); }
     bool SetMutex (const char *_val, ERcState _state = rcsValid)    { return SetGenericString (_val, rctMutex, _state);   }
 
     void SetUnitInt (ERcType type, int _val, ERcState _state = rcsValid)      { SetGenericInt   (_val, type, _state); }
@@ -1043,33 +1049,36 @@ class CResource /* final */ {
     void SetRequest (CRcRequest *_request) { SetRequestFromObj (_request); }
       ///< @brief Add or replace a request (generic version).
       /// @param _request must by a dynamically allocated object, which is handed over and must no longer be used by the caller afterwards.
-    void SetRequest (CRcValueState *value, const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      /// If the no known value is given (state @ref rcsUnknown), an already existing request with the same ID is deleted.
+    void SetRequest (CRcValueState *value, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
       ///< @brief Add or replace a request (generic value, direct parameters).
       /// The request attributes are explaind in the [*Home2L Book*](../home2l-book.pdf).
       ///
       /// @param reqGid identifies the request; it is legal to pass NULL, in which case the instance name is used.
-      /// @param value specifies the requested value (only type and value are used; the state is ignored).
+      /// @param value specifies the requested value (only type and value are used).
       /// @param priority is the request priority attribute.
       /// @param t0 is the activation (start) time attribute (optional).
       /// @param t1 is the expiration (stop) time attribute (optional).
-      /// @param repeat is the repeatition interval attribute (optional).
+      /// @param repeat is the repetition interval attribute (optional).
       /// @param hysteresis is the hysteresis attribute (optional).
       ///
-    void SetRequest (bool valBool,          const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+      /// If the no known value is given (state @ref rcsUnknown), an already existing request with the same ID is deleted.
+      ///
+    void SetRequest (bool valBool,          const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
       ///< @brief Add or replace a request (direct value and parameters).
-    void SetRequest (int valInt,            const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+    void SetRequest (int valInt,            const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
       ///< @brief Add or replace a request (direct value and parameters).
-    void SetRequest (float valFloat,        const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+    void SetRequest (float valFloat,        const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
       ///< @brief Add or replace a request (direct value and parameters).
-    void SetRequest (const char *valString, const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+    void SetRequest (const char *valString, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
       ///< @brief Add or replace a request (direct value and parameters).
-    void SetRequest (TTicks valTime,        const char *reqGid = NULL, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0);
+    void SetRequest (TTicks valTime,        const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
       ///< @brief Add or replace a request (direct value and parameters).
     void SetRequestFromStr (const char *reqDef);
       ///< @brief Set request by textual definition. See CRcRequest::SetFromStr() and the
       /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
 
-    void SetTrigger (const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks repeat = 0, TTicks hysteresis = 0) { SetRequest (1, reqGid, priority, t0, t1, repeat, hysteresis); }
+    void SetTrigger (const char *reqGid, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks repeat = RCREQ_NONE);
       ///< @brief Set a trigger request (no value needs to be given).
     void SetTriggerFromStr (const char *reqDef);
       ///< @brief Set trigger request by textual definition.
@@ -1110,7 +1119,7 @@ class CResource /* final */ {
       /// Internally, a temporary subscription is generated and the @ref CRcSubscriber methods are used
       /// to implement this reading.
 #endif
-    void WriteValue (CRcValueState value, int priority = rcPrioNormal, const char *reqGid = "write") { SetRequest (&value, reqGid, priority); }
+    void WriteValue (CRcValueState value, int priority = RCREQ_NONE, const char *reqGid = "write") { SetRequest (&value, reqGid, priority); }
       ///< @brief Write a value by issueing or updating a request with the given global id.
       /// The implementation of this method can be used as a tutorial on working with requests.
     void UnWrite (const char *reqGid = "write") { DelRequest (reqGid); }
@@ -1124,11 +1133,14 @@ class CResource /* final */ {
     /// @{
 
 #ifndef SWIG
-    static CResource *Register (CRcDriver *_rcDriver, const char *_lid, ERcType _type, bool _writable) { return Register (NULL, _rcDriver, _lid, _type, _writable); }
-    static CResource *Register (CRcDriver *_rcDriver, const char *_lid, const char *rcTypeDef) { return Register (NULL, _rcDriver, _lid, rcTypeDef); }
+    static CResource *Register (CRcDriver *_rcDriver, const char *_lid, ERcType _type, bool _writable, void *_data = NULL) { return Register (NULL, _rcDriver, _lid, _type, _writable, _data); }
       ///< @brief Register a new local resource for a driver.
-      /// Returns 'NULL' on error and prints a warning.
-      /// 'rcTypeDef' is a textual type definition, syntax: `<type> (ro|wr)`.
+      /// @param _rcDriver is the driver for the resource.
+      /// @param _lid is the local resource ID (LID).
+      /// @param _type is the resource type.
+      /// @param _writable decides whether the resource is writable.
+      /// @param _data is an optional user data reference (see @ref CResource::SetUserData() ).
+      /// @return reference to the resource. On error, 'NULL' is returned and a warning emitted.
       ///
       /// **Note:** For the automatic documentation system, invocations of these methods may be documented as follows:
       /// - If a default value is to be set, the SetDefault() call must follow in the next line.
@@ -1140,6 +1152,11 @@ class CResource /* final */ {
       ///   with "/ * [RC:-] * /"  (end/start of comment - ignore the spaces here) below or behind the call.
       ///
       /// Details on the documentation system can be found in the Home2L Book.
+    static CResource *Register (CRcDriver *_rcDriver, const char *_lid, const char *rcTypeDef, void *_data = NULL) { return Register (NULL, _rcDriver, _lid, rcTypeDef, _data); }
+      ///< @brief Register a new local resource for a driver based on a textual type description.
+      /// 'rcTypeDef' is a textual type definition, syntax: `<type> (ro|wr)`.
+      /// Details can be found in the base variant of @ref CResource::Register() .
+
 #endif
 
     void SetDefault (CRcValueState *vs)     { SetRequest (vs,         rcDefaultRequestId, rcPrioDefault); }
@@ -1160,8 +1177,10 @@ class CResource /* final */ {
 
     /// @name (Drv) User data for the driver ...
     /// @{
-    void *DriverData () { return rcDriverData; }
-    void SetDriverData (void *_data) { rcDriverData = _data; }
+    void SetUserData (void *_data) { ATOMIC_WRITE (rcUserData, _data); }
+      ///< @brief Set user-specified data for this resource.
+    void *UserData () { return ATOMIC_READ (rcUserData); }
+      ///< @brief Retrieve user-specified data.
     /// @}
 
     /// @name (Drv) Reporting values from the real device ...
@@ -1182,11 +1201,14 @@ class CResource /* final */ {
     void ReportValue (const char *_value, ERcState _state = rcsValid);
     void ReportValue (TTicks _value, ERcState _state = rcsValid);
 #endif // SWIG
-    void ReportUnknown () { ReportValueState (NULL); }
-    void ReportTrigger () { ReportValueState (NULL); }
+    void ReportTrigger ();
       ///< @brief For triggers, this method must be called.
     void ReportState (ERcState _state) { CRcValueState vs; vs.SetState (_state); ReportValueState (&vs); }
-      ///< @brief Report state change only, value remains unmodified
+      ///< @brief Report state change only, value remains unmodified.
+    void ReportBusy () { ReportState (rcsBusy); }
+      ///< @brief Report a busy state (without changing the value).
+    void ReportUnknown () { ReportValueState (NULL); }
+      ///< @brief Report an unknown state.
     /// @}
 
     /// @name (Drv) Misc. Helpers ...
@@ -1293,13 +1315,13 @@ class CResource /* final */ {
     static CResource *GetUnregistered (const char *uri);
     void PutUnregistered ();
 
-    static CResource *Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const char *_lid, ERcType _type, bool _writable);
+    static CResource *Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const char *_lid, ERcType _type, bool _writable, void *_data);
       // Generic & main registration method; used by all other 'Registration' variants
-    static CResource *Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const char *_lid, const char *rcTypeDef);
+    static CResource *Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const char *_lid, const char *rcTypeDef, void *_data);
       // Register with textual description; used by full textual registration (below) and for the "external" driver
       // Syntax of 'rcTypeDef':   <type> (ro|wr)
       // returns 'NULL' on error and prints a warning
-    static CResource *Register (const char *rcDef);
+    static CResource *Register (const char *rcDef, void *_data);
       // Register with full textual description; used by 'rc_core' for remote resources
       // Syntax: <URI> <type> (ro|wr)
       // returns 'NULL' on error and prints a warning
@@ -1319,6 +1341,8 @@ class CResource /* final */ {
     void UpdatePersistentRequestAL (const char *reqId, CRcRequest *req);
     void ClearRequestsAL ();
     bool DoDelRequestAL (CRcRequest **pList, const char *reqGid, TTicks t1, bool updatePersistence);
+    bool DelRequestNoEvaluate (const char *reqGid, TTicks t1);
+    void SetRequestFromObjNoEvaluate (CRcRequest *_request);
 
     CRcRequest *GetWinningRequest (TTicks t);
     void EvaluateRequests (bool force = false);    // check and process all pending requests
@@ -1333,7 +1357,6 @@ class CResource /* final */ {
 
     void ReportValueStateAL (const CRcValueState *_valueState, TTicks _timeStamp = 0);
     void ReportUnknownAL () { CRcValueState vs (Type ()); ReportValueStateAL (&vs); }
-    void ReportTriggerAL () { ReportValueStateAL (NULL); }
 
     // Driving values to the real device...
     void DriveValue (CRcValueState *vs, bool force);
@@ -1357,7 +1380,7 @@ class CResource /* final */ {
     // Resource identification...
     class CRcHost *rcHost;      // [atomic] 'NULL' => local resource or unregistered
     class CRcDriver *rcDriver;  // [atomic] 'NULL' => remote resource or unregistered
-    void *rcDriverData;         // user data for the driver (driver cares for concurrent access)
+    void *rcUserData;         // optional user data that can be used by the driver (driver cares for concurrent access)
     const char *lid;            // [atomic] local resources: relative path without driver; remote: with driver name as first component; points into 'gid.Get ()'.
 
     // Resource properties...
@@ -1967,12 +1990,6 @@ class CRcSubscriber: public CRcEventProcessor {
 #endif // SWIG
 
 
-#define RCREQ_NONE INT_MAX
-  ///< Special value meaning "none" for the request attributes: priority, t0, t1, hysteresis
-#define RCREQ_NOVALUE ((CRcRequest *) NULL)
-  ///< Special value meaning "none" for the request value
-
-
 const char *RcGetUserRequestId ();
   ///< @brief Get the request ID for user interactions (see 'rc.userReqId').
 const char *RcGetUserRequestAttrs ();
@@ -2068,6 +2085,8 @@ class CRcRequest {
     void SetRepeat (TTicks _repeat) { repeat = _repeat; }                 ///< Set repetition interval (argument must be != RCREQ_NONE).
     void SetHysteresis (TTicks _hysteresis) { hysteresis = _hysteresis; } ///< Set hysteresis (argument must be != RCREQ_NONE).
 
+    void SetForTrigger ();
+      ///< @brief Set value and type suitable for 'rctTrigger' resources and reset fields irrelevant for triggers.
     /// @}
 
     /// @name Type conversion/setting ...
@@ -2219,21 +2238,21 @@ class CRcRequest {
         elif value == None:           value = reqDef
       if attrs != None: self.SetAttrsFromStr (attrs)
       if value != None: self.SetValue (value)
-      if id: self.SetGid (id)
-      if priority: self.SetPriority (priority)
-      if t0:
+      if id != None: self.SetGid (id)
+      if priority != None: self.SetPriority (priority)
+      if t0 != None:
         ticks = TicksAbsOf (t0)
         if ticks: self.SetTimeOn (ticks)
         else: print ("WARNING: Invalid time specification '" + str(t0) + "' - ignoring!")
-      if t1:
+      if t1 != None:
         ticks = TicksAbsOf (t1)
         if ticks: self.SetTimeOff (ticks)
         else: print ("WARNING: Invalid time specification '" + str(t1) + "' - ignoring!")
-      if repeat:
+      if repeat != None:
         ticks = TicksRelOf (repeat)
         if ticks: self.SetRepeat (ticks)
         else: print ("WARNING: Invalid time specification '" + str(repeat) + "' - ignoring!")
-      if hysteresis: self.SetHysteresis (hysteresis)
+      if hysteresis != None: self.SetHysteresis (hysteresis)
 
   %} // %pythoncode
 };  // %extend CRcRequest
@@ -2394,8 +2413,8 @@ class CRcDriver {
 
     /// @name Resource management ...
     /// @{
-    CResource *RegisterResource (const char *rcLid, ERcType _type, bool _writable = true) { return CResource::Register (this, rcLid, _type, _writable); }
-    CResource *RegisterResource (const char *rcLid, const char *rcTypeDef) { return CResource::Register (this, rcLid, rcTypeDef); }
+    CResource *RegisterResource (const char *rcLid, ERcType _type, bool _writable, void *_data = NULL) { return CResource::Register (this, rcLid, _type, _writable, _data); }
+    CResource *RegisterResource (const char *rcLid, const char *rcTypeDef, void *_data = NULL) { return CResource::Register (this, rcLid, rcTypeDef, _data); }
       ///< @brief see also: CResource::Register()
     /// @}
 
@@ -2754,7 +2773,7 @@ void RcDone ();
 void RcIterate ();
   ///< @brief Perform pending actions, call TimerIterate() and return.
 int RcRun (bool catchSignals = true);
-  ///< @brief Run 'RcStart', then RcIterate() in a main event loop until RcStop() is called.
+  ///< @brief Run RcStart(), then RcIterate() in a main event loop until RcStop() is called.
   ///  @param catchSignals controls whether the signals SIGTERM ("exit nicely", default of the kill(1) command)
   ///    and SIGINT (Ctrl-C) are caught temporarly and lead to an immediate return of this function.
   ///  @return the signal number if the function has been stopped by a caught signal, else 0.
@@ -2782,11 +2801,10 @@ void RcStop ();
 
 #ifdef SWIG
 %feature("docstring") RcGetResource "Lookup a resource by its URI and return a reference to it."
-%feature("docstring") RcGet "Lookup a resource by its URI and return a reference to it."
+%feature("docstring") RcGet "Lookup a resource by its URI and return a reference to it (shortcut for 'RcGetResource()')."
 #endif
 
 static inline CResource *RcGetResource (const char *uri, bool allowWait = false) { return CResource::Get (uri, allowWait); }
-static inline CResource *RcGet (const char *uri, bool allowWait = false) { return CResource::Get (uri, allowWait); }
   ///< @brief Lookup a resource by its URI and return a reference to it.
   /// @param uri is the full URI of the resource.
   /// @param allowWait allows to wait for network operations if the resource is not yet known.
@@ -2799,6 +2817,8 @@ static inline CResource *RcGet (const char *uri, bool allowWait = false) { retur
   /// nor in the future refer to a valid resource. Hence, the pointer can be used for identity comparisons.
   /// It will be uniquely associated with the URI until the program terminates or RcGarbageCollection() is called.
   /// It is allowed to pass 'uri == NULL', in which case NULL will be returned without any warning.
+static inline CResource *RcGet (const char *uri, bool allowWait = false) { return CResource::Get (uri, allowWait); }
+  ///< @brief Lookup a resource by its URI and return a reference to it (shortcut for @ref RcGetResource() ).
 
 
 static inline void RcGarbageCollection () { CResource::GarbageCollection (); }
@@ -2806,13 +2826,15 @@ static inline void RcGarbageCollection () { CResource::GarbageCollection (); }
   ///
   /// This may free some memory, but at the same time invalidates any existing reference to @ref CResource objects.
   /// Can only be called if no 'CResource *' reference is presently used!
-void RcBump (CResource *rc = NULL);
+void RcBump (CResource *rc = NULL, bool soft = false);
   ///< @brief (For experts) Try to reconnect a remote host now.
   ///
   /// This may be used to accelerate automatic network reconnections, for example, if it is known that a link
   /// has just been re-established.
   /// @param rc is a resource which should be updated soon. Its host will be reconnected.
   ///   If NULL is passed, all remote hosts are (re)connected.
+  /// @param soft selects whether a (re-)connection attempt is omitted if the connection
+  ///   is in standby mode.
 
 
 /// @}
@@ -2907,45 +2929,46 @@ void RcSetRequest (const char *rcUri, CRcRequest *req);
   ///< @brief Add or replace a request (generic version).
   /// @param rcUri identifies the resource.
   /// @param req must by a dynamically allocated object, which is handed over and must no longer be used by the caller afterwards.
-static inline void RcSetRequest (CResource *rc, CRcValueState *value, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (value, reqGid, priority, t0, t1, hysteresis); }
-void RcSetRequest (const char *rcUri, CRcValueState *value, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
+static inline void RcSetRequest (CResource *rc, CRcValueState *value, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE) { rc->SetRequest (value, reqGid, priority, t0, t1, repeat, hysteresis); }
+void RcSetRequest (const char *rcUri, CRcValueState *value, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
   ///< @brief Add or replace a request (generic value, direct parameters).
-  /// @param reqGid identifies the request.
   /// @param rcUri identifies the resource.
-  /// @param value specifies the requested value (only type and value are used; the state is ignored).
-  /// @param priority is the request priority attribute.
+  /// @param value specifies the requested value (only type and value are used).
+  /// @param reqGid identifies the request (default: instance name).
+  /// @param priority is the request priority attribute (default: 'rctPrioNormal').
   /// @param t0 is the activation (start) time attribute (optional).
   /// @param t1 is the expiration (stop) time attribute (optional).
+  /// @param repeat is the repetition interval attribute (optional).
   /// @param hysteresis is the hysteresis attribute (optional).
   ///
   /// The request attributes are explaind in the [*Home2L Book*](../home2l-book.pdf).
   ///
-static inline void RcSetRequest (CResource *rc, bool valBool, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valBool, reqGid, priority, t0, t1, hysteresis); }
-void RcSetRequest (const char *rcUri, bool valBool, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
+static inline void RcSetRequest (CResource *rc, bool valBool, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE) { rc->SetRequest (valBool, reqGid, priority, t0, t1, repeat, hysteresis); }
+void RcSetRequest (const char *rcUri, bool valBool, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
   ///< @brief Add or replace a request (direct value and parameters).
-static inline void RcSetRequest (CResource *rc, int valInt, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valInt, reqGid, priority, t0, t1, hysteresis); }
-void RcSetRequest (const char *rcUri, int valInt, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
+static inline void RcSetRequest (CResource *rc, int valInt, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE) { rc->SetRequest (valInt, reqGid, priority, t0, t1, repeat, hysteresis); }
+void RcSetRequest (const char *rcUri, int valInt, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
   ///< @brief Add or replace a request (direct value and parameters).
-static inline void RcSetRequest (CResource *rc, float valFloat, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valFloat, reqGid, priority, t0, t1, hysteresis); }
-void RcSetRequest (const char *rcUri, float valFloat, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
+static inline void RcSetRequest (CResource *rc, float valFloat, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE) { rc->SetRequest (valFloat, reqGid, priority, t0, t1, repeat, hysteresis); }
+void RcSetRequest (const char *rcUri, float valFloat, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
   ///< @brief Add or replace a request (direct value and parameters).
-static inline void RcSetRequest (CResource *rc, const char *valString, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetRequest (valString, reqGid, priority, t0, t1, hysteresis); }
-void RcSetRequest (const char *rcUri, const char *valString, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
+static inline void RcSetRequest (CResource *rc, const char *valString, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE) { rc->SetRequest (valString, reqGid, priority, t0, t1, repeat, hysteresis); }
+void RcSetRequest (const char *rcUri, const char *valString, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks t1 = RCREQ_NONE, TTicks repeat = RCREQ_NONE, TTicks hysteresis = RCREQ_NONE);
   ///< @brief Add or replace a request (direct value and parameters).
 static inline void RcSetRequestFromStr (CResource *rc, const char *reqDef) { rc->SetRequestFromStr (reqDef); }
 void RcSetRequestFromStr (const char *rcUri, const char *reqDef);
   ///< @brief Set request by textual definition - see CRcRequest::SetFromStr() and the
   /// [*Home2L Book*](../home2l-book.pdf) for more information on the syntax of request definitions.
 
-static inline void RcSetTrigger (CResource *rc, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0) { rc->SetTrigger (reqGid, priority, t0, t1, hysteresis); }
-void RcSetTrigger (const char *rcUri, const char *reqGid, int priority = rcPrioNormal, TTicks t0 = 0, TTicks t1 = 0, TTicks hysteresis = 0);
+static inline void RcSetTrigger (CResource *rc, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks repeat = RCREQ_NONE) { rc->SetTrigger (reqGid, priority, t0, repeat); }
+void RcSetTrigger (const char *rcUri, const char *reqGid = NULL, int priority = RCREQ_NONE, TTicks t0 = RCREQ_NONE, TTicks repeat = RCREQ_NONE);
   ///< @brief Set a trigger request (no value needs to be given).
 static inline void RcSetTriggerFromStr (CResource *rc, const char *reqDef) { rc->SetTriggerFromStr (reqDef); }
 void RcSetTriggerFromStr (const char *rcUri, const char *reqDef);
   ///< @brief Set trigger request by textual definition.
 
-static inline void RcDelRequest (CResource *rc, const char *reqGid = NULL, TTicks t1 = 0) { rc->DelRequest (reqGid, t1); }
-void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = 0);
+static inline void RcDelRequest (CResource *rc, const char *reqGid = NULL, TTicks t1 = RCREQ_NONE) { rc->DelRequest (reqGid, t1); }
+void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = RCREQ_NONE);
   ///< @brief Delete a request.
   /// @param rcUri identifies the resource.
   /// @param reqGid is the global request identifier (GID) and identifies the request.
@@ -3044,6 +3067,11 @@ void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = 0);
     if isinstance (rc, str): rc = RcGetResource (rc)
     rc.DelRequest (id, t1)
 
+  def RcSetDefault (rc, reqDef = None, attrs = None, value = None, t0 = None, t1 = None, repeat = None, hysteresis = None, delDelay = None):
+    """Set a default request."""
+    if isinstance (rc, str): rc = RcGetResource (rc)
+    rc.SetRequest (reqDef = reqDef, attrs = attrs, value = value, id = rcDefaultRequestId, priority = rcPrioDefault, t0 = t0, t1 = t1, repeat = repeat, hysteresis = hysteresis)
+
 %} // %pythoncode
 #endif // SWIG
 
@@ -3100,7 +3128,7 @@ static inline void RcRegisterDriver (const char *drvLid, FRcDriverFunc *func) { 
   ///< @brief Register and initialize a driver by its function.
   /// The driver object is created internally, and 'func' is called with the 'rcdOpInit' operation.
 #endif
-CRcEventDriver *RcRegisterDriver (const char *drvLid, ERcState _successState = rcsBusy);
+CRcEventDriver *RcRegisterDriver (const char *drvLid, ERcState _successState = rcsNoReport);
   ///< @brief Register an event-based driver and return a reference to the event processor.
   ///
   /// Driven values are collected by the returned event processor, and the caller must process the events accordingly.
@@ -3109,20 +3137,22 @@ CRcEventDriver *RcRegisterDriver (const char *drvLid, ERcState _successState = r
   /// @param drvLid is the ID of the new driver.
   /// @param _successState' is the value returned by DriveValue(); possible values are:
   ///
-  ///    - 'rcsBusy':    (default) 'rcsBusy' with the *old* value is reported now; the application must report a valid and new value later.
+  ///    - 'rcsNoReport' or 'rcsUnknown' (default):
+  ///                     nothing is reported back automatically; the application must report something soon
+  ///                     (e.g. a busy state by calling @ref CResource::ReportBusy() ) and should report a valid and up-to-date value later.
+  ///    - 'rcsBusy':    'rcsBusy' with the *old* value is reported now; the application must report a valid and up-to-date value later.
   ///    - 'rcsValid':   the driven value is reported back; no further action by the driver necessary, but no errors are allowed to happen.
-  ///    - 'rcsUnknown' or 'rcsNoReport': nothing is reported back now; the application should report something soon and must report a valid and new value later.
 /// @}
 
 /// @name Drivers: Registering a new resource to a driver ...
 /// See also: CResource::Register() .
 /// @{
 #ifndef SWIG
-static inline CResource *RcRegisterResource (CRcDriver *drv, const char *rcLid, ERcType _type, bool _writable) { return CResource::Register (drv, rcLid, _type, _writable); }
-static inline CResource *RcRegisterResource (CRcDriver *drv, const char *rcLid, const char *rcTypeDef) { return CResource::Register (drv, rcLid, rcTypeDef); }
+static inline CResource *RcRegisterResource (CRcDriver *drv, const char *rcLid, ERcType _type, bool _writable, void *_data = NULL) { return CResource::Register (drv, rcLid, _type, _writable, _data); }
+static inline CResource *RcRegisterResource (CRcDriver *drv, const char *rcLid, const char *rcTypeDef, void *_data = NULL) { return CResource::Register (drv, rcLid, rcTypeDef, _data); }
 #endif
-CResource *RcRegisterResource (const char *drvLid, const char *rcLid, ERcType _type, bool _writable = true);
-CResource *RcRegisterResource (const char *drvLid, const char *rcLid, const char *rcTypeDef);
+CResource *RcRegisterResource (const char *drvLid, const char *rcLid, ERcType _type, bool _writable, void *_data = NULL);
+CResource *RcRegisterResource (const char *drvLid, const char *rcLid, const char *rcTypeDef, void *_data = NULL);
 
 CResource *RcRegisterSignal (const char *name, ERcType type);
   ///< @brief Register a new resource for the built-in 'signal' driver.

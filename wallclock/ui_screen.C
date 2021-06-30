@@ -311,14 +311,11 @@ bool CCanvas::HandleEvent (SDL_Event *ev) {
         GetMouseEventPos (ev, &x, &y);
         //INFOF(("SDL_FINGERDOWN(%i/%i): %4i, %4i", (int) ev->tfinger.touchId, (int) ev->tfinger.fingerId, x, y));
         if (RectContains (&area, x, y)) {
-          if (virtArea.h > area.h && x >= area.x + area.w/2) {
+          dragType = dragMain;
+          if ((virtArea.h > area.h && x >= area.x + area.w/2) || (virtArea.w > area.w && y >= area.y + area.h/2)) {
             dragCanvas = this;
-            dragType = (x >= area.x + area.w*7/8) ? dragVBar : dragMain;
-            ret = true;
-          }
-          else if (virtArea.w > area.w && y >= area.y + area.h/2) {
-            dragCanvas = this;
-            dragType = (y >= area.y + area.h*7/8) ? dragHBar : dragMain;
+            if (virtArea.h > area.h && x >= area.x + area.w * 7/8) dragType = dragVBar;
+            else if (virtArea.w > area.w && y >= area.y + area.h * 7/8) dragType = dragHBar;
             ret = true;
           }
           startX = x;

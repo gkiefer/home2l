@@ -238,7 +238,46 @@
 /// @{
 
 #ifndef ADC_PORTS
-#define ADC_PORTS      0     ///< Number of ADC input ports (max. 2, depending on MCUs) (NOT IMPLEMENTED YET)
+#define ADC_PORTS           0   ///< @brief Number of ADC input ports (max. 2)
+#endif
+
+#ifndef ADC_PERIOD
+#define ADC_PERIOD       1024   ///< @brief Sample period in ticks (max. 32767)
+  ///< If set to 0, the ADCs are driven in passive mode, in which sampling is performed (only)
+  /// on demand at the time the respective register is read.
+  /// This may have a negative impact on the TWI communication, which is stalled for the time
+  /// of an eventual strobe and the ADC readout time.
+  /// If set >0, the ADC is read out periodically with this period, an the @ref BR_CHANGED_ADC bit
+  /// is set whenever a new value has been read.
+  /// The feature flag @ref BR_FEATURE_ADC_PASSIVE indicates whether the ADCs operate in passive mode.
+  ///
+  /// **Note:** Passive mode is presently not supported by the Brownies Resource driver.
+#endif
+
+#ifndef P_ADC_0_STROBE
+#define P_ADC_0_STROBE      0   ///< @brief Pin to output a strobe signal before each sampling (0 = no strobe)
+  ///< The strobe pin may be any pin that can be used as a GPIO. It must be excluded from use as a GPIO
+  /// and will be configured as a digital output by the ADC feature module.
+#endif
+
+#ifndef ADC_0_STROBE_VALUE
+#define ADC_0_STROBE_VALUE  1   ///< @brief Strobe value (the other times, the pin drives the opposite value)
+#endif
+
+#ifndef ADC_0_STROBE_TICKS
+#define ADC_0_STROBE_TICKS  0   ///< @brief Duration of a strobe if ADC_STROBE_PIN != 0
+#endif
+
+#ifndef P_ADC_1_STROBE
+#define P_ADC_1_STROBE      0
+#endif
+
+#ifndef ADC_1_STROBE_VALUE
+#define ADC_1_STROBE_VALUE  1
+#endif
+
+#ifndef ADC_1_STROBE_TICKS
+#define ADC_1_STROBE_TICKS  0
 #endif
 
 
@@ -428,7 +467,7 @@
 
 
 // Timer ...
-#if WITH_MATRIX || WITH_UART || WITH_SHADES || WITH_TEMP_ZACWIRE
+#if WITH_MATRIX || WITH_ADC || WITH_UART || WITH_SHADES || WITH_TEMP_ZACWIRE
   // The above features require the timer: Auto-enable it
 #undef WITH_TIMER
 #define WITH_TIMER 1
@@ -655,6 +694,10 @@
   // all ports usable as GPIOs and GPIO_FROM_MASK(0xffff) identifies all logically
   // usable GPIOs, respectively.
 
+// ADC(s) ...
+#define P_ADC_0           P_B5
+#define P_ADC_1           P_B6
+
 // Temperature ...
 #define P_TEMP_ZACWIRE    P_B1
 
@@ -746,17 +789,21 @@
 // ADC(s) ...
 #if !WITH_ADC || ADC_PORTS < 1 || !defined(P_ADC_0)
 #undef P_ADC_0
-#define P_ADC_0             0
+#define P_ADC_0         0
+#undef P_ADC_0_STROBE
+#define P_ADC_0_STROBE  0
 #endif
 
 #if !WITH_ADC || ADC_PORTS < 2 || !defined(P_ADC_1)
 #undef P_ADC_1
-#define P_ADC_1             0
+#define P_ADC_1         0
+#undef P_ADC_1_STROBE
+#define P_ADC_1_STROBE  0
 #endif
 
 #define RESET_DDR_IN_ADC    (P_ADC_0 | P_ADC_1)
-#define RESET_DDR_OUT_ADC   0
-#define RESET_STATE_ADC     0
+#define RESET_DDR_OUT_ADC   (P_ADC_0_STROBE | P_ADC_1_STROBE)
+#define RESET_STATE_ADC     ((ADC_0_STROBE_VALUE == 0 ? P_ADC_0_STROBE : 0) | (ADC_1_STROBE_VALUE == 0 ? P_ADC_1_STROBE : 0))
 
 
 // UART ...
@@ -852,44 +899,44 @@
 #define USEMASK_TEMP    (RESET_DDR_IN_TEMP    | RESET_DDR_OUT_TEMP    )
 #define USEMASK_SHADES  (RESET_DDR_IN_SHADES  | RESET_DDR_OUT_SHADES  )
 
-// Combined use mask and arithmetic sum of all use masks ...
+// Compute XOR and and arithmetic sum of all use masks ...
 //   If and only if two or more feature use masks have same bits set, these two numbers differ.
-#define USEMASK (USEMASK_TWI_SL | USEMASK_GPIO | USEMASK_TWI_MA | USEMASK_MATRIX | USEMASK_ADC | USEMASK_UART | USEMASK_TEMP | USEMASK_SHADES)
-#define USESUM  (USEMASK_TWI_SL + USEMASK_GPIO + USEMASK_TWI_MA + USEMASK_MATRIX + USEMASK_ADC + USEMASK_UART | USEMASK_TEMP | USEMASK_SHADES)
+#define USEXOR (USEMASK_TWI_SL ^ USEMASK_GPIO ^ USEMASK_TWI_MA ^ USEMASK_MATRIX ^ USEMASK_ADC ^ USEMASK_UART ^ USEMASK_TEMP ^ USEMASK_SHADES)
+#define USESUM (USEMASK_TWI_SL + USEMASK_GPIO + USEMASK_TWI_MA + USEMASK_MATRIX + USEMASK_ADC + USEMASK_UART + USEMASK_TEMP + USEMASK_SHADES)
 
 // Check for errors ...
-#if USEMASK != USESUM
+#if USEXOR != USESUM
 
 // We have a conflict: Try to print the cause(s) as warnings ...
-#if (USEMASK & ~USEMASK_TWI_SL) == (USESUM - USEMASK_TWI_SL)
+#if (USEXOR ^ USEMASK_TWI_SL) == (USESUM - USEMASK_TWI_SL)
 #warning "TWI slave pins conflict with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_GPIO) == (USESUM - USEMASK_GPIO)
+#if (USEXOR ^ USEMASK_GPIO) == (USESUM - USEMASK_GPIO)
 #warning "GPIO pins conflict with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_TWI_MA) == (USESUM - USEMASK_TWI_MA)
+#if (USEXOR ^ USEMASK_TWI_MA) == (USESUM - USEMASK_TWI_MA)
 #warning "TWI master pins conflict with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_MATRIX) == (USESUM - USEMASK_MATRIX)
+#if (USEXOR ^ USEMASK_MATRIX) == (USESUM - USEMASK_MATRIX)
 #warning "Matrix pins conflict with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_ADC) == (USESUM - USEMASK_ADC)
+#if (USEXOR ^ USEMASK_ADC) == (USESUM - USEMASK_ADC)
 #warning "ADC pin(s) conflict with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_UART) == (USESUM - USEMASK_UART)
+#if (USEXOR ^ USEMASK_UART) == (USESUM - USEMASK_UART)
 #warning "UART pin(s) conflict with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_TEMP) == (USESUM - USEMASK_TEMP)
+#if (USEXOR ^ USEMASK_TEMP) == (USESUM - USEMASK_TEMP)
 #warning "Temperature pin conflicts with others!"
 #endif
 
-#if (USEMASK & ~USEMASK_SHADES) == (USESUM - USEMASK_SHADES)
+#if (USEXOR ^ USEMASK_SHADES) == (USESUM - USEMASK_SHADES)
 #warning "Shades pin(s) conflict with others!"
 #endif
 

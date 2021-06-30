@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -73,7 +73,7 @@ $(function() {
 <div class="textblock"><p>Floorplan widget. </p>
 <p>This is a mini view of the floorplan with 256x128 pixels. </p>
 
-<p class="definition">Definition at line <a class="el" href="floorplan_8H_source.html#l00122">122</a> of file <a class="el" href="floorplan_8H_source.html">floorplan.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="floorplan_8H_source.html#l00128">128</a> of file <a class="el" href="floorplan_8H_source.html">floorplan.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="floorplan_8H_source.html">floorplan.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -120,11 +120,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetColor</b> (TColor 
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetColor</b> (TColor _colNorm, TColor _colDown)</td></tr>
 <tr class="separator:ae60416f663a5ed2c430df71a308d310f inherit pub_methods_classCButton"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07cfd2bca03d23052202540cace591f6 inherit pub_methods_classCButton"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a07cfd2bca03d23052202540cace591f6">SetLabel</a> (SDL_Surface *_icon, SDL_Rect *srcRect=NULL, bool takeOwnership=false)</td></tr>
-<tr class="memdesc:a07cfd2bca03d23052202540cace591f6 inherit pub_methods_classCButton"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set '_icon' as tbe button label.  <a href="classCButton.html#a07cfd2bca03d23052202540cace591f6">More...</a><br /></td></tr>
+<tr class="memdesc:a07cfd2bca03d23052202540cace591f6 inherit pub_methods_classCButton"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set '_icon' as the button label.  <a href="classCButton.html#a07cfd2bca03d23052202540cace591f6">More...</a><br /></td></tr>
 <tr class="separator:a07cfd2bca03d23052202540cace591f6 inherit pub_methods_classCButton"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e5fc052784829041736e25f33e9bf6e inherit pub_methods_classCButton"><td class="memItemLeft" align="right" valign="top"><a id="a0e5fc052784829041736e25f33e9bf6e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a0e5fc052784829041736e25f33e9bf6e">SetLabel</a> (const char *text, TColor textColor=WHITE, TTF_Font *font=NULL)</td></tr>
-<tr class="memdesc:a0e5fc052784829041736e25f33e9bf6e inherit pub_methods_classCButton"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set text-only label. <br /></td></tr>
+<tr class="memdesc:a0e5fc052784829041736e25f33e9bf6e inherit pub_methods_classCButton"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a text-only label. <br /></td></tr>
 <tr class="separator:a0e5fc052784829041736e25f33e9bf6e inherit pub_methods_classCButton"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4766b00ba43d9d74e175dff19974746f inherit pub_methods_classCButton"><td class="memItemLeft" align="right" valign="top"><a id="a4766b00ba43d9d74e175dff19974746f"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a4766b00ba43d9d74e175dff19974746f">SetLabel</a> (SDL_Surface *_icon, const char *text, TColor textColor=WHITE, TTF_Font *font=NULL)</td></tr>
@@ -149,6 +149,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:ac01712bbdb4a1b8395f9cd80b67a4b27 inherit pub_methods_classCButton"><td class="memItemLeft" align="right" valign="top"><a id="ac01712bbdb4a1b8395f9cd80b67a4b27"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>SetCbPushed</b> (<a class="el" href="group__ui__widgets__button.html#ga65824a26e458b0479c9cce9e781408fa">FCbButtonPushed</a> *cb, void *_data=NULL)</td></tr>
 <tr class="separator:ac01712bbdb4a1b8395f9cd80b67a4b27 inherit pub_methods_classCButton"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af766965e80b02e88a50026fa5e7fb728 inherit pub_methods_classCButton"><td class="memItemLeft" align="right" valign="top"><a id="af766965e80b02e88a50026fa5e7fb728"></a>
+void *&#160;</td><td class="memItemRight" valign="bottom"><b>GetCbPushedData</b> ()</td></tr>
+<tr class="separator:af766965e80b02e88a50026fa5e7fb728 inherit pub_methods_classCButton"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e3ee536f2f22458ecfc56ac4882f430 inherit pub_methods_classCButton"><td class="memItemLeft" align="right" valign="top"><a id="a2e3ee536f2f22458ecfc56ac4882f430"></a>
 virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCButton.html#a2e3ee536f2f22458ecfc56ac4882f430">HandleEvent</a> (SDL_Event *ev)</td></tr>
 <tr class="memdesc:a2e3ee536f2f22458ecfc56ac4882f430 inherit pub_methods_classCButton"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle an event and return 'true' if the event was consumed and is to be ignored by later widgets. <br /></td></tr>

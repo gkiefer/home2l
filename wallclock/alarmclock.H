@@ -82,8 +82,8 @@ void AlarmClockHandlePushed (bool enableOff, bool longPush);
   ///< @brief Handle a push on (one of) the alarm clock button(s) in the interface.
   ///
   /// In off/standby state, a push opens the setup dialog.
-  /// If allowed ('enableOff == true'), a long push switches of alarm during alarm.
-  /// Any other push during alarm
+  /// If allowed ('enableOff == true'), a long push switches off alarm during alarm.
+  /// Any other push during alarm will put the alarm into snooze mode.
 /// @}
 
 

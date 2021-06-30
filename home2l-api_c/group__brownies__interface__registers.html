@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -103,6 +103,10 @@ Notification register(s) ...</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga902e52348ae50d88870192c252776eb9">BR_CHANGED_MATRIX</a>&#160;&#160;&#160;0x04</td></tr>
 <tr class="memdesc:ga902e52348ae50d88870192c252776eb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">&ndash; [<a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a>] any sensor matrix switch changed <br /></td></tr>
 <tr class="separator:ga902e52348ae50d88870192c252776eb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga30eb9e115fc775c0df6168b9b4132895"><td class="memItemLeft" align="right" valign="top"><a id="ga30eb9e115fc775c0df6168b9b4132895"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga30eb9e115fc775c0df6168b9b4132895">BR_CHANGED_ADC</a>&#160;&#160;&#160;0x40</td></tr>
+<tr class="memdesc:ga30eb9e115fc775c0df6168b9b4132895"><td class="mdescLeft">&#160;</td><td class="mdescRight">&ndash; [<a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a>] a new ADC sample value exists (only if <a class="el" href="group__brownies__features.html#gae068bb96d2ffb6dbc0716405a20eae0c">ADC_PERIOD</a> &gt; 0) <br /></td></tr>
+<tr class="separator:ga30eb9e115fc775c0df6168b9b4132895"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga34a57e08b5f1028c8f63080b936aaadc"><td class="memItemLeft" align="right" valign="top"><a id="ga34a57e08b5f1028c8f63080b936aaadc"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga34a57e08b5f1028c8f63080b936aaadc">BR_CHANGED_UART</a>&#160;&#160;&#160;0x08</td></tr>
 <tr class="memdesc:ga34a57e08b5f1028c8f63080b936aaadc"><td class="mdescLeft">&#160;</td><td class="mdescRight">&ndash; [<a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a>] UART status register has changed <br /></td></tr>
@@ -146,18 +150,20 @@ ADC registers ...</h2></td></tr>
 <tr><td class="ititle" colspan="2"><p><a class="anchor" id="amgrp3736acab31eb1474a60cce554b276d9a"></a>(NOT IMPLEMENTED YET) </p>
 </td></tr>
 <tr class="memitem:gad879bce65e9f1210b8baf077ca662cb1"><td class="memItemLeft" align="right" valign="top"><a id="gad879bce65e9f1210b8baf077ca662cb1"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_REG_ADC_0_LO</b>&#160;&#160;&#160;0x08</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#gad879bce65e9f1210b8baf077ca662cb1">BR_REG_ADC_0_LO</a>&#160;&#160;&#160;0x08</td></tr>
+<tr class="memdesc:gad879bce65e9f1210b8baf077ca662cb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #0 low (bit 7 = ADC.1, bit 6 = ADC.0) <br /></td></tr>
 <tr class="separator:gad879bce65e9f1210b8baf077ca662cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga87f4370878398dcf2b1100ea0e6594f2"><td class="memItemLeft" align="right" valign="top"><a id="ga87f4370878398dcf2b1100ea0e6594f2"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga87f4370878398dcf2b1100ea0e6594f2">BR_REG_ADC_0_HI</a>&#160;&#160;&#160;0x09</td></tr>
-<tr class="memdesc:ga87f4370878398dcf2b1100ea0e6594f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #0 (little endian; reading low latches high) <br /></td></tr>
+<tr class="memdesc:ga87f4370878398dcf2b1100ea0e6594f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #0 high (ADC.9 .. ADC.2); reading low latches high. <br /></td></tr>
 <tr class="separator:ga87f4370878398dcf2b1100ea0e6594f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaad841ab7e9d31103361c1e5ac4d53780"><td class="memItemLeft" align="right" valign="top"><a id="gaad841ab7e9d31103361c1e5ac4d53780"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_REG_ADC_1_LO</b>&#160;&#160;&#160;0x0a</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#gaad841ab7e9d31103361c1e5ac4d53780">BR_REG_ADC_1_LO</a>&#160;&#160;&#160;0x0a</td></tr>
+<tr class="memdesc:gaad841ab7e9d31103361c1e5ac4d53780"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #1 low (bit 7 = ADC.1, bit 6 = ADC.0) <br /></td></tr>
 <tr class="separator:gaad841ab7e9d31103361c1e5ac4d53780"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="memItemLeft" align="right" valign="top"><a id="ga5cfc8310006aa34cf57bc2a0df484c1b"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga5cfc8310006aa34cf57bc2a0df484c1b">BR_REG_ADC_1_HI</a>&#160;&#160;&#160;0x0b</td></tr>
-<tr class="memdesc:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #1 (little endian; reading low latches high) <br /></td></tr>
+<tr class="memdesc:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #1 high (ADC.9 .. ADC.2); reading low latches high. <br /></td></tr>
 <tr class="separator:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
@@ -451,7 +457,7 @@ System control registers ...</h2></td></tr>
 <p>Temperature (little endian; reading low latches high). </p>
 <p>Bits 12..1 contain the raw temperature value delivered by the TSIC206/306 device. Bit 0 is set if and only if the value ist valid. A value of 0x0000 indicates an unknown temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="interface_8h_source.html#l00535">535</a> of file <a class="el" href="interface_8h_source.html">interface.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="interface_8h_source.html#l00529">529</a> of file <a class="el" href="interface_8h_source.html">interface.h</a>.</p>
 
 </div>
 </div>
@@ -470,7 +476,7 @@ System control registers ...</h2></td></tr>
 <p>Firmware base and boot vector location. </p>
 <p>This is the base address of the active firmware in units of <a class="el" href="group__brownies__interface__memory.html#gac46043182624470704221be8df99e246">BR_FLASH_PAGESIZE</a> bytes (64/0x40 on ATtiny84, ATtiny861). Writing to this register followed by writing <a class="el" href="group__brownies__interface__registers.html#ga49e137cdbda9b88e185e2527386b0121">BR_CTRL_REBOOT_NEWFW</a> to <a class="el" href="group__brownies__interface__registers.html#ga26880600440e224b5791b13fe3fa75a5">BR_REG_CTRL</a> causes the interrupt table to be rewritten and the CPU reset. This register is initialized with the actual firmware base; reading it allows to locate the running firmware. </p>
 
-<p class="definition">Definition at line <a class="el" href="interface_8h_source.html#l00722">722</a> of file <a class="el" href="interface_8h_source.html">interface.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="interface_8h_source.html#l00716">716</a> of file <a class="el" href="interface_8h_source.html">interface.h</a>.</p>
 
 </div>
 </div>

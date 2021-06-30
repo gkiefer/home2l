@@ -783,7 +783,7 @@ void EnvFlush () {
   // Try to write the file...
   f = fopen (varFileName.Get (), "wt");
   if (!f) {
-    WARNINGF (("Unable to open '%s' for writing", varFileName.Get ()));
+    WARNINGF (("Failed to open '%s' for writing", varFileName.Get ()));
     return;
   }
   for (n = idx0; n < idx1; n++) {
@@ -827,7 +827,7 @@ const char *EnvGet (const char *key) {
     idx = envMap.Find (key);
     if (idx >= 0) return envMap.Get (idx)->Get ();
     else {
-      DEBUGF (1, ("Attempt to read non-existing configuration variable '%s' - assuming empty string.", key));
+      //~ DEBUGF (1, ("Attempt to read non-existing configuration variable '%s' - assuming empty string.", key));
       return NULL;
     }
   }
@@ -881,26 +881,26 @@ static void EnvWarn (bool warn, const char *key, const char *typeStr = NULL) {
 }
 
 
-bool EnvGetString (const char *key, const char **ret, bool warn) {
+bool EnvGetString (const char *key, const char **ret, bool warnIfMissing) {
   const char *_ret = EnvGet (key);
   if (_ret) {
     if (ret) *ret = _ret;
     return true;
   }
   else {
-    EnvWarn (warn, key);
+    EnvWarn (warnIfMissing, key);
     return false;
   }
 }
 
 
-const char *EnvGetString (const char *key, const char *defaultVal, bool warn) {
-  EnvGetString (key, &defaultVal, warn);
+const char *EnvGetString (const char *key, const char *defaultVal, bool warnIfMissing) {
+  EnvGetString (key, &defaultVal, warnIfMissing);
   return defaultVal;
 }
 
 
-bool EnvGetPath (const char *key, const char **ret, const char *path, bool warn) {
+bool EnvGetPath (const char *key, const char **ret, const char *path, bool warnIfMissing) {
   CString s, *val;
   int idx;
   const char *_ret;
@@ -916,51 +916,50 @@ bool EnvGetPath (const char *key, const char **ret, const char *path, bool warn)
     return true;
   }
   else {
-    EnvWarn (warn, key);
+    EnvWarn (warnIfMissing, key);
     return false;
   }
 }
 
 
-const char *EnvGetPath (const char *key, const char *defaultVal, const char *path, bool warn) {
-  EnvGetPath (key, &defaultVal, path, warn);
+const char *EnvGetPath (const char *key, const char *defaultVal, const char *path, bool warnIfMissing) {
+  EnvGetPath (key, &defaultVal, path, warnIfMissing);
   return defaultVal;
 }
 
 
-bool EnvGetHostAndPort (const char *key, CString *retHost, int *retPort, int defaultPort, bool warn) {
+bool EnvGetHostAndPort (const char *key, CString *retHost, int *retPort, int defaultPort, bool warnIfMissing) {
   const char *hostAndPort;
 
   // Get key & check existence...
   hostAndPort = EnvGet (key);
   if (!hostAndPort) {
-    EnvWarn (warn, key);
-    retHost->Clear ();
+    EnvWarn (warnIfMissing, key);
     return false;
   }
 
   // Resolve...
   if (!EnvNetResolve (hostAndPort, retHost, retPort, defaultPort, false)) {
-    EnvWarn (warn, key, "<host[:port]>");
+    EnvWarn (true, key, "<host[:port]>");
     return false;
   }
   return true;
 }
 
 
-bool EnvGetInt (const char *key, int *ret, bool warn) {
+bool EnvGetInt (const char *key, int *ret, bool warnIfMissing) {
   const char *strVal;
   char *endPtr;
   int val;
 
   strVal = EnvGet (key);
   if (!strVal) {
-    EnvWarn (warn, key);
+    EnvWarn (warnIfMissing, key);
     return false;
   }
   val = (int) strtol (strVal, &endPtr, 0);
   if (*strVal == '\0' || *endPtr != '\0') {
-    EnvWarn (warn, key, "integer");
+    EnvWarn (true, key, "integer");
     return false;
   }
   if (ret) *ret = val;
@@ -968,25 +967,25 @@ bool EnvGetInt (const char *key, int *ret, bool warn) {
 }
 
 
-int EnvGetInt (const char *key, int defaultVal, bool warn) {
-  EnvGetInt (key, &defaultVal, warn);
+int EnvGetInt (const char *key, int defaultVal, bool warnIfMissing) {
+  EnvGetInt (key, &defaultVal, warnIfMissing);
   return defaultVal;
 }
 
 
-bool EnvGetFloat (const char *key, float *ret, bool warn) {
+bool EnvGetFloat (const char *key, float *ret, bool warnIfMissing) {
   const char *strVal;
   char *endPtr;
   float val;
 
   strVal = EnvGet (key);
   if (!strVal) {
-    EnvWarn (warn, key);
+    EnvWarn (warnIfMissing, key);
     return false;
   }
   val = strtof (strVal, &endPtr);
   if (*strVal == '\0' || *endPtr != '\0') {
-    EnvWarn (warn, key, "float");
+    EnvWarn (true, key, "float");
     return false;
   }
   if (ret) *ret = val;
@@ -994,25 +993,23 @@ bool EnvGetFloat (const char *key, float *ret, bool warn) {
 }
 
 
-float EnvGetFloat (const char *key, float defaultVal, bool warn) {
-  EnvGetFloat (key, &defaultVal, warn);
+float EnvGetFloat (const char *key, float defaultVal, bool warnIfMissing) {
+  EnvGetFloat (key, &defaultVal, warnIfMissing);
   return defaultVal;
 }
 
 
-bool EnvGetBool (const char *key, bool *ret, bool warn) {
+bool EnvGetBool (const char *key, bool *ret, bool warnIfMissing) {
   const char *strVal;
   bool val;
 
   strVal = EnvGet (key);
   if (!strVal) {
-    EnvWarn (warn, key);
+    EnvWarn (warnIfMissing, key);
     return false;
   }
-  if (strchr ("0fF-", strVal[0])) { val = false; }
-  else if (strchr ("1tT+", strVal[0])) { val = true; }
-  else {
-    EnvWarn (warn, key, "boolean");
+  if (!BoolFromString (strVal, &val)) {
+    EnvWarn (true, key, "boolean");
     return false;
   }
   if (ret) *ret = val;
@@ -1020,8 +1017,8 @@ bool EnvGetBool (const char *key, bool *ret, bool warn) {
 }
 
 
-bool EnvGetBool (const char *key, bool defaultVal, bool warn) {
-  EnvGetBool (key, &defaultVal, warn);
+bool EnvGetBool (const char *key, bool defaultVal, bool warnIfMissing) {
+  EnvGetBool (key, &defaultVal, warnIfMissing);
   return defaultVal;
 }
 
@@ -1076,14 +1073,16 @@ void CEnvPara::GetAll (bool withVarKeys) {
 
   pEp = &first;
   while ( (ep = *pEp) ) {
-    //~ isVarKey = strncmp (ep->key, "var.", 4) == 0;
-    //~ if (isVarKey == varKeys) switch (ep->type) {
     if (withVarKeys || strncmp (ep->key, "var.", 4) != 0) {
+      // Read settings from the environment, eventually overriding the default given by the PARA_* macros.
       switch (ep->type) {
         case eptString:
           EnvGetString (ep->key, (const char **) ep->pVar);
           break;
         case eptPath:
+          if (!EnvGet (ep->key)) EnvPut (ep->key, * (const char **) ep->pVar);
+            // If the parameter has not been set by the user, set it here anyway.
+            // This will cause it to be converted to an absolute path by the following line.
           EnvGetPath (ep->key, (const char **) ep->pVar);
           break;
         case eptInt:

@@ -113,14 +113,14 @@ for fileName in fileList:
 
             # Get the 'Register' command arguments ...
             args = line.partition ("(") [2].rpartition (");") [0].strip ().split (", ") [skipArgs:]
-            #~ print ("INFO: line = '" + str (line) + "'", file=sys.stderr, flush=True);
-            #~ print ("INFO: args = " + str (args), file=sys.stderr, flush=True);
+            # ~ print ("INFO: line = '" + str (line) + "'", file=sys.stderr, flush=True);
+            # ~ print ("INFO: args = " + str (args), file=sys.stderr, flush=True);
             keyOut = args[0].strip ('"')    # LID
-            #~ print ("INFO: keyOut = " + str (keyOut), file=sys.stderr, flush=True);
-            if len (args) == 3:       # type/mode arguments?
-              typeOut = args[1][3:].lower ()  #
+            # ~ print ("INFO: keyOut = " + str (keyOut), file=sys.stderr, flush=True);
+            if args[1].strip () [0] != '"':   # type/mode arguments?
+              typeOut = args[1][3:].lower ()
               modeOut = { "true" : "wr", "false":"ro" } [args[2]]
-            elif len (args) == 2:     # 'rcDef' argument?
+            else:                             # assume 'rcDef' argument
               typeOut, modeOut = args[1].strip ('"').split ()
 
             # Check for a default ...

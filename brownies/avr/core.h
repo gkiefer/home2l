@@ -267,8 +267,8 @@ static inline void MinitimerStop () {
 /// @name Interface Functions of the "core" Module ...
 ///
 /// The feature modules (e.g. gpio.[hc], shades.[hc]) have a common set of
-/// interface functions. These are the functions for the core functionality
-/// which is seen as a pseudo-module "core" here.
+/// interface functions. The following functions are the interface for the
+/// pseudo-module "core", which implements some core functionality.
 ///
 /// **If you are developing a feature module: Never call these functions directly.
 /// they are only documented here in order to document the general module interface
@@ -297,7 +297,7 @@ void CoreOnRegRead (uint8_t reg);
   /// register content. For example, the GPIO module reads the GPIO inputs then.
   ///
   /// This function handles reads from the @ref BR_REG_CHANGED register (i.e.
-    /// auto-resets it on read) and reads from the timer registers (i.e. latches
+  /// auto-resets it on read) and reads from the timer registers (i.e. latches
   /// the 16-bit time value on access to @ref BR_REG_TICKS_LO).
   ///
 void CoreOnRegWrite (uint8_t reg, uint8_t val);

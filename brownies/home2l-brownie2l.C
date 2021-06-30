@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <elf.h>
 #include <fnmatch.h>
+#include <errno.h>
 
 #if WITH_READLINE
 #include <readline/readline.h>
@@ -51,6 +52,22 @@ ENV_PARA_INT ("brownie2l.historyLines", envBrownie2lHistLines, 64);
    *
    * If set to 0, no history file is written or read.
    */
+ENV_PARA_STRING ("brownie2l.init.cmd", envBrownie2lInitCmd, "avrdude -c %2$s -p %1$s -U hfuse:w:%3$s.%1$s.elf -U efuse:w:%3$s.%1$s.elf -U eeprom:w:%3$s.%1$s.elf -U flash:w:%3$s.%1$s.elf");
+  /* Shell command to initialize a new Brownie
+   *
+   * This shell is executed if the user issues an "init" command. In the string,
+   * each occurence of '%1$s' is replaced by the given MCU type (e.g. 't85', 't84', 't861').
+   * Each occurence of '%2$s' is replaced by the \refenv{brownie2l.init.programmer} setting.
+   * Each occurence of '%3$s' is replaced by base path name of the ELF file
+   * (e.g. 'opt/home2l/share/brownies/init').
+   *
+   * If you use avrdude(1) to program devices, it is usually not necessary to change this
+   * setting.
+   */
+ENV_PARA_STRING ("brownie2l.init.programmer", envBrownie2lInitProgrammer, "avrisp2");
+  /* Programmer device to be used for initializing a new Brownie
+   */
+
 
 #define BROWNIE_ELF_DIR "share/brownies"    // location of the .elf family relativ to HOME2L_ROOT
 
@@ -1157,7 +1174,53 @@ static bool CmdBoot (int argc, const char **argv) {
     puts ("OK");
   }
 
+  // Give the new firmware time to come up (for scripted use or 'CmdUpgrade()') ...
+  Sleep (100);
+
   // Success...
+  return true;
+}
+
+
+
+
+
+// ************************* CmdInit *******************************************
+
+
+#define CMD_INIT \
+  { "init", CmdInit, "<mcu>", "Initialize a new Brownie and install the maintenance firmware", CmdInitExtraHelp } \
+
+
+static const char *CmdInitExtraHelp () {
+  return  "This runs avrdude(1) program the device. An i2c link is not required.\n"
+          "<mcu> can be 't85', 't84' or 't861'.\n";
+}
+
+
+static bool CmdInit (int argc, const char **argv) {
+  CString cmd, elfBaseName;
+  int code;
+
+  // Sanity ...
+  if (argc < 2) return ArgError (argv);
+
+  // Prepare command ...
+  elfBaseName.SetF ("%s/" BROWNIE_ELF_DIR "/init", EnvHome2lRoot ());
+  cmd.SetF (envBrownie2lInitCmd, argv[1], envBrownie2lInitProgrammer, elfBaseName.Get ());
+  printf ("Initialize the brownie by running:\n\n$ %s\n\nContinue?", cmd.Get ());
+  if (!AreYouSure ()) return false;
+
+  // Run the command and finish ...
+  code = system (cmd.Get ());
+  if (code < 0) {
+    printf ("Failed: %s\n", strerror (errno));
+    return false;
+  }
+  if (code > 0) {
+    printf ("Failed with exit code %i.\n", code);
+    return false;
+  }
   return true;
 }
 
@@ -1352,11 +1415,11 @@ static bool CmdProgram (int argc, const char **argv) {
 
 
 
-// ************************* CmdUpgrade ********************************************
+// ************************* CmdUpgrade ****************************************
 
 
 #define CMD_UPGRADE \
-  { "upgrade", CmdUpgrade, "<options>", "Upgrade a Brownie based on the database", CmdUpgradeExtraHelp } \
+  { "upgrade", CmdUpgrade, "[ <options> ] [ <ELF file> ]", "Upgrade the operational firmware from a running operational firmware", CmdUpgradeExtraHelp } \
 
 
 static const char *CmdUpgradeExtraHelp () {
@@ -1367,7 +1430,8 @@ static const char *CmdUpgradeExtraHelp () {
 
 static bool CmdUpgrade (int argc, const char **argv) {
   CString s;
-  bool yesSure;
+  const char *elfName;
+  bool ok, yesSure;
   int n;
 
   // Sanity ...
@@ -1375,6 +1439,7 @@ static bool CmdUpgrade (int argc, const char **argv) {
 
   // Parse options ...
   yesSure = false;
+  elfName = NULL;
   for (n = 1; n < argc; n++) {
     if (argv[n][0] == '-') {
       switch (argv[n][1]) {
@@ -1385,16 +1450,20 @@ static bool CmdUpgrade (int argc, const char **argv) {
           return ArgError (argv);
       }
     }
-    else return ArgError (argv);
+    else {
+      if (elfName) return ArgError (argv);
+      elfName = argv[n];
+    }
   }
 
   // Run upgrade procedure ...
-  if (!ExecuteCmd ("boot -m")) return false;                                          // boot into maintenance
-  Sleep (100);
-  if (!ExecuteCmd (StringF (&s, "program%s -d", yesSure ? " -y" : ""))) return false; // program
-  if (!ExecuteCmd ("boot -o")) return false;                                          // boot operational system
-  Sleep (100);
-  if (!ExecuteCmd (StringF (&s, "config%s -d", yesSure ? " -y" : ""))) return false;  // write config and test
+  if (!ExecuteCmd ("boot -m")) return false;      // boot into maintenance
+  ok = ExecuteCmd (StringF (&s, "program%s %s", yesSure ? " -y" : "", elfName ? elfName : "-d"));
+                                                  // program
+  if (!ExecuteCmd ("boot -o")) ok = false;        // boot operational system
+  if (!ok) return false;
+  if (!elfName) if (!ExecuteCmd (StringF (&s, "config%s -d", yesSure ? " -y" : ""))) return false;
+                                                  // write config and test
 
   // Success ...
   putchar ('\n');     // for the case of a "for" loop
@@ -1665,9 +1734,11 @@ static CRcSubscriber *rcSubscriber = NULL;  // link to active subscriber; if set
 
 
 static bool CmdResources (int argc, const char **argv) {
+  CRcEventDriver *drv;
   CRcSubscriber subscriber;
   CRcEvent ev;
   CString s1, s2;
+  int n, count;
   bool haveSocketClient, linkFailure;
 
   // Sanity...
@@ -1683,19 +1754,21 @@ static bool CmdResources (int argc, const char **argv) {
   puts ("Initializing and registering driver ...");
   if (!rcDatabase.ReadDatabase ())
     WARNINGF (("Failed to read database '%s': No resources.", envBrDatabaseFile));
-  rcDatabase.ResourcesInit (
-      RcRegisterDriver ("brownies", rcsBusy),   // Register an event-based driver
-      &shellLink
-    );
+  drv = RcRegisterDriver ("brownies", rcsBusy);   // Register an event-based driver
+  rcDatabase.ResourcesInit (drv, &shellLink);
 
   puts ("\nRunning Resources (press Ctrl-C to stop) ...");
   RcStart ();
+
   subscriber.Register ("brownie2l");
-  subscriber.AddResources ("/local/brownies/*/*,/local/brownies/*/*/*");
+  count = drv->LockResources ();
+  for (n = 0; n < count; n++) subscriber.AddResource (drv->GetResource (n));
+  drv->UnlockResources ();
   subscriber.GetInfo (&s1);
   s2.SetFByLine ("  %s\n", s1.Get ());
   printf (s2.Get ());
   fflush (stdout);
+
   rcSubscriber = &subscriber;   // let signal handler interrupt us
   shellLink.ServerStart ();
   linkFailure = false;
@@ -1762,6 +1835,7 @@ static TCmd commandList[] = {
   CMD_MEM_READ,
   CMD_CONFIG,
   CMD_BOOT,
+  CMD_INIT,
   CMD_PROGRAM,
   CMD_UPGRADE,
   CMD_HUB,
@@ -2071,7 +2145,7 @@ static char **RlCompletionFunction (const char *text, int start, int end) {
   //   ... command-specific objects ...
   else if (cmdFunc == CmdConfig) generator = RlGeneratorConfig;
   else if (cmdFunc == CmdOpen) generator = RlGeneratorBrownies;
-  else if (cmdFunc == CmdProgram) {
+  else if (cmdFunc == CmdProgram || cmdFunc == CmdUpgrade) {
     if (strchr (text, '/') == NULL) generator = RlGeneratorInstalledElfs;
     else generator = NULL;    // word contains a '/' => do filename completion
   }
@@ -2103,6 +2177,7 @@ int main (int argc, char **argv) {
 #if WITH_READLINE
   static const char *prompt = "\001\033[1m\002brownie2l>\001\033[0m\002 ";   // The '\001' and '\002' mark invisible characters, so that libreadline knows about the visible length of the prompt.
   const char *homeDir;
+  CString lastLine;
 #else
   static const char *prompt = "\033[1mbrownie2l>\033[0m ";
   char buf[256];
@@ -2179,7 +2254,12 @@ int main (int argc, char **argv) {
         puts (line.Get ());
       }
 #if WITH_READLINE
-      if (interactive) add_history (line.Get ());
+      if (interactive) {
+        if (line.Compare (lastLine.Get ()) != 0) {
+          add_history (line);
+          lastLine.Set (line);
+        }
+      }
 #endif
       ExecuteCmd (line.Get ());
     }
@@ -2220,14 +2300,17 @@ int main (int argc, char **argv) {
 
         // Line not empty: Store in history and execute...
 #if WITH_READLINE
-        add_history (line.Get ());
+        if (line.Compare (lastLine.Get ()) != 0) {
+          add_history (line);
+          lastLine.Set (line);
+        }
 #endif
         interrupted = false;
         argCmds.Set (line.Get (), INT_MAX, ";");
         for (n = 0; n < argCmds.Entries () && !interrupted; n++) {
           line.Set (argCmds.Get (n));
           line.Strip ();
-          ExecuteCmd (line.Get ());
+          ExecuteCmd (line);
         }
       }
     }

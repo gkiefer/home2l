@@ -58,12 +58,19 @@
 enum EGadgetType {
   gtNone = 0,
 
-  /// @name Windows, shades and gates...
+  /// @name Windows, shades, doors and gates...
   /// @{
-  gtWindow,       ///< window with a state of @ref ERctWindowState.
-  gtShades,       ///< shades (type @ref rctPercent)
+  gtWindow,       ///< window with a state of @ref ERctWindowState (type @ref rctBool is also allowed).
+  gtDoor,         ///< door (visualized like a window)
+  gtGate,         ///< gate (visualized like a window)
+  gtShades,       ///< shades or blinds (type @ref rctPercent)
   gtRoofWindow,   ///< roof window, optionally including shades
   gtGarage,       ///< garage door (open/close)
+  /// @}
+
+  /// @name Text...
+  /// @{
+  gtTemp,         ///< temperature value
   /// @}
 
   /// @name Icon-like ...
@@ -77,19 +84,18 @@ enum EGadgetType {
   gtWlan,         ///< Wifi access point
   gtBluetooth,    ///< Bluetooth
   gtService,      ///< some generic service
-  /// @}
-
-  /// @name Text...
-  /// @{
-  gtTemp,         ///< temperature value
+  gtWarning,      ///< a warning sign
   /// @}
 
   /// @name Meta ...
   /// @{
-  gtZoom,
   gtEND
   /// @}
 };
+
+
+static inline bool GadgetTypeIsIcon (EGadgetType t) { return t >= gtLock; }
+  // NOTE: Icons must be last in 'EGadgetType'
 
 
 

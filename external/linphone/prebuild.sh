@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NOTE: Building last working version on Android requires NDK r10d !!
+
 
 
 ##### Download source (upgrade trial without success) #####

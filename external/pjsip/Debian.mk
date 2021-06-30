@@ -22,19 +22,20 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 CFLAGS += -I$(MYDIR)usr/$(ARCH)/include
 LDFLAGS += -L$(MYDIR)usr/$(ARCH)/lib \
 	-lpjsua -lpjsip-simple -lpjsip-ua -lpjsip -lpjmedia-codec -lpjmedia -lpjmedia-videodev -lpjmedia-audiodev \
-	-lpjmedia -lpjnath -lpjlib-util -lsrtp -lresample -lspeex -lyuv -lpj \
-	-lavformat -lavcodec -lswscale -lavutil -lv4l2 \
-	-lasound -luuid \
-	-lgsmcodec -lilbccodec -lopencore-amrnb -lopencore-amrwb -lvo-amrwbenc 
+	-lpjmedia -lpjnath -lpjlib-util -lsrtp -lresample -lyuv -lpj \
+	-lspeex -lopus -lgsmcodec -lilbccodec -lvpx \
+	-lv4l2 -lasound -luuid -lssl -lcrypto
 
 	# Lines 1 & 2: PJ libs
-	# Line 3: ffmpeg libs
+	# Line 3: Codec libs
+	#     -lavcodec -lavutil -lswscale -lavformat
 	# Line 4: system lib(s)
 	# Line 5: useless libs (-> should try to eliminate them)
-
-	
-	# Unused PJ libs:
-	#  -lg7221codec
+	#     -lopencore-amrnb -lopencore-amrwb -lvo-amrwbenc
 	#
-	# Unused system/external libs:
-	#  -lrt
+
+
+# Define endianess for armhf ...
+ifeq ($(ARCH),armhf)
+CFLAGS += -DPJ_IS_LITTLE_ENDIAN=1 -DPJ_IS_BIG_ENDIAN=0
+endif

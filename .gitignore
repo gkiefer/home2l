@@ -38,8 +38,8 @@ external/*/install
 external/*/src*
 external/*/build
 external/*/debs
-external/*/usr.new
 external/*/usr
+external/*/usr.*
 
 wallclock/icons.build
 #wallclock/android/bin

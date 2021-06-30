@@ -47,10 +47,10 @@ else ifeq ($(CFG),basic)
   MODS ?= tools resources brownies
 else ifeq ($(CFG),demo)
   # Modules for the demo image ...
-  MODS ?= tools resources brownies wallclock doorman locales
+  MODS ?= tools resources brownies wallclock locales
 else
   # Default: All modules...
-  MODS ?= tools resources brownies wallclock doorman locales doc
+  MODS ?= tools resources brownies wallclock locales doorman doc
 endif
 
 
@@ -86,7 +86,7 @@ else ifeq ($(CFG),basic)
 else ifeq ($(CFG),demo)
   # Fair set to run the demos ...
   export WITH_ANDROID ?= 0
-  export WITH_PHONE ?= 1
+  export WITH_PHONE ?= 0
   export WITH_GSTREAMER ?= 0
 endif
 
@@ -326,4 +326,3 @@ veryclean:
 
 uninstall:
 	rm -fr $(HOME2L_INSTALL)
-

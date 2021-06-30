@@ -382,7 +382,7 @@ class CMqttImport {
       // Register local resource ...
       if (!rcLid) rcLid = id; // topic.Get ();
       rc = mqttDrv->RegisterResource (rcLid, rcType, !reqTopic.IsEmpty ());
-      rc->SetDriverData (this);
+      rc->SetUserData (this);
 
       // Done ...
       //~ INFOF (("### Registered '%s' / '%s' / '%s'", topic.Get (), reqTopic.Get (), validTopic.Get ()));
@@ -1161,7 +1161,7 @@ HOME2L_DRIVER(mqtt) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcVa
       break;
 
     case rcdOpDriveValue:
-      mqttImport = (CMqttImport *) rc->DriverData ();
+      mqttImport = (CMqttImport *) rc->UserData ();
       mqttImport->DriveValue (vs);
       break;
   }

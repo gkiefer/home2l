@@ -1,6 +1,7 @@
 var searchData=
 [
   ['validbool',['ValidBool',['../classCResource.html#a5bf12a15a1bef17d2f065466f84d86c0',1,'CResource']]],
+  ['validboolfromstring',['ValidBoolFromString',['../group__common__strings.html#gaa9577bb8af7283602da10ce5d4d7b432',1,'base.H']]],
   ['validenumidx',['ValidEnumIdx',['../classCResource.html#adadfae375e6461870cad1122bdc7dcaa',1,'CResource']]],
   ['validfloat',['ValidFloat',['../classCResource.html#aedab801f1be1047fac1c37b169a61449',1,'CResource']]],
   ['validfloatfromstring',['ValidFloatFromString',['../group__common__strings.html#ga5fe937a11db6fb2c4c6a5f88f40b17ce',1,'base.H']]],

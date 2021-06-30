@@ -13,7 +13,7 @@ license apply.
             http://www.gnu.org/licenses/gpl-2.0.html
 
 
-* File 'ringback.wav' is copied from:
+* File 'ringback.wav' is derived from 'ringback-linphone.wav', which is copied from:
 
   Source:   http://www.linphone.org
   License:  GNU GPLv2

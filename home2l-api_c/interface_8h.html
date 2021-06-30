@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -277,12 +277,16 @@ Macros</h2></td></tr>
 <tr class="separator:ga59b872c5d3313a2fcc67eb669bfd34b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1542850b7e9458a41fcc4ac55353b07c"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga1542850b7e9458a41fcc4ac55353b07c">BR_FEATURE_ADC_0</a>&#160;&#160;&#160;0x0010</td></tr>
-<tr class="memdesc:ga1542850b7e9458a41fcc4ac55353b07c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has ADC #0 (e.g. for analog temperatur) <br /></td></tr>
+<tr class="memdesc:ga1542850b7e9458a41fcc4ac55353b07c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has ADC #0. <br /></td></tr>
 <tr class="separator:ga1542850b7e9458a41fcc4ac55353b07c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga86d3f82b217330ed016f85f7817994d5"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga86d3f82b217330ed016f85f7817994d5">BR_FEATURE_ADC_1</a>&#160;&#160;&#160;0x0020</td></tr>
-<tr class="memdesc:ga86d3f82b217330ed016f85f7817994d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has ADC #1 (e.g. for analog temperatur) <br /></td></tr>
+<tr class="memdesc:ga86d3f82b217330ed016f85f7817994d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has ADC #1. <br /></td></tr>
 <tr class="separator:ga86d3f82b217330ed016f85f7817994d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga618177b74a4059778392d9b896482f1a"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga618177b74a4059778392d9b896482f1a">BR_FEATURE_ADC_PASSIVE</a>&#160;&#160;&#160;0x0400</td></tr>
+<tr class="memdesc:ga618177b74a4059778392d9b896482f1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADCs run in passive mode (sampling on demand, no change reporting) <br /></td></tr>
+<tr class="separator:ga618177b74a4059778392d9b896482f1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5a52382d0934d96db1fb5f18a553dbf7"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__memory.html#ga5a52382d0934d96db1fb5f18a553dbf7">BR_FEATURE_UART</a>&#160;&#160;&#160;0x0040</td></tr>
 <tr class="memdesc:ga5a52382d0934d96db1fb5f18a553dbf7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Has UART (e.g. for RS485) <br /></td></tr>
@@ -349,6 +353,10 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga902e52348ae50d88870192c252776eb9">BR_CHANGED_MATRIX</a>&#160;&#160;&#160;0x04</td></tr>
 <tr class="memdesc:ga902e52348ae50d88870192c252776eb9"><td class="mdescLeft">&#160;</td><td class="mdescRight">&ndash; [<a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a>] any sensor matrix switch changed <br /></td></tr>
 <tr class="separator:ga902e52348ae50d88870192c252776eb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga30eb9e115fc775c0df6168b9b4132895"><td class="memItemLeft" align="right" valign="top">
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga30eb9e115fc775c0df6168b9b4132895">BR_CHANGED_ADC</a>&#160;&#160;&#160;0x40</td></tr>
+<tr class="memdesc:ga30eb9e115fc775c0df6168b9b4132895"><td class="mdescLeft">&#160;</td><td class="mdescRight">&ndash; [<a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a>] a new ADC sample value exists (only if <a class="el" href="group__brownies__features.html#gae068bb96d2ffb6dbc0716405a20eae0c">ADC_PERIOD</a> &gt; 0) <br /></td></tr>
+<tr class="separator:ga30eb9e115fc775c0df6168b9b4132895"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga34a57e08b5f1028c8f63080b936aaadc"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga34a57e08b5f1028c8f63080b936aaadc">BR_CHANGED_UART</a>&#160;&#160;&#160;0x08</td></tr>
 <tr class="memdesc:ga34a57e08b5f1028c8f63080b936aaadc"><td class="mdescLeft">&#160;</td><td class="mdescRight">&ndash; [<a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a>] UART status register has changed <br /></td></tr>
@@ -388,18 +396,20 @@ Macros</h2></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>(NOT IMPLEMENTED YET) </p>
 </div></td></tr>
 <tr class="memitem:gad879bce65e9f1210b8baf077ca662cb1"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_REG_ADC_0_LO</b>&#160;&#160;&#160;0x08</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#gad879bce65e9f1210b8baf077ca662cb1">BR_REG_ADC_0_LO</a>&#160;&#160;&#160;0x08</td></tr>
+<tr class="memdesc:gad879bce65e9f1210b8baf077ca662cb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #0 low (bit 7 = ADC.1, bit 6 = ADC.0) <br /></td></tr>
 <tr class="separator:gad879bce65e9f1210b8baf077ca662cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga87f4370878398dcf2b1100ea0e6594f2"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga87f4370878398dcf2b1100ea0e6594f2">BR_REG_ADC_0_HI</a>&#160;&#160;&#160;0x09</td></tr>
-<tr class="memdesc:ga87f4370878398dcf2b1100ea0e6594f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #0 (little endian; reading low latches high) <br /></td></tr>
+<tr class="memdesc:ga87f4370878398dcf2b1100ea0e6594f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #0 high (ADC.9 .. ADC.2); reading low latches high. <br /></td></tr>
 <tr class="separator:ga87f4370878398dcf2b1100ea0e6594f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaad841ab7e9d31103361c1e5ac4d53780"><td class="memItemLeft" align="right" valign="top">
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>BR_REG_ADC_1_LO</b>&#160;&#160;&#160;0x0a</td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#gaad841ab7e9d31103361c1e5ac4d53780">BR_REG_ADC_1_LO</a>&#160;&#160;&#160;0x0a</td></tr>
+<tr class="memdesc:gaad841ab7e9d31103361c1e5ac4d53780"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #1 low (bit 7 = ADC.1, bit 6 = ADC.0) <br /></td></tr>
 <tr class="separator:gaad841ab7e9d31103361c1e5ac4d53780"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="memItemLeft" align="right" valign="top">
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__interface__registers.html#ga5cfc8310006aa34cf57bc2a0df484c1b">BR_REG_ADC_1_HI</a>&#160;&#160;&#160;0x0b</td></tr>
-<tr class="memdesc:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #1 (little endian; reading low latches high) <br /></td></tr>
+<tr class="memdesc:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ADC #1 high (ADC.9 .. ADC.2); reading low latches high. <br /></td></tr>
 <tr class="separator:ga5cfc8310006aa34cf57bc2a0df484c1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">UART registers ...</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p><b>Notes on the UART operation:</b></p>

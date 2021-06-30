@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -69,8 +69,9 @@ $(function() {
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <div class="textblock"><p>IP Telephone. </p>
+<p><b>Note:</b> The instantiation of multiple instances is not fully supported in some backends. </p>
 
-<p class="definition">Definition at line <a class="el" href="phone_8H_source.html#l00162">162</a> of file <a class="el" href="phone_8H_source.html">phone.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="phone_8H_source.html#l00235">235</a> of file <a class="el" href="phone_8H_source.html">phone.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="phone_8H_source.html">phone.H</a>&quot;</code></p>
 <table class="memberdecls">
@@ -82,21 +83,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memdesc:abbc0c04660360f759f769046298ff550"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterate the backend and update the phone state; must be called regularly. <br /></td></tr>
 <tr class="separator:abbc0c04660360f759f769046298ff550"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Setup ...</div></td></tr>
-<tr class="memitem:a286078d54d786b6302c534f4c8d23946"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCPhone.html#a286078d54d786b6302c534f4c8d23946">Setup</a> (const char *agentName, int _mediaSelected, int withLogging, const char *tmpDir, const char *lpLinphoneRcFile)</td></tr>
-<tr class="memdesc:a286078d54d786b6302c534f4c8d23946"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup phone object.  <a href="#a286078d54d786b6302c534f4c8d23946">More...</a><br /></td></tr>
-<tr class="separator:a286078d54d786b6302c534f4c8d23946"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a499d805150c1116c0073d50f2e517f8d"><td class="memItemLeft" align="right" valign="top"><a id="a499d805150c1116c0073d50f2e517f8d"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCPhone.html#a499d805150c1116c0073d50f2e517f8d">Register</a> (const char *identity, const char *secret)</td></tr>
-<tr class="memdesc:a499d805150c1116c0073d50f2e517f8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register phone with a registrar. <br /></td></tr>
-<tr class="separator:a499d805150c1116c0073d50f2e517f8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0c8f1112685a894a1a6c988face2364"><td class="memItemLeft" align="right" valign="top"><a id="ad0c8f1112685a894a1a6c988face2364"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCPhone.html#ad0c8f1112685a894a1a6c988face2364">SetCamRotation</a> (int rot)</td></tr>
-<tr class="memdesc:ad0c8f1112685a894a1a6c988face2364"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set rotation of video (in degree); relevant for the format of a built-in camera. <br /></td></tr>
-<tr class="separator:ad0c8f1112685a894a1a6c988face2364"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe040d1a5f71a5a9b9654094f6a7246b"><td class="memItemLeft" align="right" valign="top"><a id="abe040d1a5f71a5a9b9654094f6a7246b"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCPhone.html#abe040d1a5f71a5a9b9654094f6a7246b">DumpSettings</a> ()</td></tr>
-<tr class="memdesc:abe040d1a5f71a5a9b9654094f6a7246b"><td class="mdescLeft">&#160;</td><td class="mdescRight">(For debugging) Dump the phone settings as INFO log messages. <br /></td></tr>
-<tr class="separator:abe040d1a5f71a5a9b9654094f6a7246b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf46d79aff646698af4bfb90fb785cfe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCPhone.html#aaf46d79aff646698af4bfb90fb785cfe">Setup</a> (const char *agentName, int _mediaSelected, int withLogging, const char *tmpDir)</td></tr>
+<tr class="memdesc:aaf46d79aff646698af4bfb90fb785cfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup phone object.  <a href="#aaf46d79aff646698af4bfb90fb785cfe">More...</a><br /></td></tr>
+<tr class="separator:aaf46d79aff646698af4bfb90fb785cfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae30acd713a3e9cd39af6937dabd0ba18"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCPhone.html#ae30acd713a3e9cd39af6937dabd0ba18">Register</a> (const char *identity=NULL, const char *secret=NULL)</td></tr>
+<tr class="memdesc:ae30acd713a3e9cd39af6937dabd0ba18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register phone with a registrar.  <a href="#ae30acd713a3e9cd39af6937dabd0ba18">More...</a><br /></td></tr>
+<tr class="separator:ae30acd713a3e9cd39af6937dabd0ba18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Actions ...</div></td></tr>
 <tr><td colspan="2"><div class="groupText"><p>These are actions that can be initiated by the application. Unless a 'Get...' method is present in this section, the effect may not immediately visible, e.g. the phone state may change somewhat later and will be returned by the backend via the callback mechanisms below. By default, the functions return 'true' on success (= no immediate failure), otherwise they print a warning message and return 'false'. </p>
 </div></td></tr>
@@ -223,8 +215,8 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>GetLibDataSize</
 <tr class="separator:a7405cbfb63a53ab6db881a896251599f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a286078d54d786b6302c534f4c8d23946"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a286078d54d786b6302c534f4c8d23946">&#9670;&nbsp;</a></span>Setup()</h2>
+<a id="aaf46d79aff646698af4bfb90fb785cfe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf46d79aff646698af4bfb90fb785cfe">&#9670;&nbsp;</a></span>Setup()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -251,13 +243,7 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>GetLibDataSize</
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>tmpDir</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>lpLinphoneRcFile</em>&#160;</td>
+          <td class="paramname"><em>tmpDir</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -270,16 +256,54 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>GetLibDataSize</
 <p>Setup phone object. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">agentName</td><td>is the name of the phone agent. </td></tr>
+    <tr><td class="paramname">agentName</td><td>is the reference to the name of the phone agent. The pointer must remain valid for the life time of the object. </td></tr>
     <tr><td class="paramname">_mediaSelected</td><td>is set of initially enabled media. </td></tr>
     <tr><td class="paramname">withLogging</td><td>enables logging, and should be set to the 'envDebug' setting. </td></tr>
-    <tr><td class="paramname">tmpDir</td><td>is the root temporary directory. It should be set to some path below <a class="el" href="group__env__helpers.html#ga5625203b415eb2d54b18620d2bcb0f11" title="&#39;tmp&#39; root path: dynamic data (not need to save over reboots). ">EnvHome2lTmp()</a>. To disallow the generation of temporary files (e.g. database for noise cancellation), NULL may be passed here. </td></tr>
-    <tr><td class="paramname">lpLinphoneRcFile</td><td>(<em>Linphone</em> only) The (read-only) linphone config file.</td></tr>
+    <tr><td class="paramname">tmpDir</td><td>is the root temporary directory. It should be set to some path below <a class="el" href="group__env__helpers.html#ga5625203b415eb2d54b18620d2bcb0f11" title="&#39;tmp&#39; root path: dynamic data (not need to save over reboots). ">EnvHome2lTmp()</a>. To disallow the generation of temporary files (e.g. database for noise cancellation), NULL may be passed here.</td></tr>
   </table>
   </dd>
 </dl>
 <p>A call to this function finally causes a "state changed" event from 'psNone' to 'psIdle'. If the callback handlers are set before, this can be caught for initialization purposes.</p>
+<p>A registration does not happen automatically here. To register, call <a class="el" href="classCPhone.html#ae30acd713a3e9cd39af6937dabd0ba18" title="Register phone with a registrar. ">Register()</a> afterwards.</p>
 <p><b>Note:</b> (2017-01-15) Persistent echo cancellation with <em>Linphone</em> requires a patched version of <em>Linphone</em> (see <code>external/linphone</code>). </p>
+
+</div>
+</div>
+<a id="ae30acd713a3e9cd39af6937dabd0ba18"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae30acd713a3e9cd39af6937dabd0ba18">&#9670;&nbsp;</a></span>Register()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CPhone::Register </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>identity</em> = <code>NULL</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>secret</em> = <code>NULL</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Register phone with a registrar. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">identity</td><td>is a string containing the user name and eventually domain of the identity, for example: "Joe Miller &lt;joe@example.org&gt;". </td></tr>
+    <tr><td class="paramname">secret</td><td>is the password.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Both arguments are references and must remain valid for the lifetime of the object. If NULL is passed for the identity, the default/main account defined by 'phone.register' and 'phone.secret' is registered. </p>
 
 </div>
 </div>
@@ -397,7 +421,7 @@ const int&#160;</td><td class="memItemRight" valign="bottom"><b>GetLibDataSize</
 </ul>
 <p><b>Note:</b> The caller must make sure that the audio/video devices are not opened before calling this method with argument 'psInCall'. </p>
 
-<p class="definition">Definition at line <a class="el" href="phone_8H_source.html#l00271">271</a> of file <a class="el" href="phone_8H_source.html">phone.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="phone_8H_source.html#l00347">347</a> of file <a class="el" href="phone_8H_source.html">phone.H</a>.</p>
 
 </div>
 </div>

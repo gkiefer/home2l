@@ -7,5 +7,6 @@ var searchData=
   ['unregister',['Unregister',['../classhome2l_1_1CResource.html#a1fded2e220581911c95bb06cd427ab08',1,'home2l.CResource.Unregister()'],['../classhome2l_1_1CRcSubscriber.html#a1fded2e220581911c95bb06cd427ab08',1,'home2l.CRcSubscriber.Unregister()']]],
   ['unsubscribe',['Unsubscribe',['../classhome2l_1_1CResource.html#a7c0445c91dd38baf04964ec7507330ce',1,'home2l.CResource.Unsubscribe()'],['../classhome2l_1_1CRcSubscriber.html#a1266ca0517f1f344edab9b827fc63ed9',1,'home2l.CRcSubscriber.Unsubscribe()']]],
   ['unwrite',['UnWrite',['../classhome2l_1_1CResource.html#a1b1863f95183fc2d0124e65efe203bbc',1,'home2l::CResource']]],
-  ['uri',['Uri',['../classhome2l_1_1CResource.html#ae07a37e0634de0e4c5f0865b284fc04d',1,'home2l::CResource']]]
+  ['uri',['Uri',['../classhome2l_1_1CResource.html#ae07a37e0634de0e4c5f0865b284fc04d',1,'home2l::CResource']]],
+  ['userdata',['UserData',['../classhome2l_1_1CResource.html#ae8f3dc1b2dcfbcd106c6fb72aee89206',1,'home2l::CResource']]]
 ];

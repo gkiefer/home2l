@@ -118,6 +118,8 @@ const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir = 
   // Resolve alias or '/local' path (up to at most 'maxDepth' levels of indirection) and return real path.
   // If the real path is equal to 'uri' (i.e. no resolution was necessary), '*ret' may contain a pointer to 'uri'
   // been set by 'CString::SetC ()'. Hence, 'uri' must live as long as '*ret'.
+  // This function operates symbolically. No path checking is done, and no resources need to be initialized
+  // before use. Only 'localHostId' and 'aliasMap' must be defined beforehead.
 
 bool RcUriMatches (const char *uri, const char *pattern);
   // Check if the URI matches a pattern. The pattern may be a comma- or whitespace-seperated list of patterns.
@@ -348,13 +350,13 @@ class CRcServer: public CNetRunnable {
 
 enum EHostConnectionState {
   hcsNewConnecting = 0, // Object is new and like 'hcsConnecting' otherwise (see below)
-  hcsNewRetryWait,      // Connection will be (re.)tried after some time (like 'hcsRetryWait', see below); Initial state
+  hcsNewRetryWait,      // Connection will be (re-)tried after some time (like 'hcsRetryWait', see below); Initial state
   hcsNewConnected,      // Connected, but no complete resource info has been received yet.
 
   hcsConnecting,        // Address lookup and connection in progress (e.g. background thread running)
   hcsRetryWait,         // Not connected, but connection will be tried after some time
   hcsConnected,         // Connection established, may be disconnected if idle
-  hcsStandby,           // Not connected, no connection presently required
+  hcsStandby            // Not connected, no connection presently required
 };
 
 static inline bool HostResourcesUnknown (EHostConnectionState s) { return s <= hcsNewConnected; }
@@ -450,7 +452,9 @@ class CRcHost: public CNetRunnable, public CShell {
     bool RemoteInfoSubscribers (int verbosity, CString *retText);
       // returns info on all subscribers, output format equivalent to 'CRcSubscriber::GetInfoAll ()'
 
-    void RequestConnect ();
+    void RequestConnect (bool soft = false);
+      // request a (re-)connection now;
+      // If 'soft' is set, no connection attempt is made in state 'hcsStandby' (only in 'hcsRetryWait' an alike).
 
     // Networking callbacks...
     int Fd () { return fd; }      // [T:net]
@@ -541,12 +545,16 @@ class CRcHost: public CNetRunnable, public CShell {
 
 void RcSetupNetworking (bool enableServer);     // Setup networking (server enable flag, netmask etc.)
 
-void RcReadConfig (CString *retSignals);        // Read resources config file.
+void RcReadConfig (CString *retSignals, CString *retAttrs);        // Read resources config file.
   // Read the 'resources.conf' file and initialize the main directories
   // ('aliasMap', 'hostMap', signals) as well as the local host ID and port.
-  // The signals declared in the config file are returned as a string via 'retSignals' - one signal per line.
+  //
+  // The signals declared in the config file for the local host are returned as a string via 'retSignals' - one signal
+  // per line with the syntax "<name> <type>".
   // This allows to read the config file before the signal driver is initialized.
-void RcRegisterConfigSignals (CString *signals);   // Register the signals returned by 'RcConfigRead()'.
+  //
+  // Resource registration attributes are returned as a string via 'retAttrs' - one resource per line with the syntax
+  // "<rc> [<attrs>]".
 
 
 

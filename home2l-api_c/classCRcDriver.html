@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-10-gf65a (2021-01-10)</span>
+   &#160;<span id="projectnumber">v1.0-11-g904c* (2021-06-30)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -73,7 +73,7 @@ $(function() {
 <p>All '<a class="el" href="classCRcDriver.html" title="Driver for local resources. ">CRcDriver</a>' objects must be allocated dynamically and registered before the Resources library is started (see <a class="el" href="group__resources__general.html#ga92cc4cb80bcfbd359d0c710a45c36a86" title="Complete the elaboration phase and start active operation. No more drivers and resources may be decla...">RcStart()</a> ). On registration, the library becomes owner of the object.</p>
 <p>Registering an object of this class without a driver function ('NULL') results in a signal driver. </p>
 
-<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02373">2373</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="resources_8H_source.html#l02392">2392</a> of file <a class="el" href="resources_8H_source.html">resources.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="resources_8H_source.html">resources.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -117,13 +117,13 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>ToStr</b> ()<
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 Resource management ...</h2></td></tr>
-<tr class="memitem:a4930a3a2aab6989486002db21a8c5441"><td class="memItemLeft" align="right" valign="top"><a id="a4930a3a2aab6989486002db21a8c5441"></a>
-<a class="el" href="classCResource.html">CResource</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>RegisterResource</b> (const char *rcLid, <a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, bool _writable=true)</td></tr>
-<tr class="separator:a4930a3a2aab6989486002db21a8c5441"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92989a1503d4f9ba129496ad5b229a7a"><td class="memItemLeft" align="right" valign="top"><a id="a92989a1503d4f9ba129496ad5b229a7a"></a>
-<a class="el" href="classCResource.html">CResource</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcDriver.html#a92989a1503d4f9ba129496ad5b229a7a">RegisterResource</a> (const char *rcLid, const char *rcTypeDef)</td></tr>
-<tr class="memdesc:a92989a1503d4f9ba129496ad5b229a7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">see also: CResource::Register() <br /></td></tr>
-<tr class="separator:a92989a1503d4f9ba129496ad5b229a7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae92baba9ea535c8fe9f1c95df95dc166"><td class="memItemLeft" align="right" valign="top"><a id="ae92baba9ea535c8fe9f1c95df95dc166"></a>
+<a class="el" href="classCResource.html">CResource</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>RegisterResource</b> (const char *rcLid, <a class="el" href="group__resources__values.html#gab4a0b86af465f13ff92a1c70107ecdda">ERcType</a> _type, bool _writable, void *_data=NULL)</td></tr>
+<tr class="separator:ae92baba9ea535c8fe9f1c95df95dc166"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a132400b82095080b88f874f718f48606"><td class="memItemLeft" align="right" valign="top"><a id="a132400b82095080b88f874f718f48606"></a>
+<a class="el" href="classCResource.html">CResource</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCRcDriver.html#a132400b82095080b88f874f718f48606">RegisterResource</a> (const char *rcLid, const char *rcTypeDef, void *_data=NULL)</td></tr>
+<tr class="memdesc:a132400b82095080b88f874f718f48606"><td class="mdescLeft">&#160;</td><td class="mdescRight">see also: <a class="el" href="classCResource.html#a5ec25a8131f0377acc10382bb4e012b5" title="Register a new local resource for a driver. ">CResource::Register()</a> <br /></td></tr>
+<tr class="separator:a132400b82095080b88f874f718f48606"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="member-group"></a>
 For directory services ...</h2></td></tr>

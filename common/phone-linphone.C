@@ -49,6 +49,22 @@ struct TPhoneData {
 
 
 
+// ***** Compile-time assertion *****
+
+#if __cplusplus >= 201103L
+#define STATIC_ASSERT(COND) static_assert (COND, "please check!")
+  ///< @brief Check a compile-time condition.
+  /// This macro fails to compile with error "negative array size", if the asserted
+  /// condition is not true.
+#else
+#define STATIC_ASSERT(COND) static inline void build_assert_##__LINE__() { (void) sizeof(char[(COND) - 1]); }
+#endif
+
+STATIC_ASSERT (sizeof (TPhoneData) <= LIBDATA_SIZE);
+
+
+
+
 
 // ********************** Helpers **************************
 
@@ -663,14 +679,19 @@ TPhoneVideoFrame *CPhone::VideoLockFrame (int streamId) {
 
   picInfo.changed = picChanged[streamId];
   picChanged[streamId] = false;
+
+  picInfo.format = pvfYV12;
   picInfo.w = p->w;
   picInfo.h = p->h;
+
+  picInfo.data = NULL;
   picInfo.planeY = p->planes[0];
   picInfo.pitchY = p->strides[0];
   picInfo.planeU = p->planes[1];
   picInfo.pitchU = p->strides[1];
   picInfo.planeV = p->planes[2];
   picInfo.pitchV = p->strides[2];
+
   return &picInfo;
 }
 
@@ -739,11 +760,11 @@ static void CbOrtpLogHandler (const char *domain, OrtpLogLevel lev, const char *
 
 
 void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
-                    const char *tmpDir,
-                    const char *lpLinphoneRcFile) {
+                    const char *tmpDir) {
   static LinphoneCoreVTable lpCoreVtable;
   char buf[256];
-  const char *lpConfigFile;
+  const char *lpConfigFile, **soundDevices;
+  int n;
 
   // Setup logging...
   linphone_core_set_log_level ((OrtpLogLevel) (withLogging ? ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR | ORTP_FATAL | ORTP_TRACE : 0));
@@ -791,7 +812,7 @@ void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
   else lpConfigFile = NULL;
 
   // Create the 'lpCore' object...
-  LIBDATA.lpCore = linphone_core_new (&lpCoreVtable, lpConfigFile, lpLinphoneRcFile, this);
+  LIBDATA.lpCore = linphone_core_new (&lpCoreVtable, lpConfigFile, envPhoneLinphonerc, this);
   linphone_core_set_user_agent (LIBDATA.lpCore, agentName, buildVersion);
 
   // Initialize the mediastreamer part & activate own display filter...
@@ -806,6 +827,14 @@ void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
     else {
       WARNING ("A 'CPhone' object trying a activate video output, which is already acquired by another phone - not activating!");
     }
+
+    // Dump settings ...
+    soundDevices = linphone_core_get_sound_devices (LIBDATA.lpCore);
+    for (n = 0; soundDevices[n]; n++)
+      DEBUGF (1, ("Linphone sound device #%i = '%s'", n, soundDevices[n]));
+    DEBUGF (1, ("Linphone ringer device = '%s'", linphone_core_get_ringer_device (LIBDATA.lpCore)));
+    DEBUGF (1, ("Linphone playback device = '%s'", linphone_core_get_playback_device (LIBDATA.lpCore)));
+    DEBUGF (1, ("Linphone capture device = '%s'", linphone_core_get_capture_device (LIBDATA.lpCore)));
   }
 
   // Set selected media...
@@ -815,7 +844,7 @@ void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
   // Set parameters...
   if (envPhoneRingbackFile) linphone_core_set_ringback (LIBDATA.lpCore, envPhoneRingbackFile);
   //~ linphone_core_set_ring_during_incoming_early_media (LIBDATA.lpCore, 0);     // no ringing during early media
-  if (envPhonePlayFile) linphone_core_set_play_file (LIBDATA.lpCore, envPhonePlayFile);
+  if (envPhoneRotation != 0) linphone_core_set_device_rotation (LIBDATA.lpCore, envPhoneRotation);
 
   // Configure DTMF sending...
   //~ linphone_core_set_use_info_for_dtmf (LIBDATA.lpCore, 1);
@@ -831,6 +860,14 @@ bool CPhone::Register (const char *identity, const char *secret) {
   LinphoneAddress *from;
   LinphoneAuthInfo *info;
   const char *server_addr;
+
+  // Sanity and default registration arguments ...
+  if (!identity) identity = envPhoneRegister;
+  if (!secret) secret = envPhoneSecret;
+  if (!identity || !secret) {
+    WARNING ("Missing registration information (identity or password): Not registering phone.");
+    return false;
+  }
 
   // Create proxy config...
   proxy_cfg = linphone_proxy_config_new();
@@ -852,24 +889,6 @@ bool CPhone::Register (const char *identity, const char *secret) {
 
   // Return...
   return true;      // not quite correct...
-}
-
-
-void CPhone::SetCamRotation (int rot) {
-  if (rot != 0) linphone_core_set_device_rotation (LIBDATA.lpCore, rot);
-}
-
-
-void CPhone::DumpSettings () {
-  const char **soundDevices;
-  int n;
-
-  soundDevices = linphone_core_get_sound_devices (LIBDATA.lpCore);
-  for (n = 0; soundDevices[n]; n++)
-    INFOF (("### sound device #%i = '%s'", n, soundDevices[n]));
-  INFOF (("### ringer device = '%s'", linphone_core_get_ringer_device (LIBDATA.lpCore)));
-  INFOF (("### playback device = '%s'", linphone_core_get_playback_device (LIBDATA.lpCore)));
-  INFOF (("### capture device = '%s'", linphone_core_get_capture_device (LIBDATA.lpCore)));
 }
 
 

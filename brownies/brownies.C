@@ -40,10 +40,20 @@ extern "C" {
 }
 
 
+// Compile-time assertions (see interface.h) ...
+STATIC_ASSERT (BR_VROM_SIZE == sizeof (TBrFeatureRecord) && (BR_VROM_SIZE % BR_MEM_BLOCKSIZE) == 0);
+STATIC_ASSERT (BR_EEPROM_ID_SIZE == sizeof (TBrIdRecord) && (BR_EEPROM_ID_SIZE % BR_MEM_BLOCKSIZE) == 0);
+STATIC_ASSERT (BR_EEPROM_CFG_SIZE == sizeof (TBrConfigRecord) && (BR_EEPROM_CFG_SIZE % BR_MEM_BLOCKSIZE) == 0);
+
+
 
 
 
 // *************************** Settings ****************************************
+
+
+
+// ***** General *****
 
 
 ENV_PARA_STRING("br.config", envBrDatabaseFile, "brownies.conf");
@@ -97,23 +107,27 @@ ENV_PARA_INT("br.featureTimeout", envBrFeatureTimeout, 5000);
   /* Time after which an unreachable feature resource is marked invalid
    */
 
-ENV_PARA_INT("br.temp.interval", envBrTempInterval, 5000);
-  /* Approximate polling interval for temperature values
+
+
+// ***** GPIO *****
+
+
+ENV_PARA_SPECIAL ("br.gpio.<brownieID>.<nn>.invert", bool, false);
+  /* Invert a GPIO pin when reporting or driving
+   *
+   * If set, the respective Brownie GPIO pin is handled as low-active.
+   * This affects both the reporting and driving of values.
+   * Inside the Brownie firmware, the values are processed in their original
+   * values. On the resource level, eventually negated values are used.
+   *
+   * <nn> is the 2-digit decimal GPIO number as in \refrc{brownies/<brownieID>/gpio/<nn>}
+   * or \refrc{brownies/<brownieID>/gpio/<kk>}, respectively.
    */
 
-ENV_PARA_STRING("br.shades.reqAttrs", envBrShadesReqAttrs, NULL);
-  /* Request attributes for requests generated on button pushes [\refenv{rc.userReqAttrs}]
-   *
-   * If a shades button is pushed, a request is auto-generated (or removed) to let
-   * the shades move up or down. This parameter defines the attributes of such
-   * requests. For example, if the attribute string is "-31:00" and a user pushes a
-   * button to close the shades, this overrides automatic rules until 7 a.m. on
-   * the next morning. Afterwards, automatic rules may open them again.
-   *
-   * By default, the value of \refenv{rc.userReqAttrs} is used.
-   *
-   * Note: An eventual off-time attribute is set only after the button is released.
-   */
+
+
+// ***** Matrix *****
+
 
 ENV_PARA_SPECIAL ("br.matrix.win.<brownieID>.<winID>", const char *, NULL);
   /* Define a window state resource
@@ -157,10 +171,44 @@ ENV_PARA_SPECIAL ("br.matrix.win.<brownieID>.<winID>", const char *, NULL);
 
 
 
-// Compile-time assertions (see interface.h) ...
-STATIC_ASSERT (BR_VROM_SIZE == sizeof (TBrFeatureRecord) && (BR_VROM_SIZE % BR_MEM_BLOCKSIZE) == 0);
-STATIC_ASSERT (BR_EEPROM_ID_SIZE == sizeof (TBrIdRecord) && (BR_EEPROM_ID_SIZE % BR_MEM_BLOCKSIZE) == 0);
-STATIC_ASSERT (BR_EEPROM_CFG_SIZE == sizeof (TBrConfigRecord) && (BR_EEPROM_CFG_SIZE % BR_MEM_BLOCKSIZE) == 0);
+// ***** ADC *****
+
+
+ENV_PARA_BOOL("br.adc.8bit", envBrAdc8Bit, false);
+  /* Reduce the ADC precision to 8 bit to save communication bandwidth
+   *
+   * By default, ADC values are reported with maximum available precision
+   * (10 bit for ATtiny MCUs). By activating this option, the precision is limited
+   * to 8 bit in order to save communication bandwith.
+   */
+
+
+
+// ***** Temperature (ZACwire) *****
+
+
+ENV_PARA_INT("br.temp.interval", envBrTempInterval, 5000);
+  /* Approximate polling interval for temperature values
+   */
+
+
+
+// ***** Shades *****
+
+
+ENV_PARA_STRING("br.shades.reqAttrs", envBrShadesReqAttrs, NULL);
+  /* Request attributes for requests generated on button pushes [\refenv{rc.userReqAttrs}]
+   *
+   * If a shades button is pushed, a request is auto-generated (or removed) to let
+   * the shades move up or down. This parameter defines the attributes of such
+   * requests. For example, if the attribute string is "-31:00" and a user pushes a
+   * button to close the shades, this overrides automatic rules until 7 a.m. on
+   * the next morning. Afterwards, automatic rules may open them again.
+   *
+   * By default, the value of \refenv{rc.userReqAttrs} is used.
+   *
+   * Note: An eventual off-time attribute is set only after the button is released.
+   */
 
 
 
@@ -273,7 +321,7 @@ class CBrFeature {
     // Subclass interface ...
     CBrFeature (CBrownie *_brownie);
       ///< Subclass constructor. It must:
-      ///   a) register all resources with driver, Set 'driverData' to '*this',
+      ///   a) register all resources with driver (passed a second argument), set their 'driverData' to '*this',
       ///   b) set 'expRcList'/'expRcs'.
     virtual ~CBrFeature () {}
 
@@ -287,10 +335,10 @@ class CBrFeature {
       ///    a) if a change was detected in the "changed" register or
       ///    b) if the expiration time is less than @ref envBrFeatureTimeout in the future.
       /// Features without a "changed" bit can influence the polling interval by setting the expiration time
-      /// to <next polling time> + 'envBrFeatureTimeout'.
+      /// to <next polling time> + 'envBrFeatureTimeout' by calling 'RefreshExpiration(<next polling time>)'.
       /// @param link is the hardware link.
-      /// @param changed is an indication of reason why this was called. Only bits set by Sensitivity() can
-      ///     be set here, and the BR_POLL bit is never set.
+      /// @param changed is an indication of the reason why this was called. Only bits returned by Sensitivity()
+      ///     can be set here, and the BR_POLL bit is never set.
       /// @param initial indicates that this is the first call to this method or the first call after some
       ///     recovered failure. If this is set, all resource values should be reported freshly.
 
@@ -375,7 +423,7 @@ const char *CBrFeature::MakeRcLid (const char *fmt, ...) {
 class CBrFeatureGpio: public CBrFeature {
   protected:
     CResource *rcList[BR_GPIO_MAX];
-    uint16_t gpioState;
+    uint16_t gpioState, gpioInvert;
     bool gpioStateValid;
 
   public:
@@ -383,6 +431,7 @@ class CBrFeatureGpio: public CBrFeature {
 
     CBrFeatureGpio (CBrownie *_brownie, CRcDriver *drv): CBrFeature (_brownie) {
       CResource *rc;
+      CString s;
       const char *lid;
       int n;
 
@@ -390,35 +439,44 @@ class CBrFeatureGpio: public CBrFeature {
 
       // Variables ...
       gpioStateValid = false;
+      gpioInvert = 0;
 
       // Register resources ...
       for (n = 0; n < BR_GPIO_MAX; n++) {
         lid = MakeRcLid ("gpio/%02i", n);
         rc = NULL;
+
+        // Register as input if appropriate ...
         if (_brownie->FeatureRecord ()->gpiPresence & (1 << n))
-          rc = RcRegisterResource (drv, lid, rctBool, false);
+          rc = RcRegisterResource (drv, lid, rctBool, false, this);
             /* [RC:brownies:<brownieID>/gpio/<nn>] Brownie GPIO (input)
              *
              * <nn> is the GPIO number, possible numbers are those with the respective bit set in
-             * 'SBrFeatureRecord::gpiPresence'.
+             * \refapic{SBrFeatureRecord::gpoPresence}.
              */
+
+        // Register as output if appropriate ...
         if (_brownie->FeatureRecord ()->gpoPresence & (1 << n)) {
-          rc = RcRegisterResource (drv, lid, rctBool, true);
+          rc = RcRegisterResource (drv, lid, rctBool, true, this);
           rc->SetDefault ((bool) (_brownie->FeatureRecord ()->gpoPreset & (1 << n)) != 0);
             /* [RC:brownies:<brownieID>/gpio/<kk>:<preset>] Brownie GPIO (output)
              *
              * <kk> is the GPIO number, possible numbers are those with the respective bit set in
-             * 'SBrFeatureRecord::gpoPresence'.
+             * \refapic{SBrFeatureRecord::gpoPresence}.
              *
-             * <preset> is the preset value as defined by 'SBrFeatureRecord::gpoPreset' an is set
-             * as a default.
+             * <preset> is the preset value as defined by \refapic{SBrFeatureRecord::gpoPreset}
+             * and is set as a default.
              */
         }
+
+        // Get invert status ...
         rcList[n] = rc;
         if (rc) {
-          rc->SetDriverData (this);
+          if (EnvGetBool (StringF (&s, "br.gpio.%s.%02i.invert", brownie->Id (), n), false))    // default = 'false'
+            gpioInvert |= (1 << n);
         }
       }
+      //~ INFOF (("### gpioInvert = %04x", (int) gpioInvert));
 
       // Set 'expRcList' ...
       expRcList = &rcList[0];
@@ -438,7 +496,7 @@ class CBrFeatureGpio: public CBrFeature {
       uint8_t regVal = 0;
       int n;
 
-      // Read registers ...
+      // Read registers and store result ...
       gpioMask = brownie->FeatureRecord ()->gpiPresence | brownie->FeatureRecord ()->gpoPresence;
       status = brOk;
       if (status == brOk && (gpioMask & 0x00ff)) {
@@ -454,7 +512,7 @@ class CBrFeatureGpio: public CBrFeature {
       if (status == brOk) {
         gpioStateValid = true;
         for (n = 0; n < BR_GPIO_MAX; n++) if ( (rc = rcList[n]) ) {
-          rc->ReportValue ((gpioState & (1 << n)) != 0);
+          rc->ReportValue (((gpioState ^ gpioInvert) & (1 << n)) != 0);
         }
         if (status == brOk) RefreshExpiration ();
       }
@@ -467,13 +525,14 @@ class CBrFeatureGpio: public CBrFeature {
       EBrStatus status;
       int n;
       uint8_t reg, mask, devState, newState;
+      bool bitVal;
 
       //~ INFOF(("### CBrFeatureGpio::DriveValue (): %s <- %s", rc->Lid (), vs->ToStr ()));
 
       // Sanity ...
       if (!vs->IsValid ()) return;    // ignore "drive nothing" requests
 
-      // Identify resources ...
+      // Identify resource ...
       for (n = 0; n < BR_GPIO_MAX && rcList[n] != rc; n++);
       ASSERT (n < BR_GPIO_MAX);
       reg = n < 8 ? BR_REG_GPIO_0 : BR_REG_GPIO_1;
@@ -482,7 +541,9 @@ class CBrFeatureGpio: public CBrFeature {
       // Get current and new register value ...
       if (!gpioStateValid) Update (link, 0, false);
       devState = (uint8_t) ((reg == BR_REG_GPIO_0) ? gpioState : (gpioState >> 8));
-      newState = vs->Bool () ? (devState | mask) : (devState & ~mask);
+      bitVal = vs->Bool ();
+      if (mask & gpioInvert) bitVal = !bitVal;
+      newState = bitVal ? (devState | mask) : (devState & ~mask);
 
       // Write and verify register ...
       status = link->RegWrite (brownie->Adr (), reg, newState);
@@ -671,6 +732,7 @@ class CBrFeatureMatrix: public CBrFeature {
     CBrFeatureMatrix (CBrownie *_brownie, CRcDriver *drv): CBrFeature (_brownie) {
       CString envPrefix;
       CResource *rc;
+      const char *lid;
       //~ uint16_t featureSet;
       uint8_t matDim;
       int n, k, row, col, idx0, idx1, matSize;
@@ -684,20 +746,17 @@ class CBrFeatureMatrix: public CBrFeature {
       matDim = _brownie->FeatureRecord ()->matDim;
       matRows = BR_MATDIM_ROWS (matDim);
       matCols = BR_MATDIM_COLS (matDim);
-      //~ featureSet = _brownie->FeatureRecord ()->features;
-      //~ matRows = ((featureSet & BR_FEATURE_MROWS) >> BR_FEATURE_MROWS_SHIFT) + 1;
-      //~ matCols = ((featureSet & BR_FEATURE_MCOLS) >> BR_FEATURE_MCOLS_SHIFT) + 1;
       matSize = matRows * matCols;
 
       // Register resources ...
       for (row = 0; row < matRows; row++) for (col = 0; col < matCols; col++) {
-        rc = RcRegisterResource (drv, MakeRcLid ("matrix/%i%i", row, col), rctBool, false);
+        lid = MakeRcLid ("matrix/%i%i", row, col);
+        rc = RcRegisterResource (drv, lid, rctBool, false, this);
           /* [RC:brownies:<brownieID>/matrix/<nn>] Brownie sensor matrix value
            *
            * <nn> is a two-digit number, where the first digit represents the row
            * and the second digit represents the column of the respective sensor.
            */
-        rc->SetDriverData (this);
         rcMat [row * matCols + col] = rc;
       }
 
@@ -807,6 +866,100 @@ class CBrFeatureMatrix: public CBrFeature {
     }
 
 
+};
+
+
+
+
+
+// ***** CBrFeatureAdc *****
+
+
+class CBrFeatureAdc: public CBrFeature {
+  protected:
+    int idx;
+    CResource *rcAdc;
+
+  public:
+
+
+    CBrFeatureAdc (CBrownie *_brownie, CRcDriver *drv, int _idx): CBrFeature (_brownie) {
+      ///< Subclass constructor. It must:
+      ///   a) register all resources with driver, Set 'driverData' to '*this',
+      ///   b) set 'expRcList'/'expRcs'.
+
+      // Init fields ...
+      idx = _idx;
+
+      // Sanity ...
+      ASSERT (_idx >= 0 && _idx <= 1);
+      if (_brownie->FeatureRecord ()->features & BR_FEATURE_ADC_PASSIVE) {
+        WARNINGF (("ADCs in passive mode are not supported - disabling ADC #%i feature for Brownie %03i (%s)."
+                   "Please configure the Brownie with ADC_PERIOD > 0.", idx, _brownie->Adr (), _brownie->Id ()));
+        /* TBD: Implement on-demand (passive mode) ADC feature:
+         * - Add new resource 'period' (type 'rctTime') without default, kept 'rcsUnknown' without requests
+         * - Do not poll if 'period' resource is unknown
+         * - If set, poll in the given interval and immediately when known
+         */
+         rcAdc = NULL;
+         expRcList = NULL;    // set empty expiration list ...
+         expRcs = 0;
+      }
+
+      // Register resource ...
+      const char *lid = MakeRcLid ("adc%i", idx);
+      rcAdc = RcRegisterResource (drv, lid, rctPercent, false, this);
+        /* [RC:brownies:<brownieID>/adc<0|1>] Brownie analog (ADC) value
+         */
+
+      // Set expiration list ...
+      expRcList = &rcAdc;
+      expRcs = 1;
+    }
+
+
+    virtual ~CBrFeatureAdc () {}
+
+
+    virtual unsigned Sensitivity () { return BR_CHANGED_ADC /* | BR_POLL */; }
+
+
+    virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
+      /// Must read out feature-related registers from device and eventually report changes to the resources.
+      /// This method is called
+      ///    a) if a change was detected in the "changed" register or
+      ///    b) if the expiration time is less than @ref envBrFeatureTimeout in the future.
+      /// Features without a "changed" bit can influence the polling interval by setting the expiration time
+      /// to <next polling time> + 'envBrFeatureTimeout'.
+      /// @param link is the hardware link.
+      /// @param changed is an indication of the reason why this was called. Only bits returned by Sensitivity()
+      ///     can be set here, and the BR_POLL bit is never set.
+      /// @param initial indicates that this is the first call to this method or the first call after some
+      ///     recovered failure. If this is set, all resource values should be reported freshly.
+      EBrStatus status;
+      int adcRaw;
+      float adcPercent;
+
+      // Check: envBrAdc8Bit
+
+      // Read registers ...
+      status = brOk;
+      if (envBrAdc8Bit) {
+        adcRaw = 0;
+        status = brOk;
+      }
+      else adcRaw = link->RegReadNext (&status, brownie, idx == 0 ? BR_REG_ADC_0_LO : BR_REG_ADC_1_LO);
+      adcRaw |= ((int) link->RegReadNext (&status, brownie, idx == 0 ? BR_REG_ADC_0_HI : BR_REG_ADC_1_HI)) << 8;
+
+      // Report values and refresh expiration time on success ...
+      if (status == brOk) {
+        adcPercent = adcRaw * (100.0f / (float) 0xff00);
+        if (adcPercent < 0.0) adcPercent = 0.0;
+        if (adcPercent > 100.0) adcPercent = 100.0;
+        rcAdc->ReportValue (adcPercent);
+        RefreshExpiration ();
+      }
+    }
 };
 
 
@@ -934,7 +1087,6 @@ static void SocketServerCloseLostClient (int *clientFd, const char *name) {
 
 
 class CBrFeatureUart: public CBrFeature {
-
   protected:
     CString sockName;
     int sockListenFd, sockClientFd;
@@ -1127,11 +1279,10 @@ class CBrFeatureTemperature: public CBrFeature {
       //~ INFOF(("### Registering temperature resource(s) for %03i", _brownie->Adr ()));
 
       // Register resource ...
-      rcTemp = RcRegisterResource (drv, MakeRcLid ("temp"), rctTemp, false);
+      const char *lid = MakeRcLid ("temp");
+      rcTemp = RcRegisterResource (drv, lid, rctTemp, false, this);
         /* [RC:brownies:<brownieID>/temp] Brownie temperature sensor value
          */
-
-      rcTemp->SetDriverData (this);
 
       // Set expiration list ...
       expRcList = &rcTemp;
@@ -1211,7 +1362,7 @@ class CBrFeatureShades: public CBrFeature {
 
 
     CBrFeatureShades (CBrownie *_brownie, CRcDriver *drv, const char *idStr = CString::emptyStr, CBrFeatureShades *_primary = NULL): CBrFeature (_brownie) {
-      int n;
+      const char *lid;
 
       //~ INFOF(("### Registering shades resource(s) for %03i (%s)", _brownie->Adr (), !_primary ? "primary" : "secondary"));
 
@@ -1222,7 +1373,8 @@ class CBrFeatureShades: public CBrFeature {
       rExt = rIntLocked = 0xff;
 
       // Register resources ...
-      rcPos = RcRegisterResource (drv, MakeRcLid ("shades%s/pos", idStr), rctPercent, true);
+      lid = MakeRcLid ("shades%s/pos", idStr);
+      rcPos = RcRegisterResource (drv, lid, rctPercent, true, this);
         /* [RC:brownies:<brownieID>/shades<n>/pos] Brownie shades/actuator position
          *
          * Current position of an actuator. An 'rcBusy' status indicates that the actuator
@@ -1235,7 +1387,8 @@ class CBrFeatureShades: public CBrFeature {
          * The attributes of such requests are specified by \refenv{br.shades.reqAttrs},
          * \refenv{rc.userReqId}, and \refenv{rc.userReqAttrs}.
          */
-      rcActUp = RcRegisterResource (drv, MakeRcLid ("shades%s/actUp", idStr), rctBool, false);
+      lid = MakeRcLid ("shades%s/actUp", idStr);
+      rcActUp = RcRegisterResource (drv, lid, rctBool, false, this);
         /* [RC:brownies:<brownieID>/shades<n>/actUp] Brownie actuator is powered in the "up" direction
          *
          * This resource reflects the actual (raw) state of the actuator, and is 'true' iff the
@@ -1245,7 +1398,8 @@ class CBrFeatureShades: public CBrFeature {
          *
          * <n> is the index of the actuator (0 or 1).
          */
-      rcActDn = RcRegisterResource (drv, MakeRcLid ("shades%s/actDn", idStr), rctBool, false);
+      lid = MakeRcLid ("shades%s/actDn", idStr);
+      rcActDn = RcRegisterResource (drv, lid, rctBool, false, this);
         /* [RC:brownies:<brownieID>/shades<n>/actDown] Brownie actuator is powered in the "down" direction
          *
          * This resource reflects the actual (raw) state of the actuator, and is 'true' iff the
@@ -1255,21 +1409,22 @@ class CBrFeatureShades: public CBrFeature {
          *
          * <n> is the index of the actuator (0 or 1).
          */
-      rcBtnUp = RcRegisterResource (drv, MakeRcLid ("shades%s/btnUp", idStr), rctBool, false);
+      lid = MakeRcLid ("shades%s/btnUp", idStr);
+      rcBtnUp = RcRegisterResource (drv, lid, rctBool, false, this);
         /* [RC:brownies:<brownieID>/shades<n>/btnUp] Brownie actuator's "up" button is pushed
          *
          * This is the actual (raw) state of the actuator's "up" button.
          *
          * <n> is the index of the actuator (0 or 1).
          */
-      rcBtnDn = RcRegisterResource (drv, MakeRcLid ("shades%s/btnDn", idStr), rctBool, false);
+      lid = MakeRcLid ("shades%s/btnDn", idStr);
+      rcBtnDn = RcRegisterResource (drv, lid, rctBool, false, this);
         /* [RC:brownies:<brownieID>/shades<n>/btnDn] Brownie actuator's "down" button is pushed
          *
          * This is the actual (raw) state of the actuator's "down" button.
          *
          * <n> is the index of the actuator (0 or 1).
          */
-      for (n = 0; n < 5; n++) rcList[n]->SetDriverData (this);
 
       // Set exiration list ...
       expRcList = &rcList[0];
@@ -1762,12 +1917,16 @@ void CBrownie::RegisterAllResources (class CRcDriver *rcDriver, class CBrownieLi
     featureList[features++] = new CBrFeatureGpio (this, rcDriver);
   if (FeatureRecord ()->matDim)
     featureList[features++] = new CBrFeatureMatrix (this, rcDriver);
+  if (featureVector & BR_FEATURE_ADC_0)
+    featureList[features++] = new CBrFeatureAdc (this, rcDriver, 0);
+  if (featureVector & BR_FEATURE_ADC_1)
+    featureList[features++] = new CBrFeatureAdc (this, rcDriver, 1);
   if (featureVector & BR_FEATURE_UART)
     featureList[features++] = new CBrFeatureUart (this, rcDriver);
   if (featureVector & BR_FEATURE_TEMP)
     featureList[features++] = new CBrFeatureTemperature (this, rcDriver);
-  if (featureVector & (BR_FEATURE_SHADES_0)) {
-    if (featureVector & (BR_FEATURE_SHADES_1)) {    // have two shades?
+  if (featureVector & BR_FEATURE_SHADES_0) {
+    if (featureVector & BR_FEATURE_SHADES_1) {    // have two shades?
       primaryShades = new CBrFeatureShades (this, rcDriver, "0", NULL);
       featureList[features++] = primaryShades;
       featureList[features++] = new CBrFeatureShades (this, rcDriver, "1", primaryShades);
@@ -1776,9 +1935,9 @@ void CBrownie::RegisterAllResources (class CRcDriver *rcDriver, class CBrownieLi
     else    // Just single shades ...
       featureList[features++] = new CBrFeatureShades (this, rcDriver);
   }
-  ASSERT (features <= (int) (sizeof (featureList) / sizeof (featureList[0])));      // check buffer overflow
+  ASSERT (features <= ENTRIES(featureList));      // check buffer overflow
 
-  // If the device has been checked above, call the initial update for the features ...
+  // Call the initial update for the features ...
   for (n = 0; n < features; n++) featureList[n]->Update (link, 0, true);
 }
 
@@ -1888,7 +2047,7 @@ void CBrownie::DriveValue (CBrownieLink *link, CResource *rc, CRcValueState *vs)
   }
 
   // Pass to feature ...
-  feature = (CBrFeature *) rc->DriverData ();
+  feature = (CBrFeature *) rc->UserData ();
   feature->DriveValue (link, rc, vs);
 }
 
@@ -2097,7 +2256,7 @@ void CBrownieSet::ResourcesIterate (bool noLink, bool noSleep) {
   // Process queued drive events ...
   while (rcDriver->PollEvent (&ev)) {
     ASSERT (ev.Type () == rceDriveValue);
-    brownie = ((CBrFeature *) ev.Resource ()->DriverData ())->Brownie ();
+    brownie = ((CBrFeature *) ev.Resource ()->UserData ())->Brownie ();
     brownie->DriveValue (rcLink, ev.Resource (), ev.ValueState ());
   }
 

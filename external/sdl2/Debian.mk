@@ -22,7 +22,7 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 ifneq (,$(wildcard $(MYDIR)usr/$(ARCH)/include))
   # Use these sources...
   CFLAGS += -I$(MYDIR)usr/$(ARCH)/include
-  LDFLAGS += -L$(MYDIR)usr/$(ARCH)/lib -lSDL2 -lSDL2_ttf -ldl -lX11 -lfreetype -lpng -lz -lsndio
+  LDFLAGS += -L$(MYDIR)usr/$(ARCH)/lib -lSDL2 -lSDL2_ttf -ldl -lX11 -lfreetype -lpng -lz -lbz2 -lsndio
 else
   # Use the Debian packages, not these sources...
   CFLAGS += -I/usr/include/SDL2

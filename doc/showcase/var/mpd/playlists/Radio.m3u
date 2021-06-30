@@ -13,14 +13,12 @@ http://wdr-wdr3-live.icecast.wdr.de/wdr/wdr3/live/mp3/128/stream.mp3
 http://wdr-wdr4-live.icecast.wdr.de/wdr/wdr4/live/mp3/128/stream.mp3
 #EXTINF:-1,WDR 5
 http://wdr-wdr5-live.icecast.wdr.de/wdr/wdr5/live/mp3/128/stream.mp3
-#EXTINF:-1,KiRaKa (WDR)
-http://wdr-kiraka-live.icecast.wdr.de/wdr/kiraka/live/mp3/128/stream.mp3
 
 #EXTINF:-1,Bayern 1 Schwaben
-http://br-br1-schwaben.cast.addradio.de/br/br1/schwaben/mp3/128/stream.mp3
+http://br-br1-schwaben.cast.addradio.de/br/br1/schwaben/mp3/mid
 #EXTINF:-1,Bayern 2 Süd
-http://br-br2-sued.cast.addradio.de/br/br2/sued/mp3/128/stream.mp3
+http://br-br2-sued.cast.addradio.de/br/br2/sued/mp3/mid
 #EXTINF:-1,Bayern 3
-http://br-br3-live.cast.addradio.de/br/br3/live/mp3/128/stream.mp3
+http://br-br3-live.cast.addradio.de/br/br3/live/mp3/mid
 #EXTINF:-1,BR Klassik
-http://br-brklassik-live.cast.addradio.de/br/brklassik/live/mp3/128/stream.mp3
+http://br-brklassik-live.cast.addradio.de/br/brklassik/live/mp3/mid

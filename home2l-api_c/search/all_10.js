@@ -2,6 +2,7 @@ var searchData=
 [
   ['phone',['Phone',['../group__common__phone.html',1,'']]],
   ['p_5fadc_5f0',['P_ADC_0',['../group__brownies__pins.html#ga8770bba49b5809d9ec8b2ce2e9259d80',1,'configure.h']]],
+  ['p_5fadc_5f0_5fstrobe',['P_ADC_0_STROBE',['../group__brownies__features.html#gad3516b3cb7e10cf59f7b6f8a311a22e3',1,'configure.h']]],
   ['p_5fadc_5f1',['P_ADC_1',['../group__brownies__pins.html#ga6e8b1b5716c190756e53f0f721ca8432',1,'configure.h']]],
   ['p_5fddr_5fin',['P_DDR_IN',['../group__brownies__firmware.html#ga045fd525930325f1fe2913638b89f324',1,'base.h']]],
   ['p_5fddr_5fout',['P_DDR_OUT',['../group__brownies__firmware.html#ga4a9e7de5db2e55e84438bacdf2b79301',1,'base.h']]],
@@ -31,6 +32,7 @@ var searchData=
   ['pending',['Pending',['../classCTimer.html#ab355cfe78a8d85b2d2945a5ed45638ec',1,'CTimer']]],
   ['phone_2eh',['phone.H',['../phone_8H.html',1,'']]],
   ['phonestateisdevicepermitting',['PhoneStateIsDevicePermitting',['../group__common__phone.html#gae00b692030f3090ebebbc2eb2b30b6e4',1,'phone.H']]],
+  ['pitch',['pitch',['../structTPhoneVideoFrame.html#a452873f4fb2c54aec5d476d945d154d9',1,'TPhoneVideoFrame']]],
   ['pitchv',['pitchV',['../structTPhoneVideoFrame.html#ae22fb4ef5f71e12e386bbba49ca58145',1,'TPhoneVideoFrame']]],
   ['planev',['planeV',['../structTPhoneVideoFrame.html#a91d51ac8d9adf99f567462997267687c',1,'TPhoneVideoFrame']]],
   ['pmall',['pmAll',['../group__common__phone.html#gga1cf770d3bb1be23857d1ca84d4e5a71fadeb6c90cbb9b294ac8a9b6647dd0857f',1,'phone.H']]],

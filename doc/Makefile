@@ -328,8 +328,8 @@ check: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
 	@linkchecker --check-extern home2l-api_python/index.html
 	@rm brownies
 	@echo -e "\n#################### Checking PDFs ####################\n"
-	@./checkpdfs.py
-
+	@./check_pdf_links ../README.pdf ..
+	@./check_pdf_links home2l-book.pdf ..
 
 
 

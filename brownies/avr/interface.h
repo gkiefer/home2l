@@ -370,24 +370,17 @@ typedef struct SBrFeatureRecord {
 /// (for @ref SBrFeatureRecord.features)
 /// @{
 
-#define BR_FEATURE_MAINTENANCE 0x0001 ///< Is maintenance system (usually, everything else is ommitted/zero then)
-#define BR_FEATURE_TIMER    0x0002
-#define BR_FEATURE_NOTIFY   0x0004    ///< Does host notification (usually 0 for primary hubs and maintenance systems, else 1)
-#define BR_FEATURE_TWIHUB   0x0008    ///< Is TWI hub
-#define BR_FEATURE_ADC_0    0x0010    ///< Has ADC #0 (e.g. for analog temperatur)
-#define BR_FEATURE_ADC_1    0x0020    ///< Has ADC #1 (e.g. for analog temperatur)
-#define BR_FEATURE_UART     0x0040    ///< Has UART (e.g. for RS485)
-#define BR_FEATURE_TEMP     0x0080    ///< Has temperature sensor (TSic 206/306 over ZACwire)
-//~ #define BR_FEATURE_MATRIX   0x0010    ///< Has a matrix sensor (TBD: implicit based on 'matDim' field)
-//~ #define BR_FEATURE_TEMP     0x0020    ///< Has temperature sensor (TSic 206/306 over ZACwire)
-//~ #define BR_FEATURE_ADC_0    0x0040    ///< Has ADC #0 (e.g. for analog temperatur)
-//~ #define BR_FEATURE_ADC_1    0x0080    ///< Has ADC #1 (e.g. for analog temperatur)
-#define BR_FEATURE_SHADES_0 0x0100    ///< Has shades actuator #0
-#define BR_FEATURE_SHADES_1 0x0200    ///< Has shades actuator #1
-//~ #define BR_FEATURE_MROWS    0x1c00    ///< Number of matrix rows - 1
-//~ #define BR_FEATURE_MROWS_SHIFT  (2+8)
-//~ #define BR_FEATURE_MCOLS    0xe000    ///< Number of matrix columns - 1
-//~ #define BR_FEATURE_MCOLS_SHIFT (5+8)
+#define BR_FEATURE_MAINTENANCE  0x0001  ///< Is maintenance system (usually, everything else is ommitted/zero then)
+#define BR_FEATURE_TIMER        0x0002
+#define BR_FEATURE_NOTIFY       0x0004  ///< Does host notification (usually 0 for primary hubs and maintenance systems, else 1)
+#define BR_FEATURE_TWIHUB       0x0008  ///< Is TWI hub
+#define BR_FEATURE_ADC_0        0x0010  ///< Has ADC #0
+#define BR_FEATURE_ADC_1        0x0020  ///< Has ADC #1
+#define BR_FEATURE_ADC_PASSIVE  0x0400  ///< ADCs run in passive mode (sampling on demand, no change reporting)
+#define BR_FEATURE_UART         0x0040  ///< Has UART (e.g. for RS485)
+#define BR_FEATURE_TEMP         0x0080  ///< Has temperature sensor (TSic 206/306 over ZACwire)
+#define BR_FEATURE_SHADES_0     0x0100  ///< Has shades actuator #0
+#define BR_FEATURE_SHADES_1     0x0200  ///< Has shades actuator #1
 
 
 /// @}
@@ -515,6 +508,7 @@ typedef struct SBrConfigRecord {
 #define BR_CHANGED_CHILD     0x01     ///< -- [@ref BR_REG_CHANGED] (hubs only) any child has reported a change
 #define BR_CHANGED_GPIO      0x02     ///< -- [@ref BR_REG_CHANGED] any GPIO input changed
 #define BR_CHANGED_MATRIX    0x04     ///< -- [@ref BR_REG_CHANGED] any sensor matrix switch changed
+#define BR_CHANGED_ADC       0x40     ///< -- [@ref BR_REG_CHANGED] a new ADC sample value exists (only if @ref ADC_PERIOD > 0)
 #define BR_CHANGED_UART      0x08     ///< -- [@ref BR_REG_CHANGED] UART status register has changed
 #define BR_CHANGED_SHADES    0x10     ///< -- [@ref BR_REG_CHANGED] state of any shades changed (actuator or button, not position)
 
@@ -543,11 +537,11 @@ typedef struct SBrConfigRecord {
 /// @name ADC registers ...
 /// (NOT IMPLEMENTED YET)
 /// @{
-#define BR_REG_ADC_0_LO      0x08
-#define BR_REG_ADC_0_HI      0x09     ///< ADC #0 (little endian; reading low latches high)
+#define BR_REG_ADC_0_LO      0x08     ///< ADC #0 low  (bit 7 = ADC.1, bit 6 = ADC.0)
+#define BR_REG_ADC_0_HI      0x09     ///< ADC #0 high (ADC.9 .. ADC.2); reading low latches high
 
-#define BR_REG_ADC_1_LO      0x0a
-#define BR_REG_ADC_1_HI      0x0b     ///< ADC #1 (little endian; reading low latches high)
+#define BR_REG_ADC_1_LO      0x0a     ///< ADC #1 low  (bit 7 = ADC.1, bit 6 = ADC.0)
+#define BR_REG_ADC_1_HI      0x0b     ///< ADC #1 high (ADC.9 .. ADC.2); reading low latches high
 
 
 

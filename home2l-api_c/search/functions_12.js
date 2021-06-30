@@ -10,5 +10,6 @@ var searchData=
   ['unsignedfromstring',['UnsignedFromString',['../group__common__strings.html#ga0130d6e071185d8466cb5f461b48e4bc',1,'base.H']]],
   ['unsubscribe',['Unsubscribe',['../classCResource.html#a20806af055ab6c2f0abefca4b001f470',1,'CResource']]],
   ['updatefromdevice',['UpdateFromDevice',['../classCBrownie.html#a4b65532a5d1f0748c56accca3afb8011',1,'CBrownie']]],
-  ['uri',['Uri',['../classCResource.html#a8adf3d20776877e1fec56cde058dd9a6',1,'CResource']]]
+  ['uri',['Uri',['../classCResource.html#a8adf3d20776877e1fec56cde058dd9a6',1,'CResource']]],
+  ['userdata',['UserData',['../classCResource.html#a3b5449ce1bedd95e9049d25d43994f6c',1,'CResource']]]
 ];
