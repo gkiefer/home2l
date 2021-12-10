@@ -1,5 +1,8 @@
 <map id="wallclock" name="wallclock">
-<area shape="rect" id="node1" href="dir_eb02dca7c9c0d4c553d0078bdb636671.html" title="wallclock" alt="" coords="5,5,81,53"/>
-<area shape="rect" id="node2" href="dir_bdd9a5d540de89e9fe90efdfc6973a4f.html" title="common" alt="" coords="7,101,79,149"/>
-<area shape="rect" id="edge1-headlabel" href="dir_000005_000002.html" title="3" alt="" coords="48,75,56,90"/>
+<area shape="rect" id="node1" href="dir_eb02dca7c9c0d4c553d0078bdb636671.html" title="wallclock" alt="" coords="45,5,121,53"/>
+<area shape="rect" id="node2" href="dir_0fc3f8f3ef96ce2d45d66d6e29832317.html" title="resources" alt="" coords="5,101,84,149"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000005_000004.html" title="1" alt="" coords="65,80,73,95"/>
+<area shape="rect" id="node3" href="dir_bdd9a5d540de89e9fe90efdfc6973a4f.html" title="common" alt="" coords="47,197,119,245"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000005_000002.html" title="3" alt="" coords="97,174,105,189"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000004_000002.html" title="1" alt="" coords="71,170,79,185"/>
 </map>

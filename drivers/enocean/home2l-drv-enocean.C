@@ -26,6 +26,9 @@
 #include <errno.h>
 
 
+#define LINK_LOST ((TTicks) NEVER + 1)    // constant to mark 'tNoLink' as "link lost permanently"
+
+
 
 
 
@@ -396,7 +399,7 @@ static void *DriverThread (void *) {
   CEnoTelegram telegram;
   CEnoDevice *device;
   EEnoStatus status;
-  static TTicksMonotonic tNoLink = NEVER;
+  static TTicks tNoLink = NEVER;
   int i;
   bool found;
 
@@ -424,11 +427,11 @@ static void *DriverThread (void *) {
       }
     }
     else if (status == enoNoLink) {
-      if (tNoLink == NEVER) tNoLink = TicksMonotonicNow ();
-      else if (tNoLink != ALWAYS) {
-        if (TicksMonotonicNow () - tNoLink > TICKS_FROM_SECONDS (envEnoLinkMaxAge * 60)) {
+      if (tNoLink == NEVER) tNoLink = TicksNowMonotonic ();
+      else if (tNoLink != LINK_LOST) {
+        if (TicksNowMonotonic () - tNoLink > TICKS_FROM_SECONDS (envEnoLinkMaxAge * 60)) {
           for (i = 0; i < devices; i++) deviceList[i]->OnLinkLost ();
-          tNoLink = ALWAYS;
+          tNoLink = LINK_LOST;
         }
       }
     }

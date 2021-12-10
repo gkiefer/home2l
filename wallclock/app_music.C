@@ -351,7 +351,7 @@ protected:
   bool inUpdate, changedQueue;
 
   // Server...
-  static CDictFast<CString> serverDict;
+  static CDictCompact<CString> serverDict;
   struct mpd_connection *mpdConnection;
   bool mpdInErrorHandling;
   CString mpdHost;
@@ -397,7 +397,7 @@ protected:
 
   // Error state & recovery...
   bool errorRecovery, errorPermanent;
-  TTicksMonotonic tRecoveryLast, tRecoveryNext;
+  TTicks tRecoveryLast, tRecoveryNext;
   CString errorMsg;
 };
 
@@ -516,7 +516,7 @@ class CScreenMusicMain: public CScreen, public CTimer {
 // *************************** CMusicPlayer ************************************
 
 
-CDictFast<CString> CMusicPlayer::serverDict;
+CDictCompact<CString> CMusicPlayer::serverDict;
 
 
 static bool MpdUriIsStream (const char *uri) {
@@ -645,8 +645,8 @@ void CMusicPlayer::StreamerStartOrStop () {
 
 
 void CMusicPlayer::StreamerWatchdog () {
-  TTicksMonotonic now;
-  const char *msg;
+  TTicks now;
+  CString msg;
 
   // Sanity...
   if (errorPermanent) return;     // we have a permanent error => helpless to try anything else
@@ -656,7 +656,7 @@ void CMusicPlayer::StreamerWatchdog () {
   }
 
   // Get any error message if present ...
-  msg = StreamerGetError ();
+  StreamerGetError (&msg);
   if (msg[0]) SetErrorMsg ("GStreamer: %s", msg);
 
   // Check if there is an error ...
@@ -673,7 +673,7 @@ void CMusicPlayer::StreamerWatchdog () {
     if (ErrorReasonIsStreamer ()) ClearErrorState ();
   }
   else if (streamerState == strError || streamerState == strOff) {
-    now = TicksMonotonicNow ();
+    now = TicksNowMonotonic ();
 
     // Eventually start recovery mode ...
     if (!errorRecovery) {

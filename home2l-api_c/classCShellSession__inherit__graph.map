@@ -1,3 +1,4 @@
 <map id="CShellSession" name="CShellSession">
-<area shape="rect" id="node2" href="$classCShell.html" title="Abstract base class for shells that can execute system commands. " alt="" coords="29,5,90,32"/>
+<area shape="rect" id="node1" title="Session shell: Multiple commands are executed through one shell." alt="" coords="5,80,113,107"/>
+<area shape="rect" id="node2" href="$classCShell.html" title="Abstract base class for shells that can execute system commands." alt="" coords="29,5,90,32"/>
 </map>

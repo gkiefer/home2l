@@ -73,68 +73,14 @@ static bool CmdHelp (int argc, const char **argv, bool interactive);
 // *************************** Helpers *****************************************
 
 
-static CString uriPwd ("/");
+static CString workDir;
 
 
-static const char *RcGetAbsPath (const char *uri) {
+static const char *NormalizedUri (const char *uri) {
   static CString ret;
 
-  if (!uri) return uriPwd.Get ();
-  if (!uri[0]) return uriPwd.Get ();
-  if (uri[0] == '/') ret.Set (uri);
-  else ret.SetF ("%s/%s", uriPwd.Get (), uri);
-  ret.PathNormalize ();
+  RcPathNormalize (&ret, uri, workDir);
   return ret.Get ();
-}
-
-
-static const CDictRaw *RcGetDirectory (ERcPathDomain dom, CRcHost *rcHost, CRcDriver *rcDriver) {
-  static CKeySet ret;
-  const CDictRaw *map;
-  int n, items;
-
-  switch (dom) {
-    case rcpRoot:
-      ret.Clear ();
-      for (n = 0; n < RcGetUriRoots (); n++) ret.Set (RcGetUriRoot (n));
-      map = &ret;
-      break;
-    case rcpAlias:
-      map = &aliasMap;
-      break;
-    case rcpHost:
-      ret.Clear ();
-      for (n = 0; n < hostMap.Entries (); n++) ret.Set (hostMap.GetKey (n));
-      ret.Set (localHostId.Get ());
-      map = &ret;
-      break;
-    case rcpDriver:
-      map = &driverMap;
-      break;
-    case rcpResource:
-      ret.Clear ();
-      map = &ret;
-      if (rcHost) {
-        items = rcHost->LockResources ();
-        for (n = 0; n < items; n++) ret.Set (rcHost->GetResource (n)->Lid ());
-        rcHost->UnlockResources ();
-      }
-      else if (rcDriver) {
-        items = rcDriver->LockResources ();
-        for (n = 0; n < items; n++) ret.Set (rcDriver->GetResource (n)->Lid ());
-        rcDriver->UnlockResources ();
-      }
-      else map = NULL;
-      break;
-    case rcpEnv:
-      //~ INFO ("rcpEnv");
-      map = EnvGetKeySet ();
-      break;
-    default:
-      map = NULL;
-      break;
-  }
-  return map;
 }
 
 
@@ -174,11 +120,13 @@ static void SignalHandler (int) {
 }
 
 
-static void PollSubscriber () {
+static void PollSubscriber (bool withRequestChanges) {
   CRcEvent ev;
+  CString s;
 
   while (subscriber->PollEvent (&ev)) {
-    printf (": %s\n", ev.ToStr ());
+    if (ev.Type () != rceRequestChanged || withRequestChanges)
+      printf (": %s\n", ev.ToStr (&s));
   }
 }
 
@@ -242,19 +190,16 @@ static bool CmdNetworkInfo (int argc, const char **argv, bool interactive) {
 
 
 static bool CmdList (int argc, const char **argv, bool interactive) {
-  CString s;
-  ERcPathDomain dom;
-  CRcHost *rcHost;
-  CRcDriver *rcDriver;
-  CResource *resource;
+  CKeySet dir;
+  TRcPathInfo info;
+  CString s, prefix;
   CRcValueState vs;
-  const CDictRaw *map;
-  const char *uri, *localPath, *key;
+  const char *uri, *argPath, *key;
   int n, k;
-  bool printList, optAllowNet;
+  bool optAllowNet;
 
   // Parse arguments...
-  localPath = NULL;
+  argPath = NULL;
   optAllowNet = true;
   for (n = 1; n < argc; n++) {
     if (argv[n][0] == '-') {
@@ -270,66 +215,54 @@ static bool CmdList (int argc, const char **argv, bool interactive) {
           return false;
       }
     }
-    else if (!localPath) localPath = argv[n];
+    else if (!argPath) argPath = argv[n];
   }
 
   // Analyse path...
-  uri = localPath ? RcGetAbsPath (localPath) : uriPwd.Get ();
-  uri = RcGetRealPath (&s, uri);
-  //~ INFOF (("### CmdList -> RcAnalysePath"));
-  dom = RcAnalysePath (uri, &localPath, &rcHost, &rcDriver, &resource, true);
-  //~ INFOF (("### ... RcAnalysePath done"));
+  uri = argPath ? NormalizedUri (argPath) : workDir.Get ();
+  RcPathAnalyse (uri, &info, true);
+  //~ INFOF (("### ... RcPathAnalyse done: state = %i", info.state));
+  if (info.state == rcaAliasResolved) {
 
-  // Print single object...
-  printList = false;
-  switch (dom) {
-    case rcpHost:
-      if (rcHost) rcHost->PrintInfo ();       // we have a single hit => print detailed info
-      else printList = true;
-      break;
-    case rcpDriver:
-      if (rcDriver) rcDriver->PrintInfo ();   // we have a single hit => print detailed info
-      else printList = true;
-      break;
-    case rcpResource:
-      //~ INFOF (("### CmdList -> rcpResource"));
-      if (resource) {
-        resource->PrintInfo (stdout, 1, optAllowNet);   // we have a single hit => print detailed info
-        if (resource->Type () == rctString) {
-          resource->GetValueState (&vs);
-          if (vs.IsValid () && vs.Type () == rctString) {
-            n = strlen (vs.String ());
-            if (envStringChars <= 0 || n <= envStringChars)
-              printf ("  = \"%s\"\n", vs.String ());
-            else
-              printf ("  = \"%.*s...\" (truncated after %i characters)\n",
-                      envStringChars, vs.String (), envStringChars);
-          }
-        }
-      }
-      else printList = true;
-      break;
-    default:
-      printList = true;
+    // Have a resolvable alias: Show the alias and continue with the target ...
+    //~ INFOF (("### target = '%s', localPath = '%s'", info.target, info.localPath));
+    s.SetC (info.target);
+    s.Append (info.localPath);
+    RcPathAnalyse (s.Get (), &info, true);
+    if (!info.resource && !RcPathIsDir (s.Get ()))
+      // Alias ends neither at a known resource nor is a directory: Print alias target
+      printf ("%s -> %s\n", uri, s.Get ());
   }
 
-  // Print list (if applicable)...
-  if (printList) {
-    map = RcGetDirectory (dom, rcHost, rcDriver);
-    if (map) for (n = 0; n < map->Entries (); n++) {
-      key = map->GetKey (n);
-      if (strncmp (localPath, key, strlen (localPath)) == 0) {
-        switch (dom) {
-          case rcpAlias:
-            printf ("%s -> %s\n", aliasMap.GetKey (n), aliasMap.Get (n)->Get ());
-            break;
-          case rcpEnv:
-            printf ("%s = %s\n", key, EnvGet (key));
-            break;
-          default:
-            printf ("%s\n", key);
-        }
+  // Print resource details ...
+  if (info.resource) {
+    info.resource->PrintInfo (stdout, 1, optAllowNet);
+    if (info.resource->Type () == rctString) {
+      info.resource->GetValueState (&vs);
+      if (vs.IsValid () && vs.Type () == rctString) {
+        n = strlen (vs.String ());
+        if (envStringChars <= 0 || n <= envStringChars)
+          printf ("  = \"%s\"\n", vs.String ());
+        else
+          printf ("  = \"%.*s...\" (truncated after %i characters)\n",
+                  envStringChars, vs.String (), envStringChars);
       }
+    }
+  }
+
+  // ... or directory listing ...
+  else {
+    RcPathGetDirectory (uri, &dir, NULL, &prefix, true);
+    for (n = 0; n < dir.Entries (); n++) {
+      key = dir.GetKey (n);
+      s.SetC (prefix);
+      s.Append (key);
+      RcPathAnalyse (s.Get (), &info, false);   // currently just to identify and resolve alias
+      //~ INFOF (("### ... RcPathAnalyse: state = %i", info.state));
+      if (info.state == rcaAliasResolved)
+        printf ("%s -> %s%s\n", key, info.target, info.localPath);
+      else
+        printf ("%s\n", key);
     }
   }
 
@@ -340,18 +273,19 @@ static bool CmdList (int argc, const char **argv, bool interactive) {
 
 
 static bool CmdChDir (int argc, const char **argv, bool interactive) {
+
   //~ printf ("CmdChDir\n");
-  if (argc >= 2) uriPwd.Set (RcGetAbsPath (argv[1]));
-  if (uriPwd.IsEmpty ()) uriPwd = "/";
-  if (RcPathIsDir (RcAnalysePath (uriPwd.Get (), NULL, NULL, NULL, NULL))) uriPwd.Append ('/');
-  uriPwd.PathNormalize ();
-  printf ("%s\n", uriPwd.Get ());
+  if (argc >= 2) workDir.Set (NormalizedUri (argv[1]));
+  if (workDir.IsEmpty ()) workDir = "/";
+  if (RcPathIsDir (workDir.Get ())) workDir.Append ('/');
+  workDir.PathNormalize ();
+  printf ("%s\n", workDir.Get ());
   return true;
 }
 
 
 static bool CmdSubscribe (int argc, const char **argv, bool interactive) {
-  for (int n = 1; n < argc; n++) subscriber->AddResources (RcGetAbsPath (argv[n]));
+  for (int n = 1; n < argc; n++) subscriber->AddResources (NormalizedUri (argv[n]));
   subscriber->PrintInfo ();
   return true;
 }
@@ -359,8 +293,7 @@ static bool CmdSubscribe (int argc, const char **argv, bool interactive) {
 
 static bool CmdUnsubscribe (int argc, const char **argv, bool interactive) {
   for (int n = 1; n < argc; n++) {
-    if (argv[n][0] == '*' && argv[n][1] == '\0') subscriber->Clear ();    // Wildcard "*" deletes all.
-    subscriber->DelResources (RcGetAbsPath (argv[n]));
+    subscriber->DelResources (NormalizedUri (argv[n]));
   }
   subscriber->PrintInfo ();
   return true;
@@ -368,20 +301,25 @@ static bool CmdUnsubscribe (int argc, const char **argv, bool interactive) {
 
 
 static bool CmdFollow (int argc, const char **argv, bool interactive) {
-  int n, timeLeft = 1;
-  bool haveTime, newSubs;
+  TTicks timeLeft = 1;
+  int i, n;
+  bool haveTime, newSubs, withRequestChanges;
 
   // Parse args ...
-  haveTime = newSubs = false;
+  haveTime = newSubs = withRequestChanges = false;
   for (n = 1; n < argc; n++) {
     if (argv[n][0] == '-') switch (argv[n][1]) {
       case 'h':
         HelpOnCmd (argv[0]);
         return true;
+      case 'r':
+        withRequestChanges = true;
+        break;
       case 't':
         n++;
         if (n < argc) {
-          if (!IntFromString (argv[n], &timeLeft)) {
+          if (IntFromString (argv[n], &i)) timeLeft = i;
+          else {
             printf ("Invalid time value (must be an integer number of milliseconds).\n");
             return false;
           }
@@ -394,21 +332,18 @@ static bool CmdFollow (int argc, const char **argv, bool interactive) {
         return false;
       }
     else {
-      subscriber->AddResources (RcGetAbsPath (argv[n]));
+      subscriber->AddResources (NormalizedUri (argv[n]));
       newSubs = true;
     }
   }
 
   // Print new suscribers ...
-  if (newSubs) {
-    subscriber->PrintInfo ();
-    putchar ('\n');
-  }
+  if (newSubs) subscriber->PrintInfo ();
 
   // Go ahead ...
   while (!interrupted && timeLeft > 0) {
     subscriber->WaitEvent (NULL, haveTime ? &timeLeft : NULL);
-    PollSubscriber ();
+    PollSubscriber (withRequestChanges);
     fflush (stdout);
   }
   putchar ('\n');
@@ -422,7 +357,9 @@ static bool CmdGet (int argc, const char **argv, bool interactive) {
   CRcEvent ev;
   CResource *rc;
   CRcValueState *vs, vsRef;
-  int n, timeLeft = 1;
+  CString s;
+  TTicks timeLeft = 1;
+  int i, n;
   bool haveTime, notEqual, mindBusy, haveVsRef, success;
 
   // Parse options ...
@@ -442,7 +379,8 @@ static bool CmdGet (int argc, const char **argv, bool interactive) {
           return false;
         }
         else {
-          if (!IntFromString (argv[n], &timeLeft)) {
+          if (IntFromString (argv[n], &i)) timeLeft = i;
+          else {
             printf ("Invalid time value (must be an integer number of milliseconds).\n");
             return false;
           }
@@ -521,7 +459,7 @@ static bool CmdGet (int argc, const char **argv, bool interactive) {
   // Print value on success ...
   if (success) {
     if (!mindBusy) if (vs->IsKnown ()) vs->SetState (rcsValid);
-    printf ("%s\n", vs->ToStr ());
+    printf ("%s\n", vs->ToStr (&s));
   }
   //~ write (STDOUT_FILENO, "\n", 1);
 
@@ -551,7 +489,7 @@ static bool CmdSetRequest (int argc, const char **argv, bool interactive) {
   if (ok) {
 
     // Lookup resource...
-    rcUri = RcGetAbsPath (argv[1]);
+    rcUri = NormalizedUri (argv[1]);
     rc = RcGetResource (rcUri, false);
     if (!rc) {
       printf ("Invalid URI: '%s'\n", rcUri);
@@ -599,10 +537,10 @@ static bool CmdDelRequest (int argc, const char **argv, bool interactive) {
   if (ok) {
 
     // Lookup resource...
-    rcUri = RcGetAbsPath (argv[1]);
+    rcUri = NormalizedUri (argv[1]);
     rc = RcGetResource (rcUri, false);
     if (!rc) {
-      printf ("Invalid URI '%s'", rcUri);
+      printf ("Invalid URI '%s'\n", rcUri);
       ok = false;
     }
   }
@@ -717,17 +655,32 @@ TCmd commandArr[] = {
   { "c", CmdChDir, "[<path>]", "Change or show working path", NULL },
   { "change", CmdChDir, NULL, NULL, NULL },
 
-  { "s+", CmdSubscribe, "<rc>", "Subscribe to resource(s)", NULL },
+  { "s+", CmdSubscribe, "<pattern>", "Subscribe to resource(s)",
+            "<pattern> is a single or a whitespace-separated list of resources.\n"
+            "Within the resource expressions, both MQTT-style and filename-style wildcards\n"
+            "can be used to select multiple resources:\n"
+            "\n"
+            "  '?' matches any single character except '/'.\n"
+            "  '*' matches 0 or more characters except '/'.\n"
+            "  '+' matches 1 or more characters except '/'.\n"
+            "  '#' matches the complete remaining string (including '/' characters) and can\n"
+            "      thus be used to select a complete subtree. If used, '#' must be the last\n"
+            "      character in the expression. Anything behind a '#' is ignored silently.\n" },
   { "subscribe", CmdSubscribe, NULL, NULL, NULL },
-  { "s-", CmdUnsubscribe, "<rc>", "Unsubscribe from resource(s)",
-            "The special pattern '*' (usually not allowed) removes all subscriptions." },
+  { "s-", CmdUnsubscribe, "<pattern>", "Unsubscribe from resource(s)",
+            "<pattern> is a single or a whitespace-separated list of resources.\n"
+            "Within the resource expressions, both MQTT-style and filename-style wildcards\n"
+            "can be used to select multiple resources. See help on 's+' for details.\n"
+            "\n"
+            "To remove all subscriptions, enter the pattern '/#'." },
   { "unsubscribe", CmdUnsubscribe, NULL, NULL, NULL },
   { "s", CmdSubscribe, "", "List subscriptions", NULL },
   { "subscriptions", CmdSubscribe, NULL, NULL, NULL },
 
-  { "f", CmdFollow, "[-t <ms>] [<rc>]", "Follow subscriptions until Ctrl-C is pressed.",
+  { "f", CmdFollow, "[-t <ms>] [-r] [<pattern>]", "Follow subscriptions until Ctrl-C is pressed.",
           "If the '-t' option is set, the commands stops automatically after <ms> milliseconds.\n"
-          "If resources are passed as <rc>, they are subscribed to first\n"
+          "If the '-r' option is set, 'request changed' events are shown, which are usually hidden.\n"
+          "If resources are passed as <pattern>, they are subscribed to first.\n"
           "This command can also be used to just wait for a certain time.\n" },
   { "follow", CmdFollow, NULL, NULL, NULL },
 
@@ -762,11 +715,11 @@ TCmd commandArr[] = {
   { "wait", CmdGet, NULL, NULL, NULL },
 
   { "r+", CmdSetRequest, "<rc> <value> [<ropts>]", "Add or change a request",
-          "Request options <attributes> :\n\n"
+          "Request options <attributes> :\n"
           "\n"
-          "  <rc>    : Resource identifier\n\n"
+          "  <rc>    : Resource identifier\n"
           "\n"
-          "  <value> : Requested value\n\n"
+          "  <value> : Requested value\n"
           "\n"
           "  <ropts> : Additional request arguments as supported by 'CRcRequest::SetFromStr ()':\n"
           "             #<id>   : Request ID [default: '" SHELL_NAME "']\n"
@@ -870,7 +823,7 @@ static bool ExecuteCmd (const char *cmd, bool interactive) {
 #if WITH_READLINE
 
 
-static int rlCompleteOffset;    // number of characters to skip in the completion display
+static int rlCompleteOffset;        // number of characters to skip in the completion display
 
 
 static void RlDisplayMatchList (char **matches, int len, int max) {
@@ -909,51 +862,32 @@ static char *RlGeneratorCommands (const char *text, int state) {
 
 
 static char *RlGeneratorUri (const char *text, int state) {
+  static CKeySet dir;
+  static CString prefix;
   static int idx, idx1;
-  static const CDictRaw *map;
-  static ERcPathDomain dom;
-  static int pathOfs;
-  static CString realUri;
-  static const char *localPath;
-  const char *name;
-  CRcHost *rcHost;
-  CRcDriver *rcDriver;
-  CResource *resource;
   CString ret;
+  const char *p, *absPath;
 
   // New word to complete: initialize the generator...
   if (!state) {
-    realUri.Set (RcGetRealPath (&ret, RcGetAbsPath (text)));
-    //~ INFOF (("\n### text = '%s' -> absPath =  '%s' -> realUri -> '%s'", text, ret.Get (), realUri.Get ()));
-    dom = RcAnalysePath (realUri.Get (), &localPath, &rcHost, &rcDriver, &resource);
-    //~ INFOF (("### realUri = %s, dom = %i, localPath = %s, rcHost = %s, rcDriver = %s, resource = %s",
-          //~ realUri.Get (), dom, localPath, rcHost ? rcHost->ToStr () : "(null)",
-          //~ rcDriver ? rcDriver->ToStr () : "(null)", resource ? resource->ToStr () : "(null)"));
-    map = RcGetDirectory (dom, rcHost, rcDriver);
-
-    idx = 0;
-    idx1 = map ? map->Entries () : 0;
-    pathOfs = strlen (realUri.Get ()) - strlen (localPath);
-
-    rlCompleteOffset = strlen (text);
-    while (rlCompleteOffset > 0 && text[rlCompleteOffset-1] != '/') rlCompleteOffset--;
+    //~ INFOF (("### RlGeneratorUri('%s')", text));
+    absPath = NormalizedUri (text);
+    p = strrchr (absPath, '/');
+    if (!p) return NULL;    // illegal current path
+    ret.Set (absPath, p+1 - absPath);     // reuse 'ret' for temporarily storing the directory component of 'text'
+    RcPathGetDirectory (ret.Get (), &dir, NULL, &prefix);
+    dir.PrefixSearch (p+1, &idx, &idx1);
+    //~ INFOF (("###   idx = %i, idx1 = %i", idx, idx1));
+    rlCompleteOffset = ret.Len ();
   }
 
   // Return next matching word...
-  while (idx < idx1) {
-    name = map->GetKey (idx++);
-    if (strncmp (name, localPath, strlen (localPath)) == 0) {
-      if (pathOfs > 0) ret.Set (realUri.Get (), pathOfs);
-      else ret.Clear ();
-      ret.Append (name + MAX (0, -pathOfs));
-
-      if (dom == rcpAlias) rl_completion_suppress_append = 1;     // Aliases may point to incomplete paths => Do not append a space, the user will hit Tab again
-      else if (RcPathIsDir (RcAnalysePath (ret.Get (), NULL, NULL, NULL, NULL))) {
-        ret.Append ('/');
-        rl_completion_suppress_append = 1;
-      }
-      return ret.Disown ();
-    }
+  if (idx < idx1) {
+    ret.SetC (prefix);
+    ret.Append (dir.GetKey (idx++));
+    if (ret[-1] == '/') rl_completion_suppress_append = 1;
+    //~ INFOF (("###   returning '%s'.", ret.Get ()));
+    return ret.Disown ();
   }
 
   // No more matching word...
@@ -1064,16 +998,17 @@ int main (int argc, char **argv) {
   if (!line.IsEmpty ()) argCmds.Set (line.Get (), INT_MAX, ";");
 
   // Init resources...
-  RcInit (withServer, true);    // starts main timer loop in the background...
+  RcInit (withServer, true);        // starts main timer loop in the background...
   RcStart ();
+  RcPathNormalize (&workDir, ".");  // init working directory
 
-  // Initialize subscriber...
+  // Init subscriber...
   subscriber = new CRcSubscriber ();
   subscriber->Register (SHELL_NAME);
 
   if (interactive) {
 
-    // Setup history...
+    // Init history...
 #if WITH_READLINE
     using_history ();
     homeDir = getenv ("HOME");
@@ -1120,7 +1055,7 @@ int main (int argc, char **argv) {
     rl_completer_word_break_characters = (char *) " ";
 #endif
     while (!doQuit) {
-      PollSubscriber ();
+      PollSubscriber (false);
 #if WITH_READLINE
       p = readline (EnvHaveTerminal () ? prompt : NULL);
       if (!p) {

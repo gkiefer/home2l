@@ -24,8 +24,9 @@
 
 
 /** @file
- *
- * @addtogroup brownies_interface
+ */
+
+/** @addtogroup brownies_interface
  *
  * This is the general interface file for *Home2L Brownies* containing common
  * definitions to be shared between *Brownies* and Linux hosts as well as
@@ -238,7 +239,7 @@ EBrStatus BrReplyCheck (TBrReply *reply, uint8_t op, int8_t bytes);
 // ************ Brownie Memory Organization and Data Records *******************
 
 
-/** @defgroup brownies_interface_memory *Brownie* Memory
+/** @defgroup brownies_interface_memory Brownie Memory
  * @brief Reference documentation of the *Brownie* virtual memory organization.
  *
  * This section decribes the organization of the virtual memory as accessed
@@ -477,7 +478,7 @@ typedef struct SBrConfigRecord {
 // *************************** Brownie Registers *******************************
 
 
-/** @defgroup brownies_interface_registers *Brownie* Registers
+/** @defgroup brownies_interface_registers Brownie Registers
  * @brief Reference documentation of the *Brownie* register map.
  *
  * For *Home2L Brownies*, the following macros decribe the organization of the

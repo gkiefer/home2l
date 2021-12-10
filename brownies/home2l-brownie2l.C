@@ -718,7 +718,7 @@ static bool CmdScan (int argc, const char **argv) {
           printf ("%s\n", BrownieIdStr (&brownie));
         if (verbose) PrintDeviceInfo (&brownie, false);
       }
-      if (outFile) fprintf (outFile, "id=%-12s %s\n", brownie.Id (), brownie.ToStr (false));
+      if (outFile) fprintf (outFile, "id=%-12s %s\n", brownie.Id (), brownie.ToStr (&s, false));
     }
     else if (status != brNoDevice) {
       printf ("? %s\n", BrStatusStr (status));
@@ -1605,15 +1605,16 @@ static bool CmdStatistics (int argc, const char **argv) {
 
 static bool CmdTimer (int argc, const char **argv) {
   CBrownie brownie;
-  TTicksMonotonic t0before, t0after, t1before, t1after, delay;
-  int brT0, brT1;
+  TTicks t0before, t0after, t1before, t1after, delay;
+  int i, brT0, brT1;
   float msLocal, msBrownie, msCom0, msCom1;
   uint8_t byte;
 
   // Arguments & sanity ...
   delay = 1000;    // default
   if (argc >= 2) {
-    if (!IntFromString (argv[1], &delay)) {
+    if (IntFromString (argv[1], &i)) delay = i;
+    else {
       printf ("Invalid delay value: %s\n", argv[1]);
       return false;
     }
@@ -1630,22 +1631,22 @@ static bool CmdTimer (int argc, const char **argv) {
   }
 
   // Read ticks from brownie ...
-  printf ("Testing timer (delay = %i ms)... ", delay);
+  printf ("Testing timer (delay = %i ms)... ", (int) delay);
   fflush (stdout);
-  t0before = TicksMonotonicNow ();
+  t0before = TicksNowMonotonic ();
   if (PrintOnError (shellLink.RegRead (shellAdr, BR_REG_TICKS_LO, &byte))) return false;
   brT0 = byte;
   if (PrintOnError (shellLink.RegRead (shellAdr, BR_REG_TICKS_HI, &byte))) return false;
-  t0after = TicksMonotonicNow ();
+  t0after = TicksNowMonotonic ();
   brT0 |= (byte << 8);
 
   // Wait and read again ...
   Sleep (delay);
-  t1before = TicksMonotonicNow ();
+  t1before = TicksNowMonotonic ();
   if (PrintOnError (shellLink.RegRead (shellAdr, BR_REG_TICKS_LO, &byte))) return false;
   brT1 = byte;
   if (PrintOnError (shellLink.RegRead (shellAdr, BR_REG_TICKS_HI, &byte))) return false;
-  t1after = TicksMonotonicNow ();
+  t1after = TicksNowMonotonic ();
   brT1 |= (byte << 8);
 
   // Print result ...
@@ -1678,7 +1679,7 @@ static bool CmdTest (int argc, const char **argv) {
   CString s;
   int i;
   uint8_t val, oldVal;
-  TTicksMonotonic t0, t1;
+  TTicks t0, t1;
   EBrStatus status;
   bool endless;
 
@@ -1696,17 +1697,17 @@ static bool CmdTest (int argc, const char **argv) {
   shellLink.StatisticsReset (true);
   if (endless) puts ("Push Ctrl-C to stop the test.");
   interrupted = false;
-  t0 = TicksMonotonicNow ();
+  t0 = TicksNowMonotonic ();
   for (i = 0; (i <= 0xff || endless) && !interrupted; i++) {
     shellLink.RegWrite (shellAdr, BR_REG_FWBASE, endless ? 0x55 : (uint8_t) i);
     shellLink.RegRead (shellAdr, BR_REG_FWBASE, &val);
     if (!endless) putchar ((val == (uint8_t) i) ? '.' : '!');
     fflush (stdout);
   }
-  t1 = TicksMonotonicNow ();
+  t1 = TicksNowMonotonic ();
   printf ("\n\n%s", shellLink.StatisticsStr (&s, true));
   printf ("\nElapsed time: %i.%03i secs (%.2f kbit/s).\n\n",
-          (t1 - t0) / 1000, (t1 - t0) % 1000,
+          (int) ((t1 - t0) / 1000), (int) ((t1 - t0) % 1000),
           (256 * (BrRequestSize (BR_OP_REG_WRITE(0)) + BrReplySize (BR_OP_REG_WRITE(0)) +
                   BrRequestSize (BR_OP_REG_READ(0)) + BrReplySize (BR_OP_REG_READ(0)))
                * 8) / 1024.0 / (float) (t1 - t0) * 1000.0
@@ -1777,7 +1778,7 @@ static bool CmdResources (int argc, const char **argv) {
     haveSocketClient = shellLink.ServerIterate (64);
     rcDatabase.ResourcesIterate (haveSocketClient);
     while (subscriber.PollEvent (&ev)) {
-      printf (": %s\n", ev.ToStr ());
+      printf (": %s\n", ev.ToStr (&s1));
       fflush (stdout);
     }
     if (shellLink.Status () == brNoBus) {

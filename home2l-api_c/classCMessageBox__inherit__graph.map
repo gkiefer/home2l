@@ -1,4 +1,5 @@
 <map id="CMessageBox" name="CMessageBox">
-<area shape="rect" id="node2" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box. " alt="" coords="5,80,113,107"/>
-<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="23,5,96,32"/>
+<area shape="rect" id="node1" title="Message box widget." alt="" coords="5,155,113,181"/>
+<area shape="rect" id="node2" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box." alt="" coords="5,80,113,107"/>
+<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="23,5,96,32"/>
 </map>

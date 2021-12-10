@@ -88,15 +88,17 @@ endif
 ############################## WallClock / Main part ###########################
 
 
+CFLAGS += "-pg"
+
+
 WALLCLOCK := home2l-wallclock
 WALLCLOCK_BIN := $(DIR_OBJ)/$(WALLCLOCK)
 SRC := $(SRC) ui_base.C ui_screen.C ui_widgets.C system.C apps.C alarmclock.C floorplan.C $(WALLCLOCK).C
 OBJ := $(SRC:%.C=$(DIR_OBJ)/%.o)
-#~ OBJ := $(SRC:%.C=%-$(ARCH).o)
 
 
 $(WALLCLOCK_BIN): $(DEP_CONFIG) $(OBJ) icons.build
-	@echo LD $(WALLCLOCK)
+	@echo LD$(LD_SUFF) $(WALLCLOCK)
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
 

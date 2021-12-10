@@ -39,8 +39,14 @@ HOST_ARCH := $(shell dpkg --print-architecture)
 ARCH ?= $(HOST_ARCH)
 
 
-# Release build (with optimizations, stripped; default: off) ...
-RELEASE ?= 0
+# Release build option ...
+#     0 = Release with optimizations, symbols stripped
+#     1 = Little optimizations, with debug symbols
+#     2 = With profiling data (for gprof(1) )
+# Default:
+#   1 for a local build (invoking "make" from a subproject directory)
+#   0 for a global build (invoking "make" from the main directory)
+DEBUG ?= 1
 
 
 
@@ -66,7 +72,7 @@ SHELL := /bin/bash
 
 
 # Python (used in 'resources') ...
-PYTHON_INCLUDE := /usr/include/python3.7
+PYTHON_INCLUDE := /usr/include/python3.9
 
 
 # C/C++ Compiler & strip option for 'install'...
@@ -102,7 +108,8 @@ else
     endif
   endif
   ifeq ($(ARCH),i386)
-    # Note: Cross-building for 'i386' on 'amd64' is only rarely tested.
+    # Note: Cross-building for 'i386' on 'amd64' works after installing
+    #       'g++-10-multilib' (see comments above).
     ifeq ($(HOST_ARCH),amd64)
       CC := g++ -m32 -no-pie
       STRIP := -s
@@ -113,7 +120,7 @@ else
     #       package 'crossbuild-essential-armhf' from
     #       'deb http://emdebian.org/tools/debian/ jessie main'.
     # Note [2017-07-22]: The option '-static-libstdc++' is added for armhf to create
-    #       binaries with the chance to run under Debian Jessie and Debian Stretch.
+    #       binaries with the chance to run under both Debian Jessie and Debian Stretch.
     CC := arm-linux-gnueabihf-g++ -no-pie -static-libstdc++
     STRIP := -s --strip-program=arm-linux-gnueabihf-strip
   endif
@@ -171,13 +178,21 @@ SRC :=
 
 
 # Release settings modifications ...
-ifeq ($(RELEASE),1)     # Optimize for speed, but do not sacrifice code size too much
+ifeq ($(DEBUG),0)       # Optimize for speed, but do not sacrifice code size too much
 CFLAGS += -O2
 CC_SUFF :=
-else                    # Optimize debugging experience (and exclude stripping on install)
+LD_SUFF :=
+else ifeq ($(DEBUG),1)  # Optimize debugging experience (and exclude stripping on install)
 CFLAGS += # -Og
 STRIP :=
 CC_SUFF := '*'
+LD_SUFF := '*'
+else                    # Include profiling data, optimize debugging experience (and exclude stripping on install)
+CFLAGS += -pg # -Og
+LDFLAGS += -pg
+STRIP :=
+CC_SUFF := '**'
+LD_SUFF := '**'
 endif
 
 

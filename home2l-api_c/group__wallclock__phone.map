@@ -1,3 +1,4 @@
 <map id="Phone" name="Phone">
-<area shape="rect" id="node1" href="$group__wallclock.html" title="API to implement new WallClock applets. " alt="" coords="5,5,88,32"/>
+<area shape="rect" id="node1" href="$group__wallclock.html" title="API to implement new WallClock applets." alt="" coords="5,5,87,31"/>
+<area shape="rect" id="node2" title="Interacting with the phone applet." alt="" coords="135,5,193,31"/>
 </map>

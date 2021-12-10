@@ -69,7 +69,7 @@ cmd_start () {
   if pidof -q home2l-daemon; then
     echo "(already running)"
   else
-    if home2l daemon 2>&1 > /tmp/home2l-daemon.log; then
+    if (stdbuf -oL -eL home2l daemon -d 2>&1 > /tmp/home2l-daemon.log &); then
       echo "OK"
     else
       echo "Failed!"
@@ -83,6 +83,7 @@ cmd_stop () {
   echo -n "Stopping home2l-daemon: "
   killall -q home2l-daemon && OK=1
   if [[ "$OK" == "1" ]]; then
+    while pidof -q home2l-daemon; do sleep .1; done
     echo "OK"
   else
     echo "(not running)"

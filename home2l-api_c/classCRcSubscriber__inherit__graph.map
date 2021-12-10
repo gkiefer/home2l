@@ -1,3 +1,4 @@
 <map id="CRcSubscriber" name="CRcSubscriber">
-<area shape="rect" id="node2" href="$classCRcEventProcessor.html" title="Event processor. " alt="" coords="5,5,148,32"/>
+<area shape="rect" id="node1" title="Subscriber to follow an arbitrary set of resources." alt="" coords="21,80,132,107"/>
+<area shape="rect" id="node2" href="$classCRcEventProcessor.html" title="Event processor." alt="" coords="5,5,148,32"/>
 </map>

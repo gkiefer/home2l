@@ -60,10 +60,10 @@ ENV_PARA_STRING ("calendar.nearbyHost", envCalendarNearbyHost, NULL);
    * On the nearby machine, \texttt{remind} must be installed.
    */
 
-ENV_PARA_STRING ("calendar.dir", envCalendarDir, "var/calendars");
+ENV_PARA_PATH ("calendar.dir", envCalendarDir, "calendars");
   /* Storage directory for calendar (reminder) files.
    *
-   * The path may be either absolute or relative to HOME2L\_ROOT.
+   * The path may be either absolute or relative to \refenv{sys.varDir}.
    */
 ENV_PARA_SPECIAL ("calendar.<n>.name", const char *, NULL);
   /* Name for calendar $\#n$
@@ -426,7 +426,7 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
   CCalEntry *first, **pLast, *ce;
   CString cmd, line;
   CShellSession *shell;
-  char strTime[8], strDur[8];
+  char strTime[8], strDur[8], *p;
   int sendLine, lineNo, n, msgPos, year, mon, day;
   bool canSend, canReceive;
 
@@ -499,7 +499,8 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
         if (!HaveError ()) {
           errorFile = fileNo;
           errorLine = n - 1;
-          errorMsg.Set (line.Get () + line.LFind (':') + 2);
+          p = strchr (line, ':');
+          errorMsg.Set (p ? p : line.Get ());
         }
       }
       else WARNINGF(("Unparsable line in remind output while processing '%s': %s",
@@ -684,7 +685,7 @@ SDL_Surface *CEventsBox::RenderItem (CListboxItem *item, int idx, SDL_Surface *s
   TColor backColor;
   TDate d;
   TTime t0, t1;
-  int n;
+  const char *p;
 
   if (!surf) surf = CreateSurface (area.w, itemHeight);
   backColor = item->isSpecial ? colBackSpecial : colBack;
@@ -710,13 +711,13 @@ SDL_Surface *CEventsBox::RenderItem (CListboxItem *item, int idx, SDL_Surface *s
     else {
       t0 = calEntry->GetTime ();
       t1 = t0 + calEntry->GetDur ();
-      str2.SetF ("   %i:%02i - %2i:%02i", HOUR_OF(t0), MINUTE_OF(t0), HOUR_OF(t1), MINUTE_OF(t1));
+      str2.SetF ("   %2i:%02i - %2i:%02i", HOUR_OF(t0), MINUTE_OF(t0), HOUR_OF(t1), MINUTE_OF(t1));
     }
-    n = str1.LFind (';');
-    if (n >= 0) {
+    p = strchr (str1, ';');
+    if (p) {
       str2.Append ("   ");
-      str2.Append (str1.Get () + n + 1);
-      str1.Del (n);
+      str2.Append (p + 1);
+      str1.Del (p - str1.Get ());
     }
     textSet.AddLines (str1, CTextFormat (fontBold, colLabel, backColor, -1, 0));
     if (str2.Len () > 0) textSet.AddLines (str2, CTextFormat (font, colLabel, backColor, -1, 0));
@@ -1441,7 +1442,7 @@ void *AppFuncCalendar (int appOp, void *data) {
   switch (appOp) {
 
     case appOpInit:
-      envCalendarDir = EnvGetPath (envCalendarDirKey);   // make path absolute
+      EnvGetPath (envCalendarDirKey, &envCalendarDir, EnvHome2lVar ());   // make path absolute
       return APP_INIT_OK;
 
     case appOpDone:

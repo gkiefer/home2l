@@ -1424,14 +1424,14 @@ void CInputLine::ClipboardCopy () {
   if (markD != 0) {
     if (markD > 0) { n0 = mark0; dn = markD; }
     else { n0 = mark0 + markD; dn = -markD; }
-    clip.Set (&input, n0, dn);
-    SDL_SetClipboardText (ToUtf8 (clip.Get ()));
+    clip.Set (input.Get () + n0, dn);
+    SDL_SetClipboardText (ToUtf8 (TTS, clip.Get ()));
   }
 }
 
 
 void CInputLine::ClipboardPaste () {
-  InsText (ToIso8859 (SDL_GetClipboardText ()));
+  InsText (ToIso8859 (TTS, SDL_GetClipboardText ()));
 }
 
 
@@ -1588,11 +1588,11 @@ void CInputLine::Render (SDL_Renderer *ren) {
 
     // Render content...
     r = Rect (0, 0, w, lh);
-    TextRender (ToUtf8 (input.Get ()), CTextFormat (font, BLACK, WHITE, -1, 0, INPUT_SPACE_X, 0), surfMain, &r);
+    TextRender (ToUtf8 (TTS, input.Get ()), CTextFormat (font, BLACK, WHITE, -1, 0, INPUT_SPACE_X, 0), surfMain, &r);
     if (suggPos >= 0) {
       r.x += suggX;
       r.y = lh;
-      TextRender (ToUtf8 (suggText.Get ()), CTextFormat (font, GREY, BLACK, -1, 0, INPUT_SPACE_X, 0), surfMain, &r);
+      TextRender (ToUtf8 (TTS, suggText.Get ()), CTextFormat (font, GREY, BLACK, -1, 0, INPUT_SPACE_X, 0), surfMain, &r);
     }
 
     // Set content...
@@ -1657,7 +1657,7 @@ bool CInputLine::HandleEvent (SDL_Event *ev) {
       MoveMark (_mark0);
       break;
     case SDL_TEXTINPUT:
-      InsText (ToIso8859 (ev->text.text));
+      InsText (ToIso8859 (TTS, ev->text.text));
       //~ INFOF (("### CInputLine: SDL_TEXTINPUT: '%s' (%02x %02x %02x %02x)", ev->text.text, (uint8_t) ev->text.text[0], (uint8_t) ev->text.text[1], (uint8_t) ev->text.text[2], (uint8_t) ev->text.text[3]));
       ret = true;
       break;

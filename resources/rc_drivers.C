@@ -217,7 +217,7 @@ static void DrvTimerUpdate (CTimer *, void *x = NULL) {
   static TTime lastT = -1;
   TDate d;
   TTime t;
-  TTicksMonotonic delay;
+  TTicks delay;
 
   // Get current time...
   now = TicksNow ();
@@ -243,7 +243,7 @@ static void DrvTimerUpdate (CTimer *, void *x = NULL) {
 
   // Calculate delay for the next timer...
   delay = 1000 - (now % 1000);
-  drvTimerTimer.Reschedule (TicksMonotonicNow () + delay);
+  drvTimerTimer.Reschedule (TicksNowMonotonic () + delay);
 }
 
 
@@ -384,7 +384,7 @@ class CExtDriver: public CRcDriver {
     static void ClassStart ();    // to be called to finalize the initialization phase
     static void ClassStop ();
 
-    void PutCmd (EExtDriverCmd cmd, TTicksMonotonic t = 0, TTicksMonotonic interval = 0);
+    void PutCmd (EExtDriverCmd cmd, TTicks t = 0, TTicks interval = 0);
 
     static void ThreadRoutine ();
 
@@ -410,7 +410,7 @@ class CExtDriver: public CRcDriver {
     TTicks tStart;        // only valid if 'shellInUse == true'
 
     CMutex assignSetMutex;
-    CDictFast<CRcValueState> assignSet;  // [T:any] set of pending assignments; key is 'CResource::Lid ()'
+    CDictCompact<CRcValueState> assignSet;  // [T:any] set of pending assignments; key is 'CResource::Lid ()'
 
     // Class data...
     static CThread thread;          // [T:ext]
@@ -510,7 +510,7 @@ void CExtDriver::ClassStop () {
 }
 
 
-void CExtDriver::PutCmd (EExtDriverCmd cmd, TTicksMonotonic t, TTicksMonotonic interval) {
+void CExtDriver::PutCmd (EExtDriverCmd cmd, TTicks t, TTicks interval) {
   TExtDriverCmdRec cr;
 
 #if WITH_CLEANMEM
@@ -558,7 +558,7 @@ void CExtDriver::OnShellReadable () {
           rc = CResource::Register (this, arg[1], StringF (&s, "%s %s", arg[2], arg[3]));   // [RC:-] External drivers must document themselves
           ok = (rc != NULL);
           if (ok && arg.Entries () == 5) {
-            CRcRequest *req = new CRcRequest (RCREQ_NOVALUE, rcDefaultRequestId, rcPrioDefault);
+            CRcRequest *req = new CRcRequest (NO_VALUE_STATE, rcDefaultRequestId, rcPrioDefault);
             if (req->SetFromStr (arg[4])) rc->SetRequest (req);
           }
         }
@@ -619,7 +619,7 @@ void CExtDriver::OnShellReadable () {
 
 void CExtDriver::OnIterate () {
   CResource *rc;
-  CString s;
+  CString s, s2;
   TTicks tNow;
   int n;
 
@@ -637,7 +637,7 @@ void CExtDriver::OnIterate () {
         // A "keep running" process has died just now...
         WARNINGF (("Driver process '%s' died unexpectedly", Lid ()));
         if (tNow - tStart >= envMinRunTime) PutCmd (cmdInvokeRestart);
-        else PutCmd (cmdInvokeRestart, TicksMonotonicNow () + envCrashWait);
+        else PutCmd (cmdInvokeRestart, TicksNowMonotonic () + envCrashWait);
       }
     }
   }
@@ -648,7 +648,7 @@ void CExtDriver::OnIterate () {
     if (keepRunning) {
       if (shell.IsRunning ())
         for (n = 0; n < assignSet.Entries (); n++)
-          shell.WriteLine (StringF (&s, "%s %s", assignSet.GetKey (n), assignSet.Get (n)->ToStr ()));
+          shell.WriteLine (StringF (&s, "%s %s", assignSet.GetKey (n), assignSet.Get (n)->ToStr (&s2)));
     }
     else {
       if (!shellInUse) {
@@ -658,7 +658,7 @@ void CExtDriver::OnIterate () {
         rc = GetResource (assignSet.GetKey (0));
         if (rc) rc->ReportState (rcsBusy);
         // Run "-drive command" ...
-        if (shell.Start (StringF (&s, "%s -drive %s %s", shellCmd.Get (), assignSet.GetKey (0), assignSet.Get (0)->ToStr ()))) {
+        if (shell.Start (StringF (&s, "%s -drive %s %s", shellCmd.Get (), assignSet.GetKey (0), assignSet.Get (0)->ToStr (&s2)))) {
           shellInUse = true;
           tStart = TicksNow ();
           assignSet.Del (0);
@@ -780,7 +780,7 @@ static const char *drvSearchPath[] = {
 
 
 void RcDriversInit () {
-  CDictFast<CString> drvDict;
+  CDictCompact<CString> drvDict;
   CSplitString args;
   CString s, cmd;
   const char *id, *cmdStr;

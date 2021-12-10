@@ -54,8 +54,8 @@ OBJ_DRIVER := $(SRC_DRIVER:%.C=$(DIR_OBJ)/%-pic.o)
 
 
 $(DRIVER_BIN): $(DEP_CONFIG) $(OBJ_DRIVER)
-	@echo LD $(DRIVER)
-	$(CC) -shared -o $@ $(OBJ_DRIVER) $(LDFLAGS)
+	@echo LD$(LD_SUFF) $(DRIVER)
+	@$(CC) -shared -o $@ $(OBJ_DRIVER) $(LDFLAGS)
 
 
 

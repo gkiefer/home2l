@@ -80,7 +80,7 @@ class CTask: public CShellBare {
     void Process ();
     void RetryNow () { if (startTime < 0) startTime = 0; Process (); }
 
-    const char *ToStr () { return id.Get (); }
+    const char *ToStr (CString *) { return id.Get (); }
 
   protected:
     CString id, cmd;
@@ -92,7 +92,7 @@ class CTask: public CShellBare {
 static bool foregroundMode = false;
 static bool running = true;
 static CSleeper sleeper;
-static CDictFast<CTask> taskMap;
+static CDictCompact<CTask> taskMap;
 
 
 
@@ -102,6 +102,7 @@ static CDictFast<CTask> taskMap;
 
 
 static void LogF (int priority, const char *format, ...) {
+  CString s;
   char c;
 
   va_list ap;
@@ -116,7 +117,7 @@ static void LogF (int priority, const char *format, ...) {
       case LOG_ERR:     c = 'E'; break;
       default: c = 'D';
     }
-    printf ("%s [%c] ", TicksAbsToString (TicksNow ()), c);
+    printf ("%s [%c] ", TicksAbsToString (&s, TicksNow ()), c);
     vprintf (format, ap);
     putchar ('\n');
   }
@@ -157,7 +158,7 @@ void CTask::Kill (int sig) {
 
 void CTask::Process () {
   CString line;
-  TTicksMonotonic now, lifeTime;
+  TTicks now, lifeTime;
 
   // Check and log task's stdout (and stderr)...
   if (!ReadClosed ()) {
@@ -168,18 +169,10 @@ void CTask::Process () {
   // Handle a non-running task...
   //~ INFOF (("# CTask::Process ('%s')", id.Get ()));
   if (!IsRunning ()) {
-    now = TicksMonotonicNow ();
+    now = TicksNowMonotonic ();
     if (startTime > 0) {  // Task was running and has stopped somehow...
       lifeTime = now - startTime;
-        /* NOTE: The type 'TTicksMonotonic' is signed and has just 32 bits and thus wraps around every 2^32 milliseconds (~= 50 days).
-         *       This has two implications here:
-         *       1. After multiples of the turnaround time, the 'lifeTime' may be small, so that a restart happens
-         *          only after a delay of 'envRetryWait', although it should be restarted immediately. Both the
-         *          probability and the damage of this is small. Hence we live with this little flaw.
-         *       2. After half the turnaround time (~25 days) the calculated 'lifeTime' may become negative.
-         *          Hence, we must check for negative numbers to avoid unappropriate and very long retry waiting.
-         */
-      if (lifeTime >= envMinRunTime || lifeTime < 0) {
+      if (lifeTime >= envMinRunTime) {
         LogF (LOG_INFO,
               ExitCode () >= 0 ? "Task '%s' has exited (code %i) - restarting now."
                                : "Task '%s' has died - restarting now.",
@@ -229,7 +222,7 @@ int main (int argc, char **argv) {
   const char *key, *id, *cmd;
   struct passwd *pwEntry;
   struct sigaction sigAction;
-  TTicksMonotonic delay;
+  TTicks delay;
   FILE *f;
   CTask *task;
   int n, sig, n0, n1, prefixLen;
@@ -337,12 +330,17 @@ int main (int argc, char **argv) {
   }
 
   // Kill all tasks...
+  LogF (LOG_INFO, "Shutting down ...");
   if (taskMap.Entries ()) {
     for (n = 0; n < taskMap.Entries (); n++) {
-      LogF (LOG_INFO, "Killing task '%s'...", taskMap.GetKey (n));
-      taskMap.Get (n)->Kill (SIGTERM);   // send kill signal to all first, ...
+      LogF (LOG_INFO, "Terminating task '%s'...", taskMap.GetKey (n));
+      taskMap.Get (n)->Kill (SIGTERM);
     }
-    taskMap.Clear ();    // ... then clear the 'taskMap', which implies a 'wait' on all child processes
+    for (n = 0; n < taskMap.Entries (); n++) {
+      LogF (LOG_INFO, "Waiting for '%s' to finish ...", taskMap.GetKey (n));
+      taskMap.Get (n)->Wait ();
+    }
+    taskMap.Clear ();
   }
   sleeper.Done ();
 

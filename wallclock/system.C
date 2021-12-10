@@ -21,11 +21,12 @@
 
 #include "system.H"
 
-#include "env.H"
-#include "resources.H"
+
 
 #if !ANDROID
 #include "ui_screen.H"
+#else
+#include "ui_base.H"
 #endif
 
 
@@ -91,6 +92,9 @@ static bool valMute = false;      // currently cached value
 static CResource *rcBluetooth = NULL;
 static CResource *rcBluetoothAudio = NULL;
 
+static CResource *rcPhoneState = NULL;
+
+
 // Some forward declarations...
 static void SystemModeUpdate (bool inForeground);
 static void BluetoothDriveValue (CRcValueState *vs);
@@ -153,6 +157,13 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
       rcBluetoothAudio = drv->RegisterResource ("bluetoothAudio", rctBool, false);
         /* [RC:ui] Report whether an audio device is connected via Bluetooth
          */
+
+#if WITH_PHONE
+      rcPhoneState = drv->RegisterResource ("phone", rctPhoneState, false);
+        /* [RC:ui] Report phone state
+         */
+#endif
+
 #if ANDROID == 0
       rcBluetooth->ReportValue (false);
       rcBluetoothAudio->ReportValue (false);
@@ -1272,4 +1283,20 @@ bool SystemBluetoothGetState (bool *retBusy, bool *retAudio) {
 
 void SystemBluetoothSet (bool enable) {
   rcBluetooth->SetRequest (enable, NULL, rcPrioNormal, 0, -1000);
+}
+
+
+
+// ******* Phone State *******
+
+
+class CResource *SystemGetPhoneStateRc () {
+  return rcPhoneState;
+}
+
+
+void SystemReportPhoneState (enum ERctPhoneState _phoneState) {
+#if WITH_PHONE
+  rcPhoneState->ReportValue (_phoneState);
+#endif
 }

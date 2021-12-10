@@ -220,7 +220,7 @@ void StreamerDone () {
 }
 
 
-void StreamerStart (const char *host, int port, TTicksMonotonic bufferDuration) {
+void StreamerStart (const char *host, int port, TTicks bufferDuration) {
   static CString launchStr;
   GstStateChangeReturn ret;
 
@@ -307,13 +307,7 @@ EStreamerState StreamerState () {
 
 const char *StreamerGetError (CString *s) {
   s->SetO (stateError.Disown ());
-  stateError.Clear ();
   return s->Get ();
-}
-
-
-const char *StreamerGetError () {
-  return StreamerGetError (GetTTS ());
 }
 
 
@@ -360,7 +354,7 @@ void StreamerInit () {}
 void StreamerDone () {}
 
 
-void StreamerStart (const char *host, int port, TTicksMonotonic bufferDuration) {
+void StreamerStart (const char *host, int port, TTicks bufferDuration) {
   stateStreamer = strError;
   stateError.SetC ("Compiled without streaming support");
     // like GStreamer-generated messages, this string is not translated.
@@ -386,11 +380,6 @@ const char *StreamerGetError (CString *s) {
   s->SetC (stateError.Get ());
   stateError.Clear ();
   return s->Get ();
-}
-
-
-const char *StreamerGetError () {
-  return StreamerGetError (GetTTS ());
 }
 
 

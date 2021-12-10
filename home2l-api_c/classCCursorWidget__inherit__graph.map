@@ -1,3 +1,4 @@
 <map id="CCursorWidget" name="CCursorWidget">
-<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="25,5,98,32"/>
+<area shape="rect" id="node1" title="Widget with an additional rectangular cursor." alt="" coords="5,80,117,107"/>
+<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="25,5,98,32"/>
 </map>

@@ -1,7 +1,8 @@
 <map id="Brownies" name="Brownies">
-<area shape="rect" id="node1" href="$group__brownies__linux.html" title="Linux host library to use and communicate with Brownies. " alt="" coords="162,5,255,32"/>
-<area shape="rect" id="node3" href="$group__brownies__interface.html" title="Specification of the microcontroller&#45;host interface: two&#45;wire bus protocol, register map..." alt="" coords="172,56,245,83"/>
-<area shape="rect" id="node4" href="$group__brownies__firmware.html" title="Microcontroller firmware basic modules, relevant for implementing new features. " alt="" coords="140,107,277,133"/>
-<area shape="rect" id="node5" href="$group__brownies__features.html" title="Microcontroller firmware feature options. " alt="" coords="129,158,288,199"/>
-<area shape="rect" id="node6" href="$group__brownies__pins.html" title="Definitions for pin assignments. " alt="" coords="141,223,276,265"/>
+<area shape="rect" id="node1" href="$group__brownies__linux.html" title="Linux host library to use and communicate with Brownies." alt="" coords="162,5,255,31"/>
+<area shape="rect" id="node2" title="The Home2L Brownies library." alt="" coords="5,104,81,129"/>
+<area shape="rect" id="node3" href="$group__brownies__interface.html" title="Specification of the microcontroller&#45;host interface: two&#45;wire bus protocol, register map,..." alt="" coords="172,55,245,80"/>
+<area shape="rect" id="node4" href="$group__brownies__firmware.html" title="Microcontroller firmware basic modules, relevant for implementing new features." alt="" coords="141,104,277,129"/>
+<area shape="rect" id="node5" href="$group__brownies__features.html" title="Microcontroller firmware feature options." alt="" coords="129,154,288,194"/>
+<area shape="rect" id="node6" href="$group__brownies__pins.html" title="Definitions for pin assignments." alt="" coords="141,218,276,258"/>
 </map>

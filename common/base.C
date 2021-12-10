@@ -568,7 +568,10 @@ static void LangOpenMoFile () {
   // Open MO file ...
   moFd = open (moFileName.Get (), O_RDONLY);
   if (moFd < 0) {
-    WARNINGF (("Failed to open translation file '%s'", moFileName.Get ()));
+    if (errno == ENOENT)
+      DEBUGF (1, ("No  translation file '%s' found.", moFileName.Get ()));    // be quit if a tool (intentionally) does not have a translation
+    else
+      WARNINGF (("Failed to open translation file '%s': %s", moFileName.Get (), strerror (errno)));
     moFd = 0;
     return;
   }
@@ -744,18 +747,6 @@ const char *StringF (CString *ret, const char *fmt, ...) {
 }
 
 
-const char *StringF (const char *fmt, ...) {
-  CString *tts;
-  va_list ap;
-
-  tts = GetTTS ();
-  va_start (ap, fmt);
-  tts->SetFV (fmt, ap);
-  va_end (ap);
-  return tts->Get ();
-}
-
-
 bool BoolFromString (const char *str, bool *ret) {
   static const struct { const char *str; bool val; }
     lut[] = {
@@ -858,6 +849,16 @@ void StringStrip (char *str, const char *sepChars) {
 }
 
 
+void StringTruncate (char *str, const char *sepChars, bool after) {
+  if (!sepChars) return;
+  while (str[0] && !strchr (sepChars, str[0])) str++;
+  if (after) {
+    if (str[0]) str[1] = '\0';
+  }
+  else str[0] = '\0';
+}
+
+
 void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc, const char *sepChars, char **retRef) {
   int argc;
   bool sepMerge;
@@ -944,7 +945,7 @@ void PathNormalize (char *str) {
   *(dst++) = *src;
   *dst = '\0';
 
-  // Remove "/." and "/*/.." ...
+  // Remove "/." and "*/.." ...
   src = dst = str;
   while (src[0] && src[1]) {
     if (src[0] == '/' && src[1] == '.' && (src[2] == '/' || src[2] == '\0')) {
@@ -1002,11 +1003,6 @@ const char *GetAbsPath (CString *ret, const char *relOrAbsPath, const char *defa
 }
 
 
-const char *GetAbsPath (const char *relOrAbsPath, const char *defaultPath) {
-  return GetAbsPath (GetTTS (), relOrAbsPath, defaultPath);
-}
-
-
 
 
 
@@ -1038,17 +1034,13 @@ int CSplitString::GetIdx (int pos) {
 // ***** Transcoding helpers *****
 
 
-const char *ToUtf8 (const char *iso8859str) {
-  CString *ret = GetTTS ();
-
+const char *ToUtf8 (CString *ret, const char *iso8859str) {
   ret->SetFromIso8859 (iso8859str);
   return ret->Get ();
 }
 
 
-const char *ToIso8859 (const char *str) {
-  CString *ret = GetTTS ();
-
+const char *ToIso8859 (CString *ret, const char *str) {
   ret->SetAsIso8859 (str);
   return ret->Get ();
 }
@@ -1110,9 +1102,12 @@ void CString::SetO (const char *_ptr) {
 
 
 char *CString::Disown () {
-  if (!size) ptr = strdup (ptr);    // make dynamic copy if memory was not owned before
+  char *ret = ptr;
+
+  if (!size) ret = strdup (ret);    // make dynamic copy if memory was not owned before
   size = 0;
-  return ptr;
+  Clear ();
+  return ret;
 }
 
 
@@ -1241,20 +1236,6 @@ void CString::AppendF (const char *fmt, ...) {
 // ***** Extras *****
 
 
-int CString::LFind (char c) {
-  for (char *p = ptr; p && *p; p++) if (*p == c) return p - ptr;
-  return -1;
-}
-
-
-int CString::RFind (char c) {
-  int ret = -1;
-
-  for (char *p = ptr; p && *p; p++) if (*p == c) ret = p - ptr;
-  return ret;
-}
-
-
 int CString::Compare (const char *str2) {
   //~ INFOF (("### Comparing this = '%s' with '%s'.", ptr, str2));
   return strcmp (ptr, str2);
@@ -1264,6 +1245,12 @@ int CString::Compare (const char *str2) {
 void CString::Strip (const char *sepChars) {
   MakeWriteable ();
   StringStrip (ptr, sepChars);
+}
+
+
+void CString::Truncate (const char *sepChars, bool after) {
+  MakeWriteable ();
+  StringTruncate (ptr, sepChars, after);
 }
 
 
@@ -1289,8 +1276,11 @@ void CString::AppendFByLine (const char *fmt, const char *text) {
 }
 
 
-static bool IsToEscape (char c) {
-  return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ? false : true;
+static bool IsToEscape (char c, const char *dontEscape) {
+  if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) return false;
+  if (!dontEscape) return true;
+  if (strchr (dontEscape, c)) return false;
+  return true;
 }
 
 
@@ -1301,13 +1291,15 @@ static int HexValue (char c) {
 }
 
 
-static const char escapeKeys[] = "nrt\\s0";
-static const char escapeVals[] = { 0x0a, 0x0d, 0x09, 0x5c, 0x20, 0x00 };
+static const char escapeKeys[] = "abefnrtvs0";
+static const char escapeVals[ENTRIES(escapeKeys)] = {
+  0x07, 0x08, 0x1b, 0x0c, 0x0a, 0x0d, 0x09, 0x0b, ' ', '\0'
+};
 
 
-void CString::AppendEscaped (const char *s, int maxChars) {
+void CString::AppendEscaped (const char *s, const char *dontEscape) {
   const char *src, *p;
-  char *dst, *dst0, c;
+  char *dst, *dst0, c, e;
   int n, k;
   bool empty;
 
@@ -1315,13 +1307,13 @@ void CString::AppendEscaped (const char *s, int maxChars) {
   empty = false;
   if (!s) empty = true; else if (!s[0]) empty = true;
   if (empty) {
-    Append ("\0");
+    Append ("\\0");
     return;
   }
 
   // Count number of new characters and make space for appending...
   n = 0;
-  for (src = s; *src && n < maxChars; src++) n += IsToEscape (*src) ? 4 : 1;
+  for (src = s; *src; src++) n += IsToEscape (*src, dontEscape) ? 4 : 1;
   k = strlen (ptr);
   SetSize (k + n + 1);
 
@@ -1330,21 +1322,20 @@ void CString::AppendEscaped (const char *s, int maxChars) {
   src = s;
   while (*src) {
     c = *src;
-    if (IsToEscape (c)) {
+    if (IsToEscape (c, dontEscape)) {
       *(dst++) = '\\';
       p = strchr (escapeVals, c);
-      if (p) *(dst++) = escapeKeys[p-escapeVals];
-      else {
+      if (p) {
+        e = escapeKeys[p-escapeVals];
+        if (!IsToEscape (e, dontEscape)) *(dst++) = e;
+        else p = NULL;
+      }
+      if (!p) {
         sprintf (dst, "x%02x", c);
         dst += 3;
       }
     }
     else *(dst++) = c;
-    if (dst - dst0 > maxChars - 3) {    // Abbreviate?
-      dst = dst0 + maxChars;
-      dst[-3] = dst[-2] = dst[-1] = '.';
-      break;
-    }
     src++;
   }
 
@@ -1356,7 +1347,7 @@ void CString::AppendEscaped (const char *s, int maxChars) {
 bool CString::AppendUnescaped (const char *s) {
   const char *src, *p;
   char *dst, c;
-  int n, k, hex;
+  int n, k, digit;
   bool ok;
 
   // Sanity...
@@ -1377,20 +1368,35 @@ bool CString::AppendUnescaped (const char *s) {
     if (c == '\\') {
       c = *(src++);
       switch (c) {
-        case '\0':      // unexpected end of string?
+        case '\0':      // Enexpected end of string ...
           ok = false;
           src--;        // go back to the terminating zero
           break;
-        case 'x':       // hex escape?
-          if ( (hex = HexValue (*(src++))) < 0) { ok = false; break; }
-          c = (char) (hex << 4);
-          if ( (hex = HexValue (*(src++))) < 0) { ok = false; break; }
-          c |= (char) (hex);
+        case 'x':       // Hex escape ...
+          if ( (digit = HexValue (*(src++))) < 0) { ok = false; break; }
+          c = (char) (digit << 4);
+          if ( (digit = HexValue (*(src++))) < 0) { ok = false; break; }
+          c |= (char) (digit);
           break;
-        default:        // any short escape...
-          p = strchr (escapeKeys, c);
-          if (p) c = escapeVals[p-escapeKeys];
-          else ok = false;
+        default:
+          if (c >= '0' && c <= '7') {    // Octal escape ...
+            c = (c - '0') << 6;
+            digit = *(src++) - '0';
+            if (digit < 0 || digit > 7) {
+              ok = (c == 0);    // special other case: expand "\0" to a null (end of string)
+              break;
+            }
+            c |= (char) (digit << 3);
+            digit = *(src++) - '0';
+            if (digit < 0 || digit > 7) { ok = false; break; }
+            c |= (char) digit;
+            break;
+          }
+          else {                        // Any short escape...
+            p = strchr (escapeKeys, c);
+            if (p) c = escapeVals[p-escapeKeys];
+            // else: just copy the escaped character
+          }
       }
     }
     *(dst++) = c;
@@ -1399,6 +1405,7 @@ bool CString::AppendUnescaped (const char *s) {
   // Done...
   if (ok) *dst = '\0';  // delimit string
   else ptr[k] = '\0';   // cut off all newly appended characters on error
+  //~ INFOF (("# CString::AppendUnescaped ('%s') = '%s'", s, ptr + k));
   return ok;
 }
 
@@ -1451,7 +1458,7 @@ bool CString::ReadFile (const char *relOrAbsPath) {
 }
 
 
-bool CString::AppendFromFile (int fd) {
+bool CString::AppendFromFile (int fd, const char *name) {
   char buf[256];
   int n;
 
@@ -1465,7 +1472,8 @@ bool CString::AppendFromFile (int fd) {
       Append (buf, n);
     }
     else if (n < 0 && errno != EAGAIN) {    // EAGAIN = would block on read: ok; everything else must not happen)
-      WARNINGF (("'Error in 'read (fd = %i)': %s.", fd, strerror (errno)));
+      if (name) WARNINGF (("'Error reading from '%s': %s.", name, strerror (errno)));
+      else      WARNINGF (("'Error reading from #%i: %s.", fd, strerror (errno)));
       //  close (fd);    // Do NOT close the channel, the caller must do it!
       n = 0;             // handle errors (other than 'EAGAIN') like EOF
     }
@@ -1477,13 +1485,13 @@ bool CString::AppendFromFile (int fd) {
 
 
 bool CString::ReadLine (CString *ret) {
-  int n;
+  char *p;
 
   // Try to return something...
-  n = LFind ('\n');
-  if (n < 0) return false;
-  if (ret) ret->Set (ptr, n);
-  Del (0, n + 1);
+  p = strchr (ptr, '\n');
+  if (!p) return false;
+  if (ret) ret->Set (ptr, p - ptr);
+  Del (0, p - ptr + 1);
   //~ INFOF(("# ReadLine () -> '%s'", str->Get ()));
   return true;
 }
@@ -1558,48 +1566,36 @@ bool CRegex::Match (const char *s, int eflags, size_t maxMatches, regmatch_t *re
 
 
 
-// ***************** Maps and key sets *********************
+// *************************** Containers **************************************
 
 
-void CDictRaw::Copy (int idxDst, int idxSrc) {
-  memcpy (GetKeyAdr (idxDst), GetKeyAdr (idxSrc), recSize);
+template <> const char *ToStr<int> (CString *ret, int *obj) {
+  ret->SetF ("%6i", *obj); return *ret;
 }
 
 
-void CDictRaw::Swap (int idx0, int idx1) {
-#if DICT_ALIGNMENT == 4
-  uint32_t *p0 = (uint32_t *) GetKeyAdr (idx0),
-           *p1 = (uint32_t *) GetKeyAdr (idx1), tmp;
-#else
-#error "Unsupported value for DICT_ALIGNMENT"
-#endif
-  int bytesLeft = recSize;
-  while (bytesLeft > 0) {
-    tmp = *p0;
-    *(p0++) = *p1;
-    *(p1++) = tmp;
-    bytesLeft -= DICT_ALIGNMENT;
-  }
+
+// ***** CList... *****
+
+
+CListRaw::CListRaw (int _recSize) {
+  data = NULL;
+  recSize = CONT_ALIGN(_recSize);
+  tagSize = entries = allocEntries = 0;
 }
 
 
-void CDictRaw::RecInit (int idx) {
-  CString emptyString;
-  uint8_t *p = GetKeyAdr (idx);
-  memcpy (p, &emptyString, sizeof (emptyString));
-  ValueInit (p + DICT_KEYSIZE);
+void CListRaw::RecInit (void *p) {
+  if (p) ValueInit (((uint8_t *) p) + tagSize);
 }
 
 
-void CDictRaw::RecClear (int idx) {
-  uint8_t *p = GetKeyAdr (idx);
-  //~ INFOF (("### CDictRaw::RecClear (%i: %s = '%s')", idx, GetKey (idx), ((CString *) p)->Get ()));
-  ((CString *) p)->Clear ();
-  ValueClear (p + DICT_KEYSIZE);
+void CListRaw::RecClear (void *p) {
+  if (p) ValueClear (((uint8_t *) p) + tagSize);
 }
 
 
-void CDictRaw::SetEntries (int _entries) {
+void CListRaw::SetEntries (int _entries) {
   int n;
 
   // Realloc array if necessary...
@@ -1609,8 +1605,8 @@ void CDictRaw::SetEntries (int _entries) {
   }
 
   // Clear entries that will be missing and init new entries...
-  for (n = _entries; n < entries; n++) RecClear (n);
-  for (n = entries; n < _entries; n++) RecInit (n);
+  for (n = _entries; n < entries; n++) RecClear (GetRecAdr (n));
+  for (n = entries; n < _entries; n++) RecInit (GetRecAdr (n));
 
   // Complete...
   if (_entries <= 0) {
@@ -1621,25 +1617,99 @@ void CDictRaw::SetEntries (int _entries) {
 }
 
 
-const char *CDictRaw::ValueToStr (void *p) {
-  CString *hexLine = GetTTS ();
+void CListRaw::Copy (int idxDst, int idxSrc) {
+  memcpy (GetRecAdr (idxDst), GetRecAdr (idxSrc), recSize);
+}
+
+
+void CListRaw::Swap (void *rec0, void *rec1) {
+#if CONT_ALIGNMENT == 4
+  uint32_t *p0 = (uint32_t *) rec0,
+           *p1 = (uint32_t *) rec1, tmp;
+#else
+#error "Unsupported value for CONT_ALIGNMENT"
+#endif
+  int bytesLeft = recSize;
+  while (bytesLeft > 0) {
+    tmp = *p0;
+    *(p0++) = *p1;
+    *(p1++) = tmp;
+    bytesLeft -= CONT_ALIGNMENT;
+  }
+}
+
+
+const char *CListRaw::ValueToStr (CString *ret, void *p) {
   char buf[4];
   uint8_t *bp;
   int n;
 
-  hexLine->Clear ();
-  bp = (uint8_t *) p;
-  for (n = 0; n < recSize - DICT_KEYSIZE; n++) {
+  ret->Clear ();
+  bp = ((uint8_t *) p);
+  for (n = tagSize; n < recSize; n++) {
     sprintf (buf, "%02x ", *bp);
-    hexLine->Append (buf);
+    ret->Append (buf);
     bp++;
   }
-  return hexLine->Get ();
+  return ret->Get ();
 }
 
 
-void CDictRaw::SetRaw (int idx, void *value) {
+void CListRaw::SetRaw (int idx, void *value) {
   ValueSet (GetValueAdr (idx), value);
+}
+
+
+void CListRaw::InsertRaw (int idx, void *value) {
+  int n;
+
+  if (idx > entries) idx = entries;
+  if (idx < 0) idx = 0;
+  SetEntries (entries + 1);
+  for (n = entries - 1; n > idx; n--) Copy (n, n - 1);
+  RecInit (GetRecAdr (idx));          // this was a duplicate of now #'idx + 1' => decouple it
+  ValueSet (GetValueAdr (idx), value);
+}
+
+
+void CListRaw::Del (int idx) {
+  int n;
+
+  if (idx < 0) return;    // ignore non-existing index
+  RecClear (GetRecAdr (idx));         // make record 'idx' overwritable
+  for (n = idx + 1; n < entries; n++) Copy (n - 1, n);
+  RecInit (GetRecAdr (entries - 1));  // this was a duplicate of now #'entries-2' => decouple it
+  SetEntries (entries - 1);
+}
+
+
+void CListRaw::Dump (const char *name) {
+  CString s;
+  INFOF (("Contents of '%s':", name));
+  for (int n = 0; n < entries; n++)
+    INFOF (("%6i. %s", n, ValueToStr (&s, GetValueAdr (n))));
+}
+
+
+
+
+
+// ***** CDict... *****
+
+
+void CDictRaw::RecInit (void *p) {
+  if (p) {
+    CString emptyString;
+    CListRaw::RecInit (p);
+    memcpy (p, &emptyString, sizeof (emptyString));
+  }
+}
+
+
+void CDictRaw::RecClear (void *p) {
+  //~ INFOF (("### CDictRaw::RecClear (%i: %s = '%s')", idx, GetKey (idx), ((CString *) p)->Get ()));
+  ((CString *) p)->Clear ();
+  CListRaw::RecClear (p);
 }
 
 
@@ -1648,63 +1718,64 @@ int CDictRaw::SetRaw (const char *key, void *value) {
 
   idx = Find (key, &insIdx);
   if (idx < 0) {
-    SetEntries (entries + 1);
-    for (idx = entries - 1; idx > insIdx; idx--) Copy (idx, idx - 1);
+    InsertRaw (insIdx, value);
+    ((CString *) GetRecAdr (insIdx))->Set (key);
     idx = insIdx;
-    RecInit (idx);    // this was a duplicate of #'idx + 1' => decouple it
-    ((CString *) GetKeyAdr (idx))->Set (key);
   }
-  SetRaw (idx, value);
+  else
+    SetRaw (idx, value);
   return idx;
 }
 
 
-void CDictRaw::MergeRaw (CDictRaw *map2) {
+void CDictRaw::MergeRaw (CDictRaw *dict2) {
   int i, i2, d, c;
 
-  // Enlarge array and merge from back to front...
-  i = entries - 1;
-  i2 = map2->entries - 1;
-  SetEntries (entries + map2->entries);
-  d = entries - 1;
+  // Enlarge array and merge from back to front ...
+  //   To avoid problems with dynamic data and ownership, 'Swap()' is used for transferring
+  //   entries, which is robust against construction/destruction.
+  i = entries - 1;                  // 'i' points to the next-to-read entry in 'this'
+  i2 = dict2->entries - 1;          // 'i2' points to the next-to-read entry in 'dict2'
+  SetEntries (entries + dict2->entries);
+  d = entries - 1;                  // 'd' points to the next entry to write to
   while (i >= 0 && i2 >= 0) {
-    c = strcmp (GetKey (i), map2->GetKey (i2));
+    c = strcmp (GetKey (i), dict2->GetKey (i2));
     if (c > 0) {
       // Copy & consume entry from 'this'...
-      if (d != i) Swap (d--, i--);    // 'Swap' is robust against construction/destruction
+      if (d != i) Swap (GetRecAdr (d--), GetRecAdr (i--));
     }
     else { // c <= 0
-      // Copy & consume entry from 'map2'...
-      ((CString *) GetKeyAdr (d))->Set (map2->GetKey (i2));
-      SetRaw (d--, map2->GetValueAdr (i2--));
-      if (c == 0) i--;    // key exists in both maps: use value of 'map2' (considered newer) and consume both
+      // Copy & consume entry from 'dict2'...
+      Swap (GetRecAdr (d--), dict2->GetRecAdr (i2--));
+      if (c == 0) i--;
+        // key exists in both maps: use value of 'dict2' (considered newer) and also consume item in 'this'
     }
   }
-  // Now either 'i' or 'i2' is 0, copy the remaining entries...
+
+  // Now either 'i' or 'i2' is 0: copy the remaining entries ...
+  // ... from 'dict2' ...
   while (i2 >= 0) {
-    ((CString *) GetKeyAdr (d))->Set (map2->GetKey (i2));
-    SetRaw (d--, map2->GetValueAdr (i2--));
+    Swap (GetRecAdr (d--), dict2->GetRecAdr (i2--));
+    //~ ((CString *) GetRecAdr (d))->Set (dict2->GetKey (i2));
+    //~ SetRaw (d--, dict2->GetValueAdr (i2--));
   }
-  if (d > i) {
-    while (i >= 0) Swap (d--, i--);
-    // Clear and delete superfluous entries in the beginning of the array (caused by duplicate keys)...
-    d++;  // now points to first valid element and is equal to the number of elements to delete
-    for (i = 0; i < d; i++) RecClear (i);
-    for (i = 0; i < entries - d; i++) Copy (i, i + d);
-    for (i = entries - d; i < entries; i++) RecInit (i);
-    SetEntries (entries - d);
+  // ... from 'this' ...
+  if (d > i)
+    while (i >= 0) Swap (GetRecAdr (d--), GetRecAdr (i--));
+  else {
+    d -= (i + 1);  // shortcut ... (though equivalent)
+    i = -1;
   }
-}
 
+  // Clear and delete superfluous entries in the beginning of the array (caused by duplicate keys)...
+  d++;  // now points to first valid element and is equal to the number of elements to delete
+  for (i = 0; i < d; i++) RecClear (GetRecAdr (i));                 // clear entries to overwrite
+  for (i = 0; i < entries - d; i++) Copy (i, i + d);
+  for (i = entries - d; i < entries; i++) RecInit (GetRecAdr (i));  // wipe duplicated entries
+  SetEntries (entries - d);
 
-void CDictRaw::Del (int idx) {
-  int n;
-
-  if (idx < 0) return;    // ignore non-existing index
-  RecClear (idx);         // make record 'idx' overwritable
-  for (n = idx + 1; n < entries; n++) Copy (n - 1, n);
-  RecInit (entries - 1);  // this was a duplicate of #'entries-2' => decouple it
-  SetEntries (entries - 1);
+  // Clear 'dict2', which now contains all garbage ...
+  dict2->Clear ();
 }
 
 
@@ -1735,26 +1806,35 @@ void CDictRaw::PrefixSearch (const char *key, int *retIdx0, int *retIdx1) {
 
   keyLen = strlen (key);
 
-  // Find any matching key...
-  n0 = idx = 0;
-  n1 = entries - 1;
-  found = false;
-  while (!found && n1 >= n0) {
-    idx = (n0 + n1) / 2;
-    c = strncmp (key, GetKey (idx), keyLen);
-    //~ INFOF(("### Compared '%s' with %i:'%s' -> %i", key, idx, GetKey (idx), c))
-    if (c == 0) found = true;
-    else if (c < 0) n1 = idx - 1;
-    else n0 = idx + 1;
+  // Sanity ...
+  if (keyLen == 0) {
+    idx0 = 0;
+    idx1 = entries;
   }
+  else {
 
-  // Find first matching entry...
-  idx0 = idx;
-  while (idx0 > 0 && strncmp (key, GetKey (idx0 - 1), keyLen) == 0) idx0--;
+    // Find any matching key...
+    n0 = idx = 0;
+    n1 = entries - 1;
+    found = false;
+    while (!found && n1 >= n0) {
+      idx = (n0 + n1) / 2;
+      c = strncmp (key, GetKey (idx), keyLen);
+      //~ INFOF(("### Compared '%s' with %i:'%s' -> %i", key, idx, GetKey (idx), c))
+      if (c == 0) found = true;
+      else if (c < 0) n1 = idx - 1;
+      else n0 = idx + 1;
+    }
 
-  // Find first non-matching entry...
-  idx1 = idx;
-  while (idx1 < entries && strncmp (key, GetKey (idx1), keyLen) == 0) idx1++;
+    // Find first matching entry...
+    idx0 = idx;
+    while (idx0 > 0 && strncmp (key, GetKey (idx0 - 1), keyLen) == 0) idx0--;
+
+    // Find first non-matching entry...
+    idx1 = idx;
+    while (idx1 < entries && strncmp (key, GetKey (idx1), keyLen) == 0) idx1++;
+
+  }
 
   // Return results...
   if (retIdx0) *retIdx0 = idx0;
@@ -1762,9 +1842,24 @@ void CDictRaw::PrefixSearch (const char *key, int *retIdx0, int *retIdx1) {
 }
 
 
-void CDictRaw::Dump () {
-  INFO ("CDictRaw::Dump ()...");
-  for (int n = 0; n < entries; n++) INFOF (("%6i. %s = %s\n", n, GetKey (n), ValueToStr (GetValueAdr (n))));
+void CDictRaw::Dump (const char *name) {
+  CString s;
+  INFOF (("Contents of '%s':", name));
+  for (int n = 0; n < entries; n++)
+    INFOF (("%6i. %s = %s", n, GetKey (n), ValueToStr (&s, GetValueAdr (n))));
+}
+
+
+
+
+
+// ***** CKeySet *****
+
+
+void CKeySet::Dump (const char *name) {
+  INFOF (("Contents of '%s':", name));
+  for (int n = 0; n < entries; n++)
+    INFOF (("%6i. %s", n, GetKey (n)));
 }
 
 
@@ -1772,6 +1867,9 @@ void CDictRaw::Dump () {
 
 
 // *************************** Date & Time *************************************
+
+
+STATIC_ASSERT (NEVER < 0);
 
 
 //~ static inline TDate GetFirstOfMonth (TDate date) {
@@ -1786,10 +1884,10 @@ TTicks TicksNow () {
 }
 
 
-TTicksMonotonic TicksMonotonicNow () {
+TTicks TicksNowMonotonic () {
   static int initSeconds = INT_MIN;
   struct timespec ts;
-  TTicksMonotonic ret;
+  TTicks ret;
 
   clock_gettime (CLOCK_MONOTONIC, &ts);
   if (initSeconds == INT_MIN) initSeconds = ts.tv_sec - 1;   // must substract one to ensure that the return value is >0, even for a small 'ts.tv_nsec'
@@ -1799,18 +1897,18 @@ TTicksMonotonic TicksMonotonicNow () {
 }
 
 
-TTicks TicksFromMonotic (TTicksMonotonic tm) {
-  if (tm <= 0) return (TTicks) tm;     // '0' represents "as soon as possible", < 0 represents "relative from now in the future"
-  return ((TTicks) (tm - TicksMonotonicNow ())) + TicksNow ();
+TTicks TicksAbsFromMonotic (TTicks tm) {
+  if (tm <= 0) return tm;     // '0' represents "as soon as possible", < 0 represents "relative from now in the future"
+  return tm - TicksNowMonotonic () + TicksNow ();
 }
 
 
-TTicksMonotonic TicksToMonotonic (TTicks t) {
+TTicks TicksMonotonicFromAbs (TTicks ta) {
   //~ TTicks now = TicksNow ();
-  //~ TTicksMonotonic monNow = TicksMonotonicNow ();
+  //~ TTicks monNow = TicksNowMonotonic ();
   //~ INFOF (("### TicksToMonotonic: ticksNow = %li, t = %li, monNow = %i", now, t, monNow));
-  if (t <= 0) return (TTicksMonotonic) t;     // '0' represents "as soon as possible", < 0 represents "relative from now in the future"
-  return ((TTicksMonotonic) (t - TicksNow ())) + TicksMonotonicNow ();
+  if (ta <= 0) return ta;     // '0' represents "as soon as possible", < 0 represents "relative from now in the future"
+  return ta - TicksNow () + TicksNowMonotonic ();
 }
 
 
@@ -1818,7 +1916,8 @@ const char *TicksAbsToString (CString *ret, TTicks ticks, int fracDigits, bool p
   TDate d;
   TTime t;
 
-  if (precise || TicksIsNever (ticks)) {
+  if (ticks == NEVER) ret->Clear ();          // Sanity: 'NEVER' results in an empty string
+  else if (precise) {
     ret->SetF ("t%lli", (long long) ticks);
   }
   else {
@@ -1842,11 +1941,6 @@ const char *TicksAbsToString (CString *ret, TTicks ticks, int fracDigits, bool p
     }
   }
   return ret->Get ();
-}
-
-
-const char *TicksAbsToString (TTicks ticks, int fracDigits, bool precise) {
-  return TicksAbsToString (GetTTS (), ticks, fracDigits, precise);
 }
 
 
@@ -1875,11 +1969,6 @@ const char *TicksRelToString (CString *ret, TTicks ticks) {
   }
   ret->SetF ("%lli%c", (long long) ticks, unit);
   return ret->Get ();
-}
-
-
-const char *TicksRelToString (TTicks ticks) {
-  return TicksRelToString (GetTTS (), ticks);
 }
 
 
@@ -1943,7 +2032,7 @@ bool TicksFromString (const char *str, TTicks *ret, bool absolute) {
 }
 
 
-void TicksMonotonicToStructTimeval (TTicksMonotonic t, struct timeval *retTv) {
+void TicksToStructTimeval (TTicks t, struct timeval *retTv) {
   retTv->tv_sec = t / 1000;
   retTv->tv_usec = (t % 1000) * 1000;
 }
@@ -2050,7 +2139,7 @@ void TicksToDateTimeUTC (TTicks t, TDate *retDate, TTime *retTime, struct tm *re
 
 TDate Today () {
   TDate ret;
-  GetDateTimeNow (&ret, NULL);
+  DateTimeNow (&ret, NULL);
   return ret;
 }
 
@@ -2166,12 +2255,12 @@ static void TimerSignalHandler (int sigNum) {
 
 bool CTimer::ClassIterateAL () {
   CTimer *t;
-  TTicksMonotonic curTicks;
+  TTicks curTicks;
   bool ret;
 
   ret = false;
   if (CTimer::first) {
-    curTicks = TicksMonotonicNow ();
+    curTicks = TicksNowMonotonic ();
     while (CTimer::first && curTicks >= CTimer::first->nextTicks) {
 
       // Get next timer and remove first element...
@@ -2206,11 +2295,11 @@ bool CTimer::ClassIterateAL () {
 }
 
 
-TTicksMonotonic CTimer::GetDelayTimeAL () {
-  TTicksMonotonic curTicks;
+TTicks CTimer::GetDelayTimeAL () {
+  TTicks curTicks;
 
   if (CTimer::first) {
-    curTicks = TicksMonotonicNow ();
+    curTicks = TicksNowMonotonic ();
     if (curTicks >= CTimer::first->nextTicks) return 0;
     else return CTimer::first->nextTicks - curTicks;
   }
@@ -2230,8 +2319,8 @@ bool TimerIterate () {
 }
 
 
-TTicksMonotonic TimerGetDelay () {
-  TTicksMonotonic ret;
+TTicks TimerGetDelay () {
+  TTicks ret;
 
   //~ INFO ("### TimerGetDelay: Lock...");
   timerMutex.Lock ();
@@ -2313,8 +2402,8 @@ void CTimer::Set (FTimerCallback *_func, void *_data, void *_creator) {
 }
 
 
-void CTimer::Set (TTicksMonotonic _time, TTicksMonotonic _interval, FTimerCallback *_func, void *_data, void *_creator) {
-  //~ INFOF (("### CTimer (%lx)::Set (_time = %i, _interval = %i), now = %i", (uint64_t) this, _time, _interval, TicksMonotonicNow ()));
+void CTimer::Set (TTicks _time, TTicks _interval, FTimerCallback *_func, void *_data, void *_creator) {
+  //~ INFOF (("### CTimer (%lx)::Set (_time = %i, _interval = %i), now = %i", (uint64_t) this, _time, _interval, TicksNowMonotonic ()));
   func = _func;
   data = _data;
   creator = _creator;
@@ -2322,10 +2411,10 @@ void CTimer::Set (TTicksMonotonic _time, TTicksMonotonic _interval, FTimerCallba
 }
 
 
-void CTimer::Reschedule (TTicksMonotonic _time, TTicksMonotonic _interval) {
+void CTimer::Reschedule (TTicks _time, TTicks _interval) {
   timerMutex.Lock ();
 
-  nextTicks = _time >= 0 ? _time : TicksMonotonicNow () - _time;
+  nextTicks = _time >= 0 ? _time : TicksNowMonotonic () - _time;
   interval = _interval;
 
   // Align 'nextTicks', if '_interval' is given and is a power of 2...
@@ -2473,10 +2562,10 @@ void CCond::Wait (CMutex *mutex) {
 }
 
 
-int CCond::Wait (CMutex *mutex, TTicksMonotonic maxTime) {
+TTicks CCond::Wait (CMutex *mutex, TTicks maxTime) {
   struct timespec absTime, now;
   int64_t longTime;
-  TTicksMonotonic timeLeft;
+  TTicks timeLeft;
   int errNo;
 
   clock_gettime (CLOCK_REALTIME, &absTime);
@@ -2539,12 +2628,6 @@ void CSleeper::Done () {
 }
 
 
-void CSleeper::EnableCmds (int _cmdRecSize) {
-  ASSERT (pipe (selfPipe) == 0);
-  cmdRecSize = _cmdRecSize;
-}
-
-
 void CSleeper::Prepare () {
   FD_ZERO (&fdSetRead);
   FD_ZERO (&fdSetWrite);
@@ -2572,11 +2655,11 @@ void CSleeper::AddWritable (int fd) {
 }
 
 
-void CSleeper::Sleep (TTicksMonotonic maxTime) {
+void CSleeper::Sleep (TTicks maxTime) {
   struct timeval tv;
 
   //~ INFOF (("### CSleeper<%08x>::Sleep (maxTime = %i)...", this, (int) maxTime));
-  if (maxTime) TicksMonotonicToStructTimeval (maxTime, &tv);
+  if (maxTime) TicksToStructTimeval (maxTime, &tv);
   ASSERT (maxFd >= 0);
   if (select (maxFd + 1, &fdSetRead, &fdSetWrite, NULL, maxTime >= 0 ? &tv : NULL) < 0) {
     if (errno != EINTR) ERRORF (("select() returned with error: %s", strerror (errno)));
@@ -2596,16 +2679,27 @@ bool CSleeper::IsWritable (int fd) {
 }
 
 
-bool CSleeper::GetCmd (void *retCmdRec) {
-  //~ INFOF (("### CSleeper<%08x>::GetCmd () ... selfPipe = %i/%i", this, selfPipe[0], selfPipe[1]));
-  if (selfPipe[0] < 0) return false;
-  if (!IsReadable (selfPipe[0])) return false;
-  ASSERT (read (selfPipe[0], retCmdRec, cmdRecSize) == cmdRecSize);
-  return true;
+void CSleeper::EnableCmds (int _cmdRecSize) {
+  ASSERT (pipe (selfPipe) == 0);
+  ASSERT (fcntl (selfPipe[0], F_SETFL, fcntl (selfPipe[0], F_GETFL) | O_NONBLOCK) == 0);
+    // make the reading end non-blocking
+  cmdRecSize = _cmdRecSize;
 }
 
 
-void CSleeper::PutCmd (const void *cmdRec, TTicksMonotonic t, TTicksMonotonic _interval) {
+bool CSleeper::GetCmd (void *retCmdRec) {
+  int ret;
+
+  //~ INFOF (("### CSleeper<%08x>::GetCmd () ... selfPipe = %i/%i", this, selfPipe[0], selfPipe[1]));
+  if (selfPipe[0] < 0) return false;
+  ret = read (selfPipe[0], retCmdRec, cmdRecSize);
+  if (ret == cmdRecSize) return true;
+  ASSERT (ret < 0 && errno == EAGAIN);
+  return false;
+}
+
+
+void CSleeper::PutCmd (const void *cmdRec, TTicks t, TTicks _interval) {
   //~ INFOF (("### CSleeper<%08x>::PutCmd (%i) ... selfPipe = %i/%i", this, * (int *) cmdRec, selfPipe[0], selfPipe[1]));
   ASSERT (selfPipe[1] >= 0 && cmdRecSize > 0);   // commands must have been enabled
   if (t || _interval)
@@ -2624,7 +2718,7 @@ void CSleeper::PutCmd (const void *cmdRec, TTicksMonotonic t, TTicksMonotonic _i
 // ***** Misc. *****
 
 
-void Sleep (TTicksMonotonic mSecs) {
+void Sleep (TTicks mSecs) {
   struct timespec req;
 
   req.tv_sec = mSecs / 1000;
@@ -2688,8 +2782,10 @@ int CShell::Run (const char *cmd, const char *input, CString *output) {
 
 void CShellBare::Done () {
   CShellBare::WriteClose ();
-  CShellBare::Kill ();
-  CShellBare::Wait ();
+  if (CShellBare::IsRunning ()) {
+    CShellBare::Kill (SIGKILL);
+    CShellBare::Wait ();
+  }
 }
 
 
@@ -2700,6 +2796,7 @@ bool CShellBare::Start (const char *cmd, bool readStdErr) {
   DEBUGF (1, (host.Get () ? "Starting shell command on host '%2$s': '%1$s' ..." :  "Starting shell command locally: '%s' ...", cmd ? cmd : host.IsEmpty () ? "<bash>" : "<ssh>", host.Get ()));
 
   // Preparation ...
+  id.Set (cmd);
   Wait ();
   exitCode = killSig = -1;
   readBuf.Clear ();
@@ -2791,9 +2888,13 @@ bool CShellBare::DoWaitPid (int options) {
   int ret, status;
 
   ASSERT (childPid > 0);
-  ret = waitpid (childPid, &status, options);
+  do { ret = waitpid (childPid, &status, options); } while (ret < 0 && errno == EINTR && !(options & WNOHANG));
+    /* Repeat 'waitpid()' if it got interrupted by a signal. This can, for example, happen
+     * if the main program catches SIGCHILD signals (e.g. 'home2l-daemon') and the child happens
+     * to exit right now.
+     */
   if (ret < 0) {
-    WARNINGF (("'waitpid' failed: %s - Killing child process %i", strerror (errno), childPid));
+    WARNINGF (("'waitpid()' failed: %s - Killing child process %i", strerror (errno), childPid));
     ASSERT (!ANDROID || errno == ECHILD);
       /* Note (2018-06-04):
        *    Normally, we should never get here unless there is a bug in the 'CShellBare' implementation.
@@ -2805,11 +2906,11 @@ bool CShellBare::DoWaitPid (int options) {
        *    For this reason, we consider the exit of 'waitpid (childPid, ...)' with an error as
        *    another sign that the child has exited.
        */
-    Kill (SIGABRT);     // abort child (if it still happens to be there)
+    Kill (SIGKILL);     // kill child the hard way (just in case it is still there)
     childPid = -1;
   }
   else if (ret != 0) {
-    if (WIFEXITED(status)) {
+    if (WIFEXITED (status)) {
       exitCode = WEXITSTATUS (status);
       //~ INFOF (("### Child %i has exited with code %i.", childPid, exitCode));
       childPid = -1;
@@ -2851,7 +2952,7 @@ void CShellBare::Kill (int sig) {
 }
 
 
-void CShellBare::CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime) {
+void CShellBare::CheckIO (bool *canWrite, bool *canRead, TTicks maxTime) {
   fd_set rfds, wfds;
   struct timeval tv;
   bool waitOnWrite, waitOnRead;
@@ -2859,7 +2960,7 @@ void CShellBare::CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime
   waitOnWrite = (canWrite && fdToScript > 0);
   waitOnRead = (canRead && fdFromScript > 0 && !readBufMayContainLine);
 
-  TicksMonotonicToStructTimeval (maxTime, &tv);
+  TicksToStructTimeval (maxTime, &tv);
   FD_ZERO (&wfds);
   if (waitOnWrite) FD_SET (fdToScript, &wfds);
   FD_ZERO (&rfds);
@@ -2913,7 +3014,7 @@ bool CShellBare::ReadLine (CString *str) {
 
   // Read as much as possible into the read buffer...
   if (fdFromScript > 0) {
-    if (!readBuf.AppendFromFile (fdFromScript)) {
+    if (!readBuf.AppendFromFile (fdFromScript, id.Get ())) {
       close (fdFromScript);       // EOF received...
       //~ INFOF (("### CShellBare::ReadLine (fd = %i) = EOF", fdFromScript));
       fdFromScript = -1;
@@ -2982,13 +3083,13 @@ void CShellSession::Wait () {
 }
 
 
-void CShellSession::CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic timeOut) {
+void CShellSession::CheckIO (bool *canWrite, bool *canRead, TTicks maxTime) {
 
   // Update 'readOpen'...
   if (canRead) if (session.ReadClosed ()) readOpen = false;
 
   // Delegate to the session shell...
-  session.CheckIO (canWrite, canRead, timeOut);
+  session.CheckIO (canWrite, canRead, maxTime);
 }
 
 
@@ -3039,7 +3140,7 @@ bool CShellSession::ReadLine (CString *str) {
 
 
 void CServiceKeeper::Refresh () {
-  tLastOpen = TicksMonotonicNow ();
+  tLastOpen = TicksNowMonotonic ();
   tNextAttempt = tLastOpen;
 }
 
@@ -3047,7 +3148,7 @@ void CServiceKeeper::Refresh () {
 void CServiceKeeper::Iterate () {
   if (shouldBeOpen) {     // should be open ...
     if (!isOpen) {
-      if (TicksMonotonicNow () >= tNextAttempt) DoOpen ();
+      if (TicksNowMonotonic () >= tNextAttempt) DoOpen ();
     }
   }
   else {                  // should be closed ...
@@ -3057,7 +3158,7 @@ void CServiceKeeper::Iterate () {
 
 
 bool CServiceKeeper::OpenAttemptNow () {
-  return shouldBeOpen && !isOpen && TicksMonotonicNow () >= tNextAttempt;
+  return shouldBeOpen && !isOpen && TicksNowMonotonic () >= tNextAttempt;
 }
 
 
@@ -3075,14 +3176,14 @@ void CServiceKeeper::ReportLost () {
 
 
 void CServiceKeeper::ReportOpenAttempt (bool success) {
-  TTicksMonotonic tNow;
+  TTicks tNow;
 
   isOpen = success;
   if (!success && shouldBeOpen) {
     // Had a failed open attempt: Schedule next try ...
     if (tShortToLong == NEVER || tNextAttempt - tLastOpen < tShortToLong) tNextAttempt += tDShort;
     else tNextAttempt += tDLong;
-    tNow = TicksMonotonicNow ();
+    tNow = TicksNowMonotonic ();
     // Check for and handle unexpected delay (intervals shorter than actual time passed) ...
     if (tNextAttempt < tNow) tNextAttempt = tNow + tDShort;
   }

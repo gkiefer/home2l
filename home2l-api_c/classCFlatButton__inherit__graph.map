@@ -1,5 +1,6 @@
 <map id="CFlatButton" name="CFlatButton">
-<area shape="rect" id="node4" href="$classCWidgetFloorplan.html" title="Floorplan widget. " alt="" coords="5,229,132,256"/>
-<area shape="rect" id="node2" href="$classCButton.html" title="Push&#45;button widget. " alt="" coords="33,80,104,107"/>
-<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="32,5,105,32"/>
+<area shape="rect" id="node1" title="Flat Push&#45;button widget." alt="" coords="23,155,115,181"/>
+<area shape="rect" id="node4" href="$classCWidgetFloorplan.html" title="Floorplan widget." alt="" coords="5,229,132,256"/>
+<area shape="rect" id="node2" href="$classCButton.html" title="Push&#45;button widget." alt="" coords="33,80,104,107"/>
+<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="32,5,105,32"/>
 </map>

@@ -152,8 +152,8 @@ for lid in ( "living-window", "living-shades", "dining-shades", "kitchen-shades"
 ######################### Keyboard input (rcInternalInput) #####################
 
 # The showhouse demo is implemented as a console program. We need some
-# asynchronous keyboard input which is neither blocking the main programm
-# nor requires active polling.
+# asynchronous keyboard input which neither blocks the main programm nor
+# requires active polling.
 #
 # This is solved here by implementing a resource driver for the keyboard input.
 # A background thread ('InputThread()') reads the keyboard with blocking stdin

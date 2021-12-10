@@ -83,7 +83,7 @@
 
 
 # Version of the Debian base image ...
-ARG DEBIAN_VERSION=buster
+ARG DEBIAN_VERSION=bullseye
 
 
 # Build version as reported by the tools ...
@@ -157,7 +157,7 @@ RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
       python3 curl bsdmainutils \
       libsdl2-2.0-0 libsdl2-ttf-2.0-0 \
       mosquitto mosquitto-clients \
-      libmpdclient2 mpd mpc alsa-utils \
+      libmpdclient2 mpd mpc alsa-utils ca-certificates \
       net-tools remind patch \
       i2c-tools \
       $PHONE_DEBS_RUN \
@@ -178,7 +178,8 @@ RUN adduser --uid=5000 --disabled-password --gecos "User for auto-started Home2L
     adduser home2l i2c && \
     adduser home2l dialout && \
     chown -R home2l.home2l /var/opt/home2l && \
-    chown home2l.root /var/lib/mosquitto /var/log/mosquitto && \
+    mkdir -p /run/mosquitto && \
+    chown home2l.root /var/lib/mosquitto /var/log/mosquitto /run/mosquitto && \
     /opt/home2l/bin/home2l-install -y -i && \
     echo "export PATH=\$PATH:/opt/home2l/bin:/opt/home2l/bin/`dpkg --print-architecture`" > /home/home2l/.bashrc
 

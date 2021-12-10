@@ -85,7 +85,7 @@ void EnoDone ();
 const char *EnoLinkDevice ();
   ///< Get Linux device of the EnOcean interface.
 
-EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicksMonotonic maxTime = -1);
+EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicks maxTime = -1);
   ///< @brief Receive pending data from the EnOcean link.
   ///
   /// The function returns when a complete telegram is received, after EnoInterrupt() was called,

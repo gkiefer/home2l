@@ -1,3 +1,4 @@
 <map id="General" name="General">
-<area shape="rect" id="node1" href="$group__env.html" title="Access configuration parameters and query environment properties. " alt="" coords="5,5,100,32"/>
+<area shape="rect" id="node1" href="$group__env.html" title="Access configuration parameters and query environment properties." alt="" coords="5,5,100,31"/>
+<area shape="rect" id="node2" title="Init/done and persistence." alt="" coords="148,5,215,31"/>
 </map>

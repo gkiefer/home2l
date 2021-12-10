@@ -34,7 +34,7 @@
 // Environment settings...
 extern bool serverEnabled;  // read-only
 
-TTicksMonotonic RcNetTimeout ();
+TTicks RcNetTimeout ();
 
 // Local host ID (HID)...
 extern CString localHostId; // normalized local host ID (HID):
@@ -52,7 +52,7 @@ static inline void SubscriberMapLock () { subscriberMapMutex.Lock (); }
 static inline void SubscriberMapUnlock () { subscriberMapMutex.Unlock (); }
 extern CDictRef<CRcSubscriber> subscriberMap;
 
-extern CDictFast<CString> aliasMap; // values are always full URIs; cyclic references in aliases are coped with by limiting the number of indirections in 'RcSelectResources'
+extern CDictCompact<CString> aliasMap; // values are always full URIs; cyclic references in aliases are coped with by limiting the number of indirections in 'RcPathResolvePattern'
                                     // map is read-only after initialization
 
 extern CMutex unregisteredResourceMapMutex;
@@ -89,89 +89,210 @@ class CResourceLink {
 
 
 
-// *************************** URI Path analysis *******************************
+// *************************** URI Path Handling *******************************
 
 
 #ifndef SWIG
 
 
-#define URI_FNMATCH_OPTIONS FNM_PATHNAME // 0     // Options passed to 'fnmatch' for URI matching ('FNM_PATHNAME' would do filename matching)
+
+// ***** Path Normalization and Resolution *****
+
+
+const char *RcPathNormalize (CString *ret, const char *uri, const char *workDir = NULL);
+  // Make a path absolute and normalize it.
+  //
+  // If 'workDir' is left 'NULL', the default initial path ("/alias") is used.
+  // On success, the first character is '/'. However, if invalid input is passed as 'uri',
+  // the first character may be different. This must be checked by the caller.
+  //
+  // Returns 'ret->Get ()'.
+
+const char *RcPathResolve (CString *ret, const char *uri, const char *workDir = NULL, const char **retTarget = NULL, const char **retLocalPath = NULL);
+  // Resolve URIs from the "/alias" or "/local" domain as far as possible and return the resolved path.
+  //
+  // The path is normalized and made absolute internally (unless 'retTarget' or 'retLocalPath' are set, see below).
+  // If 'workDir' is left unset ('NULL'), the default initial path is used ("/alias").
+  // This function operates symbolically. No resources need to be registered before use.
+  // Only 'localHostId' and 'aliasMap' are used must be defined beforehead.
+  //
+  // 'retTarget' and 'retLocalPath' allow to retrieve the alias target used together with the local part of
+  // 'uri' not part of the mapping. 'ret' is always exactly equal to the concatenation of '*retTarget' and '*retLocalPath'.
+  // If no resolution happens, '*retTarget' is set to NULL, and '*retLocalPath' is left unchanged.
+  // No dynamic data is allocated. If modified, '*retLocalPath' will always be pointed somewhere into 'uri'.
+  // '*retTarget' may be pointed somewhere into 'aliasMap'. To allow this, no normalization is done internally, and
+  // 'uri' must be normalized and made absolute before.
+  //
+  // On error, an unresolved, but eventually normalized variant of 'uri' is copied to '*ret'. No warning is logged.
+  // Returns 'ret->Get ()'.
+
+
+
+// ***** Path Analysis *****
 
 
 enum ERcPathDomain {
   rcpNone = 0,    // unknown, incomplete or invalid
-
-  rcpRoot,        // main root dir
-  rcpHost,        // host dir
-  rcpDriver,      // (local) driver dir
-
-  rcpResource,    // resource
-  rcpEnv,         // environment variable
-
-  rcpAlias,       // alias
+  rcpHost,        // host dir ("/host")
+  rcpLocal,       // local dir ("/local")
+  rcpAlias        // alias dir ("/alias")
 };
 
 
-#define RcPathIsDir(DOMAIN) ((DOMAIN) < rcpResource)
+enum ERcPathAnalysisState {
+  // Analysis state of a partial or complete URI. See 'RcPathAnalyse()' for details.
+  rcaNone = 0,      // unknown or invalid
 
-const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir = NULL, int maxDepth = 8);
-  // Resolve alias or '/local' path (up to at most 'maxDepth' levels of indirection) and return real path.
-  // If the real path is equal to 'uri' (i.e. no resolution was necessary), '*ret' may contain a pointer to 'uri'
-  // been set by 'CString::SetC ()'. Hence, 'uri' must live as long as '*ret'.
-  // This function operates symbolically. No path checking is done, and no resources need to be initialized
-  // before use. Only 'localHostId' and 'aliasMap' must be defined beforehead.
+  rcaRoot,          // in main root dir ("/<here>")
+  rcaHost,          // host prefix found, in host ID part ("/host/<here>")
+  rcaLocal,         // local prefix found, in driver ID part ("/local/<here>")
+  rcaDriver,        // local prefix or own host ID found, in driver part ("/local/<here>" or "/host/<localhost>/<here>"
+  rcaResource,      // local or host prefix found, in resource LID part ("/local/<driver>/.../<here>" or "/host/<host>/.../here")
 
-bool RcUriMatches (const char *uri, const char *pattern);
-  // Check if the URI matches a pattern. The pattern may be a comma- or whitespace-seperated list of patterns.
-  // 'uri' is not normalized to its real path before, and no alias checking is performed. Hence, both 'uri'
-  // and the pattern(s) must be real paths ("/host" domain).
+  rcaAlias,         // alias prefix found ("/alias/.../<here>")
+  rcaAliasResolved  // alias prefix found and the path is fully resolvable to a target in the "/host" or "/local" domain
+};
 
-ERcPathDomain RcAnalysePath (const char *uri, const char **retLocalPath, CRcHost **retHost, CRcDriver **retDriver, CResource **retResource, bool allowWait = false);
-  // Analyse an URI, which must be a full path starting with '/' and normalized (i.e. must not contain any "//", "/./" or "..").
-  // Depending on the identified path domain, the 'ret*' return parameters are set accordingly. '*retLocalPath' points inside
-  // 'uri', and the offset from the beginning of the original string can be computed by '*retLocalPath - uri'.
+
+typedef struct SRcPathInfo {
+  ERcPathAnalysisState state;
+  ERcPathDomain domain;
+  const char *localPath;
+  CRcHost *host;
+  CRcDriver *driver;
+  const char *target;       // alias target (for aliases)
+  CResource *resource;
+} TRcPathInfo;
+
+
+static inline void RcPathInfoClear (TRcPathInfo *info) { bzero (info, sizeof (*info)); }
+
+static inline bool RcPathIsValid (const ERcPathAnalysisState state) { return state == rcaResource || state == rcaAliasResolved; }
+static inline bool RcPathIsValid (const TRcPathInfo *info) { return RcPathIsValid (info->state); }
+  // Check if a path is valid and complete.
+
+ERcPathDomain RcPathGetRootDomain (const char *uri);
+  // Analyse the first path component and get the root domain ('rcpHost', 'rcpLocal', 'rcpAlias').
+  // 'uri' must be an absolute path. On error, 'rcpNone' is returned.
+
+ERcPathAnalysisState RcPathAnalyse (const char *uri, TRcPathInfo *ret, bool allowWait = false);
+  // Analyse a complete or partial URI and return info about it.
   //
-  // The identified domain corresponds to the last component(s) of the path, which may be incomplete.
-  // Examples:
-  //    "/host/this_host"   -> rcpHost / "this_host"
-  //    "/host/this_host/"  -> rcpDriver / ""
-  //    "/host/this_host/driver/resource/in/subdir"  -> rcpResource / "resource/in/subdir", 'retHost == NULL', 'retDriver != NULL' (if driver valid)
-  //    "/host/other_host/driver/resource/in/subdir"  -> rcpResource / "driver/resource/in/subdir", 'retHost != NULL' (if host valid), 'retDriver == NULL'
+  // 'uri' must be an absolute path starting with '/' and must be normalized before
+  //  (i.e., it must not contain any "//", "/./" or "..").
+  //  Wildcards are not allowed.
   //
-  //   rcpNone:     '*retLocalPath' and all others = NULL
-  //   rcpRoot:     '*retLocalPath' = domain name
-  //   rcpAlias:    '*retLocalPath' = alias name
-  //   rcpHost:     '*retLocalPath' = host name; 'retHost' set if the hostname is complete and known
-  //   rcpDriver:   '*retLocalPath' = driver name; 'retDriver' set if the driver is complete and known
-  //   rcpResource: '*retLocalPath' = resource name; 'retResource' set if name was found; 'retHost' or 'retDriver' set depending on the resource location
-  //   rcpEnv:      '*retLocalPath' = name of the environment variable
+  // Depending on the correctness and completeness of 'uri', '*ret' is filled accordingly.
+  // If set, 'ret->localPath' always points inside 'uri', and the offset from the beginning
+  // of the original string can safely be computed by 'ret->localPath - uri'.
+  //
+  // The identified analysis state corresponds to the last component(s) of the path, which may
+  // be incomplete or even empty.
+  //
+  // Examples ('uri' -> 'ret->state' / 'ret->localPath'):
+  //    "/host/this_host"   -> rcaHost   / "this_host"
+  //    "/host/this_host/"  -> rcaDriver / ""
+  //    "/host/this_host/driver/resource/in/subdir"  -> rcaResource / "resource/in/subdir" + 'ret->driver' set if driver is valid
+  //    "/host/other_host/driver/resource/in/subdir"  -> rcaResource / "driver/resource/in/subdir" + 'ret->host' set if host is valid
+  //
+  // Full specification:
+  //
+  //   rcpNone:     'ret->localPath' = 'NULL'
+  //
+  //   rcpRoot:     'ret->localPath' = start of domain name ('uri + 1')
+  //
+  //   rcpHost:     'ret->localPath' = start of host name
+  //                'ret->host'        set if the hostname is complete and known
+  //
+  //   rcpDriver:   'ret->localPath' = driver name
+  //                'ret->driver'      set if the driver is complete and known
+  //
+  //   rcpResource: 'ret->localPath' = resource LID
+  //                'ret->resource'    set if name was found (= resource is registered)
+  //                'ret->host' OR
+  //                'ret->driver'      also set, depending on the resource location (for local resources, 'ret->host' is unspecified)
+  //
+  //   rcpAlias:    'ret->localPath' = everything behind "/alias/" if 'ret->target == NULL', else everything behind 'ret->target'
+  //                'ret->target'    = last resolvable alias target = prefix of 'ret->localPath', potentially without a trailing "/";
+  //                                   in any case, if 'ret->target' is set, the correct full target path can be determined
+  //                                   by concatenating 'ret->target' with 'ret->localPath'
+  //
+  //   rcpAliasResolved:
+  //                'ret->localPath' = everything behind "/alias/" if 'ret->target == NULL', else everything behind 'ret->target'
+  //                'ret->target'    = last resolvable alias target = prefix of 'ret->localPath', potentially without a trailing "/";
+  //                All other information can now be obtained by analysing 'ret->target' + 'ret->localPath'
+  //
+  // 'ret->target' always points into a value of 'aliasMap'.
   //
   // If the parameter 'allowWait' is set (true), the function is allowed to block a little while (at most 'envNetTimeout')
   // to query resource information over the net and obtain better results. If unset, the function is guaranteed to not
   // block.
-  //
-  // Note: Aliases are not resolved.
 
-bool RcSelectResources (const char *pattern, int *retItems, CResource ***retItemArr, CKeySet *retWatchPatterns = NULL);
-  // Determine a selection of resources based on a wildcard search using 'pattern'.
+bool RcPathGetDirectory (const char *uri, CKeySet *ret = NULL, bool *retExists = NULL, CString *retPrefix = NULL, bool allowWait = false);
+  // Read a local subdirectory.
   //
-  // Matching resources, which are already in memory, are returned via 'retItems' and 'retItemArr'.
-  // URIs or pattern(s) that may match possible future resources are stored in 'retWatchPatterns'.
-  // These may be, for example, an alias for non-/not-yet-existing targets or a 'pattern' with a wildcard.
-  // Remote resources may be advertised by their host at some later time, so
-  // the 'retWatchPatterns' set may be observed afterwards.
+  // 'uri' must be an absolute path starting with "/" without wildcards. It will be normalized internally
+  // and returned via 'retPrefix' (if given).
+  // All 'ret*' arguments are optional.
+  // If given, the key set '*ret' is filled with relative names.
+  // If given, '*retExists' is set to 'true' if 'uri' actually points to a directory. This is an efficient
+  // alternative for checking for the existence of a directory if its contents are not needed.
+  // If given, '*retPrefix' is set to the normalized URI.
+  // Directory-like entries are appended with a '/'.
   //
-  // On success, '*retItemArr' will be allocated dynamically and must be free'd later (if not 'NULL').
-  // The pattern must contain a complete domain/host/driver prefix, wildcards are only allowed
-  // in the local part of the URI. In the case of a malformed pattern, 'false' is returned, and no warning
-  // is printed.
-  //
-  // Aliases are resolved internally using 'RcGetRealPath'. Wildcards within aliases are not supported (support removed after v0.1-119).
+  // Returns 'true' on success. On error, a warning is emitted and 'false' is returned.
+
+bool RcPathIsDir (const char *uri, const TRcPathInfo *info = NULL, bool allowWait = false);
+  // Check if analysed URI represents a directory with sub-entries.
+  // This is not always trivial, since aliases may point to trees of resources, which only become
+  // visible after their registration. The function tries to be as precise as possible by eventually
+  // calling 'RcPathGetDirectory ()' internally.
+  // If the URI has been analysed before, the analysis results should be passed as 'info'.
+  // Otherwise, the URI is analysed internally.
 
 
-// URI Root...
-int RcGetUriRoots ();
-const char *RcGetUriRoot (int n);
+
+// ***** Pattern Matching and Expansion *****
+
+
+bool RcPathMatchesSingle (const char *uri, const char *exp);
+  // Same as 'RcPathMatches', but slightly faster and only supports a single pattern expression 'exp',
+  // which must be normalized, absolute and stripped.
+
+bool RcPathMatches (const char *uri, const char *pattern);
+  // Check if the URI matches a pattern.
+  //
+  // The pattern may be a comma- or whitespace-separated list of URIs (expressions).
+  // Within the resource expressions, both MQTT-style and filename-style wildcards
+  // can be used to select multiple resources:
+  //
+  //   '?' matches any single character except '/'.
+  //   '*' matches 0 or more characters except '/'.
+  //   '+' matches 1 or more characters except '/'.
+  //   '#' matches the complete remaining string (including '/' characters) and can
+  //       thus be used to select a complete subtree. If used, '#' must be the last
+  //       character in the expression. Anything behind a '#' is ignored silently. },
+  //
+  // 'uri' is neither normalized nor resolved. In 'uri', wildcard characters are allowed and
+  // treated like normal characters.
+
+bool RcPathResolvePattern (const char *pattern, CKeySet *retResolvedPattern, CListRef<CResource> *retResources = NULL);
+  // Determine all currently registered resources based on a wildcard search using 'pattern'.
+  //
+  // The pattern may be a comma- or whitespace-separated list of URIs. Wildcards are allowed.
+  //
+  // All URIs are be resolved into the "/host" domain and, unless stored in 'retResources' (see below),
+  // stored in 'retResolvedPattern'. They may contain unregistered resources or a expressions with wildcards.
+  // Remote resources may be advertised by their host at some later time, so the 'retResolvedPattern' set may be
+  // observed afterwards.
+  //
+  // If 'retResources' is defined, matched known resources are returned via '*retResources'.
+  // URIs without wildcards that are returned via 'retResources' are not added to 'retResolvedPattern'.
+  //
+  // If an expression cannot be resolved into the "/host" domain, a warning is emitted, and the expression is
+  // skipped.
+  //
+  // Returns 'true' if 'pattern' could be processed completely without error or 'false' otherwise.
 
 
 #endif // #ifndef SWIG
@@ -325,7 +446,7 @@ class CRcServer: public CNetRunnable {
     EServerConnectionState state;   // [atomic]
     CString hostId;                 // [T:w=net,r=any] Host ID as sent in the "hello" message by the peer
     CDict<CRcSubscriber> subscrDict;// [T:w=net,r=any] Set of agent subscribers managed by this server; Key is the LID == GID.
-                                    //         For each subscriber on the client side, one agent subscriber on the server
+                                    //         For each subscriber on the client side, one agent subscriber on the server is
                                     //         created, which represents the client subscriber and transmits all events to
                                     //         the client.
 
@@ -420,7 +541,7 @@ class CConThread: public CThread {
     int fd;               // [T:con,w; any,r] file descriptor, set and unchanged after the 'hnoCon*' message was sent
     CString adrString;    // [T:any, protected by 'mutex'] peer's clear-text address and port (for info retrieval); TBD: really needed?
     CString errString;    // [T:any, protected by 'mutex'] String describing the last error (for info retrieval)
-    TTicks tLastAttempt;  // [T:any, protected by 'mutex'] Time of last connection attempt (for info retrieval)
+    TTicks tLastAttempt;  // [T:any, protected by 'mutex'] Time (absolute) of last connection attempt (for info retrieval)
 };
 
 
@@ -435,7 +556,7 @@ class CRcHost: public CNetRunnable, public CShell {
     void ClearResources ();     // unregister all resources
 
     const char *Id () { return id.Get (); }
-    const char *ToStr () { return id.Get (); }
+    const char *ToStr (CString *ret) { GetInfo (ret, 0); ret->Strip (); return *ret; }
 
     CResource *GetResource (const char *rcLid, bool allowWait = false);
 
@@ -446,6 +567,9 @@ class CRcHost: public CNetRunnable, public CShell {
     void RemoteUnsubscribe (CRcSubscriber *subscr, CResource *rc);
     void RemoteSetRequest (CResource *rc, CRcRequest *req);
     void RemoteDelRequest (CResource *rc, const char *reqGid, TTicks t1);
+
+    bool RemoteGetRequestSet (CResource *rc, CRcRequestSet *ret);
+      // returns all currently set requests
 
     bool RemoteInfoResource (CResource *rc, int verbosity, CString *retText);
       // returns info on a resource, output format equivalent to 'CResource::GetInfo ()'
@@ -483,7 +607,7 @@ class CRcHost: public CNetRunnable, public CShell {
     virtual bool StartRestricted (const char *name, const char *args = NULL);
     virtual bool IsRunning () { return execBusy; }
     virtual void Wait ();
-    virtual void CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic timeOut = -1);
+    virtual void CheckIO (bool *canWrite, bool *canRead, TTicks timeOut = -1);
     virtual void WriteLine (const char *line);
     virtual void WriteClose ();
     virtual bool ReadLine (CString *str);
@@ -504,12 +628,12 @@ class CRcHost: public CNetRunnable, public CShell {
 
     bool CheckIfIdle ();  // [T:net] Check various conditions on whether this host is idle and can be out into standby mode
 
-    TTicksMonotonic ResetTimes (bool resetAge, bool resetRetry, bool resetIdle);    // [T:net]
+    TTicks ResetTimes (bool resetAge, bool resetRetry, bool resetIdle);    // [T:net]
       // Reset (and eventually enable) the selected time(s) to "now + delay" and schedule the next 'hnoTimer' event.
       // Returns the current time.
     void ResetAgeTime () { ResetTimes (true, false, false); }
     void ResetRetryTime () { ResetTimes (false, true, false); }
-    void ResetFirstRetry () { tFirstRetry = NEVER; }
+    void ResetFirstRetry () { tFirstRetry = 0; }
     void ResetIdleTime () { ResetTimes (false, false, true); }
     void UpdateTimer () { ResetTimes (false, false, false); }
 
@@ -528,9 +652,10 @@ class CRcHost: public CNetRunnable, public CShell {
     CString receiveBuf;             // [T:net] received data is processed in 'OnFdReadable' and forwarded to other ('*Response') buffers
     CString sendBuf;
     bool sendBufEmpty;              // [T:any] (pseudo-atomic)
-    TTicksMonotonic tAge, tRetry, tIdle, tFirstRetry;      // [T:net] Times for the next timeouts of the respective class (0 = inactive/never)
+    TTicks tAge, tRetry, tIdle, tFirstRetry;
+        // [T:net] Times (monotonic) for the next timeouts of the respective class (0 = inactive/never; special value 'NEVER' not used!)
     int retriesLeft;
-    CTimer timer;                             // [T:net]
+    CTimer timer;                   // [T:net]
     TTicks tLastAlive;              // [atomic] time of last alive indication from server
     CString infoResponse, execResponse;       // [T:any, protected by 'mutex']
     bool infoBusy, infoComplete, execBusy, execComplete, execWriteClosed;   // [T:any!]

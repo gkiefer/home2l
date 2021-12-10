@@ -1,7 +1,21 @@
 <map id="wallclock/floorplan.H" name="wallclock/floorplan.H">
-<area shape="rect" id="node2" href="$ui__widgets_8H.html" title="ui_widgets.H" alt="" coords="189,80,288,107"/>
-<area shape="rect" id="node3" href="$ui__screen_8H.html" title="ui_screen.H" alt="" coords="193,155,285,181"/>
-<area shape="rect" id="node4" href="$ui__base_8H.html" title="ui_base.H" alt="" coords="198,229,279,256"/>
-<area shape="rect" id="node7" href="$env_8H.html" title="env.H" alt="" coords="302,304,359,331"/>
-<area shape="rect" id="node8" href="$base_8H.html" title="base.H" alt="" coords="404,379,468,405"/>
+<area shape="rect" id="node1" title=" " alt="" coords="169,5,311,32"/>
+<area shape="rect" id="node2" href="$ui__widgets_8H.html" title=" " alt="" coords="191,80,289,107"/>
+<area shape="rect" id="node3" href="$ui__screen_8H.html" title=" " alt="" coords="194,155,286,181"/>
+<area shape="rect" id="node4" href="$ui__base_8H.html" title=" " alt="" coords="199,229,281,256"/>
+<area shape="rect" id="node5" title=" " alt="" coords="117,304,176,331"/>
+<area shape="rect" id="node6" title=" " alt="" coords="201,304,279,331"/>
+<area shape="rect" id="node7" href="$env_8H.html" title=" " alt="" coords="303,304,358,331"/>
+<area shape="rect" id="node8" href="$base_8H.html" title=" " alt="" coords="404,379,468,405"/>
+<area shape="rect" id="node9" title=" " alt="" coords="5,453,67,480"/>
+<area shape="rect" id="node10" title=" " alt="" coords="91,453,155,480"/>
+<area shape="rect" id="node11" title=" " alt="" coords="179,453,245,480"/>
+<area shape="rect" id="node12" title=" " alt="" coords="269,453,334,480"/>
+<area shape="rect" id="node13" title=" " alt="" coords="359,453,423,480"/>
+<area shape="rect" id="node14" title=" " alt="" coords="447,453,515,480"/>
+<area shape="rect" id="node15" title=" " alt="" coords="540,453,607,480"/>
+<area shape="rect" id="node16" title=" " alt="" coords="631,453,707,480"/>
+<area shape="rect" id="node17" title=" " alt="" coords="731,453,797,480"/>
+<area shape="rect" id="node18" title=" " alt="" coords="821,453,891,480"/>
+<area shape="rect" id="node19" title=" " alt="" coords="915,453,986,480"/>
 </map>

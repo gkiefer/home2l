@@ -1,3 +1,4 @@
 <map id="CScreen" name="CScreen">
-<area shape="rect" id="node2" href="$classCInputScreen.html" title="Screen with an input line widget. " alt="" coords="5,80,108,107"/>
+<area shape="rect" id="node1" title="Screen object." alt="" coords="20,5,93,32"/>
+<area shape="rect" id="node2" href="$classCInputScreen.html" title="Screen with an input line widget." alt="" coords="5,80,108,107"/>
 </map>

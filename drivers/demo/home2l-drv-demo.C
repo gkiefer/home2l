@@ -98,7 +98,8 @@ HOME2L_DRIVER(demo) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcVa
        *   here. The driven value with state "valid" will be reported automatically.
        *   If that value or state is not appropriate to report, change it in 'vs'.
        */
-      DEBUGF (1, ("drv-demo: Driving a new value to '%s': %s", rc->Uri(), vs->ToStr ()));
+      CString s;
+      DEBUGF (1, ("drv-demo: Driving a new value to '%s': %s", rc->Uri(), vs->ToStr (&s)));
       break;
   }
 }

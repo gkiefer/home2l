@@ -55,6 +55,13 @@ fi
 
 
 
+# Global settings ...
+export ADB_VENDOR_KEYS=/home/home2l/.android/
+  # Add the standard key directory of user 'home2l' to the key search path.
+  # This is to avoid authorization errors.
+
+
+
 # Determine coordinates of target device ...
 HOSTNAME=`hostname`
 DEV_NAME="$1"         # Given name (can be anything of hostname, device ID or port)
@@ -173,6 +180,3 @@ case "$1" in
     run_adb "$@"    # default: pass command from command line
     ;;
 esac
-
-
-

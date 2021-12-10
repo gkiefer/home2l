@@ -32,7 +32,7 @@ mkdir -p $DST_DIR
 for f in ic-*.svg; do
   echo -n "ICON $f:"
   n=${f%%.svg}
-  inkscape $n.svg -w 96 -h 96 -e $n.png >/dev/null 2>&1 || exit 3
+  inkscape $n.svg -w 96 -h 96 -o $n.png >/dev/null 2>&1 || exit 3
     # FIXME [2019-12-22]: All stderr output is redirected to /dev/null here
     #   because otherwise inkscape produces a lot of dbus-related
     #   warnings. With a later version inkscape, the "2>&1" clause may and
@@ -67,7 +67,7 @@ for BASE in $TPLS; do
   PNG=$DST_DIR/$BASE.png    # base .png from inkscape
   BMP=$DST_DIR/fp-$BASE.bmp # destination file name
   echo "FLOORPLAN $BASE"
-  inkscape $FLOORPLAN_SVG -i tpl.$BASE -d 768 -e $PNG >/dev/null 2>&1     # '-d 768' refers to a scale factor of 8 (id 3) (96 * 8 dpi)
+  inkscape $FLOORPLAN_SVG -i tpl.$BASE -d 768 -o $PNG >/dev/null 2>&1     # '-d 768' refers to a scale factor of 8 (id 3) (96 * 8 dpi)
   convert $PNG -channel R -separate -colors 256 -compress None BMP3:$BMP
   rm $PNG
 done
@@ -86,7 +86,7 @@ done
 for n in phone-incall phone-ringing phone-ringing-door phone-ringing-gate pic-wakeup; do
   if [ -e $n.svg ]; then
     echo "IMAGE $n"
-    inkscape $n.svg -w 480 -h 480 -e $n.png > /dev/null 2>&1
+    inkscape $n.svg -w 480 -h 480 -o $n.png > /dev/null 2>&1
     convert $n.png -geometry 480x480 -channel A -separate -colors 256 -compress None BMP3:$n.bmp
     mv $n.bmp $DST_DIR
     rm $n.png

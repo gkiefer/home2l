@@ -46,6 +46,10 @@ API_PYTHON := home2l-api_python
 all: build-indep
 
 
+.PHONY: readme
+readme: ../README.pdf
+
+
 .PHONY: book
 book: $(BOOK).pdf
 
@@ -64,8 +68,8 @@ view_api: api
 	$(BROWSER) $(API_C)/index.html $(API_PYTHON)/index.html &
 
 
-.PHONY: readme
-readme: ../README.pdf
+.PHONY: check
+check: check_api check_readme check_book
 
 
 
@@ -101,13 +105,13 @@ readme: ../README.pdf
 ../home2l-figs/home2l-icon-web.png: figs/home2l-icon.svg
 	@echo INKSCAPE $@
 	@mkdir -p ../home2l-figs && \
-	inkscape -z -C $< -e $@ -b white -w 96 -h 96 2>&1 >/dev/null && \
+	inkscape -C $< -b white -w 96 -h 96 -o $@ >/dev/null 2>&1 && \
 	mogrify $@ -colors 256 # -quality 90
 
-../home2l-figs/readme-title-web.png: figs/readme-title.svg
+../home2l-figs/readme-title-web.png: figs/readme-title.svg  figs/wallclock-floorplan-3.png figs/wallclock-doorman-1.png figs/wallclock-doorman-2.png figs/wallclock-music.png figs/wallclock-calendar.png figs/wallclock-home-3.png
 	@echo INKSCAPE $@
 	@mkdir -p ../home2l-figs && \
-	inkscape -z -C $< -e $@ -b white -w 1024 2>&1 >/dev/null && \
+	inkscape -C $< -b white -w 1024 -o $@ 2>&1 >/dev/null 2>&1 && \
 	mogrify $@ -colors 256 # -quality 90
 
 
@@ -249,13 +253,13 @@ REFS_RC  := ref_rc_resources.tex  \
 
 $(BOOK).pdf: $(REFS_ENV) $(REFS_RC) $(BOOK).tex
 	@echo "PDFLaTeX: $(BOOK).pdf (1st run - draft)"
-	@set -o pipefail; pdflatex -draftmode -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" | (grep "\.tex:.*:" || true)
+	@set -o pipefail; pdflatex -draftmode -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" 2>&1 | (grep "\.tex:.*:" || true)
 	@echo "PDFLaTeX: $(BOOK).pdf (2nd run - draft)"
-	@set -o pipefail; pdflatex -draftmode -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" | (grep "\.tex:.*:" || true)
+	@set -o pipefail; pdflatex -draftmode -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" 2>&1 | (grep "\.tex:.*:" || true)
 	@echo "makeindex $(BOOK).idx"
 	@makeindex $(BOOK).idx >/dev/null 2>&1
 	@echo "PDFLaTeX: $(BOOK).pdf (3rd run - final)"
-	@set -o pipefail; pdflatex -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" | (grep "\.tex:.*:" || true)
+	@set -o pipefail; pdflatex -file-line-error --shell-escape -interaction=nonstopmode "\def\version{$(BUILD_VERSION)} \input{$(BOOK).tex}" 2>&1 | (grep "\.tex:.*:" || true)
 
 
 .PHONY: draft
@@ -319,16 +323,25 @@ $(API_PYTHON): api_python.doxygen ../home2l-figs/home2l-icon-web.png api_python.
 # This target is meant to be called manually.
 
 
-.PHONY: check
-check: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+.PHONY: check_api
+check_api: $(API_C) $(API_PYTHON) $(BOOK).pdf
 	@rm -f brownies && ln -s ../brownies .
 	@echo -e "\n#################### Checking C/C++ API ####################\n"
 	@linkchecker --check-extern home2l-api_c/index.html
 	@echo -e "\n#################### Checking Python API ####################\n"
 	@linkchecker --check-extern home2l-api_python/index.html
 	@rm brownies
-	@echo -e "\n#################### Checking PDFs ####################\n"
+
+
+.PHONY: check_readme
+check_readme: ../README.pdf
+	@echo -e "\n#################### Checking README.pdf ####################\n"
 	@./check_pdf_links ../README.pdf ..
+
+
+.PHONY: check_book
+check_book: $(API_C) $(API_PYTHON) $(BOOK).pdf ../README.pdf
+	@echo -e "\n#################### Checking Home2L Book ####################\n"
 	@./check_pdf_links home2l-book.pdf ..
 
 

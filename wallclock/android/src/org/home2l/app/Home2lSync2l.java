@@ -64,8 +64,11 @@ import android.content.res.AssetFileDescriptor;
 
 
 public class Home2lSync2l extends Thread {
-  static protected final String rawContactAccountType = "com.android.localphone";
-  static protected final String rawContactAccountName = "PHONE";
+  static protected final String rawContactAccountType = "com.android.contacts";   // account type for new entries
+  static protected final String rawContactAccountName = "DEVICE";                 // account name for new entries
+  //~ static protected final String rawContactAccountType = "com.android.localphone";
+  //~ static protected final String rawContactAccountName = "PHONE";
+  static protected final String rawContactAccountNameList = "('DEVICE','PHONE')";     // account names accepted for existing entries
   protected Context context;
   protected String pipeName;
 
@@ -150,7 +153,7 @@ public class Home2lSync2l extends Thread {
         //~ writer.write ("N='" + name + "' TEL;TYPE=HOME:'" + phoneNumber + "'\n");
 
         //~ writer.write ("############################## " + uri.toString () + " / " + ContactsContract.CommonDataKinds.Phone.CONTENT_URI + "\n");
-        writer.write ("##########\n");
+        writer.write ("########## (RAW_CONTACTS)\n");
         int columns = cursor.getColumnCount ();
         for (int i = 0; i < columns; i++) {
           writer.write ("  " + cursor.getColumnName (i) + " = '" + cursor.getString (i) + "'\n");
@@ -159,15 +162,16 @@ public class Home2lSync2l extends Thread {
 
 
       // Dump DATA...
-      Uri uri = ContactsContract.Data.CONTENT_URI;
-      cursor = context.getContentResolver ().query (uri, null, null, null, null);
+      writer.write ("\n\n\n############################## Dumping DATA ##############################\n");
+      cursor = context.getContentResolver ().query (ContactsContract.Data.CONTENT_URI, null, null, null, null);
         // ContactsContract.RawContacts.CONTENT_URI
       while (cursor.moveToNext ()) {
         //~ String name = cursor.getString(cursor.getColumnIndex (ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
         //~ String phoneNumber = cursor.getString(cursor.getColumnIndex (ContactsContract.CommonDataKinds.Phone.NUMBER));
         //~ writer.write ("N='" + name + "' TEL;TYPE=HOME:'" + phoneNumber + "'\n");
 
-        writer.write ("############################## " + uri.toString () + " / " + ContactsContract.CommonDataKinds.Phone.CONTENT_URI + "\n");
+        //~ writer.write ("############################## " + uri.toString () + " / " + ContactsContract.CommonDataKinds.Phone.CONTENT_URI + "\n");
+        writer.write ("##### (DATA)\n");
         int columns = cursor.getColumnCount ();
         for (int i = 0; i < columns; i++) {
           writer.write ("  " + cursor.getColumnName (i) + " = '" + cursor.getString (i) + "'\n");
@@ -195,8 +199,19 @@ public class Home2lSync2l extends Thread {
 
       // Iterate over the complete "DATA" database...
       Map<String, Map<String, String>> map = new HashMap<String, Map<String, String>> ();
-      Uri uri = ContactsContract.Data.CONTENT_URI;
-      Cursor cursor = context.getContentResolver ().query (uri, null, null, null, null);
+      Cursor cursor = context.getContentResolver ().query (
+          ContactsContract.Data.CONTENT_URI,
+          // projection ...
+          null,
+          // selection clause ...
+          ContactsContract.RawContacts.ACCOUNT_NAME + " IN " + rawContactAccountNameList,
+            // Note: We rely on column 'RawContacts.ACCOUNT_NAME' beong present in DATA
+            //       (this appears to be the case, but is not documented).
+          // selection args ...
+          null,
+          // sort order ...
+          null
+        );
       while (cursor.moveToNext ()) {
 
         // Get contact ID and corresponding (key, value) map...
@@ -297,12 +312,16 @@ public class Home2lSync2l extends Thread {
       Cursor cursor = context.getContentResolver ().query (
           ContactsContract.Data.CONTENT_URI,
           // projection...
-          new String [] { ContactsContract.Data.MIMETYPE, ContactsContract.Data.RAW_CONTACT_ID, ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME },
-          // selection...
-          ContactsContract.Data.MIMETYPE + " = ? AND " + ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + " = ?",
-          // selection args...
+          new String [] { ContactsContract.Data.RAW_CONTACT_ID },
+          // selection clause ...
+          ContactsContract.RawContacts.ACCOUNT_NAME + " IN " + rawContactAccountNameList + " AND " +
+            // Note: We rely on column 'RawContacts.ACCOUNT_NAME' beong present in DATA
+            //       (this appears to be the case, but is not documented).
+          ContactsContract.Data.MIMETYPE + " = ? AND " +
+          ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + " = ?",
+          // selection args ...
           new String [] { ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE, idVal },
-          null,
+          // sort order ...
           null
         );
       if (cursor.getCount () == 0 && warnIfMissing)
@@ -560,6 +579,12 @@ public class Home2lSync2l extends Thread {
               // add or change contact...
               putContact (lineToMap (line.substring (1)));
               break;
+            case 'd':
+              // dump date (für debugging only) ...
+              reader.close ();      // close pipe to use it in the opposite direction now
+              dumpData ();
+              reader = new BufferedReader (new FileReader (pipeName));  // re-open pipe in the reading direction
+              break;
             default:
               // error
               Home2l.logWarning ("Sync2l received illegal line: " + line);
@@ -574,5 +599,3 @@ public class Home2lSync2l extends Thread {
     }
   }
 }
-
-

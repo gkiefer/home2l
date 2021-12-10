@@ -169,13 +169,13 @@ EEnoStatus CEnoTelegram::Parse (uint8_t *buf, int bufBytes, int *retBytes) {
 // *************************** Top-Level ***************************************
 
 
-#define ENO_LINK_RETRY_TIME ((TTicksMonotonic) TICKS_FROM_SECONDS(5))
+#define ENO_LINK_RETRY_TIME ((TTicks) TICKS_FROM_SECONDS(5))
 
 
 static int enoFd = -1;
 static CSleeper enoSleeper;
 static int enoSleeperInterruptCommand = 17;
-static TTicksMonotonic tLastRetry;    // last failed try to open the link
+static TTicks tLastRetry;    // last failed try to open the link
 static uint8_t rcvBuf[256];
 static int rcvBytes;
 
@@ -191,13 +191,15 @@ void EnoClose () {
 
 static void EnoOpen () {
   struct termios ts;
+  TTicks tNow;
   bool ok, isRetry;
 
   // Sanity ...
   if (enoFd >= 0) return;
   isRetry = (tLastRetry != 0);
-  if (tLastRetry && (TicksMonotonicNow () - tLastRetry < ENO_LINK_RETRY_TIME)) return;
-  tLastRetry = TicksMonotonicNow ();
+  tNow = TicksNowMonotonic ();
+  if (isRetry && (tNow - tLastRetry < ENO_LINK_RETRY_TIME)) return;
+  tLastRetry = tNow;
 
   // Open device file ...
   enoFd = open (envEnoLinkDev, O_RDONLY);
@@ -267,15 +269,15 @@ const char *EnoLinkDevice () {
 }
 
 
-static inline EEnoStatus EnoReadFromLink (TTicksMonotonic maxTime) {
-  TTicksMonotonic dRetry;
+static inline EEnoStatus EnoReadFromLink (TTicks maxTime) {
+  TTicks dRetry;
   int i, bytes, cmd;
 
   // Ensure link is open ...
   //~ INFOF (("# EnoReceive: Open... (enoFd = %i)", enoFd));
   EnoOpen ();
   if (enoFd < 0) {
-    dRetry = tLastRetry + ENO_LINK_RETRY_TIME - TicksMonotonicNow ();
+    dRetry = tLastRetry + ENO_LINK_RETRY_TIME - TicksNowMonotonic ();
     ASSERT (dRetry > 0);
     if (maxTime < 0) maxTime = dRetry;
     else maxTime = MIN (maxTime, dRetry);
@@ -322,7 +324,7 @@ static inline EEnoStatus EnoReadFromLink (TTicksMonotonic maxTime) {
 }
 
 
-EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicksMonotonic maxTime) {
+EEnoStatus EnoReceive (CEnoTelegram *telegram, TTicks maxTime) {
   EEnoStatus status;
   int i, bytes;
 

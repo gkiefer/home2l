@@ -1,3 +1,4 @@
 <map id="CSlider" name="CSlider">
-<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="5,5,79,32"/>
+<area shape="rect" id="node1" title="Slider widget." alt="" coords="9,80,75,107"/>
+<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="5,5,79,32"/>
 </map>

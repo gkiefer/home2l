@@ -1,4 +1,18 @@
 <map id="wallclock/ui_base.H" name="wallclock/ui_base.H">
-<area shape="rect" id="node4" href="$env_8H.html" title="env.H" alt="" coords="302,80,359,107"/>
-<area shape="rect" id="node5" href="$base_8H.html" title="base.H" alt="" coords="404,155,468,181"/>
+<area shape="rect" id="node1" title=" " alt="" coords="171,5,309,32"/>
+<area shape="rect" id="node2" title=" " alt="" coords="117,80,176,107"/>
+<area shape="rect" id="node3" title=" " alt="" coords="201,80,279,107"/>
+<area shape="rect" id="node4" href="$env_8H.html" title=" " alt="" coords="303,80,358,107"/>
+<area shape="rect" id="node5" href="$base_8H.html" title=" " alt="" coords="404,155,468,181"/>
+<area shape="rect" id="node6" title=" " alt="" coords="5,229,67,256"/>
+<area shape="rect" id="node7" title=" " alt="" coords="91,229,155,256"/>
+<area shape="rect" id="node8" title=" " alt="" coords="179,229,245,256"/>
+<area shape="rect" id="node9" title=" " alt="" coords="269,229,334,256"/>
+<area shape="rect" id="node10" title=" " alt="" coords="359,229,423,256"/>
+<area shape="rect" id="node11" title=" " alt="" coords="447,229,515,256"/>
+<area shape="rect" id="node12" title=" " alt="" coords="540,229,607,256"/>
+<area shape="rect" id="node13" title=" " alt="" coords="631,229,707,256"/>
+<area shape="rect" id="node14" title=" " alt="" coords="731,229,797,256"/>
+<area shape="rect" id="node15" title=" " alt="" coords="821,229,891,256"/>
+<area shape="rect" id="node16" title=" " alt="" coords="915,229,986,256"/>
 </map>

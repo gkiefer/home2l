@@ -70,7 +70,7 @@ OBJ_DOORMAN := $(SRC_DOORMAN:%.C=$(DIR_OBJ)/%.o)
 
 
 $(DOORMAN_BIN): $(DEP_CONFIG) $(OBJ_DOORMAN)
-	@echo LD $(DOORMAN)
+	@echo LD$(LD_SUFF) $(DOORMAN)
 	@$(CC) -o $@ $(OBJ_DOORMAN) $(LDFLAGS)
 #~ 	cp $(DOORMAN_BIN) ./$(DOORMAN).$(ARCH)
 

@@ -113,9 +113,11 @@ static inline void TestDefaultPixelTypes () {
 
 
 static inline void ShowUnconfiguredInfo () {
+  CString s;
+
   RunMessageBox (
     _("Welcome!"),
-    StringF (
+    StringF (&s,
       _("The Home2L %s is successfully installed an running,\n"
         "but still unconfigured on this device. To use all its great features,\n"
         "it should be integrated into a Home2L building installation.\n"

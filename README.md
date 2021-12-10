@@ -33,13 +33,17 @@ The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for autom
 What is New?
 ============
 
-* **Brownies:** New **ADC** module for analog input, improved GPIO module
+* Adaptations for building on **Debian 11 (Bullseye)**
 
-* New *PJSIP* phone backend for **DoorMan** and **WallClock**
+* Several improvements and cleanups in the **Resources** library:
+    - Support for MQTT-like and shell-like wildcards ('+', '#', '*', '?')
+    - Default URI prefix is now always */alias*, allowing for smaller scripts
+    - New event type *rceRequestChanged* and improved API for querying requests
+    - Shell improvements
 
-* Further improvements of the **Python API** to simplify rules writing
+* Updated **Tutorial**
 
-* **WallClock:** More UI improvements
+* Several minor improvements and fixes
 
 
 
@@ -156,13 +160,3 @@ Questions?
 ==========
 
 Feel free to contact: Gundolf Kiefer `<gundolf.kiefer@web.de>`
-
-
-
-Attribution
-===========
-
-1. The doorphone video screenshot has been created using:
-   ["The Beatles magical mystery tour"](https://commons.wikimedia.org/wiki/File:The_Beatles_magical_mystery_tour.jpg),
-   Parlophone Music Sweden,
-   [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode)

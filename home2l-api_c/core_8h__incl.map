@@ -1,5 +1,9 @@
 <map id="brownies/avr/core.h" name="brownies/avr/core.h">
-<area shape="rect" id="node2" href="$configure_8h.html" title="configure.h" alt="" coords="44,80,131,107"/>
-<area shape="rect" id="node3" href="$base_8h.html" title="base.h" alt="" coords="57,155,118,181"/>
-<area shape="rect" id="node5" href="$interface_8h.html" title="interface.h" alt="" coords="95,229,178,256"/>
+<area shape="rect" id="node1" title=" " alt="" coords="19,5,155,32"/>
+<area shape="rect" id="node2" href="$configure_8h.html" title=" " alt="" coords="44,80,131,107"/>
+<area shape="rect" id="node3" href="$base_8h.html" title=" " alt="" coords="57,155,118,181"/>
+<area shape="rect" id="node4" title=" " alt="" coords="5,229,71,256"/>
+<area shape="rect" id="node5" href="$interface_8h.html" title=" " alt="" coords="95,229,178,256"/>
+<area shape="rect" id="node6" title=" " alt="" coords="56,304,121,331"/>
+<area shape="rect" id="node7" title=" " alt="" coords="146,304,221,331"/>
 </map>

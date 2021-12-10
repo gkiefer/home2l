@@ -349,7 +349,7 @@ class CBrFeature {
       /// Read-only features do not need to implement this.
 
     // Helpers ...
-    void RefreshExpiration (TTicksMonotonic waitTime = 0);
+    void RefreshExpiration (TTicks waitTime = 0);
     const char *MakeRcLid (const char *fmt, ...);
 
     // Service (called from 'CBrownie'/'CBrownieSet') ...
@@ -361,7 +361,7 @@ class CBrFeature {
     friend class CBrownie;
 
     CBrownie *brownie;          // reference to owner (to identify brownie by driver)
-    TTicksMonotonic expTime;    // expiration time (all resources of the same feature expire together)
+    TTicks expTime;    // expiration time (all resources of the same feature expire together)
                                 //   'envBrFeatureTimeout' ticks before expiration, CBrFeature::Update () is called.
                                 //   NEVER = do not check for expiration, but call 'CBrFeature::Update ()' now.
     CResource **expRcList;      // reference to array of resources to auto-expire (to be maintained by sub-class; may contain NULL entries)
@@ -378,8 +378,8 @@ CBrFeature::CBrFeature (CBrownie *_brownie) {
 }
 
 
-void CBrFeature::RefreshExpiration (TTicksMonotonic waitTime) {
-  expTime = TicksMonotonicNow () + waitTime + envBrFeatureTimeout;
+void CBrFeature::RefreshExpiration (TTicks waitTime) {
+  expTime = TicksNowMonotonic () + waitTime + envBrFeatureTimeout;
   //~ if (expRcs > 0) INFOF (("###     CBrFeature::RefreshExpiration: %s :%i", expRcList[0]->Lid (), (int) expTime));
 }
 
@@ -388,9 +388,9 @@ void CBrFeature::CheckExpiration () {
   CResource *rc;
   int n;
 
-  if (expTime != NEVER) if (TicksMonotonicNow () - expTime >= 0) {
+  if (expTime != NEVER) if (TicksNowMonotonic () - expTime >= 0) {
     for (n = 0; n < expRcs; n++) if ( (rc = expRcList[n]) ) {
-      //~ INFOF (("###   Expired: %s (now = %i, expTime = %i)", rc->Gid (), TicksMonotonicNow (), expTime));
+      //~ INFOF (("###   Expired: %s (now = %i, expTime = %i)", rc->Gid (), TicksNowMonotonic (), expTime));
       rc->ReportUnknown ();
     }
     expTime = NEVER;
@@ -597,13 +597,14 @@ class CBrMatrixWindow {
   protected:
     EBrMatrixWindowType type;
     int col[2], row[2];
-    TTicksMonotonic tth;  // for 'mwtHorizontal': threshold time
+    TTicks tth;  // for 'mwtHorizontal': threshold time
 
     int vals;             // bit 0 = value at col[0]/row[0], bit 1 = value at col[1]/row[1]
     bool invert;          // 'true' = sensor values are inverted
-    TTicksMonotonic tx0;  // for 'mwtHorizontal': the time + 'tth' at which the "0/x" state was reached or 'NEVER' if the state is not "0/x"
+    TTicks tx0;  // for 'mwtHorizontal': the time + 'tth' at which the "0/x" state was reached or 'NEVER' if the state is not "0/x"
     ERctWindowState state;
     CResource *rc;
+    int i;
 
     friend class CBrFeatureMatrix;
 
@@ -656,7 +657,8 @@ class CBrMatrixWindow {
       // Read 'tth' value ('mwtHorizontal' only) ...
       if (type == mwtHorizontal) {
         if (def[7] != ':') { type = mwtInvalid; return; }
-        if (!IntFromString (def + 8, &tth)) { type = mwtInvalid; return; }
+        if (IntFromString (def + 8, &i)) tth = i;
+        else { type = mwtInvalid; return; }
       }
 
       // Init variables ...
@@ -699,11 +701,11 @@ class CBrMatrixWindow {
           state = ( vals == 3 ? rcvWindowClosed :
                     vals == 1 ? rcvWindowTilted :
                     vals == 2 ? rcvWindowOpen :
-                    /* vals == 0 */ (state == rcvWindowTilted || tx0 == NEVER || TicksMonotonicNow () <= tx0) ?
+                    /* vals == 0 */ (state == rcvWindowTilted || tx0 == NEVER || TicksNowMonotonic () <= tx0) ?
                       rcvWindowTilted : rcvWindowOpen
                   );
           if (vals & 1) tx0 = NEVER;
-          else if (tx0 == NEVER) tx0 = TicksMonotonicNow () + tth;
+          else if (tx0 == NEVER) tx0 = TicksNowMonotonic () + tth;
           break;
         default:
           break;
@@ -1123,7 +1125,7 @@ class CBrFeatureUart: public CBrFeature {
 
     virtual void Update (CBrownieLink *link, unsigned changed, bool initial) {
       EBrStatus status = brOk;
-      TTicksMonotonic tBreak;
+      TTicks tBreak;
       uint8_t buf[16];
       int i, bytes, newSockClientFd;
 
@@ -1188,7 +1190,7 @@ class CBrFeatureUart: public CBrFeature {
         }
 
         // Init time-out time ...
-        tBreak = TicksMonotonicNow () + envBrMinScanInterval * 2;
+        tBreak = TicksNowMonotonic () + envBrMinScanInterval * 2;
       }
 
       // Receive from UART as many bytes as possible ...
@@ -1217,7 +1219,7 @@ class CBrFeatureUart: public CBrFeature {
         uartStatus = link->RegReadNext (&status, brownie, BR_REG_UART_STATUS);
         if (status != brOk) uartStatus = -1;
       }
-      while (status == brOk && sockClientFd >= 0 && (uartStatus & BR_UART_STATUS_RX_MASK) && TicksMonotonicNow () < tBreak);
+      while (status == brOk && sockClientFd >= 0 && (uartStatus & BR_UART_STATUS_RX_MASK) && TicksNowMonotonic () < tBreak);
         // Repeat as long as:
         //   a) link and socket are up and OK
         //   b) Brownie UART buffer still contains unread bytes
@@ -1249,7 +1251,7 @@ class CBrFeatureUart: public CBrFeature {
         uartStatus = link->RegReadNext (&status, brownie, BR_REG_UART_STATUS);
         if (status != brOk) uartStatus = -1;
       }
-      while (status == brOk && sockClientFd >= 0 && bytes > 0 && (uartStatus & BR_UART_STATUS_TX_MASK) && TicksMonotonicNow () < tBreak);
+      while (status == brOk && sockClientFd >= 0 && bytes > 0 && (uartStatus & BR_UART_STATUS_TX_MASK) && TicksNowMonotonic () < tBreak);
         // Repeat as long as:
         //   a) link and socket are up and OK
         //   b) socket has delivered >0 bytes and may thus deliver more bytes
@@ -1630,10 +1632,9 @@ bool BrFeaturesFromStr (TBrFeatureRecord *featureRecord, const char *str) {
 // ***** Class helpers *****
 
 
-const char *CBrownie::GetOptValue (int optIdx, CString *ret) {
+const char *CBrownie::GetOptValue (CString *ret, int optIdx) {
   const TBrCfgDescriptor *opt = &brCfgDescList[optIdx];
 
-  if (!ret) ret = GetTTS ();
   switch (opt->type) {
     case ctUint8:
       ret->SetF (opt->fmt, (int) (* ((uint8_t *) &configRecord + opt->ofs)) );
@@ -1798,7 +1799,7 @@ bool CBrownie::SetFromStr (const char *str, CString *ret) {
       }
 
       // Output value if requested...
-      if (ret) ret->AppendF ("%s=%s ", key, GetOptValue (optIdx, &s));
+      if (ret) ret->AppendF ("%s=%s ", key, GetOptValue (&s, optIdx));
     }
   }
 
@@ -1822,7 +1823,7 @@ const char *CBrownie::ToStr (CString *ret, bool withIdentification, bool withVer
           (!featureRecord.magic || (opt->features & featureRecord.features) != 0) &&  // relevant (= feature present)?
           (opt->type != ctVersion || BrVersionGet (&featureRecord))                   // if version: valid?
         )
-      ret->AppendF ("%s=%s ", brCfgDescList[n].key, GetOptValue (n, &s));
+      ret->AppendF ("%s=%s ", brCfgDescList[n].key, GetOptValue (&s, n));
     //~ INFOF (("### %s (%04x/%04x) -> %s", brCfgDescList[n].key, featureRecord.features, opt->features, ret->Get ()));
   }
 
@@ -1963,7 +1964,7 @@ void CBrownie::CheckDeviceForResources (CBrownieLink *link) {
 
 unsigned CBrownie::Iterate (CBrownieLink *link, bool fast) {
   CBrFeature *feature;
-  TTicksMonotonic now;
+  TTicks now;
   EBrStatus status;
   uint8_t changedRaw;
   unsigned changed, sensitivity;
@@ -2002,7 +2003,7 @@ unsigned CBrownie::Iterate (CBrownieLink *link, bool fast) {
   //~ INFOF (("###   changed = 0x%02x", changed));
 
   // Iterate over features ...
-  now = TicksMonotonicNow ();
+  now = TicksNowMonotonic ();
   for (n = 0; n < features; n++) {            // Note: Positive order is required for the shades!
     feature = featureList[n];
     sensitivity = feature->Sensitivity ();
@@ -2224,21 +2225,21 @@ void CBrownieSet::ResourcesInit (CRcEventDriver *_rcDriver, class CBrownieLink *
 void CBrownieSet::ResourcesIterate (bool noLink, bool noSleep) {
   CRcEvent ev;
   CBrownie *brownie;
-  TTicksMonotonic tIterate, tEndFastPoll, tEndSlowPoll;
+  TTicks tIterate, tEndFastPoll, tEndSlowPoll;
   unsigned changed;
   int n, adr, hubMaxAdr;
 
   //~ INFOF (("### CBrownieSet::ResourcesIterate (noLink = %i, noSleep = %i)", (int) noLink, (int) noSleep));
-  //~ INFOF (("### %8i:   Entry (tLastIterate = %i) ...", (int) TicksMonotonicNow (), (int) tLastIterate));
+  //~ INFOF (("### %8i:   Entry (tLastIterate = %i) ...", (int) TicksNowMonotonic (), (int) tLastIterate));
 
   // Sanity ...
   ASSERT (rcDriver && rcLink);
 
   // Sleep if necessary ...
-  tIterate = TicksMonotonicNow ();
+  tIterate = TicksNowMonotonic ();
   if (!noSleep && tLastIterate != NEVER && tIterate - tLastIterate < envBrMinScanInterval) {
     Sleep (envBrMinScanInterval - (tIterate - tLastIterate));
-    tIterate = TicksMonotonicNow ();
+    tIterate = TicksNowMonotonic ();
   }
 
   // Handle "no link" case ...
@@ -2261,7 +2262,7 @@ void CBrownieSet::ResourcesIterate (bool noLink, bool noSleep) {
   }
 
   // Fast poll: Query "changed" registers of *all* immediately connected devices ...
-  //~ INFOF (("### %8i:   Fast Poll ...", (int) TicksMonotonicNow ()));
+  //~ INFOF (("### %8i:   Fast Poll ...", (int) TicksNowMonotonic ()));
   adr = 0;
   while (adr < 128) {
     if (brList[adr]) {
@@ -2281,10 +2282,10 @@ void CBrownieSet::ResourcesIterate (bool noLink, bool noSleep) {
     // Next address ...
     adr++;
   }
-  tEndFastPoll = TicksMonotonicNow ();
+  tEndFastPoll = TicksNowMonotonic ();
 
   // Slow poll: Iterate a few devices in a circular way ...
-  //~ INFOF (("### %8i:   Full Poll ...", (int) TicksMonotonicNow ()));
+  //~ INFOF (("### %8i:   Full Poll ...", (int) TicksNowMonotonic ()));
   adr = rcLastCheckedAdr;
   for (n = 0; n < envBrChecksPerScan; n++) {
 
@@ -2293,17 +2294,17 @@ void CBrownieSet::ResourcesIterate (bool noLink, bool noSleep) {
       while (!brList[adr] && adr != rcLastCheckedAdr);
 
     // Check the device (full, non-fast mode) ...
-    //~ INFOF (("### %8i:     Checking %03i...", (int) TicksMonotonicNow (), (int) adr));
+    //~ INFOF (("### %8i:     Checking %03i...", (int) TicksNowMonotonic (), (int) adr));
     if (brList[adr]) brList[adr]->Iterate (rcLink, false);
 
     // If we have fewer checkable devices than given by 'envBrChecksPerScan', do not iterate any of them twice...
     if (adr == rcLastCheckedAdr) break;
   }
   rcLastCheckedAdr = adr;
-  tEndSlowPoll = TicksMonotonicNow ();
+  tEndSlowPoll = TicksNowMonotonic ();
 
   // Statistics ...
-  //~ INFOF (("### %8i:   Statistics ...", (int) TicksMonotonicNow ()));
+  //~ INFOF (("### %8i:   Statistics ...", (int) TicksNowMonotonic ()));
   if (tLastIterate != NEVER)
     rcLink->StatisticsAddIterateTimes (tIterate - tLastIterate, tEndFastPoll - tIterate, tEndSlowPoll - tEndFastPoll);
   tLastIterate = tIterate;
@@ -3069,7 +3070,7 @@ const char *CBrownieLink::StatisticsStr (CString *ret, bool local) {
 }
 
 
-void CBrownieLink::StatisticsAddIterateTimes (TTicksMonotonic tCycle, TTicksMonotonic tFastPoll, TTicksMonotonic tSlowPoll) {
+void CBrownieLink::StatisticsAddIterateTimes (TTicks tCycle, TTicks tFastPoll, TTicks tSlowPoll) {
   //~ INFOF (("### Stat times: %i/%i/%i", (int) tCycle, (int) tFastPoll, (int) tSlowPoll));
   rcIterations++;
   rcTSumCycle += tCycle;
@@ -3120,7 +3121,7 @@ void CBrownieLink::ServerStop () {
 }
 
 
-bool CBrownieLink::ServerIterate (TTicksMonotonic maxSleepTime) {
+bool CBrownieLink::ServerIterate (TTicks maxSleepTime) {
   CString s;
 
   // Accept new client ...
@@ -3391,7 +3392,7 @@ EBrStatus CBrownieLink::CheckDevice (int adr, CBrownie *brownie) {
         // Discard Brownies with firmware from the future ...
         if (verBrownie > verHost) {
           WARNINGF (("Firmware of brownie %03i is newer (%s) than that of the host (%s): Discarding device. Please upgrade your host software!",
-                     adr, VersionToStr (GetTTS (), verBrownie), VersionGetOwnAsStr ()));
+                     adr, VersionToStr (TTS, verBrownie), VersionGetOwnAsStr ()));
           status = brNoBrownie;
         }
 
@@ -3401,7 +3402,7 @@ EBrStatus CBrownieLink::CheckDevice (int adr, CBrownie *brownie) {
           // Version 1.1.102 introduced major changes in the feature record:
           //   Restrict features and adapt record to allow firmware upgrades (but not more) ...
           WARNINGF (("Brownie %03i runs an incompatible firmware (%s): Disabling some features. Please upgrade the firmware!",
-                    adr, VersionToStr (GetTTS (), verBrownie)));
+                    adr, VersionToStr (TTS, verBrownie)));
           fr = brownie->FeatureRecord ();
           fr->features &= (BR_FEATURE_MAINTENANCE | BR_FEATURE_TIMER | BR_FEATURE_NOTIFY | BR_FEATURE_TWIHUB);
             // allow only core features

@@ -62,8 +62,8 @@ endif
 
 
 $(RCSHELL_BIN): $(DEP_CONFIG) $(OBJ_RCSHELL)
-	@echo LD $(RCSHELL)
-	@$(CC) -o $@ $(RCSHELL_LDFLAGS) $(OBJ_RCSHELL)
+	@echo LD$(LD_SUFF) $(RCSHELL)
+	@$(CC) -o $@ $(OBJ_RCSHELL) $(RCSHELL_LDFLAGS)
 
 
 
@@ -78,8 +78,8 @@ SRC_SERVER := $(SRC) $(SERVER).C
 OBJ_SERVER := $(SRC_SERVER:%.C=$(DIR_OBJ)/%.o)
 
 $(SERVER_BIN): $(DEP_CONFIG) $(OBJ_SERVER)
-	@echo LD $(SERVER)
-	@$(CC) -o $@ $(LDFLAGS) $(OBJ_SERVER)
+	@echo LD$(LD_SUFF) $(SERVER)
+	@$(CC) -o $@ $(OBJ_SERVER) $(LDFLAGS)
 
 
 
@@ -104,11 +104,15 @@ $(DIR_OBJ)/$(PYLIB)_wrap.C: $(DIR_OBJ)/$(PYLIB).py
 $(DIR_OBJ)/$(PYLIB)_wrap-pic.o: $(DIR_OBJ)/$(PYLIB)_wrap.C
 	@echo CC$(CC_SUFF) $(PYLIB)_wrap.C "(-fPIC)"
 	@mkdir -p $(dir $@)
-	@$(CC) -c -fPIC -I$(PYTHON_INCLUDE) $(CFLAGS) $< -o $@
+	@$(CC) -c -fPIC -I$(PYTHON_INCLUDE) $(CFLAGS) -Wno-deprecated-declarations $< -o $@
+
+# WORKAROUND [2021-08-27]: The option '-Wno-deprecated-declarations' is to avoid
+#   a deprecation warning for 'PyEval_InitThreads()' with Python 3.9.
+#   It should be removed later.
 
 
 $(PYLIB_BIN): $(DEP_CONFIG) $(OBJ_PYLIB)
-	@echo LD $(notdir $(PYLIB_BIN))
+	@echo LD$(LD_SUFF) $(notdir $(PYLIB_BIN))
 	@$(CC) -shared $(LDFLAGS) -o $@ $(OBJ_PYLIB)
 
 

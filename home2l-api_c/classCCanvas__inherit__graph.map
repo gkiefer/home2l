@@ -1,6 +1,7 @@
 <map id="CCanvas" name="CCanvas">
-<area shape="rect" id="node3" href="$classCInputLine.html" title="Input line widget. " alt="" coords="5,155,91,181"/>
-<area shape="rect" id="node4" href="$classCListbox.html" title="Listbox widget. " alt="" coords="115,155,189,181"/>
-<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="63,5,137,32"/>
-<area shape="rect" id="node5" href="$classCMenu.html" title="Menu widget. " alt="" coords="120,229,184,256"/>
+<area shape="rect" id="node1" title="Canvas widget." alt="" coords="61,80,139,107"/>
+<area shape="rect" id="node3" href="$classCInputLine.html" title="Input line widget." alt="" coords="5,155,91,181"/>
+<area shape="rect" id="node4" href="$classCListbox.html" title="Listbox widget." alt="" coords="115,155,189,181"/>
+<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="63,5,137,32"/>
+<area shape="rect" id="node5" href="$classCMenu.html" title="Menu widget." alt="" coords="120,229,184,256"/>
 </map>

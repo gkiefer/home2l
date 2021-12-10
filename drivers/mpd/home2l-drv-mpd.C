@@ -71,7 +71,7 @@ class CMpdMonitor: public CThread {
 
     void Iterate ();
 
-    const char *ToStr () { return id.Get (); }   // for use with 'CDict'
+    const char *ToStr (CString *) { return id.Get (); }   // for use with 'CDict'
 
   protected:
     virtual void *Run ();    // thread routine to perform 'mpd_connection_new()'

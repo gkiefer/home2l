@@ -1,6 +1,7 @@
 <map id="CMenu" name="CMenu">
-<area shape="rect" id="node2" href="$classCListbox.html" title="Listbox widget. " alt="" coords="5,155,80,181"/>
-<area shape="rect" id="node3" href="$classCCanvas.html" title="Canvas widget. " alt="" coords="24,80,101,107"/>
-<area shape="rect" id="node4" href="$classCWidget.html" title="Base class for all widgets. " alt="" coords="63,5,137,32"/>
-<area shape="rect" id="node5" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box. " alt="" coords="105,155,213,181"/>
+<area shape="rect" id="node1" title="Menu widget." alt="" coords="68,229,132,256"/>
+<area shape="rect" id="node2" href="$classCListbox.html" title="Listbox widget." alt="" coords="5,155,80,181"/>
+<area shape="rect" id="node3" href="$classCCanvas.html" title="Canvas widget." alt="" coords="24,80,101,107"/>
+<area shape="rect" id="node4" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="63,5,137,32"/>
+<area shape="rect" id="node5" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box." alt="" coords="105,155,213,181"/>
 </map>

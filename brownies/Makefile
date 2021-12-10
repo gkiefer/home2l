@@ -26,8 +26,8 @@
 
 #~ ARCH=armhf
 
-all:
-	@cp -va $(DIR_OBJ)/home2l-brownie2l ./home2l-brownie2l.$(ARCH)
+#~ all:
+#~ 	@cp -va $(DIR_OBJ)/home2l-brownie2l ./home2l-brownie2l.$(ARCH)
 
 
 
@@ -75,7 +75,7 @@ endif
 
 
 $(BROWNIE2L_BIN): $(DEP_CONFIG) $(BROWNIE2L_OBJ)
-	@echo LD $(BROWNIE2L)
+	@echo LD$(LD_SUFF) $(BROWNIE2L)
 	@$(CC) -o $@ $(BROWNIE2L_OBJ) $(LDFLAGS)
 
 

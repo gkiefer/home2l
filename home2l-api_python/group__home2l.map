@@ -1,6 +1,7 @@
 <map id="Home2L" name="Home2L">
-<area shape="rect" id="node1" href="$group__home2l__resources.html" title="Defining local resources and custom drivers. " alt="" coords="124,5,209,32"/>
-<area shape="rect" id="node2" href="$group__home2l__general.html" title="General functions of the Home2L package. " alt="" coords="133,56,200,83"/>
-<area shape="rect" id="node3" href="$group__home2l__time.html" title="Date and time helpers. " alt="" coords="141,107,192,133"/>
-<area shape="rect" id="node5" href="$group__home2l__rules.html" title="Running functions on resource updates, on events or at certain times. " alt="" coords="139,157,195,184"/>
+<area shape="rect" id="node1" href="$group__home2l__resources.html" title="Defining local resources and custom drivers." alt="" coords="124,5,209,31"/>
+<area shape="rect" id="node2" href="$group__home2l__general.html" title="General functions of the Home2L package." alt="" coords="133,55,200,80"/>
+<area shape="rect" id="node3" href="$group__home2l__time.html" title="Date and time helpers." alt="" coords="141,104,192,129"/>
+<area shape="rect" id="node4" title="Top&#45;level of the Home2L Python package." alt="" coords="5,80,76,105"/>
+<area shape="rect" id="node5" href="$group__home2l__rules.html" title="Running functions on resource updates, on events or at certain times." alt="" coords="139,153,195,179"/>
 </map>

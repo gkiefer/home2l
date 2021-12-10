@@ -21,7 +21,7 @@
 
 #include "phone.H"
 
-#include "base.H"
+#include "env.H"
 
 #include <pjsua.h>
 
@@ -857,7 +857,7 @@ struct TPhoneData {
   pjsua_call_id pjCallId[2];
   int callStatus[2];                // last known call status code, -1 == unknown
   pjsua_player_id playerId;         // audio player ID for ringback
-  TTicksMonotonic tLastStatusLog;   // used for regular status logs, e.g. during calls
+  TTicks tLastStatusLog;   // used for regular status logs, e.g. during calls
 
   TMgmtCheckRec check;              // [T:any] - data potentially accessed by assynchronous callbacks;
                                     //           protected by the mutex 'mgmtMutex'
@@ -1373,9 +1373,7 @@ void CPhone::SelectMedia (unsigned selected, unsigned mask) {
 
 bool CPhone::Dial (const char *uri) {
   pjsua_acc_info accInfo;
-  pj_str_t sipUser, sipDomain, sipAccountUser, cleanUriPj, ringbackFilePj;
-  pjsua_conf_port_id confPort;
-  pj_status_t pjStatus;
+  pj_str_t sipUser, sipDomain, sipAccountUser, cleanUriPj;
   char *cleanUri;
   bool ok;
 
@@ -1431,23 +1429,6 @@ bool CPhone::Dial (const char *uri) {
 
   // Update media...
   MediaUpdate ();
-
-  // Start ringback sound ...
-  //~ INFOF (("### Playing ringback sound '%s' ...", envPhoneRingbackFile));
-  //   create player ...
-  pj_strset2 (&ringbackFilePj, (char *) envPhoneRingbackFile);
-  pjStatus = pjsua_player_create (&ringbackFilePj, 0, &(LIBDATA.playerId));
-  if (pjStatus != PJ_SUCCESS) LIBDATA.playerId = PJSUA_INVALID_ID;
-  //   connect to conference ...
-  else {
-    confPort = pjsua_player_get_conf_port (LIBDATA.playerId);
-    //~ INFOF (("###   playerId = %i, confPort = %i", LIBDATA.playerId, confPort));
-    pjStatus = pjsua_conf_connect (confPort, 0);
-    if (pjStatus == PJ_SUCCESS) pjStatus = pjsua_conf_adjust_rx_level (confPort, envPhoneRingbackLevel);
-  }
-  //   handle error ...
-  if (pjStatus != PJ_SUCCESS)
-    WARNINGF (("Failed to play ringback sound '%s': %s", envPhoneRingbackFile, PjStrError (pjStatus)));
 
   // Complete...
   free (cleanUri);
@@ -1690,6 +1671,9 @@ static void UpdatePhoneState (CPhone *phone) {
   TMgmtCheckRec _check;
   pjsua_acc_info accInfo;
   pjsua_call_info callInfo;
+  pjsua_conf_port_id confPort;
+  pj_str_t ringbackFilePj;
+  pj_status_t pjStatus;
   EPhoneState oldPhoneState, newPhoneState;
   int n, callStatus;
   bool havePrimaryCall, primaryConfirmed, haveSecondaryCall;
@@ -1830,15 +1814,6 @@ static void UpdatePhoneState (CPhone *phone) {
       // New state ...
       //   report the state ...
       phone->ReportState (newPhoneState);
-      //   stop ringback if appropriate ...
-      if (oldPhoneState == psDialing || oldPhoneState == psTransferDialing) {
-        //~ INFOF (("### Stopping ringback sound '%s' (%i) ...", envPhoneRingbackFile, phoneData->playerId));
-        if (phoneData->playerId != PJSUA_INVALID_ID) {
-          // destroy player, implicitely disconnecting it from the conference ...
-          ASSERT_WARN (PJ_SUCCESS == pjsua_player_destroy (phoneData->playerId));
-          phoneData->playerId = PJSUA_INVALID_ID;
-        }
-      }
       //   update media ...
       if (PhoneStateIsDevicePermitting (oldPhoneState) != PhoneStateIsDevicePermitting (newPhoneState))
         MediaUpdate ();
@@ -1848,6 +1823,40 @@ static void UpdatePhoneState (CPhone *phone) {
 
     // Auto-complete transfer if appropriate...
     if (newPhoneState == psTransferInCall && oldPhoneState == psTransferAutoComplete) phone->CompleteTransfer ();
+
+    // Start/stop ringback as appropriate ...
+    if (newPhoneState == psDialing || newPhoneState == psTransferDialing) {
+      if (phoneData->playerId == PJSUA_INVALID_ID) {
+
+        // Start ringback sound ...
+        //~ INFOF (("### Playing ringback sound '%s' ...", envPhoneRingbackFile));
+        //   create player ...
+        EnvGetPath (envPhoneRingbackFileKey, envPhoneRingbackFile);
+        pj_strset2 (&ringbackFilePj, (char *) envPhoneRingbackFile);
+        pjStatus = pjsua_player_create (&ringbackFilePj, 0, &(phoneData->playerId));
+        if (pjStatus != PJ_SUCCESS) phoneData->playerId = PJSUA_INVALID_ID;
+        //   connect to conference ...
+        else {
+          confPort = pjsua_player_get_conf_port (phoneData->playerId);
+          //~ INFOF (("###   playerId = %i, confPort = %i", LIBDATA.playerId, confPort));
+          pjStatus = pjsua_conf_connect (confPort, 0);
+          if (pjStatus == PJ_SUCCESS) pjStatus = pjsua_conf_adjust_rx_level (confPort, envPhoneRingbackLevel);
+        }
+        //   handle error ...
+        if (pjStatus != PJ_SUCCESS)
+          WARNINGF (("Failed to play ringback sound '%s': %s", envPhoneRingbackFile, PjStrError (pjStatus)));
+      }
+    }
+    else {  // not dialing ...
+      if (phoneData->playerId != PJSUA_INVALID_ID) {
+
+        // Stop ringback sound ...
+        //~ INFOF (("### Stopping ringback sound '%s' (%i) ...", envPhoneRingbackFile, phoneData->playerId));
+        ASSERT_WARN (PJ_SUCCESS == pjsua_player_destroy (phoneData->playerId));
+          // destroy player, implicitely disconnecting it from the conference
+        phoneData->playerId = PJSUA_INVALID_ID;
+      }
+    }
 
   } // if (_check.callState)
 
@@ -2147,7 +2156,9 @@ static inline void PjsuaInit (const char *agentName) {
   logCfg.cb = AsyncOnLogging;
 
   pjsua_media_config_default (&mediaCfg);
+
   ASSERT (pjsua_init (&pjCfg, &logCfg, &mediaCfg) == PJ_SUCCESS);
+
   AlsaInit ();
 
   // Register video driver,,,
@@ -2324,7 +2335,7 @@ void CPhone::Done () {
 
 
 void CPhone::Iterate () {
-  TTicksMonotonic tNow;
+  TTicks tNow;
   TMgmtCheckRec *check = &LIBDATA.check;
   char dtmfChar;
 
@@ -2344,28 +2355,30 @@ void CPhone::Iterate () {
   }
 
   // Log statistics ...
-  tNow = TicksMonotonicNow ();
-  if (tNow > LIBDATA.tLastStatusLog + TICKS_FROM_SECONDS (5)) {
-    pjmedia_echo_stat ecStat;
-    pj_status_t pjStatus;
-    char callStat[4096];
-    int callId;
+  if (envDebug >= 1) {
+    tNow = TicksNowMonotonic ();
+    if (tNow > LIBDATA.tLastStatusLog + TICKS_FROM_SECONDS (5)) {
+      pjmedia_echo_stat ecStat;
+      pj_status_t pjStatus;
+      char callStat[4096];
+      int callId;
 
-    callId = LIBDATA.pjCallId[0];
-    if (callId >= 0) {
-      pjStatus = pjsua_call_dump (LIBDATA.pjCallId[0], true, callStat, sizeof (callStat), "  ");
-      if (pjStatus != PJ_SUCCESS)
-        WARNINGF (("Failed to retrieve call statistics: %s", PjStrError (pjStatus)));
-      else
-        DEBUGF (1, ("Call statistics:\n%s", callStat));
+      callId = LIBDATA.pjCallId[0];
+      if (callId >= 0) {
+        pjStatus = pjsua_call_dump (LIBDATA.pjCallId[0], true, callStat, sizeof (callStat), "  ");
+        if (pjStatus != PJ_SUCCESS)
+          DEBUGF (1, ("Failed to retrieve call statistics: %s", PjStrError (pjStatus)));
+        else
+          DEBUGF (1, ("Call statistics:\n%s", callStat));
 
-      pjStatus = pjsua_get_ec_stat (&ecStat);
-      if (pjStatus != PJ_SUCCESS)
-        DEBUGF (1, ("No echo canceller statistics available: %s", PjStrError (pjStatus)));
-      else
-        DEBUGF (1, ("Echo canceller (%s): %s\n", ecStat.name, ecStat.stat_info));
+        pjStatus = pjsua_get_ec_stat (&ecStat);
+        if (pjStatus != PJ_SUCCESS)
+          DEBUGF (1, ("No echo canceller statistics available: %s", PjStrError (pjStatus)));
+        else
+          DEBUGF (1, ("Echo canceller (%s): %s\n", ecStat.name, ecStat.stat_info));
+      }
+
+      LIBDATA.tLastStatusLog = tNow;
     }
-
-    LIBDATA.tLastStatusLog = tNow;
   }
 }

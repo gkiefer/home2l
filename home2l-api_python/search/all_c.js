@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['onevent',['onEvent',['../group__home2l__rules.html#ga87092aaedb927af6fb87929cce8439d8',1,'home2l']]],
-  ['ontime',['OnTime',['../classhome2l_1_1CRcEventTimer.html#a40252b6d4a2c62a334be3b670c7b9964',1,'home2l::CRcEventTimer']]],
-  ['onupdate',['onUpdate',['../group__home2l__rules.html#gab239b272450aa2d04b65266b577aaf4f',1,'home2l']]],
-  ['origin',['Origin',['../classhome2l_1_1CRcRequest.html#a0857995082a30f455ff2d9fc258d96ec',1,'home2l::CRcRequest']]]
+  ['newdriver_101',['NewDriver',['../group__home2l__resources.html#ga5c3fde957bf9c8ab739ff056828e3101',1,'home2l']]],
+  ['newdriverresource_102',['NewDriverResource',['../group__home2l__resources.html#ga3edb260a1b362c55c1c40117c00db3c4',1,'home2l']]],
+  ['newgate_103',['NewGate',['../group__home2l__resources.html#ga93a0d7ab0520e7a8ed8dc738cde4a447',1,'home2l']]],
+  ['newresource_104',['NewResource',['../group__home2l__resources.html#gac4a23944374d16e5b7ebe60daf904c6f',1,'home2l']]],
+  ['newsignal_105',['NewSignal',['../group__home2l__resources.html#ga5f47038853aa762322925f27b6800688',1,'home2l']]]
 ];

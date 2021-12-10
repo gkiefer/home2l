@@ -52,7 +52,7 @@ static inline bool StreamerStateIsActive (EStreamerState s) { return s >= strBus
 void StreamerInit ();
 void StreamerDone ();
 
-void StreamerStart (const char *host, int port, TTicksMonotonic bufferDuration);
+void StreamerStart (const char *host, int port, TTicks bufferDuration);
 void StreamerStop ();
 
 EStreamerState StreamerIterate ();
@@ -61,7 +61,6 @@ EStreamerState StreamerState ();
 static inline bool StreamerIsRunning () { return StreamerStateIsActive (StreamerState ()); }
 
 const char *StreamerGetError (CString *s);   ///< @brief Return readable error message and reset the text internally.
-const char *StreamerGetError (); // (TTS)
 
 
 #define STREAMER_LEVEL_UNKNOWN -INT_MAX

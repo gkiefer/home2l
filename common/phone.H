@@ -83,6 +83,7 @@ extern const char *envPhoneRegister;
 extern const char *envPhoneSecret;
 
 extern const char *envPhoneRingbackFile;
+extern const char *envPhoneRingbackFileKey;
 extern float envPhoneRingbackLevel;
 
 extern int envPhoneRotation;

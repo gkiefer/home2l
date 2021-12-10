@@ -341,7 +341,7 @@ static inline bool IsKeyChar (char c) {
 
 
 
-void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
+void EnvReadIniFile (const char *fileName, CDictCompact<CString> *map) {
   CString fileBuf, line, valStr, s;
   int fd, lineNo;
   bool relevant, ok, prodVal, varVal, neg;
@@ -355,7 +355,7 @@ void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
   lineNo = 0;
   fd = open (fileName, O_RDONLY);
   if (fd < 0) ERRORF (("Unable to open '%s': %s", fileName, strerror (errno)));
-  while (fileBuf.AppendFromFile (fd)) while (fileBuf.ReadLine (&line)) {
+  while (fileBuf.AppendFromFile (fd, fileName)) while (fileBuf.ReadLine (&line)) {
     lineNo++;
     line.Strip ();
     ok = true;
@@ -424,7 +424,7 @@ void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
             // Quoted values end at the closing quote (everything behind is ignored) or end of line.
             // Unquoted values may end at a comment.
           if (*q == '\\') {
-            q++;
+            *(p++) = *(q++);                  // skip backslash-quoted characters to avoid them being interpreted as a closing quote
             if (!*q) { ok = false; break; }   // sudden end of line after '\'
           }
           *(p++) = *(q++);
@@ -440,9 +440,8 @@ void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
           EnvReadIniFile (EnvGetHome2lRootPath (&s, val), map);
         }
         else {
-          valStr.Set (val);
-          map->Set (key, &valStr);
-          //~ map->Set (key, new CString (val));
+          if (valStr.SetUnescaped (val)) map->Set (key, &valStr);
+          else WARNINGF (("Illegally escaped text for parameter '%s': '%s'", key, val));
         }
     }
     if (!ok) ERRORF (("Syntax error at '%s:%i'", fileName, lineNo));
@@ -456,7 +455,7 @@ void EnvReadIniFile (const char *fileName, CDictFast<CString> *map) {
 // *************************** Settings dictionary *****************************
 
 
-CDictFast<CString> envMap;
+CDictCompact<CString> envMap;
 
 
 
@@ -770,6 +769,7 @@ void EnvEnablePersistence (bool writeThrough, const char *_varFileName) {
 
 
 void EnvFlush () {
+  CString s;
   FILE *f;
   int n, idx0, idx1;
 
@@ -787,8 +787,8 @@ void EnvFlush () {
     return;
   }
   for (n = idx0; n < idx1; n++) {
-    // TBD: Properly escape special characters and quotes in the value string
-    if (fprintf (f, "%s = \"%s\"\n", envMap.GetKey (n), envMap.Get (n)->Get ()) < 0) {
+    s.SetEscaped (envMap.Get (n)->Get (), " *!$%&/()?+-@_,.;:<>");
+    if (fprintf (f, "%s = \"%s\"\n", envMap.GetKey (n), s.Get ()) < 0) {
       WARNINGF (("Unable to write to '%s': %s", strerror (errno)));
       fclose (f);
       return;
@@ -837,23 +837,40 @@ const char *EnvGet (const char *key) {
 const char *EnvPut (const char *key, const char *value) {
   CString valStr;
   int idx;
+  bool needFlush;
   //~ INFOF (("### Setting option: %s = %s", key, value));
 
+  // Handle persistence ...
+  needFlush = varPersistent;
+  if (varPersistent) if (strncmp (key, "var.", 4) != 0) needFlush = false;
+
   // Set the value...
-  idx = -1;
+  idx = envMap.Find (key);
   if (value) {
     valStr.SetC (value);
-    idx = envMap.Set (key, &valStr);
-    //~ idx = envMap.Set (key, new CString (value));
+    if (idx >= 0) {
+      // Change existing entry ...
+      if (envMap.Get (idx)->Compare (value) == 0) needFlush = false;
+      else envMap.SetValue (idx, &valStr);
+    }
+    else
+      // Add new entry ...
+      idx = envMap.Set (key, &valStr);
     //~ INFOF (("###   value = %08x, valStr.ptr = %08x, envMap.Get ()->Get () = %08x", value, valStr.Get (), envMap.Get (key)->Get ()));
   }
-  else
-    envMap.Del (key);
+  else {
+    // Delete value ...
+    if (idx >= 0) {
+      envMap.Del (idx);
+      idx = -1;
+    }
+    else needFlush = false;     // was already deleted
+  }
 
   // Handle persistence...
-  if (varPersistent) if (strncmp (key, "var.", 4) == 0) {
+  if (needFlush) {
     varDirty = true;
-    if (varWriteThrough) EnvFlush ();
+    EnvFlush ();
   }
 
   // Done...
@@ -922,9 +939,10 @@ bool EnvGetPath (const char *key, const char **ret, const char *path, bool warnI
 }
 
 
-const char *EnvGetPath (const char *key, const char *defaultVal, const char *path, bool warnIfMissing) {
-  EnvGetPath (key, &defaultVal, path, warnIfMissing);
-  return defaultVal;
+const char *EnvGetPath (const char *key, const char *path, bool warnIfMissing) {
+  const char *ret = NULL;
+  EnvGetPath (key, &ret, path, warnIfMissing);
+  return ret;
 }
 
 
@@ -1069,7 +1087,6 @@ CEnvPara::CEnvPara (const char *_key, EEnvParaType _type, void *_pVar) {
 
 void CEnvPara::GetAll (bool withVarKeys) {
   CEnvPara *ep, **pEp;
-  //~ bool isVarKey;
 
   pEp = &first;
   while ( (ep = *pEp) ) {
@@ -1082,8 +1099,8 @@ void CEnvPara::GetAll (bool withVarKeys) {
         case eptPath:
           if (!EnvGet (ep->key)) EnvPut (ep->key, * (const char **) ep->pVar);
             // If the parameter has not been set by the user, set it here anyway.
-            // This will cause it to be converted to an absolute path by the following line.
-          EnvGetPath (ep->key, (const char **) ep->pVar);
+            // This allows to convert it easily to an absolute path later by calling:
+            // EnvGetPath (<varname>Key, &varName);
           break;
         case eptInt:
           EnvGetInt (ep->key, (int *) ep->pVar);

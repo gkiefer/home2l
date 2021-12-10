@@ -1,0 +1,5 @@
+<map id="CListRef&lt; T &gt;" name="CListRef&lt; T &gt;">
+<area shape="rect" id="node1" title="Reference list." alt="" coords="5,155,112,181"/>
+<area shape="rect" id="node2" href="$classCList.html" title="Dynamic list." alt="" coords="16,80,101,107"/>
+<area shape="rect" id="node3" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="19,5,99,32"/>
+</map>

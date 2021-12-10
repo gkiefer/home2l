@@ -1,3 +1,4 @@
 <map id="Date and Time" name="Date and Time">
-<area shape="rect" id="node2" href="$group__common.html" title="Common definitions and classes for all Home2L components. " alt="" coords="5,5,80,32"/>
+<area shape="rect" id="node1" title="Various definitions related to date and time handling." alt="" coords="128,5,236,31"/>
+<area shape="rect" id="node2" href="$group__common.html" title="Common definitions and classes for all Home2L components." alt="" coords="5,5,80,31"/>
 </map>

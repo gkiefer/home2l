@@ -156,7 +156,7 @@ class CWidgetVideo: public CWidget {
     int streamId;
     SDL_Texture *texVideo;
 
-    TTicksMonotonic missingVideoTime;
+    TTicks missingVideoTime;
     SDL_Surface *surfInCall;
 };
 
@@ -170,7 +170,7 @@ void CWidgetVideo::Setup (CPhone *_phone, SDL_Rect _maxArea, int _streamId) {
     SDL_DestroyTexture (texVideo);
     texVideo = NULL;
   }
-  if (streamId >= 0) missingVideoTime = TicksMonotonicNow ();
+  if (streamId >= 0) missingVideoTime = TicksNowMonotonic ();
   else missingVideoTime = -1;
 }
 
@@ -241,13 +241,13 @@ void CWidgetVideo::Iterate () {
     // Trigger drawing...
     if (p->data || p->planeY) {
       Changed ();
-      missingVideoTime = TicksMonotonicNow ();
+      missingVideoTime = TicksNowMonotonic ();
     }
   }
   else {
 
     // Check for time-out without picture...
-    if (missingVideoTime >= 0 && TicksMonotonicNow () > missingVideoTime + 1000) {
+    if (missingVideoTime >= 0 && TicksNowMonotonic () > missingVideoTime + 1000) {
       missingVideoTime = -1;
 
       // Remove texture...
@@ -317,23 +317,23 @@ class CScreenPhone: public CScreen {
 
     void Iterate ();
 
-    // Phone state...
+    // Phone state ...
     EPhoneState GetState () { return phone.GetState (); }
 
-    // Image view...
+    // Image view ...
     void SetImage (SDL_Surface *_surfImage, bool blinking = false);   // implies 'EnableImage (true)'
     void EnableImage (bool enable = true);
 
-    // Callbacks for Linphone...
+    // Callbacks for SIP backend ...
     void OnPhoneStateChanged (EPhoneState oldState);
     void ShowInfo (const char *msg);
 
-    // Button actions...
+    // Button actions ...
     void OnActionButton (EPhoneAction action);
     void OnDialButton (char c);
     void OnFavButton (int favId);
 
-    // High-level actions...
+    // High-level actions ...
     bool Dial (const char *url, CScreen *_returnScreen = NULL);
 
   protected:
@@ -343,11 +343,11 @@ class CScreenPhone: public CScreen {
     void UpdateInputLine ();
     void AdvanceOpenDoor ();
 
-    // Phone...
+    // Phone ...
     CPhone phone;
     CScreen *returnScreen;                // if != NULL: Screen to activate when idle
 
-    // UI elements...
+    // UI elements ...
     CButton btnHangup, btnCall,           // general
             btnBack, btnBackspace,        // psIdle
             btnAcceptMuted,               // psRinging
@@ -356,22 +356,22 @@ class CScreenPhone: public CScreen {
     CWidget wdgImage, wdgInfo;      // general
     SDL_Surface *surfInfo;
 
-    // Idle view...
+    // Idle view ...
     CButton btnsDialPad[12], btnsFavorites[10];
     CWidget wdgInput;
     SDL_Surface *surfInput;
     char input[MAX_URL+1];
     char favNames[10][MAX_FAVNAME+1], favUrls[10][MAX_URL+1];
 
-    // Ringing view...
+    // Ringing view ...
     SDL_Surface *surfImage;
     bool imageEnabled;
-    TTicksMonotonic imageBlinkTime;
+    TTicks imageBlinkTime;
 
-    // In-call view...
+    // In-call view ...
     CWidgetVideo wdgVideoMain, wdgVideoSmall;
 
-    // Door-related...
+    // Door-related ...
     CRegex camRegex, doorRegex;
     bool peerIsDoor;    // set, if the peer has been identified as a door phone
     bool openDoor;      // if set, the "open door" sequence is in progress
@@ -402,8 +402,26 @@ static void CbFavButton (class CButton *, bool, void *data) {
 // ***** Phone Callbacks *****
 
 
-static void CbPhoneStateChanged (void *, EPhoneState oldState) {
+static void CbPhoneStateChanged (void *_phone, EPhoneState oldState) {
+  CPhone *phone = (CPhone *) _phone;
+  ERctPhoneState reportedState;
+
+  // Notify applet ...
   scrPhone->OnPhoneStateChanged (oldState);
+
+  // Report to resource ...
+  switch (phone->GetState ()) {
+    case psNone:
+    case psIdle:                 ///< Phone is idle.
+      reportedState = rcvPhoneIdle;
+      break;
+    case psRinging:
+      reportedState = rcvPhoneRinging;
+      break;
+    default:
+      reportedState = rcvPhoneInCall;
+  }
+  SystemReportPhoneState (reportedState);
 }
 
 
@@ -568,7 +586,7 @@ void CScreenPhone::Setup () {
   wdgVideoSmall.Setup (&phone, Rect (imageArea.x+imageArea.w*3/4, imageArea.y+imageArea.h*3/4, imageArea.w/4, imageArea.h/4));
 
   // Set phone callbacks...
-  phone.SetCbPhoneStateChanged (CbPhoneStateChanged);
+  phone.SetCbPhoneStateChanged (CbPhoneStateChanged, &phone);
   phone.SetCbInfo (CbShowInfo);
 
   // Draw Screen...
@@ -589,7 +607,7 @@ void CScreenPhone::Iterate () {
 
   // Blinking image...
   if (imageBlinkTime >= 0) {
-    t = TicksMonotonicNow ();
+    t = TicksNowMonotonic ();
     if (t > imageBlinkTime + 500) {
       EnableImage (!imageEnabled);
       if (t > imageBlinkTime + 1500) imageBlinkTime = t;
@@ -619,7 +637,7 @@ void CScreenPhone::SetImage (SDL_Surface *_surfImage, bool blinking) {
   wdgImage.SetArea (r);
   imageEnabled = false;
   EnableImage (true);
-  imageBlinkTime = blinking ? TicksMonotonicNow () : -1;
+  imageBlinkTime = blinking ? TicksNowMonotonic () : -1;
 }
 
 
@@ -973,7 +991,8 @@ void CScreenPhone::OnFavButton (int favId) {
 bool CScreenPhone::Dial (const char *url, CScreen *_returnScreen) {
   returnScreen = _returnScreen;
   DEBUGF (1, ("Dialing '%s' - camRegex matches: %i", url, (int) camRegex.Match (url)));
-  SetCamOn (camRegex.Match (url) && !doorRegex.Match (url));
+  peerIsDoor = doorRegex.Match (url);
+  SetCamOn (camRegex.Match (url) && !peerIsDoor);
   return phone.Dial (url);
 }
 
@@ -998,9 +1017,12 @@ void *AppFuncPhone (int appOp, void *data) {
   switch (appOp) {
 
     case appOpInit:
+      EnvGetPath (envPhoneRingFileKey, &envPhoneRingFile);
+      EnvGetPath (envPhoneRingFileDoorKey, &envPhoneRingFileDoor);
       scrPhone = new CScreenPhone ();
       scrPhone->Setup ();
       iterationTimer.Set (0, 32, CbIterationTimer, scrPhone);
+      SystemReportPhoneState (rcvPhoneIdle);
       return APP_INIT_OK;
 
     case appOpDone:

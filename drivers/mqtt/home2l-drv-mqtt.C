@@ -303,7 +303,7 @@ class CMqttImport {
     const char *ReqTopic () { return reqTopic.Get (); }
     const char *ValidTopic () { return validTopic.Get (); }
 
-    const char *ToStr () { return CString::emptyStr; }
+    const char *ToStr (CString *) { return CString::emptyStr; }
 
     // (Try to) initialize object ...
     bool Init (const char *key, const char *id, const char *desc) {

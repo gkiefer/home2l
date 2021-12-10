@@ -437,7 +437,10 @@ void CScreen::DelAllWidgets () {
 
 void CScreen::DoAddWidget (CWidget **pFirst, CWidget *widget, int layer) {
   CWidget **pNext;
-  if (widget->screen == this) return;     // is already added
+
+  // Sanity ...
+  if (widget->screen == this) DoDelWidget (pFirst, widget);
+    // widget is already on screen: Delete and let it be re-inserted on top
 
   // Link to 'this' screen...
   widget->canvas = NULL;
@@ -450,7 +453,7 @@ void CScreen::DoAddWidget (CWidget **pFirst, CWidget *widget, int layer) {
   widget->next = *pNext;
   *pNext = widget;
 
-  // Markchanged ...
+  // Mark changed ...
   Changed ();
 }
 
@@ -535,6 +538,28 @@ bool CScreen::HandleEvent (SDL_Event *ev) {
 void CScreen::RenderUpdate () {
   SDL_Renderer *ren;
 
+  //~ // Profiling ...
+  //~ if (true) {
+    //~ CString s, s2;
+    //~ CWidget *w;
+    //~ int n, nChanged;
+
+    //~ if (!activeScreen || emulateOff)
+      //~ s2.SetC ("Screen off.");
+    //~ else {
+      //~ if (!changed)
+        //~ s2.SetC ("No change.");
+      //~ else {
+        //~ nChanged = 0;
+        //~ for (n = 0, w = activeScreen->firstWidget; w; w = w->next, n++)
+          //~ if (!w->texture) nChanged++;
+        //~ s2.SetF ("%3i/%3i widgets changed.", nChanged, n);
+      //~ }
+    //~ }
+    //~ INFOF (("%s: CScreen::RenderUpdate (): %s", TicksAbsToString (&s, TicksNow ()), s2.Get ()));
+  //~ }
+
+  // Go ahead ...
   if (!activeScreen || emulateOff) {
     // Clear the SDL window ...
     ren = UiGetSdlRenderer ();

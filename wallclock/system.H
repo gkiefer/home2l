@@ -36,7 +36,7 @@
  */
 
 
-#include "ui_base.H"
+#include "resources.H"
 
 
 
@@ -194,7 +194,7 @@ void SystemReportUiVisibility (bool foreNotBack);
 /// @{
 
 
-class CResource *SystemGetMuteRc ();
+CResource *SystemGetMuteRc ();
   ///< @brief Get the "mute" resource.
 void SystemMute (const char *reqName);
   ///< @brief Mute.
@@ -240,9 +240,9 @@ void SystemSetAudioPhone ();
 /// @{
 
 
-class CResource *SystemGetBluetoothRc ();
+CResource *SystemGetBluetoothRc ();
   ///< @brief Get readable/writable resource to indicate if bluetooth is generally on.
-class CResource *SystemGetBluetoothAudioRc ();
+CResource *SystemGetBluetoothAudioRc ();
   ///< @brief Get read-only resource to indicate if BT audio (output) is available.
 
 bool SystemBluetoothGetState (bool *retBusy = NULL, bool *retAudio = NULL);
@@ -253,6 +253,26 @@ void SystemBluetoothSet (bool enable);
   ///< @brief Generally enable or disable Bluetooth.
 static inline void SystemBluetoothToggle () { SystemBluetoothSet (!SystemBluetoothGetState ()); }
   ///< @brief Toggle the Bluetooth enable status.
+
+
+/// @}
+
+
+
+
+
+// *************************** Phone State *************************************
+
+
+/// @name Phone State
+/// @{
+
+
+CResource *SystemGetPhoneStateRc ();
+  ///< @brief Get readable resource indicating the reported phone state (may be NULL, if not present).
+
+void SystemReportPhoneState (ERctPhoneState _phoneState);
+  ///< @brief Report phone state to the phone state resource.
 
 
 /// @}

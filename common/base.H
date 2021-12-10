@@ -99,13 +99,13 @@
 /// @name Enhanced file and directory operations ...
 /// @{
 size_t Write (int fd, const void *buf, size_t count);
-  ///< @brief Similar to POSIX write(), but returns all 'count' bytes as possible.
+  ///< @brief Similar to POSIX write(), but writes all 'count' bytes as possible.
   ///
   /// This function repeatedly calls write(2) until 'count' bytes have been written.
   /// On error, the actual number of bytes written is returned (which is less than
   /// 'count'), and 'errno' is set accordingly.
   /// If the file is opened in non-blocking mode, the function does not wait, but
-  /// returns the bytes available immediately and sets/leaves 'errno == EAGAIN'.
+  /// writes as many bytes as possible immediately and sets/leaves 'errno == EAGAIN'.
   /// @return the number of bytes written successfully.
 
 size_t Read (int fd, void *buf, size_t count);
@@ -474,23 +474,6 @@ void LangTranslateNumber (char *str);
  * should be documented with the method or class. If unspecified, a pointer
  * returned by a class method is valid until the respective object is destructed.
  *
- *
- * A note on thread-temporary strings (TTS)
- * ----------------------------------------
- *
- * Often, functions are supposed to return a string as a return value
- * ('const char *f (,..)') for which the caller should not need to take
- * responsibility. Examples are the various 'ToStr ()' methods.
- *
- * For these situations, the function 'GetThreadTempString ()' returns
- * a single CString object that can be used globally. To avoid
- * synchronization issues, there is one thread-temporary string (TTS)
- * per thread.
- *
- * Functions using the TTS are marked with "TTS". Callers must take care
- * that the returned pointer is valid only until the next function labelled with
- * "TTS" is called (or until it uses the TTS itself).
- *
  * @{
  */
 
@@ -503,15 +486,24 @@ void LangTranslateNumber (char *str);
 
 class CString *GetThreadTempString ();
   ///< @brief Get the thread-local temporary string (TTS) of the calling thread.
-static inline class CString *GetTTS () { return GetThreadTempString (); }
-  ///< @brief Get the TTS (same as above, but shorter).
+  ///
+  /// Sometimes, functions return a string and require the 'CString' object to
+  /// be provided by the caller. Examples are the various 'ToStr ()' methods.
+  ///
+  /// This function 'GetThreadTempString ()' returns a single CString object that
+  /// can be used globally. To avoid synchronization issues, there is one
+  /// thread-temporary string (TTS) per thread.
+  ///
+  /// Use it and the @ref TTS macro with care! By convention, it is not allowed
+  /// to call any function or method outside of this module (@ref common)
+  /// between the first use of @ref TTS and the last use of the returned
+  /// 'const char *' string.
+
+#define TTS (GetThreadTempString ())
+  ///< @brief Get the thread-local temporary string (TTS) of the calling thread (short version).
 
 const char *StringF (class CString *ret, const char *fmt, ...);
   ///< @brief Return 'ret->Get ()'
-const char *StringF (const char *fmt, ...);
-  ///< @brief (TTS) Create a formatted string (linke `sprinf()`, but with inlimited length).
-  /// Returned pointer is valid until the next TTS usage.
-
 
 bool BoolFromString (const char *str, bool *ret);
   ///< @brief Convert a string to a Boolean value.
@@ -539,7 +531,9 @@ float ValidFloatFromString (const char *str, float defaultVal);
   ///< @brief Convert a string to a float value. On failure, 'defaultVal' is returned.
 
 void StringStrip (char *str, const char *sepChars = WHITESPACE);
-  ///< @brief Remove seperator (whitespace) characters at the beginning and end of the string
+  ///< @brief Remove seperator (whitespace) characters at the beginning and end of the string.
+void StringTruncate (char *str, const char *sepChars = WHITESPACE, bool after = false);
+  ///< @brief Cut away anything from or after the first occurence of any of the given seperator characters.
 void StringSplit (const char *str, int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = NULL, char **retRef = NULL);
   ///< @brief Split a string into (whitespace-)separated arguments.
   ///
@@ -575,8 +569,6 @@ void PathNormalize (char *str);             ///< Treat string as a (full) pathna
 void PathRemoveTrailingSlashes (char *str); ///< Treat string as a (full) pathname and remove trailing slash(es)
 const char *PathLeaf (const char *str);     ///< Get leaf component of a path
 
-const char *GetAbsPath (const char *relOrAbsPath, const char *defaultPath);
-  ///< @brief (TTS) Get absolute path.
 const char *GetAbsPath (class CString *ret, const char *relOrAbsPath, const char *defaultPath);
   ///< @brief Get absolute path.
   /// @param ret String to write the result to
@@ -592,11 +584,11 @@ const char *GetAbsPath (class CString *ret, const char *relOrAbsPath, const char
 
 /// @name Transcoding ...
 /// @{
-const char *ToUtf8 (const char *iso8859str);
-  ///< @brief (TTS) Transcode an ISO8859-coded string to UTF-8.
+const char *ToUtf8 (class CString *ret, const char *iso8859str);
+  ///< @brief Transcode an ISO8859-coded string to UTF-8.
   /// Result is valid until next call of this function.
-const char *ToIso8859 (const char *str);
-  ///< @brief (TTS) Transcode an ISO8859-coded string to UTF-8.
+const char *ToIso8859 (class CString *ret, const char *str);
+  ///< @brief Transcode an ISO8859-coded string to UTF-8.
   /// Result is valid until next call of this function.
 /// @}
 
@@ -623,8 +615,6 @@ class CString {
     ///@{
     void Clear () { SetC (emptyStr); }
     void Set (char c) { Clear (); Insert (0, c); }
-    void Set (const CString *str) { Set (str->Get ()); }
-    void Set (const CString *str, int n0, int dn = INT_MAX) { Set (str->Get () + n0, dn); }
     void Set (const char *str, int maxLen = INT_MAX);
       ///< @brief Set (substring) from 'str'.
     void SetF (const char *fmt, ...);
@@ -644,7 +634,7 @@ class CString {
       ///< @brief Set content and take ownership of '_ptr'.
       /// '_ptr' must have been dynamically allocated, since it will be free'd later using 'free ()'.
     char *Disown ();
-      ///< @brief Release ownership.
+      ///< @brief Return current string as a dynamic object and clear 'this'.
       ///
       /// The caller is responsible for freeing the pointer later using free().
       ///
@@ -666,7 +656,7 @@ class CString {
 
     /// @name Read access ...
     ///@{
-    const char *Get () const { return ptr; }    ///< Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer
+    char *Get () const { return ptr; }    ///< Get the C string. Unless explicitely set by 'SetC', this will never return NULL or an invalid pointer
     int Len () { return strlen (ptr); }   ///< Get the length.
     bool IsEmpty () { return ptr[0] == '\0'; }  ///< Check, if empty.
     ///@}
@@ -689,11 +679,10 @@ class CString {
 
     /// @name Extras ...
     ///@{
-    int LFind (char c);
-    int RFind (char c);
     int Compare (const char *str2);
 
     void Strip (const char *sepChars = WHITESPACE);
+    void Truncate (const char *sepChars = WHITESPACE, bool after = false);
 
     void Split (class CSplitString *args, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE);
     void Split (int *retArgc, char ***retArgv, int maxArgc = INT_MAX, const char *sepChars = WHITESPACE) { StringSplit (ptr, retArgc, retArgv, maxArgc, sepChars); }
@@ -704,9 +693,9 @@ class CString {
       ///< @brief Split 'text' into lines and reassembles the text by processing each line through sprintf and 'fmt'.
       /// 'fmt' must contain no more than "%s" (or similar) conversion modifier and should contain a trailing '\n'.
 
-    void AppendEscaped (const char *s, int maxChars = INT_MAX);
+    void AppendEscaped (const char *s, const char *dontEscape = NULL);
       ///< @brief Same as 'Set...', but appending the result to the current srtring.
-    void SetEscaped (const char *s, int maxChars = INT_MAX) { Clear (); AppendEscaped (s, maxChars); }
+    void SetEscaped (const char *s, const char *dontEscape = NULL) { Clear (); AppendEscaped (s, dontEscape); }
       ///< @brief Set and escape all non-alphanumerical characters by "\...".
       ///
       /// If 's' is empty, "\0" is appended, so that the resulting string is never empty.
@@ -714,8 +703,11 @@ class CString {
       /// In addition to the C standard, the following sequences may occur here:
       /// `'\\s' == ' ' (space)`
       ///
-      /// The resulting string does not contain any other characters besides '0'...'9', 'a'...'z', 'A'...'Z' and '\'.
-      /// Even spaces are not contained.
+      /// By default, the resulting string does not contain any other characters besides
+      /// '0'...'9', 'a'...'z', 'A'...'Z' and '\'. Even spaces are not contained.
+      ///
+      /// The 'dontEscape' parameter is a pragmatical option to improve the human-readability and
+      /// memory consumption of the result. If set, characters in 'dontEscape' are not escaped.
 
     bool AppendUnescaped (const char *s);
       ///< @brief Same as 'Set...', but appending the result to the current srtring.
@@ -740,10 +732,11 @@ class CString {
     bool ReadFile (const char *relOrAbsPath);
       ///< @brief Read a complete text file into a string.
       /// The path may be absolute or relative to HOME2L_ROOT.
-    bool AppendFromFile (int fd);
+    bool AppendFromFile (int fd, const char *name = NULL);
       ///< @brief Read as much as possible from 'fd' and append to buffer.
       /// If an end-of-file is encountered, 'false' is returned. 'fd' is NOT closed automatically.
       /// This method can be used to read a file (or pipe or socket) asynchronously.
+      /// The optional argument 'name' is the stream name logged in case of an error/warning.
     bool ReadLine (CString *ret);
       ///< @brief Consume and optionally return the first line from 'this'.
       /// On success, 'true' is returned. If no complete line is available, 'false' is returned
@@ -754,25 +747,25 @@ class CString {
 
     /// @name Operators ...
     /// @{
-    operator const char * () { return ptr; }
+    operator char * () { return ptr; }
 
     CString& operator = (const CString &str) { Set (str.Get ()); return *this; }
     CString& operator = (const char *str) { Set (str); return *this; }
-    char& operator [] (int n) { return ptr [n]; }
+    char& operator [] (int n) { return n >= 0 ? ptr [n] : ptr [strlen (ptr) + n]; }
     CString operator + (const char *str);
     CString& operator += (char c) { Append (c); return *this; }
     CString& operator += (const char *str) { Append (str); return *this; }
 
-    bool operator < (char *str) { return Compare (str) < 0; }
-    bool operator > (char *str) { return Compare (str) > 0; }
-    bool operator <= (char *str) { return Compare (str) <= 0; }
-    bool operator >= (char *str) { return Compare (str) >= 0; }
-    bool operator == (char *str) { return Compare (str) == 0; }
-    bool operator != (char *str) { return Compare (str) != 0; }
+    bool operator < (const char *str) { return Compare (str) < 0; }
+    bool operator > (const char *str) { return Compare (str) > 0; }
+    bool operator <= (const char *str) { return Compare (str) <= 0; }
+    bool operator >= (const char *str) { return Compare (str) >= 0; }
+    bool operator == (const char *str) { return Compare (str) == 0; }
+    bool operator != (const char *str) { return Compare (str) != 0; }
     ///@}
 
     // Interfaces ...
-    const char *ToStr () { return Get (); }   // (internal, for 'CDict')
+    const char *ToStr (CString *) { return Get (); }   // (internal, for 'CDict')
 
   protected:
     void SetSize (int _size);
@@ -883,46 +876,253 @@ class CRegex {
 
 
 
-// ********************** Dictionaries and key sets ****************************
+// ********************** Container Classes ************************************
 
 
 /** @defgroup common_containers Containers
- * @brief Lightweight container classes for dictionaries and key sets.
+ * @brief Lightweight container classes for lists, dictionaries and key sets.
  *
  * @{
  */
 
 
-#define DICT_ALIGNMENT 4
-#define DICT_ALIGN(X) (((X) + DICT_ALIGNMENT - 1) & ~(DICT_ALIGNMENT - 1))
+#define CONT_ALIGNMENT 4
+#define CONT_ALIGN(X) (((X) + CONT_ALIGNMENT - 1) & ~(CONT_ALIGNMENT - 1))
 
-#define DICT_KEYSIZE DICT_ALIGN((int) sizeof (CString))
+
+
+// ***** Stringification of container values ****
+
+
+// Template for all classes, which must have a 'ToStr()' method ...
+template <typename T> const char *ToStr (CString *ret, T *obj) { return obj->ToStr (ret); }
+
+// Specializations for non-class types (more specializations may be added here as required) ...
+template <> const char *ToStr<int> (CString *ret, int *obj);
+
+
+
+// ***** CList... *****
+
+
+/** @brief Raw list (base class for other list variants).
+ *
+ * This class stores typeless value data and is the base class for the other
+ * list classes. It should not be used directly.
+ */
+class CListRaw {
+  public:
+    CListRaw (int _recSize);
+    virtual ~CListRaw () { Clear (); }
+
+    /// @name Read access ...
+    /// @{
+    int Entries () const { return entries; }
+      ///< @brief Get number of entries.
+    /// @}
+
+    /// @name Write access ...
+    /// @{
+    void Clear () { SetEntries (0); }
+      ///< @brief Clear the list.
+    void Del (int idx);
+      ///< @brief Delete entry; complexity is O(n).
+    /// @}
+
+    /// @name Debugging ...
+    /// @{
+    virtual void Dump (const char *name);   ///< Dump contents by means of `INFO` logs (for debugging)
+    /// @}
+
+  protected:
+
+    // Methods to be overloaded by derived classes ...
+    virtual void RecInit (void *p);
+      // Initialize record in previously uninitialized memory.
+      // This method is also used to wipe entries that have been copied and are no longer owned.
+    virtual void RecClear (void *p);
+      // Clear (initialized) record such that no destructor call is necessary anymore.
+
+    virtual void ValueInit (void *p) {}
+      // Initialize value data in previously uninitialized memory
+    virtual void ValueClear (void *p) {}
+      // Clear (initialized) record such that no destructor call is necessary anymore
+    virtual void ValueSet (void *p, void *orig) {}
+      // Copy or move 'orig' to 'p' properly. Both are initialized objects.
+      // The derived class must specify whether 'orig' is copied or moved (= disowned) by this
+      // and document the behavior for
+    virtual const char *ValueToStr (CString *ret, void *p);
+                                          // return readable string for the 'Dump' method
+
+    // Helpers for derived classes ...
+    void SetEntries (int _entries);
+
+    uint8_t *GetRecAdr (int idx) const { return idx < 0 ? NULL : data + recSize * idx; }
+      // Get memory address of whole record (including eventual tag)
+    uint8_t *GetValueAdr (int idx) const { return idx < 0 ? NULL : data + recSize * idx + tagSize; }
+      // Get memory address of the value part of the record (for '...Compact' classes)
+    void *GetValuePtr (int idx) const { return idx < 0 ? NULL : * (void **) (GetValueAdr (idx)); }
+      // Take the value part inside the record as a pointer to the real value and dereference it (for non-compact classes)
+
+    void Copy (int idxDst, int idxSrc);   // byte-copy entry
+    void Swap (void *rec0, void *rec1);   // byte-swap two entries (potentially from different objects)
+
+    void SetRaw (int idx, void *value);
+      // Set a new entry. The entry must exist and 'idx' be valid.
+      // 'value' may either be copied or moved, see comment to 'ValueSet()'.
+    void InsertRaw (int idx, void *value);
+      // Insert a new entry in position 'idx'.
+      // 'value' may either be copied or moved, see comment to 'ValueSet()'.
+
+    // Data ...
+    uint8_t *data;
+    int recSize, tagSize, entries, allocEntries;
+      // 'tagSize' is an offset inside a record. It can be used by derived classes,
+      //  e.g. by 'CDictRaw' to reserve space for keys.
+};
+
+
+/** @brief Dynamic list.
+ *
+ * A list stores an arbitrary number typed objects retaining the order of objects.
+ * Internally, the entries are stored in an array, which is dynamically resized as adequate.
+ *
+ * The values are dynamically allocated objects, to which pointers are stored in the array.
+ * All 'Set...' methods require dynamic objects to be passed and take over their ownerships.
+ * On element deletion, these objects are deleted. It is legal to pass NULL to 'Set...' methods.
+ */
+template <typename T> class CList: public CListRaw {
+  public:
+    CList (): CListRaw (sizeof (T *)) {}
+
+    /// @name Read access ...
+    /// @{
+    T *Get (int idx) { return (T *) GetValuePtr (idx); }
+    T *operator [] (int idx) { return Get (idx); }
+    /// @}
+
+    /// @name Write access ...
+    /// For any operations passing a new value object, the list takes over the ownership:
+    /// The pointer passed as 'value' remains valid until the entry is deleted from the list.
+    /// Then it will be free'd using 'delete'.
+    /// @{
+    void Set (int idx, T *value) { SetRaw (idx, value); }
+      ///< @brief Set (replace) a value.
+      /// The entry must exist and 'idx' be valid. Complexity is O(1).
+    void Insert (int idx, T *value) { InsertRaw (idx, value); }
+      ///< @brief Insert a new value.
+      /// Complexity is O(n).
+    void Append (T *value) { InsertRaw (INT_MAX, value); }
+      ///< @brief Append a new value.
+      /// Complexity is O(1) if no resizing is necessary, else O(1).
+    T *Disown (int idx) { T *ret = Get (idx); RecInit (ret); return ret; }
+      ///< @brief Disown a value and clear it in the array.
+    /// @}
+
+  protected:
+    virtual void ValueInit (void *p) { * (T **) p = NULL; }
+    virtual void ValueClear (void *p) { if (* (T**) p) { delete * (T **) p; * (T **) p = NULL; } }
+    virtual void ValueSet (void *p, void *orig) { ValueClear (p); * (T**) p = (T*) orig; }
+    virtual const char *ValueToStr (CString *ret, void *p) { return ::ToStr<T> (ret, * (T**) p); }
+};
+
+
+/** @brief Compact list.
+ *
+ * This class is similar to @ref CList, but stores the value objects in one big array
+ * and may therefore be more efficient in some cases. In particular, the memory layout
+ * is more compact, and read accesses as well as changes to individual entries are faster.
+ * On the other hand, adding or removing entries may be more time consuming for
+ * large objects.
+ *
+ * The type 'T' must fulfill the following properties:
+ * 1. The default constructor must not allocate any dynamic data.
+ *    (A sample object will be copied using 'memcpy' to construct other objects.)
+ * 2. It must be location-invariant, since it may be moved in memory.
+ *    In particular, if elements are inserted or deleted, no pointers
+ *    to dictionary elements must exist anywhere.
+ * 3. The '=' operator must be defined appropriately.
+ * 4. The '=' operator must free any dynamic data if the sample object is assigned.
+ */
+template <typename T> class CListCompact: public CListRaw {
+  public:
+    CListCompact (): CListRaw (sizeof (T)) {}
+    virtual ~CListCompact () { Clear (); }
+
+    /// @name Read access ...
+    /// @{
+    T *Get (int idx) { return (T *) GetValueAdr (idx); }
+    T *operator [] (int idx) { return Get (idx); }
+    /// @}
+
+    /// @name Write access ...
+    /// For any operations passing a new value object, the object is copied.
+    /// @{
+    void Set (int idx, T *value) { SetRaw (idx, value); }
+      ///< @brief Set (replace) a value.
+      /// The entry must exist and 'idx' be valid. Complexity is O(1).
+    void Insert (int idx, T *value) { InsertRaw (idx, value); }
+      ///< @brief Insert a new value.
+      /// Complexity is O(n).
+    void Append (T *value) { InsertRaw (INT_MAX, value); }
+      ///< @brief Append a new value.
+      /// Complexity is O(1) if no resizing is necessary, else O(1).
+    /// @}
+
+  protected:
+    virtual void ValueInit (void *p) { memcpy (p, &emptyObj, sizeof (emptyObj)); }
+    virtual void ValueClear (void *p) { ValueSet (p, &emptyObj); }
+    virtual void ValueSet (void *p, void *orig) { * (T *) p = * (T *) orig; }
+    virtual const char *ValueToStr (CString *ret, void *p) { return ::ToStr<T> (ret, (T*) p); }
+
+    T emptyObj;   // Template for an initialized object
+};
+
+
+/** @brief Reference list.
+ *
+ * This class is similar to @ref CList, but stores references to named objects
+ * without taking over ownership.
+ */
+template <typename T> class CListRef: public CList<T> {
+  protected:
+    virtual void ValueClear (void *p) { * (T **) p = NULL; }
+    virtual void ValueSet (void *p, void *orig) { * (T**) p = (T*) orig; }
+};
+
+
+
+// ***** CDict... *****
+
+
+#define DICT_KEYSIZE CONT_ALIGN((int) sizeof (CString))
 
 
 /** @brief Raw dictionary (base class for other dictionary variants).
  *
- * A dictionary stores arbitrary (key, value) pairs. The key is always of type
- * `CString` / `const char *`. Internally, the dictionary is stored as one
- * array containing the keys and an arbitrary (constant) number of bytes as
- * a value payload.
- *
- * This class stored typeless value data and is the base class for the other
+ * This class stores typeless value data and is the base class for the other
  * dirctionary classes. It should not be used directly.
  */
-class CDictRaw {
+class CDictRaw: public CListRaw {
   public:
-    CDictRaw (int _valueSize) { data = NULL; recSize = DICT_KEYSIZE + DICT_ALIGN(_valueSize); entries = allocEntries = 0; }
-    virtual ~CDictRaw () { Clear (); }
+    CDictRaw (int _valueSize): CListRaw (_valueSize + DICT_KEYSIZE) { tagSize = DICT_KEYSIZE; }
 
-    void Clear () { SetEntries (0); }
+    /// @name Read access ...
+    /// @{
+    void Del (int idx) { CListRaw::Del (idx); }
+      ///< @brief Delete entry; complexity is O(n).
+      ///
+      /// Entries with indices < 'idx' remain unchanged, all other entries may be modified.
+      /// This is important to consider if, for example, multiple entries are to be deleted in a loop.
+      /// Such a loop is legal if it traverses the indices in reverse order.
+    void Del (const char *key) { Del (Find (key)); }
+      ///< @brief Delete entry by key; complexity is O(n).
+    /// @}
 
-    void Del (int idx);   ///< Delete entry; complexity is O(n).
-    void Del (const char *key) { Del (Find (key)); }  ///< Delete entry; complexity is O(n).
-
-    int Entries () const { return entries; }    ///< Get number of entries.
-
-    const char *GetKey (int idx) const { return ((CString *) GetKeyAdr (idx))->Get (); }
-
+    /// @name Write access ...
+    /// @{
+    const char *GetKey (int idx) const { return ((CString *) GetRecAdr (idx))->Get (); }
+      ///< @brief Get key by index.
     int Find (const char *key, int *retInsIdx = NULL);
       ///< @brief Make binary search and return index of entry found or -1 if the key does not exist.
       /// If `retInsIdx != NULL`, the index to insert a new item is return in `*retInsIdx`.
@@ -931,57 +1131,92 @@ class CDictRaw {
       /// @param key Key prefix
       /// @param retIdx0 Pointer to first return value, index of first matching entry.
       /// @param retIdx1 Pointer to second return value, index behind last matching entry.
+    /// @}
 
-    void Dump ();   ///< Dump contents by means of `INFO` logs (for debugging)
+    /// @name Debugging ...
+    /// @{
+    virtual void Dump (const char *name);
+    /// @}
 
   protected:
-    void Copy (int idxDst, int idxSrc);            // byte-copy entry
-    void Swap (int idx0, int idx1);                // byte-swap two entries
+    virtual void RecInit (void *p);
+    virtual void RecClear (void *p);
 
-    void RecInit (int idx);     // initializes record in previously uninitialized memory
-    void RecClear (int idx);    // clears (initialized) record such that no destructor call is necessary anymore
-
-    void SetEntries (int _entries);
-
-    virtual void ValueInit (void *p) {}             // initialize value data in previously uninitialized memory
-    virtual void ValueClear (void *p) {}            // clear (initialized) record such that no destructor call is necessary anymore
-    virtual void ValueSet (void *p, void *orig) {}  // copy 'orig' to 'p' properly; both are initialized objects
-    virtual const char *ValueToStr (void *p);       // (TTS) return readable string for the 'Dump' method
-
-    uint8_t *GetKeyAdr (int idx) const { return idx < 0 ? NULL : data + recSize * idx; }
-    uint8_t *GetValueAdr (int idx) const { return idx < 0 ? NULL : GetKeyAdr (idx) + DICT_KEYSIZE; }
-    void *GetValuePtr (int idx) const { return idx < 0 ? NULL : * (void **) (GetKeyAdr (idx) + DICT_KEYSIZE); }
-
-    void SetRaw (int idx, void *value);            // entry must exist and 'idx' be valid
+    void SetRaw (int idx, void *value) { CListRaw::SetRaw (idx, value); }
     int SetRaw (const char *key, void *value);     // add or replace the keyed entry; returns new index
 
-    void MergeRaw (CDictRaw *map2);                // merge 'map2' into this one
-
-    uint8_t *data;
-    int recSize, entries, allocEntries;
+    void MergeRaw (CDictRaw *dict2);               // merge 'dict2' into this one and clear 'dict2'
 };
 
 
-/** @brief Fast dictionary.
+/** @brief Dictionary.
  *
- * This class stores the value object in the same array as the keys
- * and is therefore generally more efficient than the alternative class 'CDict'.
+ * A dictionary stores arbitrary (key, value) pairs. The key is always of type
+ * `CString` / `const char *`. Internally, the dictionary is stored in an array
+ * containing the (key, value) pairs, which is kept ordered by the keys.
  *
- * The type 'T' must fullfill the following properties:
- * 1. The default constructor must not allocate any dynamic data
- *    (A sample object will be copied using 'memcpy' to construct other objects.)
- * 2. It must be location-invariant, since it may be moved in memory (e.g. no pointers
- *    to dictionary elements must exist).
- * 3. The '=' operator must be defined appropriately.
- * 4. The '=' operator free any dynamic data if the sample object is assigned.
- * 5. It must implement a method 'const char *ToStr ()' for the 'Dump' method.
- *    (the returned string will not be used after a further call to this method for any
- *    object, so that it can e.g. be stored in a static variable)
+ * The values are dynamically allocated objects, to which pointers are stored in the array.
+ * All 'Set...' methods require dynamic objects to be passed and take over their ownerships.
+ * On element deletion, these objects are deleted. It is legal to pass NULL to 'Set...' methods.
  */
-template <typename T> class CDictFast: public CDictRaw {
+template <typename T> class CDict: public CDictRaw {
   public:
-    CDictFast (): CDictRaw (sizeof (T)) {}
-    virtual ~CDictFast () { Clear (); }
+    CDict (): CDictRaw (sizeof (T *)) {}
+
+    /// @name Read access ...
+    /// @{
+    T *Get (int idx) { return (T *) GetValuePtr (idx); }
+    T *Get (const char *key) { return Get (Find (key)); }
+    T *operator [] (int idx) { return Get (idx); }
+    T *operator [] (const char *key) { return Get (key); }
+    /// @}
+
+    /// @name Write access ...
+    /// For any operations passing a new value object, the dictionary takes over
+    /// the ownership: The pointer passed as 'value' remains valid until the entry
+    /// is deleted from the list. Then it will be free'd using 'delete'.
+    /// @{
+    int Set (const char *key, T *value) { return SetRaw (key, value); }
+      ///< @brief Add or replace the keyed entry. Complexity is O(n).
+      /// @return Index of new entry
+    void SetValue (int idx, T *value) { SetRaw (idx, value); }
+      ///< @brief Set (replace) a value.
+      /// @param idx is the index.
+      /// @param value must be a dynamically allocated object or 'NULL'.
+      ///        The dictionary will take over ownership and call 'delete' on it later.
+      /// The entry must exist and 'idx' be valid. Complexity is O(1).
+    T *DisownValue (int idx) { T *ret = Get (idx); RecInit (ret); return ret; }
+      ///< @brief Disown a value and clear it in the dictionary.
+    T *DisownValue (const char *key) { T *ret = Get (key); RecInit (ret); return ret; }
+      ///< @brief Disown a value and clear it in the dictionary.
+
+    void Merge (CDict<T> *dict2) { MergeRaw (dict2); }
+      ///< @brief Merge another dictionary into this one.
+      /// Complexity is O(n_this + n_dict2). 'dict2' will be empty afterwards.
+      ///
+      /// The recommended way to add a bunch of new entries to a dictionary is to
+      /// first add them to a new dictionary and then use this method to merge
+      /// them into 'this'.
+    /// @}
+
+  protected:
+    virtual void ValueInit (void *p) { * (T **) p = NULL; }
+    virtual void ValueClear (void *p) { if (* (T**) p) { delete * (T **) p; * (T **) p = NULL; } }
+    virtual void ValueSet (void *p, void *orig) { ValueClear (p); * (T**) p = (T*) orig; }
+    virtual const char *ValueToStr (CString *ret, void *p) { return ::ToStr<T> (ret, * (T**) p); }
+};
+
+
+/** @brief Compact dictionary.
+ *
+ * This class is similar to @ref CDict, but stores the value objects in one big array and may
+ * therefore be more efficient in some cases. Also, The type 'T' must fullfill certain properties.
+ *
+ * See @ref CListCompact for details.
+ */
+template <typename T> class CDictCompact: public CDictRaw {
+  public:
+    CDictCompact (): CDictRaw (sizeof (T)) {}
 
     /// @name Read access ...
     /// @{
@@ -993,26 +1228,26 @@ template <typename T> class CDictFast: public CDictRaw {
 
     /// @name Write access ...
     /// @{
-    void Set (int idx, T *value) { SetRaw (idx, value); }
-      ///< @brief Set (replace) a value.
-      /// The entry must exist and 'idx' be valid. Complexity is O(1).
     int Set (const char *key, T *value) { return SetRaw (key, value); }
       ///< @brief Add or replace the keyed entry. Complexity is O(n).
       /// @return Index of new entry
-    void Merge (CDictFast<T> *map2) { SetRaw (map2); }
+    void SetValue (int idx, T *value) { SetRaw (idx, value); }
+      ///< @brief Set (replace) a value.
+      /// The entry must exist and 'idx' be valid. Complexity is O(1).
+    void Merge (CDictCompact<T> *dict2) { MergeRaw (dict2); }
       ///< @brief Merge another map into this one.
-      /// Complexity is O(n_this + n_map2).
+      /// Complexity is O(n_this + n_dict2). 'dict2' will be empty afterwards.
       ///
-      /// The recommended way to add a bunch of new keys to a map is to first add
-      /// them to a new map and then use this method to merge them into 'this'
-      /// using this method.
+      /// The recommended way to add a bunch of new entries to a dictionary is to
+      /// first add them to a new dictionary and then use this method to merge
+      /// them into 'this'.
     /// @}
 
   protected:
     virtual void ValueInit (void *p) { memcpy (p, &emptyObj, sizeof (emptyObj)); }
     virtual void ValueClear (void *p) { ValueSet (p, &emptyObj); }
     virtual void ValueSet (void *p, void *orig) { * (T *) p = * (T *) orig; }
-    //~ virtual const char *ValueToStr (void *p) { return ((T *) p)->ToStr (); }
+    virtual const char *ValueToStr (CString *ret, void *p) { return ::ToStr<T> (ret, (T*) p); }
 
     T emptyObj;   // Template for an initialized object
 };
@@ -1020,74 +1255,18 @@ template <typename T> class CDictFast: public CDictRaw {
 
 /** @brief Dictionary of references.
  *
- * This class stores references to the named object without taking over ownership.
- * Use the class 'CDict' instead, if a classical container for dynamically
- * allocated objects is desired.
- *
- * The type 'T' must fullfill the following properties:
- *
- * 1. It must implement a method 'const char *ToStr ()' for the 'Dump' method.
- *    (the returned string will not be used after a further call to this method for any
- *    object, so that it can e.g. be stored in a static variable.)
+ * This class is similar to @ref CDict, but stores references to named objects
+ * without taking over ownership.
  */
-template <typename T> class CDictRef: public CDictRaw {
-  public:
-    CDictRef (): CDictRaw (sizeof (T *)) {}
-
-    /// @name Read access ...
-    /// @{
-    T *Get (int idx) { return (T *) GetValuePtr (idx); }
-    T *Get (const char *key) { return Get (Find (key)); }
-    T *operator [] (int idx) { return Get (idx); }
-    T *operator [] (const char *key) { return Get (key); }
-    /// @}
-
-    /// @name Write access ...
-    /// @{
-    void Set (int idx, T *value) { SetRaw (idx, &value); }
-      ///< @brief Set (replace) a value.
-      /// The entry must exist and 'idx' be valid. Complexity is O(1).
-    int Set (const char *key, T *value) { return SetRaw (key, &value); }
-      ///< @brief Add or replace the keyed entry. Complexity is O(n).
-      /// @return Index of new entry
-
-    void Merge (CDictRef<T> *map2) { SetRaw (map2); }
-      ///< @brief Merge another map into this one.
-      /// Complexity is O(n_this + n_map2).
-      ///
-      /// The recommended way to add a bunch of new keys to a map is to first add
-      /// them to a new map and then use this method to merge them into 'this'
-      /// using this method.
-    /// @}
-
+template <typename T> class CDictRef: public CDict<T> {
   protected:
-    virtual void ValueInit (void *p) { * (T **) p = NULL; }
     virtual void ValueClear (void *p) { * (T **) p = NULL; }
-    virtual void ValueSet (void *p, void *orig) { * (T**) p = * (T**) orig; }
-    virtual const char *ValueToStr (void *p) { return (* (T**) p)->ToStr (); }
+    virtual void ValueSet (void *p, void *orig) { * (T**) p = (T*) orig; }
 };
 
 
-/** @brief Flexible dictionary.
- *
- * The class is like 'CDictRef', except that it takes over ownership of
- * any object passed to the 'Set ()' calls.
- * Presently, there is no way to release ownership, so that the 'Merge'
- * method has to be disabled.
- */
-template <typename T> class CDict: public CDictRef<T> {
-  public:
 
-    /// @name Write access ...
-    /// @{
-    void Merge (CDict<T> *map2) { ASSERT (false); }  ///< Merging with proper ownerships not implemented (yet)
-    /// @}
-
-  protected:
-    virtual void ValueClear (void *p) { if (* (T**) p) { delete * (T **) p; * (T **) p = NULL; } }
-    //~ virtual void ValueSet (void *p, void *orig) { if (* (T**) p) delete * (T **) p; * (T**) p = new T (* (T**) orig); }
-};
-
+// ***** CKeySet *****
 
 /** @brief Set of strings (keys).
  */
@@ -1103,12 +1282,19 @@ class CKeySet: public CDictRaw {
     /// @name Write access ...
     /// @{
     int Set (const char *key) { return SetRaw (key, NULL); }
-
-    void Merge (CKeySet *map2) { MergeRaw (map2); }
+    void Merge (CKeySet *set2) { MergeRaw (set2); }
+      ///< @brief Merge another map into this one.
+      /// Complexity is O(n_this + n_set2). 'set2' will be empty afterwards.
+      ///
+      /// The recommended way to add a bunch of new entries to a dictionary is to
+      /// first add them to a new dictionary and then use this method to merge
+      /// them into 'this'.
     /// @}
 
-  protected:
-    const char *ValueToStr (void *p) { return NULL; }
+    /// @name Debugging ...
+    /// @{
+    virtual void Dump (const char *name);
+    /// @}
 };
 
 
@@ -1122,46 +1308,65 @@ class CKeySet: public CDictRaw {
 
 
 /** @defgroup common_datetime Date and Time
- * @brief Various defitions related to date and time handling.
+ * @brief Various definitions related to date and time handling.
  *
- * The *Home2L* suite uses two different measures of time (clocks), as also supported
- * by the Linux kernel:
- * 1. The real time (`TTicks`): This is the absolute time, eventually synchronized
- *    via network with time servers. This clock should be used for calendar or
+ * Times are always represented by the type @ref TTicks and stored in integer units
+ * of milliseconds.
+ *
+ * Depending on the context, the *Home2L* suite uses two different clocks, as
+ * also supported by the Linux kernel, namely the real time and a monotonic time.
+ *
+ * To distinguish between different clocks or relative times, the following terminology
+ * is used:
+ *
+ * 1. An **absolute** time refers to the number of of milliseconds since the
+ *    Epoch (1970-01-01-000000 UTC). This clock is used for calendar or
  *    alarm clock applications, where the absolute date and time matters.
- * 2. A monotonic time (`TTicksMonotonic`): This is some relative time which never
- *    makes quick changes in speed or even may move backwards (as is possible with
- *    `TTicks` after network synchronization). This clock is used wherever possible,
- *    particularly for @ref common_timers.
+ *    The absolute clock is eventually synchronized via network with time servers
+ *    to be kept accurate.
  *
- * Besides the two basic types `TTicks` and `TTicksMonotonic`, this group contains
- * some helper types `TDate` and `TTime` for calendar time handling.
+ * 2. A **monotonic** time is relative to some reference time, usually the start
+ *    of the application. It can never move backwards (as is possible with the
+ *    absolute clock after network synchronization) and does not make quick changes in speed.
+ *    The monotonic clock is used for @ref common_timers.
+ *
+ * 3. A **relative** is either relative to the current time or to some contexct-specific
+ *    base time.
+ *
+ * Besides the basic type `TTicks`, this group contains some helper types
+ * `TDate` and `TTime` for calendar time handling.
  * @{
  */
 
 
-/// @name Ticks (real and monotonic) ...
+/// @name Ticks ...
 /// @{
 
 typedef int64_t TTicks;
-  ///< @brief Real time; number of milliseconds since the Epoch (1970-01-01-000000 UTC)
-typedef int32_t TTicksMonotonic;
-  ///< @brief Monotonic clock; number of milliseconds since the first invocation of GetTicksMonotonic()
+  ///< @brief Time value (relative, absolute, or monotonic).
 
-#define NEVER 0     ///< Represents no time (for both types `TTicks` and `TTicksMonotonic`)
-#define ALWAYS -1   ///< Another special time value, e.g. to mark that some timed event has successfully been handled in the past (for both types `TTicks` and `TTicksMonotonic`)
+#define ASAP   ((TTicks) 0)
+  ///< @brief Special value that may represent "as soon as possible" for absolute or monotonic times.
+#define NEVER  ((TTicks) INT64_MIN)
+  ///< @brief Special value that may represent "never" for absolute or monotonic times.
+  /// Other application-specific special values may be defined as (NEVER + 1), (NEVER + 2), ... .
+  /// The actual value is and will always be < 0.
 
-static inline bool TicksIsNever (TTicks t) { return t == 0; }
-static inline bool TicksMonotonicIsNever (TTicksMonotonic t) { return t == 0; }
 
-TTicks TicksNow ();                   ///< Get the current real time in milliseconds
-TTicksMonotonic TicksMonotonicNow (); ///< Get the current monotonic in milliseconds
+TTicks TicksNow ();
+  ///< @brief Get the current absolute time in milliseconds.
+  /// This function never returns 0 or a negative value.
+TTicks TicksNowMonotonic ();
+  ///< @brief Get the current monotonic time in milliseconds.
+  /// This function never returns 0 or a negative value.
 
-TTicks TicksFromMonotic (TTicksMonotonic tm); ///< Conversion function
-TTicksMonotonic TicksToMonotonic (TTicks t);  ///< Conversion function
+TTicks TicksAbsFromMonotic (TTicks tm);
+  ///< @brief Get the approximated absolute (real) time for a monotonic time.
+  /// Arguments <= 0 are returned unmodified.
+TTicks TicksMonotonicFromAbs (TTicks ta);
+  ///< @brief Get the approximated monotonic time for an absolute time .
+  /// Arguments <= 0 are returned unmodified.
 
-const char *TicksAbsToString (TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
-  ///< @brief (TTS) Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
 const char *TicksAbsToString (CString *ret, TTicks ticks, int fracDigits = INT_MAX, bool precise = false);
   ///< @brief Get a string of the form "YYYY-MM-DD-hhmmss[.<millis>]" in local time.
   /// @param ret Return string
@@ -1171,10 +1376,8 @@ const char *TicksAbsToString (CString *ret, TTicks ticks, int fracDigits = INT_M
   ///             automatically (trailing 0s may be skipped).
   /// @param precise If 'true', a string of the form "`t<n>`" is returned, where
   ///             `<n>` is the decimal number milliseconds since the Epoch.
-const char *TicksRelToString (TTicks ticks);
-  ///< @brief (TTS) Get a string of the form "<integer>[<unit>]" for a relative time.
 const char *TicksRelToString (CString *ret, TTicks ticks);
-  ///< @brief (TTS) Get a string of the form "<integer>[<unit>]" for a relative time.
+  ///< @brief Get a string of the form "<integer>[<unit>]" for a relative time.
   /// @param ret Return string
   /// @param ticks Ticks to be converted
   ///
@@ -1209,7 +1412,7 @@ static inline bool TicksAbsFromString (const char *str, TTicks *ret) { return Ti
 static inline bool TicksRelFromString (const char *str, TTicks *ret) { return TicksFromString (str, ret, false); }
   ///< @brief Convert a string to a relative ticks value. See TicksFromString() for supported string formats.
 
-void TicksMonotonicToStructTimeval (TTicksMonotonic t, struct timeval *retTv);
+void TicksToStructTimeval (TTicks t, struct timeval *retTv);
 
 #define TICKS_FROM_SECONDS(S) (((TTicks) (S)) * 1000)         ///< Convert seconds (integer!) to ticks
 #define SECONDS_FROM_TICKS(T) (((TTicks) (T) + 500) / 1000)   ///< Convert ticks to seconds
@@ -1263,7 +1466,7 @@ void TicksToDateTimeUTC (TTicks t, TDate *retDate, TTime *retTime, struct tm *re
 
 /// @name Date/time: Current time...
 /// @{
-static inline void GetDateTimeNow (TDate *d, TTime *t) { TicksToDateTime (TicksNow (), d, t, NULL); }
+static inline void DateTimeNow (TDate *d, TTime *t) { TicksToDateTime (TicksNow (), d, t, NULL); }
   ///< @brief Retrieve current date and time (both pointers may be NULL)
 TDate Today ();
 TTicks TicksToday ();
@@ -1348,17 +1551,17 @@ class CTimer {
     CTimer ();
     CTimer (FTimerCallback *_func, void *_data = NULL, void *_creator = NULL) { Set (_func, _data, _creator); }
       ///< @brief Construct with a callback function.
-    CTimer (TTicksMonotonic _time, TTicksMonotonic _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL) { Set (_time, _interval, _func, _data, _creator); }
+    CTimer (TTicks _time, TTicks _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL) { Set (_time, _interval, _func, _data, _creator); }
       ///< @brief Construct with a time/interval specification and eventually a callback function.
     virtual ~CTimer () { Clear (); }
 
     void Set (FTimerCallback *_func, void *_data = NULL, void *_creator = NULL);
       ///< @brief Setup timer without (re-)scheduling it.
-    void Set (TTicksMonotonic _time, TTicksMonotonic _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL);
+    void Set (TTicks _time, TTicks _interval = 0, FTimerCallback *_func = NULL, void *_data = NULL, void *_creator = NULL);
       ///< @brief Setup and (re-)schedule timer.
-      /// @param _time Absolute time of the next invocation. A value of 0 means "now".
+      /// @param _time Monotonic time of the next invocation. A value of 0 means "now".
       ///             A value < 0 means "in `-_time` milliseconds from now".
-      /// @param _interval Repeat interval. A value of 0 inserts a one-shot timer.
+      /// @param _interval Repeat interval. A value of <= 0 inserts a one-shot timer.
       ///             This number should be a power of 2 (see note above).
       /// @param _func Callback function to be executed at the given times.
       /// @param _data Data to be passed as the `data` argument to the callback function.
@@ -1366,7 +1569,7 @@ class CTimer {
       ///             of this object. In consequence, the caller does not need to keep a reference to this object,
       ///             but can eventually remove all of them using `DelByCreator()`.
 
-    void Reschedule (TTicksMonotonic _time, TTicksMonotonic _interval = 0);
+    void Reschedule (TTicks _time, TTicks _interval = 0);
       ///< @brief Change a timer (like 'Set'), but leave function and creator unchanged.
     void Clear ();                              ///< Remove timer from the event list.
     static void DelByCreator (void *_creator);  ///< Remove all timers created by `_creator` from the event list.
@@ -1385,12 +1588,12 @@ class CTimer {
 
   protected:
     friend bool TimerIterate ();
-    friend TTicksMonotonic TimerGetDelay ();
+    friend TTicks TimerGetDelay ();
     friend void TimerRun ();
     friend void *TimerThreadRoutine (void *);
 
     static bool ClassIterateAL ();
-    static TTicksMonotonic GetDelayTimeAL ();
+    static TTicks GetDelayTimeAL ();
 
     void InsertAL ();
     void UnlinkAL ();
@@ -1399,7 +1602,7 @@ class CTimer {
     CTimer *next;           // for chained list
     bool isLinked;          // indicates, whether element is in the linked list
 
-    TTicksMonotonic nextTicks, interval;
+    TTicks nextTicks, interval;
     void *creator;        // this object is managed externally, the caller has a reference to it and must remove it
 
     FTimerCallback *func;
@@ -1412,7 +1615,7 @@ class CTimer {
 /// @{
 bool TimerIterate ();
   ///< @brief Returns false if nothing was done.
-TTicksMonotonic TimerGetDelay ();
+TTicks TimerGetDelay ();
   ///< @brief Returns number of milliseconds until next call to @ref TimerIterate() is necessary, or -1 if no timer is pending.
 
 void TimerStart ();
@@ -1509,7 +1712,7 @@ class CCond {
     void Wait (CMutex *mutex);
       ///< @brief Wait until woken up.
       /// The supplied `mutex` must be locked and will be atomically unlocked while waiting.
-    TTicksMonotonic Wait (CMutex *mutex, TTicksMonotonic maxTime);
+    TTicks Wait (CMutex *mutex, TTicks maxTime);
       ///< @brief Wait until woken up or a time-out occured.
       /// @param mutex Mutex to unlock while waiting.
       /// @param maxTime Maximum wait time in milliseconds.
@@ -1565,7 +1768,7 @@ class CSleeper {
 
     /// @name For the sleeping thread: Sleep...
     /// @{
-    void Sleep (TTicksMonotonic maxTime = -1);
+    void Sleep (TTicks maxTime = -1);
       ///< @brief Sleep until one file descriptor is readable/writable or a new command was received.
       /// @param maxTime Maximum waiting time; -1: wait forever, 0 => do not wait
       ///
@@ -1583,7 +1786,7 @@ class CSleeper {
 
     /// @name For other threads...
     /// @{
-    void PutCmd (const void *cmdRec, TTicksMonotonic t = 0, TTicksMonotonic _interval = 0);
+    void PutCmd (const void *cmdRec, TTicks t = 0, TTicks _interval = 0);
       ///< @brief Send message to sleeper.
       ///
       /// `cmd == NULL` represents "no command" and will be ignored by receiver.
@@ -1602,7 +1805,7 @@ class CSleeper {
 
 
 
-void Sleep (TTicksMonotonic mSecs);
+void Sleep (TTicks mSecs);
   ///< @brief Suspend for `mSecs` milliseconds using `nanosleep()`.
 
 
@@ -1687,7 +1890,7 @@ class CShell {
 
     /// @name Accessing stdin & stdout...
     /// @{
-    virtual void CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime = -1) = 0;
+    virtual void CheckIO (bool *canWrite, bool *canRead, TTicks maxTime = -1) = 0;
       ///< @brief Check whether the i/o channels can take/deliver data.
       /// @param canWrite may point to a variable that will be set, depending on whether at least one
       ///    byte can be written to the external command.
@@ -1704,13 +1907,13 @@ class CShell {
       /// **Note:** As long as both the read and the write channel are open, the caller (usually) must
       /// always write *and* read as much as possible. Otherwise, a deadlock may occur.
       ///
-    bool WaitUntilReadable (TTicksMonotonic timeOut = -1) { bool canRead; CheckIO (NULL, &canRead, timeOut); return canRead; }
+    bool WaitUntilReadable (TTicks maxTime = -1) { bool canRead; CheckIO (NULL, &canRead, maxTime); return canRead; }
       ///< @brief Wait until output of the external command is readable.
       /// Be aware of potential deadlocks. This command can only be safely used if the external
       /// command does not wait for input.
       /// @return 'true', if the output is readable.
       ///
-    bool WaitUntilWritable (TTicksMonotonic timeOut = -1) { bool canWrite; CheckIO (&canWrite, NULL, timeOut); return canWrite; }
+    bool WaitUntilWritable (TTicks maxTime = -1) { bool canWrite; CheckIO (&canWrite, NULL, maxTime); return canWrite; }
       ///< @brief Wait until the external command can accept written input.
       /// Be aware of potential deadlocks. This command can only be safely used if the external
       /// command does not produce any output.
@@ -1767,7 +1970,7 @@ class CShellBare: public CShell {
 
     /// @name Accessing stdin & stdout...
     /// @{
-    virtual void CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic maxTime = 0);
+    virtual void CheckIO (bool *canWrite, bool *canRead, TTicks maxTime = -1);
       ///< @brief Use select() to check whether the i/o channels can take/deliver data.
 
     virtual void WriteLine (const char *line);
@@ -1800,7 +2003,7 @@ class CShellBare: public CShell {
     /// @}
 
   protected:
-    CString host;
+    CString id, host;
     bool newProcessGroup;
     CString readBuf;
     bool readBufMayContainLine;
@@ -1842,7 +2045,7 @@ class CShellSession: public CShell {
 
     /// @name Accessing stdin & stdout...
     /// @{
-    virtual void CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic timeOut = -1);
+    virtual void CheckIO (bool *canWrite, bool *canRead, TTicks maxTime = -1);
 
     virtual void WriteLine (const char *line) { session.WriteLine (line); }
     virtual void WriteClose ();
@@ -1900,11 +2103,11 @@ class CServiceKeeper {
     /// @name Initialization and setup ...
     /// @{
     CServiceKeeper () { isOpen = shouldBeOpen = false; tDShort = tDLong = tShortToLong = 0; }
-    CServiceKeeper (TTicksMonotonic _tDShort, TTicksMonotonic _tDLong = NEVER, TTicksMonotonic _tShortToLong = NEVER)
+    CServiceKeeper (TTicks _tDShort, TTicks _tDLong = NEVER, TTicks _tShortToLong = NEVER)
       { isOpen = shouldBeOpen = false; Setup (_tDShort, _tDLong, _tShortToLong); }
     ~CServiceKeeper () { Close (); }
 
-    void Setup (TTicksMonotonic _tDShort, TTicksMonotonic _tDLong = NEVER, TTicksMonotonic _tShortToLong = NEVER) { tDShort = _tDShort; tDLong = _tDLong; tShortToLong = _tShortToLong; }
+    void Setup (TTicks _tDShort, TTicks _tDLong = NEVER, TTicks _tShortToLong = NEVER) { tDShort = _tDShort; tDLong = _tDLong; tShortToLong = _tShortToLong; }
       ///< @brief Setup the retry policy.
       /// @param _tDShort is the retry interval after the service got lost (e.g. disconnected / closed).
       /// @param _tDLong is the retry interval after the service was lost for a longer time.
@@ -1980,9 +2183,9 @@ class CServiceKeeper {
 
   protected:
     bool isOpen, shouldBeOpen;
-    TTicksMonotonic tLastOpen;    // last time the service was known to be open (only valid if 'isOpen == false' and 'shouldBeOpen == true')
-    TTicksMonotonic tNextAttempt; // time of next open attempt (only valid if 'isOpen == false' and 'shouldBeOpen == true')
-    TTicksMonotonic tDShort, tDLong, tShortToLong;
+    TTicks tLastOpen;    // last time the service was known to be open (only valid if 'isOpen == false' and 'shouldBeOpen == true')
+    TTicks tNextAttempt; // time of next open attempt (only valid if 'isOpen == false' and 'shouldBeOpen == true')
+    TTicks tDShort, tDLong, tShortToLong;
 };
 
 

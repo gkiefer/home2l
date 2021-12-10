@@ -248,7 +248,7 @@ static void UpdateTimer () {
         if (tLeft < 0) tLeft = 0;
         if (tLeft > TICKS_FROM_SECONDS (600)) tLeft = TICKS_FROM_SECONDS (600);   // avoid overflows; have updates at least every 10 minutes (e.g. for the day display)
         else if (tLeft > TICKS_FROM_SECONDS (1)) tLeft = tLeft * 7/8;    // round down
-        acTimer.Reschedule (TicksMonotonicNow () + (TTicksMonotonic) tLeft);
+        acTimer.Reschedule (TicksNowMonotonic () + (TTicks) tLeft);
       }
       else acTimer.Clear ();
       break;
@@ -416,7 +416,7 @@ static void Iterate (CTimer *timer = NULL, void *data = NULL) {
       break;
     case acsStandby:
     case acsSnooze:
-      if (TicksNow () >= tAlarm && !TicksIsNever (tAlarm)) {
+      if (tAlarm != NEVER && TicksNow () >= tAlarm) {
         // Alarm goes off...
         SetPersistentTAlarm (tAlarm);
         SystemSetAudioNormal ();
@@ -790,6 +790,7 @@ CScreenSetAlarmClock::~CScreenSetAlarmClock () {
 
 
 void CScreenSetAlarmClock::Commit () {
+  CString s;
   int n;
 
   if (enabled != envAlarmEnabled) {
@@ -798,7 +799,7 @@ void CScreenSetAlarmClock::Commit () {
     AlarmClockEnableDisable (enabled);
   }
   for (n = 0; n < 7; n++) if (timeSetChanged[n]) {
-    EnvPut (StringF ("var.alarm.timeSet.%i", n), timeSetList[n]);
+    EnvPut (StringF (&s, "var.alarm.timeSet.%i", n), timeSetList[n]);
     timeSetChanged[n] = false;
   }
   EnvFlush ();      // flush to disk
@@ -870,11 +871,15 @@ void AlarmClockRunSetDialog () {
 
 
 void AlarmClockInit () {
+  CString s;
   int n;
+
+  // Environment...
+  EnvGetPath (envAlarmRingFileKey, envAlarmRingFile);
 
   // Read time settings...
   for (n = 0; n < 7; n++)
-    timeSetList[n] = EnvGetInt (StringF ("var.alarm.timeSet.%i", n), -1);
+    timeSetList[n] = EnvGetInt (StringF (&s, "var.alarm.timeSet.%i", n), -1);
 
   // Init state according to the 'envAlarmEnabled' setting ...
   acState = envAlarmEnabled ? acsStandby : acsDisabled;

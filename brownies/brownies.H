@@ -189,8 +189,6 @@ class CBrownie {
       /// On error, a warning is emitted and 'false' is returned.
     const char *ToStr (CString *ret, bool withIdentification = true, bool withVersionInfo = true);
       ///< @brief Return the contents of the feature record and the config record as a string in the database syntax.
-    const char *ToStr (bool withIdentification = true, bool withVersionInfo = true) { return ToStr (GetTTS (), withIdentification, withVersionInfo); }
-      ///< @brief (TTS) Return the contents of the feature record and the config record as a string in the database syntax.
 
     /// @}
     /// @name Accessing fields ...
@@ -239,7 +237,7 @@ class CBrownie {
      /// @}
 
   protected:
-    const char *GetOptValue (int optIdx, CString *ret);
+    const char *GetOptValue (CString *ret, int optIdx);
     bool SetOptValue (int optIdx, const char *str);
     void CheckDeviceForResources (CBrownieLink *link);
 
@@ -370,13 +368,13 @@ class CBrownieSet {
 
   protected:
     CBrownie *brList[128];
-    CDictFast<int> adrMap;
+    CDictCompact<int> adrMap;
 
     // Resources ...
     class CRcEventDriver *rcDriver;
     class CBrownieLink *rcLink;
     int rcLastCheckedAdr;         // next address to be polled normally (not fast)
-    TTicksMonotonic tLastIterate; // time of last entry of 'ResourcesIterate ()'
+    TTicks tLastIterate; // monotonic time of last entry of 'ResourcesIterate ()'
 };
 
 
@@ -546,7 +544,7 @@ class CBrownieLink {
       /// @param local is only relevant if the link type is @ref ifSocket.
       ///   If set to 'true', the statistics of the local socket connection are selected,
       ///   otherwise (by default), the statistics of the remote server are selected.
-    void StatisticsAddIterateTimes (TTicksMonotonic tCycle, TTicksMonotonic tFastPoll, TTicksMonotonic tSlowPoll);
+    void StatisticsAddIterateTimes (TTicks tCycle, TTicks tFastPoll, TTicks tSlowPoll);
       ///< @brief @private Add times of an iteration cycle to the statistics (for CBrownieSet::Iterate() )
 
     /// @}
@@ -561,7 +559,7 @@ class CBrownieLink {
       /// @return success status.
     void ServerStop ();
       ///< @brief Stop the socket server (if it was running).
-    bool ServerIterate (TTicksMonotonic maxSleepTime = -1);
+    bool ServerIterate (TTicks maxSleepTime = -1);
       ///< @brief Perform all socket server services (if enabled).
       /// @param maxSleepTime is the maximum time to sleep if a client is connected
       /// (<0 = wait unlimited until the connection proceeds).
@@ -594,7 +592,7 @@ class CBrownieLink {
 
     int rcIterations;
     TTicks rcTSumCycle, rcTSumFastPoll, rcTSumSlowPoll;
-    TTicksMonotonic rcTCycleMin, rcTCycleMax, rcTFastPollMin, rcTFastPollMax, rcTSlowPollMin, rcTSlowPollMax;
+    TTicks rcTCycleMin, rcTCycleMax, rcTFastPollMin, rcTFastPollMax, rcTSlowPollMin, rcTSlowPollMax;
 
     // Socket server ...
     int sockListenFd;       // listening socket (or <0, if none activated)

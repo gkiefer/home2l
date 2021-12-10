@@ -104,7 +104,7 @@ static inline bool GadgetTypeIsIcon (EGadgetType t) { return t >= gtLock; }
 // *************************** Resource Dialog *********************************
 
 
-void RunResourceDialog (class CResource *rc, EGadgetType subType = gtNone, const char *title = NULL);
+void RunResourceDialog (class CResource *rc, EGadgetType subType = gtNone, const char *title = NULL, bool emphasize = false);
   ///< @brief Run a dialog allowing to edit, add or delete a user request.
   ///
   /// @param rc is the resource.
@@ -113,6 +113,7 @@ void RunResourceDialog (class CResource *rc, EGadgetType subType = gtNone, const
   ///    @ref gtShades, the UI presents a UI for shades ("0%" at the top).
   /// @param title is the title of the dialog. If set to NULL, the title will be derived from 'subType'.
   ///    If 'subType == gtNone', a generic default title will be shown.
+  /// @param emphasize lets the dialog appear red if set (if unset: auto-detect)
 
 
 
@@ -130,7 +131,7 @@ class CWidgetFloorplan: public CFlatButton, public CTimer {
     CWidgetFloorplan ();
     virtual ~CWidgetFloorplan ();
 
-    void Setup (int x0, int y0, class CFloorplan *_floorplan = NULL, TTicksMonotonic _tInterval = FP_UPDATE_INTERVAL);
+    void Setup (int x0, int y0, class CFloorplan *_floorplan = NULL, TTicks _tInterval = FP_UPDATE_INTERVAL);
       ///< Setup the widget.
     bool IsOk () { return floorplan != NULL; }
 
@@ -152,7 +153,7 @@ class CWidgetFloorplan: public CFlatButton, public CTimer {
 
     // Variables ...
     class CFloorplan *floorplan;
-    TTicksMonotonic tInterval;
+    TTicks tInterval;
 
     SDL_Surface *mapSurf;
 };

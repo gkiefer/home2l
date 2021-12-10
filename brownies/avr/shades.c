@@ -288,12 +288,12 @@ static void IterateSingle (uint8_t shIdx, TShade *sh) {
 
         // Start moving if required ...
         if (asStart) {
-          if (SHADES_PERSISTENCE)   // persistent position is "unknown" while moving
+          if (SHADES_PERSISTENCE)       // persistent position is "unknown" while moving
             eeprom_write_byte (&brEeprom.shadesPos[shIdx], 0xff);
           WriteActuators (shIdx, asStart);        // start engine!
           tuNow = TimerNow () >> SHADES_TU_SHIFT;
           sh->tuActStart = tuNow;
-          sh->tuPos = tuNow + tuDelay;   // extrapolate position time to the time the shades will first move
+          sh->tuPos = tuNow + tuDelay;  // extrapolate position time to the time the shades will first move
           sh->actBtnState |= asStart;
         }
       }
@@ -336,7 +336,7 @@ static void IterateSingle (uint8_t shIdx, TShade *sh) {
         sh->tuActStop = tuNow;                  // record time
         if (movingUp) {
           if (sh->rawPos != SHADES_POS_NONE && sh->rawPos < 0) {
-            sh->rawPos = 0;   // adjust (truncate) position
+            sh->rawPos = 0;     // adjust (truncate) position
             sh->calibrating = false;
           }
         }

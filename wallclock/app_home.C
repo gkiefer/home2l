@@ -67,7 +67,7 @@ ENV_PARA_STRING ("ui.sysinfoHost", envSysinfoHost, NULL);
    * If set, the system information script is executed on the given remote host.
    */
 
-ENV_PARA_STRING ("ui.accessPointRc", envAccessPointRc, "/local/accessPoint");
+ENV_PARA_STRING ("ui.accessPointRc", envAccessPointRc, NULL);
   /* Resource (boolean) for local (wifi) access point status display
    */
 ENV_PARA_STRING ("ui.bluetoothRc", envBluetoothRc, "/local/ui/bluetooth");
@@ -77,20 +77,20 @@ ENV_PARA_STRING ("ui.bluetoothRc", envBluetoothRc, "/local/ui/bluetooth");
 ENV_PARA_STRING ("ui.outdoorTempRc", envOutdoorTempRc, "/alias/weather/temp");
   /* Resource (temp) representing the outside temperature for the right info area (outdoor)
    */
-ENV_PARA_STRING ("ui.outdoorData1Rc", envOutdoorData1Rc, "/alias/ui/outdoorData1");
+ENV_PARA_STRING ("ui.outdoorData1Rc", envOutdoorData1Rc, NULL);
   /* Resource for the upper data field of the right info area (outdoor)
    */
-ENV_PARA_STRING ("ui.outdoorData2Rc", envOutdoorData2Rc, "/alias/ui/outdoorData2");
+ENV_PARA_STRING ("ui.outdoorData2Rc", envOutdoorData2Rc, NULL);
   /* Resource for the lower data field of the right info area (outdoor)
    */
 
 ENV_PARA_STRING ("ui.indoorTempRc", envIndoorTempRc, NULL);
   /* Resource (temp) representing the outside temperature for the right info area (indoor)
    */
-ENV_PARA_STRING ("ui.indoorData1Rc", envIndoorData1Rc, "/alias/ui/indoorData1");
+ENV_PARA_STRING ("ui.indoorData1Rc", envIndoorData1Rc, NULL);
   /* Resource for the upper data field of the right info area (indoor)
    */
-ENV_PARA_STRING ("ui.indoorData2Rc", envIndoorData2Rc, "/alias/ui/indoorData2");
+ENV_PARA_STRING ("ui.indoorData2Rc", envIndoorData2Rc, NULL);
   /* Resource for the lower data field of the right info area (indoor)
    */
 
@@ -98,15 +98,6 @@ ENV_PARA_STRING ("ui.radarEyeRc", envRadarEyeRc, "/alias/weather/radarEye");
   /* Resource for the radar eye as provided by the 'home2l-weather' driver
    */
 
-ENV_PARA_STRING ("ui.lockSensor1Rc", envLockSensor1Rc, "/alias/ui/lockSensor1");
-  /* Resource (bool) for the first lock display in the left info area (building)
-   */
-ENV_PARA_STRING ("ui.lockSensor2Rc", envLockSensor2Rc, "/alias/ui/lockSensor2");
-  /* Resource (bool) for the first lock display in the left info area (building)
-   */
-ENV_PARA_STRING ("ui.motionDetectorRc", envMotionRc, "/alias/ui/motionDetector");
-  /* Resource (bool) for the motion detector display in the left info area (building)
-   */
 ENV_PARA_INT ("ui.motionDetectorRetention", envMotionRetention, 300000);
   /* Retention time (ms) of the motion detector display (OBSOLETE)
    */
@@ -159,11 +150,13 @@ class CWidgetMultiData: public CFlatButton {
     CResource *rcData[3];
     bool rcChanged[3];
     bool showSub;
-    TTicksMonotonic tLastPushed;
+    TTicks tLastPushed;
 };
 
 
 static void MultiDataFormat (char *buf, int bufSize, CRcValueState *val) {
+  CString s;
+
   // TBD: Merge with floorplan.C:TextFormatData()?
   switch (RcTypeGetBaseType (val->Type ())) {
     case rctFloat:
@@ -171,7 +164,8 @@ static void MultiDataFormat (char *buf, int bufSize, CRcValueState *val) {
       LangTranslateNumber (buf);
       break;
     default:
-      strncpy (buf, val->ToStr (), bufSize - 1); buf[bufSize - 1] = '\0';
+      strncpy (buf, val->ToStr (&s), bufSize - 1);
+      buf[bufSize - 1] = '\0';
   }
 }
 
@@ -205,14 +199,11 @@ void CWidgetMultiData::Iterate () {
   SDL_Surface *surf = NULL, *surf2 = NULL;
   SDL_Rect r;
   TTF_Font *font;
-  bool valid[3], viewMain;
+  bool valid[3], _showSub;
   int n, temp;
 
   // Return if nothing may have changed...
-  if (!rcChanged[0] && !rcChanged[1] && !rcChanged[2]) {
-    if (TicksMonotonicIsNever (tLastPushed)) return;
-    if (TicksMonotonicNow () < tLastPushed) return;
-  }
+  if (!rcChanged[0] && !rcChanged[1] && !rcChanged[2] && tLastPushed == NEVER) return;
 
   // Capture resources...
   for (n = 0; n < 3; n++) {
@@ -222,21 +213,28 @@ void CWidgetMultiData::Iterate () {
     }
     else valid[n] = false;
   }
-  if (vs[0].Type () != rctTemp) valid[0] = false;   // main field must be a temperature
+  if (vs[0].Type () != rctTemp) valid[0] = false; // main field must be a temperature
 
   // Determine view to present...
-  viewMain = true;    // Default: Main view
-  if (!valid[1] || !valid[2]) viewMain = false;   // One of the sub values is invalid => show the problem
-  if (!TicksMonotonicIsNever (tLastPushed)) {     // Button was pushed => swap view
-    viewMain = !viewMain;
-    if (TicksMonotonicNow () > tLastPushed + 3000) tLastPushed = NEVER;
+  _showSub = false;    // Default: Main view
+  if (!valid[1] || !valid[2]) _showSub = true;   // One of the sub values is invalid => show the problem
+  if (tLastPushed != NEVER) {                     // Button was pushed => swap view
+    _showSub = !_showSub;
+    if (TicksNowMonotonic () > tLastPushed + 3000) tLastPushed = NEVER;
   }
-  if (!valid[0]) viewMain = false;                // Nothing to see in main view => force sub view
-  if (!valid[1] && !valid[2]) viewMain = true;    // Nothing to see in sub view => force main view
+  if (!valid[0]) _showSub = true;                // Nothing to see in main view => force sub view
+  if (!valid[1] && !valid[2]) _showSub = false;  // Nothing to see in sub view => force main view
+
+  // Return if no visible change happened ...
+  if (_showSub == showSub) {
+    if ((!_showSub && !rcChanged[0]) ||
+        (_showSub && !rcChanged[1] && !rcChanged[2])) return;
+  }
+  showSub = _showSub;
 
   // Draw the (main) view...
   surf = NULL;
-  if (viewMain) {
+  if (!_showSub) {
     if (valid[0]) {
 
       // Main text...
@@ -255,6 +253,9 @@ void CWidgetMultiData::Iterate () {
       surf2 = FontRenderText (font, buf, WHITE);
       SurfaceBlit (surf2, NULL, surf, &r, -1, 1);
       SurfaceFree (surf2);
+
+      // Mark as updated ...
+      rcChanged[0] = false;
     }
   }
 
@@ -281,6 +282,9 @@ void CWidgetMultiData::Iterate () {
 
   // Pass label with ownership ...
   SetLabel (surf, NULL, true);
+
+  // Mark as updated ...
+  rcChanged[1] = rcChanged[2] = false;
 }
 
 
@@ -290,8 +294,7 @@ void CWidgetMultiData::OnRcEvent (CResource *rc) {
 
 
 void CWidgetMultiData::OnPushed (bool longPushed) {
-  if (TicksMonotonicIsNever (tLastPushed)) tLastPushed = TicksMonotonicNow ();
-  else tLastPushed = NEVER;
+  if (tLastPushed == NEVER) tLastPushed = TicksNowMonotonic ();
   Iterate ();
 }
 
@@ -514,6 +517,9 @@ void CScreenHome::Setup () {
   lastDt = DATE_OF(0, 0, 0);
   lastTm = TIME_OF(99, 0, 0);
   btnTime.SetCbPushed (CbScreenHomeOnButtonPushed, this);
+  AddWidget (&btnTime);
+  AddWidget (&wdgSecs);
+  AddWidget (&wdgDate);
   btnAlarmClock.SetArea (Rect (ALARM_X, ALARM_Y, ALARM_W, ALARM_H));
   btnAlarmClock.SetHotkey (SDLK_a);
   AddWidget (&btnAlarmClock);
@@ -566,7 +572,7 @@ void CScreenHome::Setup () {
 
 void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   CString s;
-  char buf[30];
+  char buf[64];
   TTicks now;
   TDate dt;
   TTime tm;
@@ -609,7 +615,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   if (MINUTES_OF (tm) != MINUTES_OF (lastTm)) {
     font = FontGet (fntLight, 256);
     //~ font = FontGet (fntLight, 192);
-    sprintf (buf, "%i:%02i", HOUR_OF (tm), MINUTE_OF (tm));
+    snprintf (buf, sizeof (buf), "%i:%02i", HOUR_OF (tm), MINUTE_OF (tm));
     SurfaceSet (&surfTime, FontRenderText (font, buf, WHITE)); // , BLACK));
     r = Rect (surfTime);
     RectAlign (&r, Rect (frame.x, frame.y + CLOCK_H * 1/8, CLOCK_W * 13/16, CLOCK_H * 6/8), 1, 1);
@@ -617,19 +623,17 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     r.h = CLOCK_H * 6/8;
     btnTime.SetArea (r);
     btnTime.SetLabel (surfTime);
-    AddWidget (&btnTime);
   }
 
   // ... seconds ...
   if (SECOND_OF (tm) != SECOND_OF (lastTm)) {
     font = FontGet (fntLight, 48);
-    sprintf (buf, ":%02i", SECOND_OF (tm));
+    snprintf (buf, sizeof (buf), ":%02i", SECOND_OF (tm));
     SurfaceSet (&surfSecs, FontRenderText (font, buf, WHITE, BLACK));
     r = Rect (surfSecs);
     RectAlign (&r, Rect (frame.x + CLOCK_W * 13/16, frame.y, CLOCK_W * 2/16, CLOCK_H * 6/8 - 4), -1, 1);
     wdgSecs.SetArea (r);
     wdgSecs.SetSurface (surfSecs);
-    AddWidget (&wdgSecs);
   }
 
   // ... date ...
@@ -637,13 +641,12 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     font = FontGet (fntLight, 48);
     // TRANSLATORS: Format string for the "<weekday>, <full date>" display on the home screen (de_DE: "%s, %i. %s %i")
     //              Arguments are: <week day name>, <day>, <month name>, <year>
-    sprintf (buf, _("%1$s, %3$s %2$i, %4$i"), DayName (GetWeekDay (dt)), DAY_OF (dt), MonthName (MONTH_OF (dt)), YEAR_OF (dt));
+    snprintf (buf, sizeof (buf), _("%1$s, %3$s %2$i, %4$i"), DayName (GetWeekDay (dt)), DAY_OF (dt), MonthName (MONTH_OF (dt)), YEAR_OF (dt));
     SurfaceSet (&surfDate, FontRenderText (font, buf, WHITE, BLACK));
     r = Rect (surfDate);
     RectAlign (&r, Rect (frame.x, frame.y + CLOCK_H * 6/8, CLOCK_W, CLOCK_H * 2/8), 0, 1);
     wdgDate.SetArea (r);
     wdgDate.SetSurface (surfDate);
-    AddWidget (&wdgDate);
   }
 
   // ... done with time and date ...

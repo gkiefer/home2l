@@ -342,7 +342,7 @@
       \includesvg[width=3cm]{figs/cc-by-sa}
     }
     \hfill
-    \parbox{12cm}{\footnotesize This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/4.0} or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.}
+    \parbox{12cm}{\footnotesize This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. To view a copy of this license, visit \url{https://creativecommons.org/licenses/by-sa/4.0} or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.}
   }
 \end{titlepage}
 
@@ -602,7 +602,7 @@ To run the tutorial you need
 
 \begin{itemize}
   \item \href{https://en.wikipedia.org/wiki/Docker_(software)}{Docker (Version 18.09.01 or above)},
-  \item a host operating system with a running X11 server (e.g. Linux).
+  \item a host system with a running X11 server (e.~g. an arbitrary Linux distribution).
 \end{itemize}
 
 Alternative ways of running the tutorial without the supplied Docker image are described in Section~\ref{sec:tutorial-nodocker}.
@@ -674,9 +674,9 @@ The tutorial uses the following conventions in notation:
 
 \end{itemize}
 
-That's it!
+\textbf{That's it!}
 
-You should now have two windows open as shown in Figure~\ref{fig:tutorial-start}. The left window is your original terminal window, in which a console application, \reftool{home2l-showhouse}, is running. It simulates the house and the physical world. The right window shows a \reftool{home2l-wallclock} instance, which simulates a virtual tablet computer mounted at the living room wall of your virtual home.
+You should now have two windows open as shown in Figure~\ref{fig:tutorial-start}. The left window is your original terminal window, in which the \textit{ShowHouse} console tool is running (\reftool{home2l-showhouse}). It simulates the house and the physical world. The right window shows a \textit{WallClock}instance (\reftool{home2l-wallclock}), which simulates a virtual tablet computer mounted at the living room wall of your virtual home.
 
 \begin{figure}[ht]
   \centering
@@ -685,25 +685,33 @@ You should now have two windows open as shown in Figure~\ref{fig:tutorial-start}
   \label{fig:tutorial-start}
 \end{figure}
 
-\infobox{
+\begin{itemize}[$\blacktriangleright$]
+\item
+  (Recommendation) On your host PC, add the following lines to your \lstf{.bashrc} file:
+  \begin{lstlisting}[language=bash]
+  $ alias DOCKER="docker exec -ti home2l-showcase"
+  $ alias DOCKER_ROOT="docker exec -ti --user=root home2l-showcase"
+  \end{lstlisting}
   The Docker container is running several foreground and background processes (to be explored later).
   In future steps, you may want or need to start additional programs inside the running container.
-  This can be done by running (in some other terminal window):
-  \lstbox{
-    \$ docker exec -ti home2l-showcase <command>
-  }
-  It is recommended to define aliases for running commands normally or with \textit{root}
-  privileges, respectively:
-  \lstbox{
-    \$ alias DOCKER="docker exec -ti home2l-showcase" \\
-    \$ alias DOCKER\_ROOT="docker exec -ti {-}{-}user=root home2l-showcase"
-  }
-  Examples:
+  These aliases facilitate starting shells and tools inside the container.
+\end{itemize}
+
+\infobox{
+  Example invocations are:
   \lstbox{
     \begin{tabular}{ll}
     \$ DOCKER bash            & \# Run a (Unix) shell \\
     \$ DOCKER home2l shell    & \# Run \reftool{home2l-shell} \\
     \$ DOCKER\_ROOT bash      & \# Run a root shell
+    \end{tabular}
+  }
+  Of course, these actions can also be performed without modifying your personal \lstf{.bashrc} file:
+  \lstbox{
+    \begin{tabular}{ll}
+    \$ docker exec -ti home2l-showcase bash            & \# Run a (Unix) shell \\
+    \$ docker exec -ti home2l-showcase home2l shell    & \# Run \reftool{home2l-shell} \\
+    \$ docker exec -ti {-}{-}user=root home2l-showcase bash      & \# Run a root shell
     \end{tabular}
   }
 }
@@ -739,7 +747,7 @@ The \textit{Home2L} suite follows a highly distributed design paradigm. At this 
 \begin{enumerate}
 
   \item
-    The \textit{ShowHouse} (\reftool{home2l-showhouse}, left in Figure~\ref{fig:tutorial-start}) is a simulator for the
+    The \textit{ShowHouse} Console Tool (\reftool{home2l-showhouse}, left in Figure~\ref{fig:tutorial-start}) is a simulator for the
     physical world of the demo system. This little console application contains a \textit{Resource} driver providing a
     simulated motion sensor, a door lock sensor, window shades, a door light and some other gadgets. The user (you) can
     simulate physical actions by key presses, and some gadgets are visualized in the ASCII art picture.
@@ -762,9 +770,9 @@ The \textit{Home2L} suite follows a highly distributed design paradigm. At this 
 The following subsections explore this setup step by step, beginning with the most visible instances.
 
 \infobox{
-  \textbf{Do the \textit{Home2Ls} need a central server?}
+  \textbf{There is no central server! The \textit{Home2Ls} do not need one.}
 
-  No. Even if there is an instance \reftool{home2l-server} whose name suggests so,
+  Even if there is an instance \reftool{home2l-server} whose name suggests so,
   a \textit{Home2L} installation does not need a central server.
   In this example, the weather and the MQTT drivers could as well be loaded and executed by \textit{any}
   of the other three \textit{Home2L} instances.
@@ -842,9 +850,9 @@ By pushing (or clicking on) the mini floor plan, you can open the full floor pla
   \item User is away for longer (e.g. on vacation).
 \end{enumerate}
 
-Depending on the use state, certain elements of the floor plan are highlighted. For example, the user is reminded to close the windows when leaving home or to lock the door over night.
-
 The currently active use state is indicated with a yellow label.
+
+Depending on the use state, certain elements of the floor plan are highlighted. For example, the user is reminded to close the windows when leaving home or to lock the door over night.
 
 \begin{figure}[ht]
   \centering
@@ -878,7 +886,7 @@ The \textit{ShowHouse} console tool allows to simulate certain physical user act
       \item the door light is activated for a few seconds if motion is detected (press ''M''),
         but only at night time?
       \item at night time, open windows or an unlocked main door are highlighted to draw the
-        users' attention to it?
+        user's attention to it?
       \item during rainy weather, the \textit{WallClock} excitedly reminds you to close open windows?
     \end{itemize}
 
@@ -907,7 +915,7 @@ and Section~\ref{sec:resources-requests}) can be set in order to, for example, n
 but to autmatically turn it off again in an hour.
 
 
-\subsubsection{Easy Usage}
+\subsubsection{Everyday Use}
 
 Simple switching lights or closing shades is almost as easy as pushing a light button.
 Especially for household members with little technical affinity, it is important that standard use cases are easy.
@@ -935,7 +943,9 @@ Especially for household members with little technical affinity, it is important
 
   \item
     Click on one of the WiFi icons to switch on the (virtual) WiFi access points.
-    Then open some windows and unlock the main door by pushing the respective buttons in the
+
+  \item
+    Open some windows and unlock the main door by pushing the respective buttons in the
     \textit{ShowHouse} window.
 
     Now assume, you have to leave the house for a short (or a longer) period of time.
@@ -954,7 +964,7 @@ Especially for household members with little technical affinity, it is important
 Sometimes, just toggling between ''on'' and ''off'' or ''fully up'' and ''fully down'' is not sufficient,
 and a more fine-grained control is desired.
 Also, it is not always obvious how the above interactions interfere with the automation rules (remember that
-both the door light and the shades are also subject to automation).
+both the door light and the shades are also subject to automation). This is, where \textit{resource dialogs} come into play.
 
 \begin{itemize}[$\blacktriangleright$]
 
@@ -1051,7 +1061,7 @@ This section shows how to look ''under the hood'' and to inspect all details of 
 \begin{itemize}[$\blacktriangleright$]
 
   \item
-    Open the resource dialog (Figure~\ref{fig:tutorial-floorplan-shades-auto}) for the kitchen window,
+    Open the resource dialog (Figure~\ref{fig:tutorial-floorplan-shades-auto}) for the kitchen window shades,
     and push the button on the upper right (showing ''0.0\%'' in the figure). The dialog expands as
     shown in Figure~\ref{fig:tutorial-floorplan-shades-details}.
 
@@ -1154,7 +1164,7 @@ In summary, these examples show that whenever a \textit{Home2L} instance fails, 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
-\section{Looking Behind the Scenes -- Using the \textit{Home2L Shell}}
+\section{Using the \textit{Home2L Shell}: Behind the Scenes}
 \label{sec:tutorial-shell}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1239,64 +1249,68 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+The commands 'c' and 'l' can be used to explore the available resources and the namespace.
+Tab-completion is available.
+
+
 \begin{itemize}[$\blacktriangleright$]
 
 \item
-  Use the commands 'c' and 'l' to explore the available resources and the namespace.
-  Tab-completion is available.
   List the root directory of the namespace:
   \begin{lstlisting}[language=home2l]
     home2l> l /
-    alias
-    env
-    host
-    local
+    alias/
+    host/
+    local/
   \end{lstlisting}
 
   The directory \textit{/host} contains an entry for each host:
   \begin{lstlisting}[language=home2l]
     home2l> l /host/
-    home2l-showcase<shell:431>
-    server
-    showhouse
-    wallclock
+    home2l-showcase<shell:341>/
+    server/
+    showhouse/
+    wallclock/
   \end{lstlisting}
 
   The directory \textit{/alias} contains all defined alias names, which are symbolic
   links to host resources or directories:
   \begin{lstlisting}[language=home2l]
     home2l> l /alias/
-    daylight -> /host/showhouse/world/simDaylight
-    floorplan/bath-shades/shades -> /host/showhouse/world/bath-shades
-    floorplan/bath-temp/data -> /host/showhouse/signal/fp_temp_bath
-    floorplan/bath-window/state -> /host/showhouse/world/bath-window
-    ...
+    daylight -> /host/showhouse/resource/simDaylight
+    doorLock -> /host/showhouse/resource/lock
+    floorplan/
+    frontLight -> /host/showhouse/resource/light
+    mailbox -> /host/server/mqtt/mailbox
+    motion -> /host/showhouse/resource/motion
     use -> /host/wallclock/signal/use
-    weather -> /host/server/weather
-    weatherWarning -> /host/showhouse/world/simBadWeather
+    weather/ -> /host/server/weather/
+    weatherWarning -> /host/showhouse/resource/simBadWeather
   \end{lstlisting}
 
   The top-level directory \textit{/local} is a hard-wired alias to
   \textit{/host/<self>}, where \textit{<self>} is the local
-  \textit{Home2L} host ID (\textit{''home2l-showcase<shell:431>''} in this case).
+  \textit{Home2L} host ID (\textit{''home2l-showcase<shell:341>''} in this case).
 
 \item
-  With the 'c' command, you can navigate in the tree.
+  With the 'c' command, you can navigate in the tree. Without arguments, the current working path
+  (directory \textit{or} resource) is shown, which is initially \textit{/alias}.
   \begin{lstlisting}[language=home2l]
-    home2l> c /alias/frontLight
+    home2l> c
+    /alias/
+    home2l> c frontLight
     /alias/frontLight
   \end{lstlisting}
 
   \infobox{
     If you are familiar with navigating and exploring files using ''cd'', ''ls'' and
     tab-completion in a Unix shell: Navigating with the \textit{Home2L Shell} is very
-    similar, just easier!
-    \begin{enumerate}[a)]
+    similar, just easier:
+    \begin{itemize}
       \item The respective commands have one character instead of two (''c''/''l'' instead of ''cd''/''ls'').
-      \item Tab-completion may auto-complete over multiple directory levels.
-      \item The ''l'' command does not only list directories, but displays anything, particularly resources.
-        Simililarly, with ''c'' you can not only navigate to a directory, but also to a resource itself.
-    \end{enumerate}
+      \item The ''l'' command does not only list directories, but displays anything, in particular resources.
+      \item Similarly, with ''c'' you can not only navigate to a directory, but also to a resource itself.
+    \end{itemize}
   }
 
 \item
@@ -1304,11 +1318,12 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
   Running it now displays the status of the outdoor light resource.
   \begin{lstlisting}[language=home2l]
     home2l> l
-    /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-135724.842
-      ! (bool) 1         #motion       *3 -2020-01-11-140606.472   @home2l-showcase<rules:359>/2020-01-11-140601
-      ! (bool) 0         #daytime      *4   @home2l-showcase<rules:359>/2020-01-11-135727
-      ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
+    /host/showhouse/resource/light[bool,wr] = 0 @2021-11-14-181255.149
+      ! (bool) 1         #motion       *3 -2021-11-14-182112.676   @home2l-showcase<rules:257>/2021-11-14-182107
+      ! (bool) 0         #daytime      *4   @home2l-showcase<rules:257>/2021-11-14-181255
+      ! (bool) 0         #default      *0   @home2l-showcase<rules:257>/2021-11-14-181243
       ? wallclock/floorplan
+      ? server/MQTT/frontLight
       ? showhouse/UiDraw
   \end{lstlisting}
 
@@ -1317,25 +1332,26 @@ This section gives an introduction to the \textit{Home2L Shell}, which we will u
   the last change. The next lines list the active requests and
   subscribers.
 
-  Lines starting with ''!'' show an active request. In the example
-  above, there is a request with the ID ''\#\_default'' for a value of 0
-  with a low priority (''*0'') and another one ''\#motion'' for a value of 1
+  Lines starting with \lst{!} show active requests. In the example
+  above, there is a request with the ID \lst{#default} for a value of 0
+  with a low priority (\lst{*0}) and another one \lst{#motion} for a value of 1
   with a higher priority, which supersedes the default request in this
-  situation. The ''\#motion'' request has a time-out attribute set causing
-  the request to be auto-removed at the given time. The ''@'' tags at the
+  situation. The \lst{#motion} request has a time-out attribute set causing
+  the request to be auto-removed at the given time. The \lst{@} tags at the
   end of the lines identify the origin (host/time) of each request.
 
   \infobox{
     This example reflects the situation shortly after pressing the ''M''
     button in the \textit{ShowHouse} window at (simulated) daytime.
-    The ''\#motion'' request tries to switch on the light for 5 seconds
-    (until 14:06:06). However, a ''\#daylight'' request at a higher
+    The \lst{#motion} request tries to switch on the light for 5 seconds
+    (until 18:21:12 in the example). However, a \lst{#daylight} request at a higher
     priority is active as well, which ties the value to 0, so that the
     light effectively remains off.
   }
 
-  Lines starting with ''?'' show a subscriber. In this example, the resource is subscribed by
-  the floor plan view of the \textit{WallClock} and the \textit{''UiDraw()''} function of
+  Lines starting with \lst{?} show subscribers. In this example, the resource is subscribed by
+  the floor plan view of the \textit{WallClock}, the MQTT gateway driver to export the
+  resource via MQTT (see Section~\ref{sec:tutorial-mqtt}), and the \textit{UiDraw()} function of
   the \textit{ShowHouse} script, which is responsible for redrawing the ASCII art on value changes.
 
 \item
@@ -1367,14 +1383,15 @@ We now manipulate the light by placing requests manually.
   Enter (\textit{Note: The second command is the digit ''one'', not a
   lower-case ''L''.})
   \begin{lstlisting}[language=home2l]
-    home2l> c /alias/frontLight
-    /host/showhouse/world/light
+    home2l> c frontLight
+    /alias/frontLight
     home2l> 1
-    /host/showhouse/world/light[bool,wr] = 1 @2020-01-11-141039.993
-      ! (bool) 1         #shell        *7   @home2l-showcase<shell:431>/2020-01-11-141039
-      ! (bool) 0         #daytime      *4   @home2l-showcase<rules:359>/2020-01-11-135727
-      ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
+    /host/showhouse/resource/light[bool,wr] = 0 @2021-11-14-181255.149
+      ! (bool) 1         #shell        *7   @home2l-showcase<shell:341>/2021-11-14-183025
+      ! (bool) 0         #daytime      *4   @home2l-showcase<rules:257>/2021-11-14-181255
+      ! (bool) 0         #default      *0   @home2l-showcase<rules:257>/2021-11-14-181243
       ? wallclock/floorplan
+      ? server/MQTT/frontLight
       ? showhouse/UiDraw
   \end{lstlisting}
   and see that the light is turned on. Look at the output above: Can you
@@ -1385,31 +1402,33 @@ We now manipulate the light by placing requests manually.
   light remains on. Then enter
   \begin{lstlisting}[language=home2l]
     home2l> 0
-    /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-141118.960
-      ! (bool) 0         #shell        *7   @home2l-showcase<shell:431>/2020-01-11-141118
-      ! (bool) 1         #motion       *3 -2020-01-11-141121.476   @home2l-showcase<rules:359>/2020-01-11-141116
-      ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
+    /host/showhouse/resource/light[bool,wr] = 1 @2021-11-14-183025.324
+      ! (bool) 0         #shell        *7   @home2l-showcase<shell:341>/2021-11-14-183216
+      ! (bool) 1         #motion       *3 -2021-11-14-183220.855   @home2l-showcase<rules:257>/2021-11-14-183215
+      ! (bool) 0         #default      *0   @home2l-showcase<rules:257>/2021-11-14-181243
       ? wallclock/floorplan
+      ? server/MQTT/frontLight
       ? showhouse/UiDraw
   \end{lstlisting}
   This forces the light to stay off. Motion events have no effect on the
   light even at night, since their requests have a lower priority
-  (''*3'') than the default priority of shell requests (''*7'').
+  \lst{*3}) than the default priority of shell requests (\lst{*7}).
 
 \item
   Finally, remove the manual shell request by typing
   \begin{lstlisting}[language=home2l]
     home2l> -
-    /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-141118.960
-      ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
+    /host/showhouse/resource/light[bool,wr] = 0 @2021-11-14-183216.501
+      ! (bool) 0         #default      *0   @home2l-showcase<rules:257>/2021-11-14-181243
       ? wallclock/floorplan
+      ? server/MQTT/frontLight
       ? showhouse/UiDraw
   \end{lstlisting}
 
 \end{itemize}
 
 \infobox{
-  The commands ''0'', ''1'', and ''-'' are abbreviations for variants of the ''r+'' and ''r-''
+  The commands \lst{0}, \lst{1}, and \lst{-} are abbreviations for variants of the \lst{r+} and \lst{r-}
   commands to place and remove requests. More information is given in the online help of \reftool{home2l-shell}.
 }
 
@@ -1421,13 +1440,14 @@ We now manipulate the light by placing requests manually.
   again 3 seconds later enter:
   \begin{lstlisting}[language=home2l]
     home2l> 1 +2s -5s
-    /host/showhouse/world/light[bool,wr] = 0 @2020-01-11-141118.960
-      ! (bool) 1         #shell        *7 +2020-01-11-141300.240 -2020-01-11-141303.240   @home2l-showcase<shell:431>/2020-01-11-141258
-      ! (bool) 0         #_default     *0   @showhouse/2020-01-11-135724
+    /host/showhouse/resource/light[bool,wr] = 0 @2021-11-14-183216.501
+      ! (bool) 1         #shell        *7 +2021-11-14-183355.474 -2021-11-14-183358.474   @home2l-showcase<shell:341>/2021-11-14-183353
+      ! (bool) 0         #default      *0   @home2l-showcase<rules:257>/2021-11-14-181243
       ? wallclock/floorplan
+      ? server/MQTT/frontLight
       ? showhouse/UiDraw
   \end{lstlisting}
-  The arguments '+2s' and '-5s' add start and stop time attributes to
+  The arguments \lst{+2s} and \lst{-5s} add start and stop time attributes to
   the request so that it becomes effective in 2 seconds from now until 5 seconds
   from now.
 
@@ -1437,7 +1457,7 @@ We now manipulate the light by placing requests manually.
   How can you open or close the shades of the kitchen window?
   How can you dim or switch off the \textit{WallClock} display?
 
-  Finally, remove all requests again you have set (''r-'' command).
+  Finally, remove all requests again you have set (\lst{r-} command).
 
 \end{itemize}
 
@@ -1451,31 +1471,39 @@ We now manipulate the light by placing requests manually.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The shell allows to subscribe to any resources using the ''s+'' and ''s-'' commands, respectively.
+The shell allows to subscribe to any resources using the \lst{s+} and \lst{s-} commands, respectively.
 
 \begin{itemize}[$\blacktriangleright$]
 
 \item
-  Subscribe to all resources provided by the \textit{ShowHouse} ''world'' driver:
+  Subscribe to some resources provided by the \textit{ShowHouse} resource driver as follows:
   \begin{lstlisting}[language=home2l]
-    home2l> s+ /host/showhouse/world/*
-    Subscriber 'home2l-showcase<shell:431>/shell'
-      /host/showhouse/world/*?
-      /host/showhouse/world/bath-shades
-      /host/showhouse/world/bath-window
-      /host/showhouse/world/bedroom-shades
+    home2l> s+ /host/showhouse/resource/+
+    Subscriber 'home2l-showcase<shell:178>/shell'
+      /host/showhouse/resource/+ ?
+      /host/showhouse/resource/bath-shades
+      /host/showhouse/resource/bath-window
+      /host/showhouse/resource/bedroom-shades
       ...
-      /host/showhouse/world/simDaylight
-    : /host/showhouse/world/bath-shades = ?
-    : /host/showhouse/world/bath-window = ?
-    : /host/showhouse/world/bedroom-shades = ?
-    ...
-    : /host/showhouse/world/simDaylight = ?
+      /host/showhouse/resource/motion
+      /host/showhouse/resource/simBadWeather
+      /host/showhouse/resource/simDaylight
   \end{lstlisting}
-  The first part of the output (without the lines starting with '':'')
-  shows the ID of the subscriber of the shell and lists the resources it
-  currently subscribes to. Lines ending with ''?'' are \textit{watch set}
-  entries and are currently not associated with any existing resource.
+  The output shows the subscriber ID of the shell and lists the resources it
+  currently subscribes to. Lines ending with \lst{?} are \textit{watch set}
+  entries and are currently directly not associated with any existing resource.
+
+  \infobox{
+    For selecting resources, both MQTT-style and filename-style wildcards can be used:
+    \begin{itemize}
+      \item[\lst{?}] matches any single character except slashes (\lst{/}).
+      \item[\lst{*}] matches 0 or more characters except slashes (\lst{/}).
+      \item[\lst{+}] matches 1 or more characters except slashes (\lst{/}).
+      \item[\lst{#}] matches the complete remaining string (including \lst{/} characters) and can
+          thus be used to select a complete subtree. If used, \lst{#} must be the last
+          character in the expression. Anything behind a \lst{#} is ignored silently.
+    \end{itemize}
+  }
 
   \infobox{
     \textit{Watch set} entries may either be named resources or -- as in this case -- wildcard
@@ -1483,37 +1511,37 @@ The shell allows to subscribe to any resources using the ''s+'' and ''s-'' comma
     from each other. You can verify this by closing both the \textit{ShowHouse} and the \textit{Home2L Shell},
     and then repeating the above command \textit{before} starting the \textit{ShowHouse}.
 
-    The command ''s'' lists the status of the shell's subscriber. Run it before and after starting
+    The command \lst{s} lists the status of the shell's subscriber. Run it before and after starting
     the \textit{ShowHouse}.
   }
-
-  Lines starting with a colon ('':'') are events reported by the
-  subscriber. The \textit{Home2L} suite follows a very precise event model.
-  Immediately after the subscription, the locally known values are
-  reported (''unknown'' in this case). However, in the background,
-  the server(s) are contacted. By the time you have read this text,
-  the actual values have been delivered from the server(s) to the shell.
 
 \item
   Press return:
   \begin{lstlisting}[language=home2l]
     home2l>
-    : /host/showhouse/world/bath-shades = 0.0% @2020-01-11-141422.985
-    : /host/showhouse/world/bath-shades connected
-    : /host/showhouse/world/bath-window = closed @2020-01-11-141422.985
-    : /host/showhouse/world/bath-window connected
-    : /host/showhouse/world/bedroom-shades = 0.0% @2020-01-11-141422.986
-    : /host/showhouse/world/bedroom-shades connected
+    : /host/showhouse/resource/bath-shades = 0.0% @2021-11-21-165134.312
+    : /host/showhouse/resource/bath-shades connected
+    : /host/showhouse/resource/bath-window = closed @2021-11-21-165134.313
+    : /host/showhouse/resource/bath-window connected
+    : /host/showhouse/resource/bedroom-shades = 0.0% @2021-11-21-165134.313
+    : /host/showhouse/resource/bedroom-shades connected
     ...
-    : /host/showhouse/world/simDaylight = 1 @2020-01-11-141422.986
-    : /host/showhouse/world/simDaylight connected
+    : /host/showhouse/resource/simDaylight = 1 @2021-11-21-165134.313
+    : /host/showhouse/resource/simDaylight connected
   \end{lstlisting}
   Incoming events are collected in the background and displayed after each shell command.
+  Lines starting with a colon (\lst{:}) are events reported by the subscriber.
+  By the time you have read the previous text, the server(s) have been contacted in the background
+  and have delivered their actual values to the shell.
 
   \infobox{
-    The ''... connected'' events denote that the connection is established.
+    The \textit{Home2L} suite follows a very precise event model.
+    Event lines like \lstf{: <URI> connected} denote that the connection is established.
     From now on, it is guaranteed that every single value change will be reported,
-    even if the resource value changes very quickly!
+    even if the resource value changes very quickly.
+    It is \textit{not} an error that the connection events are reported \textit{after} the
+    values, since the values did not change after the connection was established, but reflect
+    the actual values before that.
   }
 
 \item
@@ -1527,17 +1555,17 @@ The shell allows to subscribe to any resources using the ''s+'' and ''s-'' comma
   (e.g.~lock/unlock the door, move the person, or open and close windows).
   The output will be similar to this:
   \begin{lstlisting}[language=home2l]
-    : /host/showhouse/world/motion = 1 @2020-01-11-142453.688
-    : /host/showhouse/world/motion = 0 @2020-01-11-142454.188
-    : /host/showhouse/world/lock = 1 @2020-01-11-142455.248
-    : /host/showhouse/world/bedroom-window = open @2020-01-11-142456.464
-    : /host/showhouse/world/bath-window = open @2020-01-11-142456.464
-    : /host/showhouse/world/lock = 0 @2020-01-11-142502.720
-    : /host/showhouse/world/dining-window-l = open @2020-01-11-142504.760
-    : /host/showhouse/world/dining-window-r = open @2020-01-11-142504.760
-    : /host/showhouse/world/kitchen-window = open @2020-01-11-142504.760
-    : /host/showhouse/world/bedroom-window = closed @2020-01-11-142504.760
-    : /host/showhouse/world/bath-window = tilted @2020-01-11-142504.760
+    : /host/showhouse/resource/motion = 1 @2021-11-21-170907.845
+    : /host/showhouse/resource/motion = 0 @2021-11-21-170908.346
+    : /host/showhouse/resource/lock = 1 @2021-11-21-170909.629
+    : /host/showhouse/resource/bedroom-window = open @2021-11-21-170914.436
+    : /host/showhouse/resource/bath-window = open @2021-11-21-170914.436
+    : /host/showhouse/resource/lock = 0 @2021-11-21-170920.494
+    : /host/showhouse/resource/dining-window-l = open @2021-11-21-170922.285
+    : /host/showhouse/resource/dining-window-r = open @2021-11-21-170922.285
+    : /host/showhouse/resource/kitchen-window = open @2021-11-21-170922.285
+    : /host/showhouse/resource/bedroom-window = closed @2021-11-21-170922.285
+    : /host/showhouse/resource/bath-window = tilted @2021-11-21-170922.285
   \end{lstlisting}
 
 \item
@@ -1573,41 +1601,41 @@ The \textit{Home2L Shell} can be run non-interactively, so that certain actions 
 \item
   To turn on the \textit{ShowHouse} light for 2 seconds (with priority 5):
   \begin{lstlisting}[language=bash]
-    $ home2l shell -e "c /alias/frontLight; 1 *5 -2s"
+    $ home2l shell -e "c frontLight; 1 *5 -2s"
   \end{lstlisting}
-  or alternatively:
+  or shorter:
   \begin{lstlisting}[language=bash]
-    $ home2l r+ /alias/frontLight 1 *5 -2s
+    $ home2l r+ frontLight 1 *5 -2s
   \end{lstlisting}
 
 \item
   To log all motion events, you may use a command like:
   \begin{lstlisting}[language=bash]
-    $ home2l shell -e "s+ /host/showhouse/world/motion; follow" | tee /tmp/motion.log
+    $ home2l shell -e "s+ motion; follow" | tee /tmp/motion.log
   \end{lstlisting}
   or shorter:
   \begin{lstlisting}[language=bash]
-    $ home2l follow /host/showhouse/world/motion | tee /tmp/motion.log
+    $ home2l follow motion | tee /tmp/motion.log
   \end{lstlisting}
   (Of course, the commands can also be run in the background.)
 
 \item
   To log the outside temperature over time, run:
   \begin{lstlisting}[language=bash]
-    $ home2l follow /alias/weather/temp
+    $ home2l follow weather/temp
   \end{lstlisting}
   (Again, the output may be redirected at your choice as in the previous example.)
 
 \item
   To obtain the current value of the door lock, run:
   \begin{lstlisting}[language=bash]
-    $ home2l get /alias/doorLock
+    $ home2l get doorLock
   \end{lstlisting}
 
 \item
   To wait until the door is locked (=1), run:
   \begin{lstlisting}[language=bash]
-    $ home2l wait /alias/doorLock 1
+    $ home2l wait doorLock 1
   \end{lstlisting}
 
 \end{itemize}
@@ -1646,7 +1674,7 @@ The showcase environment contains a running \href{https://mosquitto.org}{Mosquit
 Also, the \textit{Home2L} MQTT gateway driver (\reftool{home2l-drv-mqtt}) is configured to export and
 import a couple of resources. Both are already running.
 
-To get started, we first open two new terminal windows to monitor the MQTT traffic and to publish
+To get started, we first open two new terminal windows to monitor the MQTT traffic and to later publish
 MQTT messages manually.
 
 \begin{itemize}[$\blacktriangleright$]
@@ -1655,9 +1683,9 @@ MQTT messages manually.
   Open a new terminal window and start a command to monitor all messages of the MQTT broker:
   \begin{lstlisting}[language=bash]
     $ DOCKER mosquitto_sub -v -t '#'
-    home2l/doorLock 0
-    home2l/frontLight off
     home2l/online 1
+    home2l/frontLight off
+    home2l/doorLock 0
     mailbox/state 0
     mailbox/online 1
   \end{lstlisting}
@@ -1669,7 +1697,7 @@ MQTT messages manually.
     \textit{Home2L} resources configured to be exported by MQTT (see Section~\ref{sec:tutorial-mqtt-exports}).
     The topic \lst{home2l/online} indicates that the \textit{Home2L} MQTT gateway driver is online and alive.
     The topics \lst{mailbox/state} and \lst{mailbox/online} are \textit{not} controlled by the MQTT
-    gateway driver. They refer to an external imported device and have been preset just by the
+    gateway driver. They refer to an imported external device and have been preset just by the
     \lstf{home2l demo} script (see Section~\ref{sec:tutorial-mqtt-imports}).
   }
 
@@ -1726,7 +1754,7 @@ The MQTT gateway is configured to export the door lock sensor (\lst{/alias/doorL
   \begin{lstlisting}[language=bash]
     $ mosquitto_pub -r -t home2l/frontLight/cmd -n
   \end{lstlisting}
-  to let the automation rule become effective again.
+  to remove the MQTT-related request (\lst{#mqtt}) and let the automation rules become effective again.
 
 \item
   In the \textit{WallClock} window, click on the front door light and expand the window
@@ -1768,13 +1796,10 @@ indicating that the mailbox is empty.
 \item
   Open a new terminal window and run the following command to observe the mailbox resource:
   \begin{lstlisting}[language=bash]
-    $ DOCKER home2l shell -e "s+ /alias/mailbox; f"
-    home2l-shell v1.1-57 (2020-07-30) by Gundolf Kiefer
-
-    Subscriber 'home2l-showcase<shell:1342>/shell'
-      /host/server/mqtt/mailbox?
-    : /host/server/mqtt/mailbox = ?
-    : /host/server/mqtt/mailbox = 0 @2020-07-30-203102.418
+    $ DOCKER home2l follow mailbox
+    Subscriber 'home2l-showcase<shell:428>/shell'
+      /host/server/mqtt/mailbox ?
+    : /host/server/mqtt/mailbox = 0 @2021-11-21-174036.585
     : /host/server/mqtt/mailbox connected
   \end{lstlisting}
 
@@ -1848,7 +1873,7 @@ At your choice, it possible to use either your own MQTT broker or the MQTT broke
   this line and check that the topic matches the one configured in your device.
 
 \item
-  \textbf{If you want to use your own MQTT broker:}
+  \textbf{To use your own MQTT broker:}
   \begin{enumerate}
     \item Edit the following line and replace \lst{localhost:1883} with the IP address and port of your broker.
       \begin{lstlisting}
@@ -1861,7 +1886,7 @@ At your choice, it possible to use either your own MQTT broker or the MQTT broke
   \end{enumerate}
 
 \item
-  \textbf{If you want to use the broker of the demo container:}
+  \textbf{To use the broker of the demo container:}
   \begin{enumerate}
     \item Make sure that no other MQTT broker is running on your host machine.
     \item Configure your device to use \lst{<IP>:1883} as the broker, where \lst{<IP>} is the IP address
@@ -1933,11 +1958,13 @@ Finally, the supplied \reftool{rules-showhouse} file will be inspected and exten
 
 In this section, we will deactivate the provided \reftool{rules-showhouse} script and write
 an own rules file to control the front light of the show house.
+The \textit{Home2L} Python package offers a number of different techniques to implement automation rules (see Section~\ref{sec:rules-events}). In this section, some of them are demonstrated and sometimes compared to alternative solutions for the same problem.
+
 
 \begin{itemize}[$\blacktriangleright$]
 
 \item
-  In the \textit{ShowHouse} window, quit ('Q') the \textit{ShowHouse} tool.
+  In the \textit{ShowHouse} window, quit (''Q'') the \textit{ShowHouse} tool.
   Then stop the \textit{Home2L} daemon together with \reftool{rules-showhouse} script and start
   \reftool{home2l-showhouse} again:
   \begin{lstlisting}[language=bash]
@@ -1945,9 +1972,10 @@ an own rules file to control the front light of the show house.
     $ home2l showhouse
   \end{lstlisting}
 
-  (This will stop the server instance, too, and the weather displays disappear. This is no problem.)
+  This will stop the server instance, too. In consequence, the weather displays disappear and the mailbox
+  icon shows an error due to the missing MQTT driver. This is no problem.
 
-  Then push 'M' and 'D' and verify that the front light no longer switches automatically on
+  Then push ''M'' and ''D'' and verify that the front light no longer switches automatically on
   motion at night.
 
 \item
@@ -1957,6 +1985,13 @@ an own rules file to control the front light of the show house.
     $ DOCKER bash
     $ . /opt/home2l/env.sh   # to set the Python search path
   \end{lstlisting}
+
+\end{itemize}
+
+
+\subsubsection*{A First Rules Script}
+
+\begin{itemize}[$\blacktriangleright$]
 
 \item
   Open a text editor to create a new file \lst{myrules}:
@@ -1974,40 +2009,43 @@ an own rules file to control the front light of the show house.
     Home2lInit ()
 
     # Get some resource handles ...
-    rcDaylight = RcGet ("/alias/daylight")
-    rcRain = RcGet ("/alias/weatherWarning")
-    rcMotion = RcGet ("/alias/motion")
-    rcLight = RcGet ("/alias/frontLight")
+    rcDaylight = RcGet ("daylight")
+    rcRain = RcGet ("weatherWarning")
+    rcMotion = RcGet ("motion")
+    rcLight = RcGet ("frontLight")
 
-    # Rules area ...
+    # Set default request ...
     rcLight.SetDefault (0)
 
-    Connect (rcLight, rcMotion, lambda x: 1 if x == True else None, attrs = '#motion *3', delDelay = '5s')
+    # Rule to acrivate the light on motion ...
+    @onUpdate (rcMotion)
+    def LightOnMotion (motion):
+      if motion == True: rcLight.SetRequest (1, attrs = '#motion *3')
+      else: rcLight.DelRequest ('#motion', '5s')
+      print ("Hi there - motion = " + str (motion))
 
     # Go ahead ...
     Home2lRun ()
   \end{lstlisting}
 
-  The lines following \textit{''\# Get some resource handles...''} simply lookup some resource
+  The lines following \lstf{\# Get some resource handles...} lookup some resource
   objects and place them in Python variables. This is good practice, but not strictly
-  necessary. The rules commands later would also accept strings containing the resources
-  identifiers (URI) instead.
+  necessary. The rules later would also accept strings containing the resource identifiers (URI).
 
-  The rules area presently contains two calls controlling the front light (\lst{rcLight}):
-  The first (\lst{rcLight.SetDefault (0)}) sets a default request to let the light turn off (0)
+  The next lines are the actual rules area. There are two rules controlling the front light (\lst{rcLight}):
+  The first one (\lst{rcLight.SetDefault (0)}) sets a default request to let the light turn off (0)
   if no other request is active.
 
-  The second rule (\lstf{Connect (...)}) is a connector that requests the light to turn on when
-  the motion detector (\lstf{rcMotion}) is active (\textit{True}) and to turn the light off
-  again 5 seconds after \lstf{rcMotion} becomes \textit{False} again.
-  The argument \lstf{attrs = '\#motion *3'} defines the request attributes
-  (request ID \textit{''motion''}, priority 3).
-  The argument \lstf{delDelay = '5s'} sets the delay for request deletion to 5 seconds.
-  The \lstf{lambda x: ...} expression is the so-called \textit{transfer function} and describes
-  how an \lst{rcMotion} value is translated into a request value for \lstf{rcLight}. In this
-  example, the light is requested to switch on (\lst{1}) if the motion sensor is active
-  (\lstf{x = True}), whereas the request \textit{''motion''} is deleted (\lstf{None}) in all
-  other cases.
+  The second rule consists of the funtion \lstf{LightOnMotion()}. The decorator \lstf{@onUpdate (rcMotion)}
+  lets the function be called whenever the value or state of \lst{rcMotion} changes
+  (see Section~\ref{sec:rules-actions-onupdate}).
+  The new resource value is passed as the function argument (\lst{motion}). Whenever called with
+  \lstf{motion == True}, a request is set to activate the light. The attributes \lstf{attrs = '\#motion *3'}
+  specify a request ID of \textit{''motion''} and a priority of 3. If called with \lstf{motion == False}
+  (or \lstf{motion == None}), the request is deleted with a delay of 5 seconds (\lstf{'5s'}).
+
+  The \lstf{print()} statement just prints some status information on the console to indicate when the
+  triggered function is called.
 
 \item
   Save the file and exit the editor. Then make it executable and run it:
@@ -2015,42 +2053,68 @@ an own rules file to control the front light of the show house.
     $ chmod a+x myrules
     $ ./myrules
   \end{lstlisting}
-  In the \textit{ShowHouse} windows, push 'M' and see that the front light switches on on
+  In the \textit{ShowHouse} windows, push ''M'' and see that the front light switches on on
   motion and stays on for 5 seconds.
 
+\end{itemize}
+
+\infobox{
+  To watch the requests being added and deleted, you may use the \textit{WallClock} and open the resource
+  dialog for the front light in detail view (see Figure~\ref{fig:tutorial-floorplan-light-mqtt}).
+}
+
+
+\subsubsection*{Using Connectors}
+
+\begin{itemize}[$\blacktriangleright$]
+
 \item
-  The \lst{Connect(...)} statement is handy, but not the only solution for this rule.
-  Replace the line with the following code, which is -- besides the \lst{print()} statements --
-  equivalent, though a bit more verbose and extensible:
+  The automation rule for activating the light on motion and switching it off 5 seconds later can
+  be formulated shorter by means of a \textit{connector} (see Section~\ref{sec:rules-actions-connectors}).
+
+  Replace the decorated funtion (stating with \lstf{@onUpdate(rcMotion) ...}) with the following code:
   \begin{lstlisting}
-    @onUpdate (rcMotion)
-    def LightOnMotion (motion):
-      rcLight.SetRequest (1 if motion == True else None, attrs = '#motion *3', delDelay = '5s')
-      print ("Hi there - motion = " + str (motion))
-      # other arbitray Python code may be added here.
+    Connect (rcLight, rcMotion,
+             lambda x: 1 if x == True else None,
+             attrs = '#motion *3', delDelay = '5s')
   \end{lstlisting}
-  Run the modified script again and see that the front light is switched on motion as before,
-  while a text is printed whenever the value of \lst{rcMotion} changes.
 
-  As the \lst{print()} statement suggests, the function \lst{LightOnMotion()} is a normal
-  Python function, and it may contain any additional Code. The decorator
-  \lst{@onUpdate(rcMotion)} makes that function to be called whenever the value or state of
-  \lst{rcMotion} changes. The new resource value is passed as the function argument
-  (\lst{motion}).
+  The arguments in the first line define the destination and the source resource (\lstf{rcLight} and
+  \lstf{rcMotion}, respectively).
+  The \lstf{lambda x: ...} expression is the so-called \textit{transfer function} and defines
+  how an \lst{rcMotion} value is translated into a request value for \lstf{rcLight}. In this
+  example, the light is requested to be on (\lst{1}) if the motion sensor is active
+  (\lstf{x = True}), whereas the request \lstf{\#motion} is deleted (\lstf{None}) in all
+  other cases.
+  The argument \lstf{attrs = '\#motion *3'} sets the request attributes (request ID of ''motion'' and
+  a priority of 3, as before). The argument \lstf{delDelay = '5s'} sets the delay for request deletion to
+  5~seconds.
 
 \item
-  To keep the light off at day time, another rule must be added. The following connector
-  lets the light stay off at day time, but not during rainy weather:
+  Connectors may also have multiple sources.
+  The following connector lets the light stay off at day time, but not during rainy weather:
   \begin{lstlisting}
-    Connect (rcLight, (rcDaylight, rcRain), lambda d, r: 0 if d == True and r == False else None, attrs = '#daylight *4')
+    Connect (rcLight, (rcDaylight, rcRain),
+             lambda day, rain: 0 if day == True and rain == False else None,
+             attrs = '#daylight *4')
   \end{lstlisting}
-  Add this line to the script run it, and test its effect!
+  The request attributes define a priority of 4, so that \lstf{\#daylight} requests generated by this
+  connector have a higher priority that \lstf{\#motion} requests set by the other rules.
+
+  Add these lines to the script and run it! Manipulate the daylight and weather status in the
+  \textit{ShowHouse} window to see how it works.
+
+\end{itemize}
+
+
+\subsubsection*{Going Further: Connectors with Explicit Functions}
+
+\begin{itemize}[$\blacktriangleright$]
 
 \item
-  The previous example shows that connectors can have multiple source resources
-  (\lst{rcDaylight, rcRain}). Putting the logic into a single lambda expression may lead to
-  unreadable code for more complex functions. The following code is equivalent to it, but
-  uses a Python decorator to build a connector around a function:
+  For complex connectors, putting the logic into a single lambda expression may be difficult or lead
+  to incomprehensible code. The following code is equivalent to the previous example, but uses
+  a Python decorator to build a connector around a named function:
   \begin{lstlisting}
     @connect (rcLight, (rcDaylight, rcRain), attrs = '#daylight *4')
     def LightOffDuringDay (daylight, rain):
@@ -2059,16 +2123,17 @@ an own rules file to control the front light of the show house.
       return None
   \end{lstlisting}
   Similar to the \lst{@onUpdate} decorator, the function may contain arbitrary other Python
-  code, and it is called whenever a value or state of any of the resources \textit{rcDaylight}
-  or \textit{rcRain} changes.
+  code, and it is called whenever a value or state of any of the resources \lst{rcDaylight}
+  or \lst{rcRain} changes.
 
-  Replace the \lst{Connect (...)} line with this alternative and run the script.
+  Replace the \lst{Connect (rcLight, (rcDaylight, rcRain), ...} statement with this alternative and
+  run the script!
   Manipulate the daylight and weather status in the \textit{ShowHouse} window and verify the
   console output!
 
 \item
-  Stop the \textit{ShowHouse} script (press 'Q') and start it again. Watch the console output
-  of your \lst{myrules} script an see how it behaves if its resources get lost and reappear
+  Stop the \textit{ShowHouse} script (press ''Q'') and start it again. Watch the console output
+  of your \lst{myrules} script and see how it behaves if its resources get lost and reappear
   again.
 
 \item
@@ -2085,7 +2150,7 @@ an own rules file to control the front light of the show house.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Introduction to the Python API}
+\subsection{Digging Deeper into the Python API}
 \label{sec:tutorial-rules-python}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2124,9 +2189,7 @@ This section describes an interactive Python session to explore some technical a
 
     RcGet(uri, allowWait=False)
         RcGet(char const * uri, bool allowWait=False) -> CResource
-        RcGet(char const * uri) -> CResource
-
-        Lookup a resource by its URI and return a reference to it.
+        Lookup a resource by its URI and return a reference to it (shortcut for 'RcGetResource()').
   \end{lstlisting}
 
 \item
@@ -2141,10 +2204,12 @@ This section describes an interactive Python session to explore some technical a
   To inspect the network environment and list the resources provided by, for example,
   \reftool{home2l-showhouse}, enter:
   \begin{lstlisting}[language=python]
-    >>> RcHosts ()
-    ['home2l-showcase<interactive:567>', 'server', 'showhouse', 'wallclock']
-    >>> RcHostResources ("showhouse")
-    ['/host/showhouse/signal/fp_mail', '/host/showhouse/signal/fp_music', '/host/showhouse/signal/fp_phone', '/host/showhouse/signal/fp_temp_bath',  ..., '/host/showhouse/world/bath-shades', '/host/showhouse/world/bath-window', '/host/showhouse/world/bedroom-shades', ..., '/host/showhouse/world/lock', '/host/showhouse/world/motion', '/host/showhouse/world/simBadWeather', '/host/showhouse/world/simDaylight']
+    >>> RcHosts()
+    ['home2l-showcase<interactive:1454>', 'server', 'showhouse', 'wallclock']
+    >>> RcHostResources("showhouse")
+    ['/host/showhouse/resource/bath-shades', '/host/showhouse/resource/bath-window',
+    ...
+    '/host/showhouse/timer/twilight/sunrise', '/host/showhouse/timer/twilight/sunset']
   \end{lstlisting}
   (Output is abbreviated for readability.)
 \end{itemize}
@@ -2218,7 +2283,7 @@ This section describes an interactive Python session to explore some technical a
 \item
   Resources can be manipulated by setting requests, for example, as follows:
   \begin{lstlisting}[language=python]
-    >>> rcLight = RcGet ("/alias/frontLight")
+    >>> rcLight = RcGet ("frontLight")
     >>> rcLight.SetRequest (True, "*5 -5s")
   \end{lstlisting}
   The last command could also be written as:
@@ -2227,7 +2292,7 @@ This section describes an interactive Python session to explore some technical a
   \end{lstlisting}
   ... or both together like:
   \begin{lstlisting}[language=python]
-  >>> RcSetRequest ("/alias/frontLight", "1 *5 -5s")
+  >>> RcSetRequest ("frontLight", "1 *5 -5s")
   \end{lstlisting}
   Actually, the methods \refapipython{CResource.SetRequest()} and \refapipython{RcSetRequest()}
   offer a wide range of possibilities to pass arguments. Values and attributes can be passed as strings
@@ -2430,7 +2495,7 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
   at day time or whenever the door is unlocked in order to remind the user to
   lock it over night:
   \begin{lstlisting}
-    @onUpdate (rcDaylight, "/alias/doorLock")
+    @onUpdate (rcDaylight, "doorLock")
     def WallClockDisplayNew (daylight, lock):
       print ("### daylight = {}, lock = {}".format (str (daylight), str (lock)))
       if daylight == False and lock != True:
@@ -2452,7 +2517,7 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
   Add a new rule to mute the music player for 5 seconds if motion is detected in
   front of the house:
   \begin{lstlisting}
-    @onEvent ("/alias/motion")
+    @onEvent ("motion")
     def MuteOnMotion (ev, rc, vs):
       if ev == rceValueStateChanged and vs.Value () == True:
         RcSetRequest ("/host/wallclock/ui/mute", "1 -5s")
@@ -2462,7 +2527,7 @@ The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{t
 
 %  An alternative to this rule with similar semantics is:
 %  \begin{lstlisting}
-%    Connect ("/host/wallclock/ui/mute", "/alias/motion", lambda x: 1 if x == True else None, value = 1, delDelay = "5s")
+%    Connect ("/host/wallclock/ui/mute", "motion", lambda x: 1 if x == True else None, value = 1, delDelay = "5s")
 %  \end{lstlisting}
 
 \item
@@ -3009,7 +3074,7 @@ tutorial.
     Setting up an intercom system with multiple room video phones and multiple
     doorphones using \href{https://www.asterisk.org/}{Asterisk}, \reftool{home2l-wallclock}
     and \reftool{home2l-doorman} instances. The author has such a system in productive use for
-    a few years now, but it requires some effort and technical expertise (and patience) to set it up.
+    a few years now, but it requires some technical expertise (and perhaps some patience) to set it up.
 
 \end{enumerate}
 
@@ -3533,7 +3598,7 @@ This can be viewed using \textit{adb(1)}:
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Configuration and Cluster Administration}
+\chapter{Configuration and Administration}
 \label{ch:managing}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -4404,12 +4469,12 @@ S turing testFloat float 3.14
 \end{lstlisting}
 
 
-\subsection{Resource Attributes: Default Requests and Persistence}
+\subsection{Defining Default Requests and Persistence}
 \label{sec:resources-conf-defaults}
 
 Depending on the type of resource and context, it may or may not be reasonable to have a permanent \textbf{default request} tying it to a certain value whenever no other request exists. For example, a service should have a default request towards 0 (''not running'') in order to shut down the service whenever it is not needed. On the other hand, for example, electrical blinds which are mainly operated manually may not have a default request to prevent them from moving if the user requests times out.
 
-A \textbf{persistent resource} is a resource for which requests are stored on disk and are not lost when the instance is (re)started (see \refenv{rc.persistent}).
+A \textbf{persistent resource} is a resource for which requests are stored on disk and are not lost when the instance is (re)started (see \refenv{rc.persistent}). Request IDs starting with an underscore (\lst{\_}) indicate a volatile request, they are never stored on disk.
 
 Ressource attributes can be assigned to any single resource as follows:
 \begin{lstlisting}
@@ -5131,15 +5196,16 @@ Please consult the Python API documentation of \refapipython{RcSetRequest()} and
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Triggered Functions}
-\label{sec:rules-events}
+\section{Triggered Actions}
+\label{sec:rules-actions}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 The \textit{Home2L} package defines a number of Python decorators allowing to execute functions at certain occasions.
 
 
-\subsection{Value/State Updates}
+\subsection{Update Functions}
+\label{sec:rules-actions-onupdate}
 
 Functions decorated with \refapipython{@onUpdate} are executed whenever the value or state of a resource changes:
 \begin{lstlisting}
@@ -5153,8 +5219,8 @@ Functions decorated with \refapipython{@onUpdate} are executed whenever the valu
 In the following example, the function \lst{WallClockDisplayNew (daylight, lock)} is executed whenever any of the resources \textit{rcDaylight} or \textit{rcLock} changes its value or state. The arguments \textit{daylight} and \textit{lock} contain the current values of the two resources on invocation. Both may occasionally be \textit{None} if the respective resource is unavailable. This is taken into account in the \lst{if ...} statement, which compares the arguments with explicit values (\textit{False} or \textit{True}).
 
 \begin{lstlisting}
-  rcDaylight = RcGet ("/alias/daylight")
-  rcLock = RcGet ("/alias/doorlock")
+  rcDaylight = RcGet ("daylight")
+  rcLock = RcGet ("doorlock")
   rcWallClockActive = RcGet ("/host/wallclock/ui/active")
 
   @onUpdate (rcDaylight, rcLock)
@@ -5171,6 +5237,7 @@ In the following example, the function \lst{WallClockDisplayNew (daylight, lock)
 
 
 \subsection{Timed Functions}
+\label{sec:rules-actions-at}
 
 To run a function at a certain time or at certain intervals, the \refapipython{@at} decorator can be used:
 \begin{lstlisting}
@@ -5198,6 +5265,7 @@ is used instead of the decorator.
 
 
 \subsection{Connectors}
+\label{sec:rules-actions-connectors}
 
 A \textit{connector} is a background task, which continuously monitors a set of source (e.g. sensor) resources  and connects them to a target resource by setting (or deleting) a corresponding request to the target. The kind of connection is specified by a \textit{transfer function}, which allows to cover different use cases. For example,
 \begin{itemize}
@@ -5249,6 +5317,7 @@ Connectors can always be written by means value/state-triggered functions. The a
 
 
 \subsection{Daily Requests}
+\label{sec:rules-actions-daily}
 
 Often, static requests need to be set that are re-calculated on a daily basis. For example, an outdoor light might need to be switched on at night depending on the current sunset and sunrise times. For such cases, \textit{daily rules} may be defined, which set some requests accordingly.
 
@@ -5268,6 +5337,7 @@ Note: For getting the time and to detect the presence or absence of a host, the 
 
 
 \subsection{Precise Event Tracing}
+\label{sec:rules-actions-onevent}
 
 Functions to be run on each event related to a specific set of resources can be defined with the \refapipython{@onEvent()} decorator:
 \begin{lstlisting}
@@ -5403,7 +5473,7 @@ See Section~\ref{sec:resources-drvdev-app-python} for details on this.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\chapter{\textit{Brownies} -- Helpful Microcontrollers for Sensors and Actors}
+\chapter{\textit{Brownies} -- Helpful Microcontrollers for Connected Sensors and Actors}
 \label{ch:brownies}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6177,7 +6247,7 @@ The directory \refsrc{brownies/circuits} contains some sample circuits as inspir
 
     The power supply is +5V and the same voltage is expected at the slave TWI interface. To connect
     the hub(s) to a mini computer with a lower \textit{i2c} voltage, a level shifter can be used.
-    The \href{https://www.nxp.com/docs/en/application-note/AN10441.pdf}{NXP Application Note AN10441}
+    The \href{https://assets.nexperia.com/documents/application-note/AN10441.pdf}{Nexperia Application Note AN10441}
     contains useful information on this, \textit{BSS138} is a suitable transistor model.
 
   \item[Matrix 4x8 (\code{matrix4x8})] ~ \\
@@ -6282,7 +6352,7 @@ In the second stage, the \textit{operational} firmware and the configuration rec
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\chapter{\textit{WallClock} -- An Information Display}
+\chapter{\textit{WallClock} -- An Information Display and More}
 \label{ch:wallclock} \labeltool{home2l-wallclock}
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6475,9 +6545,7 @@ In order to compile the \textit{WallClock} with phone capabilities,
 
 % NOTE: Check that this footnote is on the same page, not earlier!
 \footnotetext[1]{The video image has been created using:
-  \href{https://commons.wikimedia.org/wiki/File:The_Beatles_magical_mystery_tour.jpg}{The Beatles magical mystery tour},
-  Parlophone Music Sweden,
-  \href{https://creativecommons.org/licenses/by/3.0/legalcode}{CC~BY~3.0}
+  \url{https://commons.wikimedia.org/wiki/File:TrailerUSHelp.jpg}
 }
 
 
@@ -6687,7 +6755,7 @@ This chapter is the reference documentation of all supplied drivers.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Signal Driver (built-in)}
+\section{The \textit{Signal} Driver (built-in)}
 \label{sec:drvlib-signal} \labeltool{home2l-drv-signal}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -6706,7 +6774,7 @@ They can be defined inside a \reftool{resources.conf} configuration file
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Timer Driver (built-in)}
+\section{The \textit{Timer} Driver (built-in)}
 \label{sec:drvlib-timer} \labeltool{home2l-drv-timer}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -6729,7 +6797,7 @@ The driver is statically built into the \textit{Resources} library and enabled b
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The GPIO Driver}
+\section{The \textit{GPIO} Driver}
 \label{sec:drvlib-gpio} \labeltool{home2l-drv-gpio}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -6782,7 +6850,7 @@ as specified in the name of the symbolic link.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The MQTT Gateway Driver}
+\section{The \textit{MQTT} Gateway Driver}
 \label{sec:drvlib-mqtt} \labeltool{home2l-drv-mqtt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

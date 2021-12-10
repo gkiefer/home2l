@@ -1,6 +1,7 @@
 <map id="Interface" name="Interface">
-<area shape="rect" id="node1" href="$group__brownies__interface__memory.html" title="Reference documentation of the Brownie virtual memory organization. " alt="" coords="273,5,393,32"/>
-<area shape="rect" id="node2" href="$group__brownies.html" title="The Home2L Brownies library. " alt="" coords="5,56,81,83"/>
-<area shape="rect" id="node4" href="$group__brownies__interface__protocol.html" title="Communication message formats and Brownie status codes (EBrStatus). " alt="" coords="251,56,416,83"/>
-<area shape="rect" id="node5" href="$group__brownies__interface__registers.html" title="Reference documentation of the Brownie register map. " alt="" coords="269,107,398,133"/>
+<area shape="rect" id="node1" href="$group__brownies__interface__memory.html" title="Reference documentation of the Brownie virtual memory organization." alt="" coords="273,5,393,31"/>
+<area shape="rect" id="node2" href="$group__brownies.html" title="The Home2L Brownies library." alt="" coords="5,55,81,80"/>
+<area shape="rect" id="node3" title="Specification of the microcontroller&#45;host interface: two&#45;wire bus protocol, register map,..." alt="" coords="129,55,203,80"/>
+<area shape="rect" id="node4" href="$group__brownies__interface__protocol.html" title="Communication message formats and Brownie status codes (EBrStatus)." alt="" coords="251,55,416,80"/>
+<area shape="rect" id="node5" href="$group__brownies__interface__registers.html" title="Reference documentation of the Brownie register map." alt="" coords="269,104,398,129"/>
 </map>

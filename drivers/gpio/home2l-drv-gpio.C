@@ -90,7 +90,10 @@ void CGpioPin::DriveValue (CRcValueState *vs) {
   }
 
   // Print warning...
-  if (!ok) WARNINGF (("Failed to drive value '%s' to GPIO '%s'", vs->ToStr (), rc->Uri ()));
+  if (!ok) {
+    CString s;
+    WARNINGF (("Failed to drive value '%s' to GPIO '%s'", vs->ToStr (&s), rc->Uri ()));
+  }
 
   // Done...
   vs->SetState (ok ? rcsValid : rcsUnknown);

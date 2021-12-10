@@ -38,13 +38,13 @@ ENV_PARA_STRING ("rc.persistent", envRcPersistent, NULL);
    * Wildcards are allowed. By default, only those resources specified in
    * \reftool{resources.conf} are persistent.
    *
-   * With persistent resources, all pending requests are stored in a file and
+   * With persistent resources, all pending requests with IDs not starting with an
+   * underscore (''\_'', volatile requests) are stored in a file and
    * retrieved again on the next startup. Only requests are stored, no values.
    * On read-only resources, this setting has no effect.
    *
-   * Persistent requests are stored as persistent environment variables, at the
-   * file is flushed (but without FS sync) before the request is actually applied
-   * and reported back.
+   * Persistent requests are stored as persistent environment variables, and the
+   * file is flushed before the request is actually applied and reported back.
    */
 
 ENV_PARA_STRING ("rc.userReqId", envRcUserReqId, "user");
@@ -114,13 +114,13 @@ static bool IsValidIdentifier (const char *id, bool allowSlash) {
 
 
 static const char *rcTypeNames [] = {   // names of base and special types
-  //~ "none", "bool", "int", "float", "string", "blob", "time", "color", "trigger", "mutex"
+  // TBD(future): "none", "bool", "int", "float", "string", "blob", "time", "color", "trigger", "mutex"
   "none", "bool", "int", "float", "string", "time", "trigger", "mutex"
 };
 
 
 static ERcType rcBaseTypeList [] = {    // base type for base and special types
-  //~ rctNone, rctBool, rctInt, rctFloat, rctString, rctBlob, rctTime, rctColor, rctInt, rctString
+  // TBD(future): rctNone, rctBool, rctInt, rctFloat, rctString, rctBlob, rctTime, rctColor, rctInt, rctString
   rctNone, rctBool, rctInt, rctFloat, rctString, rctTime, rctInt, rctString
 };
 
@@ -327,7 +327,9 @@ static void AppendValue (CString *ret, URcValue val, ERcType type, bool precise,
       if (RcTypeIsUnitType (type)) ret->Append (RcTypeGetUnit (type));
       break;
     case rctString:
-      ret->AppendEscaped (val.vString, stringChars);
+      if (stringChars < INT_MAX) s.Set (val.vString, stringChars);
+      else s.SetC (val.vString);
+      ret->AppendEscaped (s.Get ());
       break;
     case rctTime:
       ret->Append (TicksAbsToString (&s, val.vTime, INT_MAX, precise));
@@ -357,7 +359,7 @@ static bool ParseValue (const char *p, ERcType type, URcValue *retVal) {
 
   URcValueClear (&val);
   baseType = RcTypeGetBaseType (type);
-  if (p[0] == '$' && baseType == rctFloat) {    // precise value?
+  if (baseType == rctFloat && p[0] == '$') {    // precise value?
     val.vInt = (uint32_t) strtoll (p + 1, &q, 16);         // parse as hexadecimal
     //~ INFOF (("### ParseValue: '%s' -> %08x -> %f", p, val.vInt, val.vFloat));
     if (q[0] != '\0') ok = false;
@@ -773,14 +775,9 @@ const char *CRcValueState::ToStr (CString *ret, bool withType, bool withTimeStam
   // Timestamp...
   if (withTimeStamp && timeStamp > 0) {
     ret->Append (" @");
-    ret->Append (TicksAbsToString (timeStamp, 3));
+    ret->Append (TicksAbsToString (&s, timeStamp, 3));
   }
   return ret->Get ();
-}
-
-
-const char *CRcValueState::ToStr (bool withType, bool withTimeStamp, bool precise, int stringChars) const {
-  return ToStr (GetTTS (), withType, withTimeStamp, precise, stringChars);
 }
 
 
@@ -903,8 +900,8 @@ ENV_PARA_INT ("rc.maxOrphaned", envMaxOrphanedResources, 1024);
 // Initialization information for local resources derived from the configuration file ...
 //   Keys are the respective URIs without the leading "/host/<hostId>/".
 //   These dictionaries are cleared/invalid after drivers have been started ('RcStart ()').
-CKeySet rcConfPersistence;                  // local resources configured persistent in 'resources.conf'
-CDictFast<CString> rcConfDefaultRequests;   // default requests (as strings) configured in 'resources.conf'
+CKeySet rcConfPersistence;                    // local resources configured persistent in 'resources.conf'
+CDictCompact<CString> rcConfDefaultRequests;  // default requests (as strings) configured in 'resources.conf'
 
 
 
@@ -926,7 +923,15 @@ CResource::CResource () {
 
 CResource::~CResource () {
   ASSERT (IsRegistered () == false);   // destruction may only happen after unregistration
-  ClearRequestsAL ();
+
+  // Delete requests ...
+#if WITH_CLEANMEM
+  while (requestList) {
+    CRcRequest *req = requestList;
+    ATOMIC_WRITE (requestList, req->next);
+    delete req;
+  }
+#endif
 }
 
 
@@ -953,7 +958,7 @@ CResource *CResource::GetUnregistered (const char *uri) {
 
 void CResource::PutUnregistered () {
   unregisteredResourceMapMutex.Lock ();
-  ASSERT (unregisteredResourceMap.Get (Uri ()) == NULL);   // TBD: This is expensive => remove?
+  ASSERT (unregisteredResourceMap.Get (Uri ()) == NULL);
   if (unregisteredResourceMap.Entries () >= envMaxOrphanedResources)
     ERROR ("Maximum number of orphaned/invalid resources exceeded");
   unregisteredResourceMap.Set (Uri (), this);
@@ -963,20 +968,26 @@ void CResource::PutUnregistered () {
 
 CResource *CResource::Get (const char *uri, bool allowWait) {
   CString realUri;
-  CResource *rc;
-  ERcPathDomain domain;
+  TRcPathInfo info;
 
+  // Sanity ...
   if (!uri) return NULL;
-  RcGetRealPath (&realUri, uri, "/alias");
-  domain = RcAnalysePath (realUri.Get (), NULL, NULL, NULL, &rc, allowWait);
-  if (!rc && (domain == rcpResource || domain == rcpDriver || domain == rcpAlias)) {
-    // Only domains of type 'rcpResource' get the chances to become registered some time later.
-    // However, we must accept anything here (unless syntactically incorrect) so that
-    // the caller does not receive NULLs for non-existing aliases or drivers.
-    rc = GetUnregistered (realUri.Get ());
+
+  // Resolve and analyse path ...
+  RcPathResolve (&realUri, uri);
+  RcPathAnalyse (realUri.Get (), &info, allowWait);
+
+  // Handle unregistered resources ...
+  if (!info.resource && info.state == rcaResource) {
+    // Only URIs with state 'rcaResource' after resolution get the chance to become registered some time later.
+    // Everything else (e.g. unresolvable aliases) is considered syntactically incorrect,
+    // since we cannot determine a valid resource LID here.
+    info.resource = GetUnregistered (realUri.Get ());
   }
-  if (!rc) WARNINGF (("Invalid URI '%s'", uri));
-  return rc;
+
+  // Done ...
+  if (!info.resource) WARNINGF (("Invalid URI '%s'", uri));
+  return info.resource;
 }
 
 
@@ -1047,13 +1058,13 @@ CResource *CResource::Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const ch
     //~ rcConfPersistence.Dump ();
 
     if (!rc->persistent)
-      rc->persistent = RcUriMatches (rc->Uri (), envRcPersistent);  // persistent by environment?
+      rc->persistent = RcPathMatches (rc->Uri (), envRcPersistent);  // persistent by environment?
     if (rc->persistent) EnvEnablePersistence ();
 
     // Default request ...
     reqStr = rcConfDefaultRequests.Get (key);
     if (reqStr) {
-      reqDefault = new CRcRequest ((CRcValueState *) NULL, rcDefaultRequestId, rcPrioDefault);
+      reqDefault = new CRcRequest (NO_VALUE_STATE, rcDefaultRequestId, rcPrioDefault);
       if (!reqDefault->SetFromStr (reqStr->Get ())) FREEO(reqDefault);
     }
   }
@@ -1091,7 +1102,6 @@ CResource *CResource::Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const ch
     _rcHost->Unlock ();
   }
   if (_rcDriver) {
-    //~ ASSERT (!rcInitCompleted);
     if (rcInitCompleted)
       ERRORF (("Registration attempt for a local resource '%s/%s' after the initialization phase.", _rcDriver->Lid (), _lid));
     _rcDriver->Lock ();
@@ -1173,20 +1183,18 @@ CResource *CResource::Register (CRcHost *_rcHost, CRcDriver *_rcDriver, const ch
 
 CResource *CResource::Register (const char *rcDef, void *_data) {
   CSplitString arg;
-  CRcHost *_rcHost;
-  CRcDriver *_rcDriver;
-  const char *_lid;
+  TRcPathInfo info;
   bool ok;
 
   arg.Set (rcDef, 2);
   ok = (arg.Entries () == 2);
   if (ok) {
     // URI...
-    RcAnalysePath (arg.Get (0), &_lid, &_rcHost, &_rcDriver, NULL);
-    ok = (_lid && (_rcHost || _rcDriver));
+    RcPathAnalyse (arg.Get (0), &info);
+    ok = (info.localPath && (info.host || info.driver));
   }
   if (ok)
-    return Register (_rcHost, _rcDriver, _lid, arg.Get (1), _data);
+    return Register (info.host, info.driver, info.localPath, arg.Get (1), _data);
   else
     WARNINGF(("Invalid resource definition string '%s'", rcDef));
   return NULL;
@@ -1233,7 +1241,7 @@ void CResource::Unregister () {
 
 
 void CResource::WaitForRegistration () {
-  TTicksMonotonic timeLeft;
+  TTicks timeLeft;
 
   if (!IsRegistered ()) {   // fast pre-check
     timeLeft = RcNetTimeout ();
@@ -1254,7 +1262,7 @@ bool CResource::Is (const char *uri) {
   const char *p, *q;
 
   p = gid.Get ();
-  q = RcGetRealPath (&realUri, uri);
+  q = RcPathResolve (&realUri, uri);
   //~ INFOF(("# '%s' == '%s'?", p, q));
   while (true) {
     if (*p != *q) return false;
@@ -1266,7 +1274,7 @@ bool CResource::Is (const char *uri) {
 
 
 bool CResource::IsLike (const char *pattern) {
-  return RcUriMatches (gid.Get (), pattern);
+  return RcPathMatches (gid.Get (), pattern);
 }
 
 
@@ -1277,10 +1285,6 @@ const char *CResource::ToStr (CString *ret, bool pathLocal) {
   return ret->Get ();
 }
 
-
-const char *CResource::ToStr (bool pathLocal) {
-  return ToStr (GetTTS (), pathLocal);
-}
 
 
 // ***** Reading values *****
@@ -1321,12 +1325,10 @@ void CResource::SubscribePAL (CRcSubscriber *subscr, bool resLocked, bool subLoc
     // Send subscription to remote host ...
     if (rcHost) rcHost->RemoteSubscribe (subscr, this);
 
-    // Submit current value as an event...
-    ev.Set (rceValueStateChanged, this, &valueState);
-    subscr->NotifyAL (&ev);
-
-    // For a local resource commit that we are connected...
+    // For a local resource: Submit the current value and commit that we are connected...
     if (rcDriver) {
+      ev.Set (rceValueStateChanged, this, &valueState);
+      subscr->NotifyAL (&ev);
       ev.Set (rceConnected, this, &valueState);
       subscr->NotifyAL (&ev);
       sl->isConnected = true;
@@ -1462,11 +1464,6 @@ const char *CResource::ValidString (CString *ret, const char *defaultVal, TTicks
 }
 
 
-const char *CResource::ValidString (const char *defaultVal, TTicks *retTimeStamp) {
-  return ValidString (GetTTS (), defaultVal, retTimeStamp);
-}
-
-
 TTicks CResource::ValidTime (TTicks defaultVal, TTicks *retTimeStamp) {
   Lock ();
   TTicks ret = valueState.ValidTime (defaultVal);
@@ -1503,7 +1500,7 @@ int CResource::ValidEnumIdx (ERcType _type, int defaultVal, TTicks *retTimeStamp
 }
 
 
-void CResource::ReadValueState (CRcValueState *retValueState, int maxTime) {
+void CResource::ReadValueState (CRcValueState *retValueState, TTicks maxTime) {
   CRcSubscriber *subscr;
   CRcEvent ev;
 
@@ -1532,20 +1529,11 @@ void CResource::ReadValueState (CRcValueState *retValueState, int maxTime) {
 void CResource::UpdatePersistentRequestAL (const char *reqId, CRcRequest *req) {
   CString key, reqDef;
 
-  key.SetF ("var.rc.(%s).%s", Gid (), reqId);
-  if (req)  EnvPut (key.Get (), req->ToStr (&reqDef, true, false, 0, "i#"));
-  else      EnvDel (key.Get ());
-  EnvFlush ();
-}
-
-
-void CResource::ClearRequestsAL () {
-  CRcRequest *req;
-
-  while (requestList) {
-    req = requestList;
-    ATOMIC_WRITE (requestList, req->next);
-    delete req;
+  if (reqId[0] != '_') {      // skip volatile requests
+    key.SetF ("var.rc.(%s).%s", Gid (), reqId);
+    if (req)  EnvPut (key.Get (), req->ToStr (&reqDef, true, false, 0, "i#"));
+    else      EnvDel (key.Get ());
+    EnvFlush ();
   }
 }
 
@@ -1578,7 +1566,7 @@ bool CResource::DelRequestNoEvaluate (const char *reqGid, TTicks t1) {
   // Sanity...
   if (!reqGid) reqGid = EnvInstanceName ();
   if (reqGid[0] == '#') reqGid++;
-  if (t1 == RCREQ_NONE) t1 = 0;
+  if (t1 == NEVER) t1 = 0;
 
   // Remove the request from list...
   Lock ();
@@ -1599,6 +1587,7 @@ bool CResource::DelRequestNoEvaluate (const char *reqGid, TTicks t1) {
   // Re-evaluate 'this' or send to remote host ...
   if (isRegistered) {
     if (!rcHost) {
+      NotifySubscribers (rceRequestChanged, reqGid);
       if (reEvaluate) return true;
     }
     else rcHost->RemoteDelRequest (this, reqGid, t1);
@@ -1608,16 +1597,17 @@ bool CResource::DelRequestNoEvaluate (const char *reqGid, TTicks t1) {
 
 
 void CResource::SetRequestFromObjNoEvaluate (CRcRequest *_request) {
+  CString s;
   //~ INFOF (("### Set request '%s' on '%s'...", _request->ToStr (), Uri ()));
 
   // Sanity...
   if (!IsValidIdentifier (_request->Gid (), true)) {
-    WARNINGF (("Ignoring request to '%s' with invalid ID: '%s'", Uri (),  _request->ToStr ()));
+    WARNINGF (("Ignoring request to '%s' with invalid ID: '%s'", Uri (),  _request->ToStr (&s)));
     delete _request;
     return;
   }
   if (_request->Repeat () && !_request->TimeOn ()) {
-    WARNINGF (("Ignoring repeat attribute for request without an on-time to '%s': '%s'", Uri (),  _request->ToStr ()));
+    WARNINGF (("Ignoring repeat attribute for request without an on-time to '%s': '%s'", Uri (),  _request->ToStr (&s)));
     _request->repeat = 0;
   }
 
@@ -1634,7 +1624,7 @@ void CResource::SetRequestFromObjNoEvaluate (CRcRequest *_request) {
   // Check and convert the request (but only if the resource is already registered) ...
   if (Type () != rctNone) {
     if (!writable) {
-      WARNINGF (("Request '%s' to write-protected resource '%s' will have no effect", _request->ToStr (), Uri ()));
+      WARNINGF (("Request '%s' to write-protected resource '%s' will have no effect", _request->ToStr (&s), Uri ()));
     }
     else
       _request->Convert (this);
@@ -1651,6 +1641,7 @@ void CResource::SetRequestFromObjNoEvaluate (CRcRequest *_request) {
     _request->next = requestList;
     ATOMIC_WRITE (requestList, _request);
     Unlock ();
+    NotifySubscribers (rceRequestChanged, _request->Gid ());
   }
 }
 
@@ -1699,7 +1690,7 @@ void CResource::SetRequestFromStr (const char *reqDef) {
 
 
 void CResource::SetTrigger (const char *reqGid, int priority, TTicks t0, TTicks repeat) {
-  CRcRequest *req = new CRcRequest ((CRcValueState *) NULL, reqGid, priority, t0, RCREQ_NONE, repeat);
+  CRcRequest *req = new CRcRequest (NO_VALUE_STATE, reqGid, priority, t0, NEVER, repeat);
   req->SetForTrigger ();
   SetRequest (req);
 }
@@ -1718,69 +1709,49 @@ void CResource::DelRequest (const char *reqGid, TTicks t1) {
 }
 
 
-void CResource::GetRequest (CRcRequest *ret, const char *reqGid, bool allowNet) {
+bool CResource::GetRequestSet (CRcRequestSet *ret, bool allowNet) {
   CRcRequest *req;
 
-  // Sanity...
-  ASSERT (ret != NULL && reqGid != NULL);
-
-  ret->Reset ();
+  // Sanity ...
+  ASSERT (ret != NULL);
+  ret->Clear ();
 
   // Local resource ...
   if (rcDriver) {
     Lock ();
-    for (req = requestList; req; req = req->next) if (req->gid.Compare (reqGid) == 0) {
-
-      // Success: Return ...
-      *ret = *req;
-      Unlock ();
-      ret->next = NULL;
-      return;
-    }
-
-    // Failure ...
+    for (req = requestList; req; req = req->next)
+      ret->Set (req->Gid (), new CRcRequest (req));
     Unlock ();
+    return true;    // success
   }
 
   // Remote resource ...
-  //   TBD: Shorten this when request events are implemented!
-  else if (rcHost && allowNet) {
-    CSplitString info;
-    CString s;
-    const char *p;
-    int n;
-    bool ok;
+  else if (rcHost && allowNet)
+    return rcHost->RemoteGetRequestSet (this, ret);
 
-    GetInfo (&s, 1, true);
-    info.Set (s.Get (), INT_MAX, "\n");
-    for (n = 0; n < info.Entries (); n++) {
-      p = info.Get (n);
-      while (p[0] == ' ') p++;
-      if (p[0] == '!') {      // have a request line?
-        ok = true;
-        while (ok && p[0] != ')') {
-          if (!p[0]) ok = false;
-          p++;
-        }
-        if (ok) {
-          p++;
-          while (p[0] == ' ') p++;
-          ok = ret->SetFromStr (p);
-        }
-        if (!ok)
-          WARNINGF (("Syntax error in resource info string line: '%s'", s.Get ()));
-        else {
-          if (ret->gid.Compare (reqGid) == 0) {
+  // No success so far: Failure ...
+  return false;
+}
 
-            // Success: Return ...
-            ret->Convert (this);    // Convert type
-            return;
-          }
-        }
-        ret->Reset ();
-      }
-    }
-  }
+
+CRcRequest *CResource::GetRequest (const char *reqGid, bool allowNet) {
+  CRcRequestSet set;
+  CRcRequest *req;
+
+  // Sanity...
+  ASSERT (reqGid != NULL);
+
+  // Get request set ...
+  if (!GetRequestSet (&set, allowNet)) return NULL;
+
+  // Pick out selected request ...
+  req = set.DisownValue (reqGid);
+
+  // Handle non-existing request ...
+  if (!req) req = new CRcRequest (NO_VALUE_STATE, reqGid);
+
+  // Done ...
+  return req;
 }
 
 
@@ -1790,35 +1761,47 @@ void CResource::GetRequest (CRcRequest *ret, const char *reqGid, bool allowNet) 
 // **** For drivers *****
 
 
-void CResource::NotifySubscribers (int evType) {
+void CResource::NotifySubscribers (int evType, const char *evAttr) {
   Lock ();
-  NotifySubscribersAL (evType);
+  NotifySubscribersAL (evType, evAttr);
   Unlock ();
 }
 
 
-void CResource::NotifySubscribersAL (int evType) {
+void CResource::NotifySubscribersAL (int evType, const char *evAttr) {
   CRcEvent ev;
   CRcSubscriberLink *sl;
   CRcSubscriber *subscr;
   bool wasConnected;
 
   //~ INFOF (("### NotifySubscribers: vs = '%s'", valueState.ToStr ()));
-  ev.Set ((ERcEventType) evType, this, &valueState);
+
+  // Create event object ...
+  if (evType == rceRequestChanged) {
+    CRcValueState vs;
+    vs.SetString (evAttr);
+    ev.Set (rceRequestChanged, this, &vs);
+  }
+  else
+    ev.Set ((ERcEventType) evType, this, &valueState);
+
+  // Push event to all subscribers ...
   for (sl = subscrList; sl; sl = sl->next) {
 
     // Track "connected" status with the subscriber link...
-    wasConnected = sl->isConnected;
-    if (evType == rceConnected) sl->isConnected = true;
-    if (evType == rceDisconnected) sl->isConnected = false;
-
-    // Notify subscriber, but avoid repeating 'rceConnected' or 'rceDisconnected' events...
-    if ((evType != rceConnected && evType != rceDisconnected) || sl->isConnected != wasConnected) {
-      subscr = sl->subscr;
-      subscr->Lock ();
-      subscr->NotifyAL (&ev);
-      subscr->Unlock ();
+    if (evType == rceConnected || evType == rceDisconnected) {
+      wasConnected = sl->isConnected;
+      if (evType == rceConnected) sl->isConnected = true;
+      if (evType == rceDisconnected) sl->isConnected = false;
+      if (sl->isConnected == wasConnected) continue;
+        // avoid repeating 'rceConnected' or 'rceDisconnected' events
     }
+
+    // Notify subscriber ...
+    subscr = sl->subscr;
+    subscr->Lock ();
+    subscr->NotifyAL (&ev);
+    subscr->Unlock ();
   }
 }
 
@@ -1970,7 +1953,6 @@ void CResource::ReportNetLost () {
     tLast = valueState.TimeStamp ();
     ASSERT (rcHost);
     tNew = rcHost->LastAlive ();      // last time the host is known to be alive
-    //~ if (!tNew) tNew = TicksNow () - envMaxAge;  // (should not be necessary)
     if (tNew < tLast) tNew = tLast;   // ... but not before the last known time stamp (should not happen, but ensures monotonic behaviour).
     ReportValueStateAL (&vs, tNew);
   }
@@ -2103,7 +2085,7 @@ CRcRequest *CResource::GetWinningRequest (TTicks t) {
   maxReq = NULL;
   maxPrio = -1;
   for (req = requestList; req; req = req->next) if (req->IsCompatible ())
-    if (req->priority >= maxPrio && t >= req->t0 && (!req->t1 || t < req->t1)) {
+    if (req->priority >= maxPrio && t >= req->t0 && (req->t1 <= 0 || t < req->t1)) {
       maxReq = req;
       maxPrio = req->priority;
     }
@@ -2115,7 +2097,7 @@ void CResource::EvaluateRequests (bool force) {
   CRcRequest *req, *bestReq, *finalReq, **pReq, **pBestReq;
   CRcValueState finalValueState;
   TTicks curTime, nextTime, bestTime;
-  TTicksMonotonic curTicks, t;
+  TTicks curTicks, t;
 
   // NOTE on race conditions:
   //   We must make sure that any new value we drive here only depends on the request set, but never on the
@@ -2137,14 +2119,17 @@ void CResource::EvaluateRequests (bool force) {
   //   'this' will be kept locked during the complete evaluation process.
   Lock ();
   curTime = TicksNow ();              // Absolute time in milliseconds since epoch
-  curTicks = TicksMonotonicNow ();    // Semi-absolute time in milliseconds
+  curTicks = TicksNowMonotonic ();    // Semi-absolute time in milliseconds
 
   // Handle repetitions: Update 't0' / 't1' based on 'repeat' attributes ...
   for (req = requestList; req; req = req->next)
-    if (req->repeat && req->t0 && req->t1) {
-      // Note: We do not update a persistent request afterwards here, we rely on the fact that
+    if (req->repeat > 0 && req->t0 != NEVER && req->t1 != NEVER) {
+      // Note: The repeat attribute only makes sense if both 't0' and 't1' are defined.
+      //
+      // Note: We do not update a persistent request afterwards, we rely on the fact that
       //       t0 and t1 are always updated appropriately here, even if their original
       //       values are very much back in the past.
+      //
       // Repeat back in time ...
       while (req->t1 - req->repeat > curTime) req->t1 -= req->repeat;
       while (req->t0 > req->t1) req->t0 -= req->repeat;
@@ -2175,7 +2160,7 @@ void CResource::EvaluateRequests (bool force) {
 
       // Remove that trigger...
       req = *pBestReq;
-      if (req->repeat) {
+      if (req->repeat > 0 && req->t0 != NEVER) {    // Sanity ...
         while (req->t0 <= curTime) req->t0 += req->repeat;   // update time for next occurence
         if (persistent) UpdatePersistentRequestAL (req->Gid (), req);
       }
@@ -2216,11 +2201,11 @@ void CResource::EvaluateRequests (bool force) {
       if (finalReq->hysteresis) {
         //~ INFOF(("###    ... hysteresis = %i", finalReq->hysteresis));
         for (req = requestList; req; req = req->next) if (req->IsCompatible ()) {
-          if (req->t0 && req->t0 > curTime && req->t0 <= curTime + finalReq->hysteresis) {  // starting time in the future during the hysteresis period?
+          if (req->t0 != NEVER && req->t0 > curTime && req->t0 <= curTime + finalReq->hysteresis) {  // starting time in the future during the hysteresis period?
             bestReq = GetWinningRequest (req->t0);                                          // get the winner at that time
             if (!finalReq->value.Equals (&bestReq->value)) { finalReq = NULL; break; }      // future winner dictates a value different from now's winner
           }
-          if (req->t1 && req->t1 > curTime && req->t1 <= curTime + finalReq->hysteresis) {  // stop time in the future during the hysteresis period?
+          if (req->t1 != NEVER && req->t1 > curTime && req->t1 <= curTime + finalReq->hysteresis) {  // stop time in the future during the hysteresis period?
             bestReq = GetWinningRequest (req->t1);                                          // get the winner at that time
             if (!finalReq->value.Equals (&bestReq->value)) { finalReq = NULL; break; }      // future winner dictates a value different from now's winner
           }
@@ -2293,6 +2278,11 @@ const char *CRcEvent::ToStr (CString *ret) {
     case rceValueStateChanged:
       ret->SetF ("%s = %s", resource->Uri (), valueState.ToStr (&s, false, true));
       break;
+    case rceRequestChanged:
+      s.SetC (valueState.ValidString (CString::emptyStr));
+      if (s.IsEmpty ()) s.SetC ("*");
+      ret->SetF ("%s requested (#%s)", resource->Uri (), s.Get ());
+      break;
     case rceDisconnected:
       ret->SetF ("%s disconnected", resource->Uri ());
       break;
@@ -2300,17 +2290,12 @@ const char *CRcEvent::ToStr (CString *ret) {
       ret->SetF ("%s connected", resource->Uri ());
       break;
     case rceDriveValue:
-      ret->SetF ("Drive %s = %s", resource->Uri (), valueState.ToStr (&s));
+      ret->SetF ("%s driven (%s)", resource->Uri (), valueState.ToStr (&s));
       break;
     default:
       ret->SetC ("???");
   }
   return ret->Get ();
-}
-
-
-const char *CRcEvent::ToStr () {
-  return ToStr (GetTTS ());
 }
 
 
@@ -2458,8 +2443,8 @@ bool CRcEventProcessor::PollEvent (CRcEvent *ev) {
 }
 
 
-bool CRcEventProcessor::WaitEvent (CRcEvent *ev, int *maxTime) {
-  int timeLeft;
+bool CRcEventProcessor::WaitEvent (CRcEvent *ev, TTicks *maxTime) {
+  TTicks timeLeft;
   bool haveEvent;
 
   haveEvent = false;
@@ -2548,8 +2533,8 @@ void CRcEventProcessor::SetInSelectSet (bool _inSelectSet) {
 }
 
 
-CRcEventProcessor *CRcEventProcessor::Select (TTicksMonotonic maxTime) {
-  TTicksMonotonic timeLeft;
+CRcEventProcessor *CRcEventProcessor::Select (TTicks maxTime) {
+  TTicks timeLeft;
 
   timeLeft = maxTime;
   //~ INFOF(("# CRcEventProcessor::Select (%i)", timeLeft));
@@ -2557,23 +2542,13 @@ CRcEventProcessor *CRcEventProcessor::Select (TTicksMonotonic maxTime) {
   do {
 
     // Check list with processors owning pending events...
-    while (firstProc) {
-      //~ INFOF(("# Trying '%s'/'%s'...", firstProc->TypeId (), firstProc->InstId ()));
-      if (firstProc->DoPollEventAL (NULL)) {
-        // The above check should always (TBD: proof) (and definitely does mostly) return 'true'.
-        // Hence, we could skip it here and document that the caller should not worry about spurious returns.
-        // For efficiency reasons (outer loop may be in a high-level language, e.g. Python), we leave the small loop
-        // here. TBD: Check, if we can replace the check with an 'ASSERT()'.
-
-        // 'firstProc' is a valid candidate: return with success...
-        //~ INFO("# ... Done: Success");
-        globMutex.Unlock ();
-        return firstProc;
-      }
-      else {
-        //~ INFOF(("# -> nothing"));
-        firstProc->UnlinkAL ();   // Entry has no pending events and is irrelevant: unlink it
-      }
+    if (firstProc) {
+      //~ INFOF(("# Found '%s'/'%s'.", firstProc->TypeId (), firstProc->InstId ()));
+      ASSERT (firstProc->firstEv != NULL);
+        // Assert that the first processor has events available.
+        // Processors without events should have been sorted out in 'DoPollEventAL()'.
+      globMutex.Unlock ();
+      return firstProc;
     }
 
     // Wait for signalling or until the time left is over...
@@ -2648,11 +2623,6 @@ const char *CRcSubscriber::ToStr (CString *ret) {
 }
 
 
-const char *CRcSubscriber::ToStr () {
-  return ToStr (GetTTS ());
-}
-
-
 
 // ***** Adding/removing resources *****
 
@@ -2664,36 +2634,26 @@ CResource *CRcSubscriber::AddResource (CResource *rc) {
 
 
 CResource *CRcSubscriber::AddResources (const char *pattern) {
-  CResource **selArr, *ret;
   CKeySet newWatchSet;
-  char **patV;
-  int n, items, patC;
-  bool ok;
+  CListRef<CResource> resources;
+  CResource *ret;
+  int n;
 
-  // Handle multiple patterns in the 'pattern' string...
-  if (!pattern) return NULL;
-  if (strchr (pattern, ',')) {
-    StringSplit (pattern, &patC, &patV, INT_MAX, "," WHITESPACE);
-    if (patV) {
-      for (n = 0; n < patC; n++) AddResources (patV[n]);
-      free (patV[0]);
-      free (patV);
-      return NULL;
-    }
-  }
+  // Resolve 'pattern' ...
+  RcPathResolvePattern (pattern, &newWatchSet, &resources);
+    // Errors in 'pattern' are logged by 'RcPathResolvePattern ()', so that we do not care about them.
 
-  // Handle single pattern...
+  // Add registered resources ...
   ret = NULL;
-  ok = RcSelectResources (pattern, &items, &selArr, &newWatchSet);
-  if (ok) {
-    for (n = 0; n < items; n++) AddResource (selArr[n]);
-    if (items == 1) ret = selArr[0];
-    Lock ();
-    watchSet.Merge (&newWatchSet);
-    Unlock ();
-  }
-  else WARNINGF(("Malformed resource pattern or unresolvable alias '%s' - not subscribing anything", pattern));
-  FREEP (selArr);
+  for (n = 0; n < resources.Entries (); n++) AddResource (resources.Get (n));
+  if (resources.Entries () == 1) ret = resources.Get (0);
+
+  // Update 'watchSet' ...
+  Lock ();
+  watchSet.Merge (&newWatchSet);
+  Unlock ();
+
+  // Done ...
   return ret;
 }
 
@@ -2704,48 +2664,34 @@ void CRcSubscriber::DelResource (CResource *rc) {
 
 
 void CRcSubscriber::DelResources (const char *pattern) {
+  CKeySet watchSetToDelete;
   CResourceLink *rl, *rlNext;
-  char **patV;
-  int n, patC;
-  bool changed;
+  const char *exp;
+  int n, k;
 
-  // Handle multiple patterns in the 'pattern' string recursively...
-  if (strchr (pattern, ' ')) {
-    StringSplit (pattern, &patC, &patV);
-    if (patV) {
-      for (n = 0; n < patC; n++) DelResources (patV[n]);
-      free (patV[0]);
-      free (patV);
-      return;
-    }
-  }
-
-  // Now we have a single pattern.
+  // Resolve 'pattern' ...
+  RcPathResolvePattern (pattern, &watchSetToDelete);
+    // Errors in 'pattern' are logged by 'RcPathResolvePattern ()', so that we do not care about them.
 
   // Lock...
   Lock ();    // Another thread may call 'CheckNewResource' concurrently
 
-  // Go through the watch set and remove items covered by 'pattern'...
-  changed = true;
-  while (changed) {
-    // In order to not assume any (re-)ordering when removing items, we loop through the
-    // key set until a complete pass with no item found has been performed.
-    changed = false;
-    for (n = 0; n < watchSet.Entries (); n++)
-      if (fnmatch (pattern, watchSet.GetKey (n), URI_FNMATCH_OPTIONS) == 0) {
-        watchSet.Del (n);
-        changed = true;
-        break;
-      }
-  }
+  // Walk through all patterns to delete ...
+  for (n = 0; n < watchSetToDelete.Entries (); n++) {
+    exp = watchSetToDelete.GetKey (n);
 
-  // Unsubscribe from all matching resources...
-  rl = resourceList;
-  while (rl) {
-    rlNext = rl->next;    // '*rl' may not survive the following operations
-    if (fnmatch (pattern, rl->resource->Uri (), URI_FNMATCH_OPTIONS) == 0)
-      rl->resource->UnsubscribePAL (this, false, true);
-    rl = rlNext;
+    // Go through the watch set and remove items covered by 'exp'...
+    for (k = watchSet.Entries () - 1; k >= 0; k--)
+      if (RcPathMatches (watchSet.GetKey (k), exp)) watchSet.Del (k);
+
+    // Unsubscribe from all matching resources...
+    rl = resourceList;
+    while (rl) {
+      rlNext = rl->next;    // '*rl' may not survive the following operations
+      if (RcPathMatches (rl->resource->Uri (), exp))
+        rl->resource->UnsubscribePAL (this, false, true);
+      rl = rlNext;
+    }
   }
 
   // Unlock...
@@ -2761,7 +2707,7 @@ void CRcSubscriber::CheckNewResource (CResource *resource) {
   uri = resource->Uri ();
   Lock ();
   for (n = 0; n < watchSet.Entries (); n++)
-    if (fnmatch (watchSet.GetKey (n), uri, URI_FNMATCH_OPTIONS) == 0) {
+    if (RcPathMatchesSingle (uri, watchSet.GetKey (n))) {
       resource->SubscribePAL (this, false, true);    // tell 'SubscribePAL()' that this subscription is already locked
       if (strcmp (watchSet.GetKey (n), uri) == 0) watchSet.Del (uri);
       break;    // important, since we may have modified 'watchSet'
@@ -2841,7 +2787,7 @@ void CRcSubscriber::GetPatternSet (CKeySet *retPatternSet) {
   for (rl = resourceList; rl; rl = rl->next)
     retPatternSet->Set (rl->resource->Uri ());
   for (n = 0; n < watchSet.Entries (); n++)
-    retPatternSet->Set (StringF (&s, "%s?", watchSet.GetKey (n)));
+    retPatternSet->Set (StringF (&s, "%s ?", watchSet.GetKey (n)));
   Unlock ();
 }
 
@@ -2864,7 +2810,7 @@ void CRcRequest::Reset () {
   value.Clear ();
 
   // Set default attributes ...
-  gid.SetC (EnvInstanceName ());
+  if (gid.IsEmpty ()) gid.SetC (EnvInstanceName ());
   priority = rcPrioNormal;
   t0 = t1 = NEVER;
   repeat = 0;
@@ -2895,51 +2841,49 @@ void CRcRequest::Set (CRcValueState *_value, const char *_gid, int _priority, TT
     isCompatible = false;
   }
   if (_gid) gid.Set (_gid);
-  if (_priority != RCREQ_NONE) priority = _priority;
-  if (_t0 < 0 || _t1 < 0) {
+  if (_priority != rcPrioNone) priority = _priority;
+  if (_t0 != NEVER || _t1 != NEVER) {
     now = TicksNow ();
-    if (_t0 != RCREQ_NONE && _t0 < 0) _t0 = now - _t0;
-    if (_t1 != RCREQ_NONE && _t1 < 0) _t1 = now - _t1;
+    if (_t0 != NEVER) t0 = (_t0 > 0 ? _t0 : now - _t0);
+    if (_t1 != NEVER) t1 = (_t1 > 0 ? _t1 : now - _t1);
   }
-  if (_t0 != RCREQ_NONE) t0 = _t0;
-  if (_t1 != RCREQ_NONE) t1 = _t1;
-  if (_repeat != RCREQ_NONE) repeat = _repeat;
-  if (_hysteresis != RCREQ_NONE) hysteresis = _hysteresis;
+  if (_repeat != NEVER) repeat = _repeat;
+  if (_hysteresis != NEVER) hysteresis = _hysteresis;
 }
 
 
 void CRcRequest::Set (bool _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetBool (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
+  Set (NO_VALUE_STATE, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
 void CRcRequest::Set (int _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetInt (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
+  Set (NO_VALUE_STATE, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
 void CRcRequest::Set (float _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetFloat (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
+  Set (NO_VALUE_STATE, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
 void CRcRequest::Set (const char *_value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetString (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
+  Set (NO_VALUE_STATE, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
 void CRcRequest::Set (TTicks _value, const char *_gid, int _priority, TTicks _t0, TTicks _t1, TTicks _repeat, TTicks _hysteresis) {
   value.SetTime (_value);
   isCompatible = false;
-  Set ((CRcValueState *) NULL, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
+  Set (NO_VALUE_STATE, _gid, _priority, _t0, _t1, _repeat, _hysteresis);
 }
 
 
@@ -3091,43 +3035,41 @@ const char *CRcRequest::ToStr (CString *ret, bool precise, bool tabular, TTicks 
 
   ret->SetF (tabular ? "%-16s" : "%s", value.ToStr (&s, tabular, false, precise, 16));
   if (!gid.IsEmpty ()) if (!strchr (skipAttrs, '#')) ret->AppendF (tabular ? " #%-12s" : " #%s", gid.Get ());
-  if (priority != RCREQ_NONE) if (!strchr (skipAttrs, '*')) ret->AppendF (" *%i", priority);
-  if (relativeTimeThreshold && (t0 != NEVER || t1 != NEVER)) now = TicksNow ();
-  if (t0) if (!strchr (skipAttrs, '+')) {
+  if (priority != rcPrioNone) if (!strchr (skipAttrs, '*')) ret->AppendF (" *%i", priority);
+  if (relativeTimeThreshold != NEVER) now = TicksNow ();
+  if (t0 != NEVER) if (!strchr (skipAttrs, '+')) {
     ret->Append (" +");
-    if (repeat) {
+    if (repeat != NEVER) {
       if (repeat != TICKS_FROM_SECONDS(TIME_OF(24,0,0)))      // skip 1 day (implicit)
         ret->Append (TicksRelToString (&s, repeat));
       ret->Append ('+');
     }
-    if (relativeTimeThreshold && t0 > now && t0 - now <= relativeTimeThreshold)
+    if (relativeTimeThreshold != NEVER && t0 > now && t0 - now <= relativeTimeThreshold)
       ret->Append (TicksRelToString (&s, t0 - now));
     else
       ret->Append (TicksAbsToString (&s, t0));
   }
-  if (t1) if (!strchr (skipAttrs, '-')) {
+  if (t1 != NEVER) if (!strchr (skipAttrs, '-')) {
     ret->Append (" -");
-    if (relativeTimeThreshold && t1 > now && t1 - now <= relativeTimeThreshold)
+    if (relativeTimeThreshold != NEVER && t1 > now && t1 - now <= relativeTimeThreshold)
       ret->Append (TicksRelToString (&s, t1 - now));
     else
       ret->Append (TicksAbsToString (&s, t1));
   }
-  if (hysteresis) if (!strchr (skipAttrs, '~')) ret->AppendF (" ~%s", TicksRelToString (&s, hysteresis));
+  if (hysteresis > 0)
+    if (!strchr (skipAttrs, '~')) ret->AppendF (" ~%s", TicksRelToString (&s, hysteresis));
   if (!strchr (skipAttrs, '@')) ret->AppendF (tabular ? "   @%s" : " @%s", origin.Get ());
   if (!isCompatible) if (!strchr (skipAttrs, 'i')) ret->Append (" (incompatible)");
   return ret->Get ();
 }
 
 
-const char *CRcRequest::ToStr (bool precise, bool tabular, TTicks relativeTimeThreshold, const char *skipAttrs) {
-  return ToStr (GetTTS (), precise, tabular, relativeTimeThreshold, skipAttrs);
-}
-
-
 void CRcRequest::Convert (CResource *rc, bool warn) {
   isCompatible = value.Convert (rc->Type ());
-  if (!isCompatible && warn)
-    WARNINGF (("Request '%s' to resource '%s' has incompatible type and will have no effect.", ToStr (), rc->Uri ()));
+  if (!isCompatible && warn) {
+    CString s;
+    WARNINGF (("Request '%s' to resource '%s' has incompatible type and will have no effect.", ToStr (&s), rc->Uri ()));
+  }
 }
 
 
@@ -3363,7 +3305,7 @@ static inline void RcSetupRegistrationInfo (CString *attrs) {
     // Syntax: <URI without "/host/<host>/"> [<attrs>]
     args.Set (lineSet [n]);
     if (args.Entries () < 1) continue;      // ignore empty lines
-    RcGetRealPath (&uri, args[0], "/alias");
+    RcPathResolve (&uri, args[0]);
     //~ INFOF (("### RcSetupRegistrationInfo(): '%s' (alias '%s') ... ", uri.Get (), args[0]));
     ok = true;
     if (strncmp (uri.Get (), "/host/", 6) != 0) ok = false;
@@ -3448,7 +3390,6 @@ void RcInit (bool enableServer, bool inBackground) {
   //   Such signals may occur on writes if the network connection is lost and by default, the program
   //   would exit then. To avoid this (failed writes are always checked for and handled accordingly),
   //   we ignore the signal.
-  // TBD: Move this to a more global place, e.g. EnvInit()?
   signal (SIGPIPE, SIG_IGN);
 
   weOwnTheTimerThread = inBackground;
@@ -3463,6 +3404,10 @@ void RcInit (bool enableServer, bool inBackground) {
   // Elaboration phase...
   RcDriversInit ();
   RcRegisterConfigSignals (&signals);
+
+  //~ // Debug ...
+  //~ hostMap.Dump ("hostMap");
+  //~ driverMap.Dump ("driverMap");
 }
 
 
@@ -3574,7 +3519,6 @@ CRcSubscriber *RcNewSubscriber (const char *subscrLid, CResource *rc) {
   subscr = subscriberMap.Get (subscrLid);
   subscriberMapMutex.Unlock ();
   if (subscr) ERRORF (("Redefinition of a subscriber with name '%s'", subscrLid));
-  //~ subscr = new CRcSubscriber (subscrLid);
   subscr = new CRcSubscriber ();
   subscr->Register (subscrLid);
   //~ INFOF (("###   -> '%s'/%08x", subscr->Lid (), subscr));

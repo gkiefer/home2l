@@ -408,8 +408,9 @@
 #endif
 
 #ifndef SHADES_PERSISTENCE
-#define SHADES_PERSISTENCE    0
+#define SHADES_PERSISTENCE    1
   ///< @brief If set, the position is stored in EEPROM to minimize calibrations.
+  ///< If unset, the position is reset to "unknown" on power up.
 #endif
 
 #ifndef SHADES_TOLERANCE

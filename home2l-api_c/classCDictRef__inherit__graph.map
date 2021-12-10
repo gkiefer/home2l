@@ -1,4 +1,6 @@
 <map id="CDictRef&lt; T &gt;" name="CDictRef&lt; T &gt;">
-<area shape="rect" id="node3" href="$classCDict.html" title="Flexible dictionary. " alt="" coords="16,155,104,181"/>
-<area shape="rect" id="node2" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants). " alt="" coords="19,5,101,32"/>
+<area shape="rect" id="node1" title="Dictionary of references." alt="" coords="5,229,115,256"/>
+<area shape="rect" id="node2" href="$classCDict.html" title="Dictionary." alt="" coords="16,155,104,181"/>
+<area shape="rect" id="node3" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="19,80,101,107"/>
+<area shape="rect" id="node4" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="20,5,100,32"/>
 </map>

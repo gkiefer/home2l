@@ -253,11 +253,11 @@ def WallClockDisplay ():
 #                                                                              #
 ################################################################################
 
-# This rule sets the default use state according to the day/night time.
+# This rule sets the automatic use state according to the day/night time.
 
 
 @connect (rcUse, rcDaylight, priority = 1)
-def SetDefaultUseState (daylight):
+def SetAutoUseState (daylight):
   return rcvUseDay if daylight else rcvUseNight
 
 

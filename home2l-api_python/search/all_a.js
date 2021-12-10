@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['mutex',['Mutex',['../classhome2l_1_1CRcValueState.html#ace5297d579b90dd12616e46c273f697c',1,'home2l::CRcValueState']]],
-  ['main_20api',['Main API',['../group__resources__general.html',1,'']]]
+  ['lid_96',['Lid',['../classhome2l_1_1CResource.html#a28c97d7347e7727486163c2a9699ff70',1,'home2l.CResource.Lid()'],['../classhome2l_1_1CRcSubscriber.html#a28c97d7347e7727486163c2a9699ff70',1,'home2l.CRcSubscriber.Lid()']]],
+  ['locklocalrequests_97',['LockLocalRequests',['../classhome2l_1_1CResource.html#a3c1b04e7dfd6846947eb62a65390e039',1,'home2l::CResource']]],
+  ['locklocalsubscribers_98',['LockLocalSubscribers',['../classhome2l_1_1CResource.html#a24a1e1aba190065f757ac9d918a8603e',1,'home2l::CResource']]]
 ];

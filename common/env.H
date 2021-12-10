@@ -91,7 +91,7 @@ const char *EnvExecPathName ();
   ///< @brief Full path name of the executable (== argv[0]).
   ///
   /// **Note:** The return values of EnvExecPathName() and EnvExecName() may be undefined (== NULL),
-  ///           e.g. if the main program is a Python script or an Android app (TBD: FIX?).
+  ///           e.g. if the main program is a Python script or an Android app.
 const char *EnvExecName ();       ///< @brief File name of the executable without path.
 
 const char *EnvInstanceName ();
@@ -123,7 +123,7 @@ const char *EnvDroidId ();        ///< @brief Droid ID
 int EnvPid ();                    ///< @brief Operating system's process identifier (PID).
 bool EnvHaveTerminal ();          ///< @brief 'true', if the application has been started from an interactive terminal.
 
-void EnvReadIniFile (const char *fileName, CDictFast<CString> *map);
+void EnvReadIniFile (const char *fileName, CDictCompact<CString> *map);
   ///< @brief Read a .ini file.
   /// 'fileName' must be an absolute path name.
 
@@ -256,7 +256,7 @@ void EnvDone ();
 
 /// @name Persistence ...
 /// @{
-void EnvEnablePersistence (bool writeThrough = false, const char *_varFileName = NULL);
+void EnvEnablePersistence (bool writeThrough = true, const char *_varFileName = NULL);
   ///< @brief Enable the persistence of all environment variables starting with "var.*".
   ///
   /// @param writeThrough decides whether the file is written back automatically with
@@ -347,10 +347,8 @@ static inline const char *EnvGetString (const char *key) { return EnvGet (key); 
 bool EnvGetPath (const char *key, const char **ret, const char *path = NULL, bool warnIfMissing = false);
   ///< @brief Read a path, eventually convert value to an absolute path before (advanced).
   /// The returned path is always absolute. Relative paths are interpreted as relative to 'path' or HOME2L_ROOT and made absolute.
-const char *EnvGetPath (const char *key, const char *defaultVal, const char *path = NULL, bool warnIfMissing = false);
+const char *EnvGetPath (const char *key, const char *path = NULL, bool warnIfMissing = false);
   ///< @brief Read a path, eventually convert value to an absolute path before (simple).
-static inline const char *EnvGetPath (const char *key, const char *path = NULL, bool warnIfMissing = false) { return EnvGetPath (key, (const char *) NULL, path, warnIfMissing); }
-  ///< @brief Read a path (simple variant) without default.
 bool EnvGetHostAndPort (const char *key, CString *retHost, int *retPort = NULL, int defaultPort = 0, bool warnIfMissing = false);
   ///< @brief Get a host + port combination; host names are translated using the 'net.resolve.\<name\>' settings.
 static inline bool EnvGetHost (const char *key, CString *retHost, bool warnIfMissing = false) { return EnvGetHostAndPort (key, retHost, NULL, 0, warnIfMissing); }
@@ -458,6 +456,7 @@ class CEnvPara {
 /// @{
 #define ENV_PARA_STRING(key,varName,varDefault) const char *varName = varDefault; CEnvPara varName##PreInit (key, eptString, &varName); const char *varName##Key = key;
 #define ENV_PARA_PATH(key,varName,varDefault) const char *varName = varDefault; CEnvPara varName##PreInit (key, eptPath, &varName); const char *varName##Key = key;
+  ///< Path can be made absolute before first use by calling `EnvGetPath (<varName>Key, &<varName>, [<base path>] )` afterwards.
 #define ENV_PARA_INT(key,varName,varDefault) int varName = varDefault; CEnvPara varName##PreInit (key, eptInt, &varName); const char *varName##Key = key;
 #define ENV_PARA_FLOAT(key,varName,varDefault) float varName = varDefault; CEnvPara varName##PreInit (key, eptFloat, &varName); const char *varName##Key = key;
 #define ENV_PARA_BOOL(key,varName,varDefault) bool varName = varDefault; CEnvPara varName##PreInit (key, eptBool, &varName); const char *varName##Key = key;

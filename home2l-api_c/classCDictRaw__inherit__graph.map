@@ -1,8 +1,10 @@
 <map id="CDictRaw" name="CDictRaw">
-<area shape="rect" id="node2" href="$classCDictFast.html" title="Fast dictionary. " alt="" coords="5,80,120,107"/>
-<area shape="rect" id="node3" href="$classCDictFast.html" title="CDictFast\&lt; int \&gt;" alt="" coords="144,80,264,107"/>
-<area shape="rect" id="node4" href="$classCDictRef.html" title="Dictionary of references. " alt="" coords="288,80,397,107"/>
-<area shape="rect" id="node6" href="$classCDictRef.html" title="CDictRef\&lt; CResource \&gt;" alt="" coords="422,80,589,107"/>
-<area shape="rect" id="node7" href="$classCKeySet.html" title="Set of strings (keys). " alt="" coords="613,80,688,107"/>
-<area shape="rect" id="node5" href="$classCDict.html" title="Flexible dictionary. " alt="" coords="299,155,387,181"/>
+<area shape="rect" id="node1" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="248,80,331,107"/>
+<area shape="rect" id="node3" href="$classCDictCompact.html" title=" " alt="" coords="5,155,152,181"/>
+<area shape="rect" id="node4" href="$classCDict.html" title="Dictionary." alt="" coords="176,155,264,181"/>
+<area shape="rect" id="node7" href="$classCDictCompact.html" title="Compact dictionary." alt="" coords="288,155,429,181"/>
+<area shape="rect" id="node8" href="$classCKeySet.html" title="Set of strings (keys)." alt="" coords="453,155,528,181"/>
+<area shape="rect" id="node2" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="249,5,329,32"/>
+<area shape="rect" id="node5" href="$classCDictRef.html" title=" " alt="" coords="55,229,222,256"/>
+<area shape="rect" id="node6" href="$classCDictRef.html" title="Dictionary of references." alt="" coords="247,229,356,256"/>
 </map>

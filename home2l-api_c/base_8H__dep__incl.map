@@ -1,15 +1,16 @@
 <map id="common/base.H" name="common/base.H">
-<area shape="rect" id="node2" href="$env_8H.html" title="common/env.H" alt="" coords="142,80,253,107"/>
-<area shape="rect" id="node12" href="$streamer_8H.html" title="common/streamer.H" alt="" coords="277,80,419,107"/>
-<area shape="rect" id="node13" href="$app__music_8H.html" title="wallclock/app_music.H" alt="" coords="443,80,600,107"/>
-<area shape="rect" id="node14" href="$app__phone_8H.html" title="wallclock/app_phone.H" alt="" coords="624,80,781,107"/>
-<area shape="rect" id="node3" href="$resources_8H.html" title="resources/resources.H" alt="" coords="5,155,160,181"/>
-<area shape="rect" id="node4" href="$brownies_8H.html" title="brownies/brownies.H" alt="" coords="11,229,155,256"/>
-<area shape="rect" id="node5" href="$ui__base_8H.html" title="wallclock/ui_base.H" alt="" coords="333,155,472,181"/>
-<area shape="rect" id="node6" href="$system_8H.html" title="wallclock/system.H" alt="" coords="179,229,317,256"/>
-<area shape="rect" id="node7" href="$apps_8H.html" title="wallclock/apps.H" alt="" coords="341,229,464,256"/>
-<area shape="rect" id="node8" href="$alarmclock_8H.html" title="wallclock/alarmclock.H" alt="" coords="488,229,645,256"/>
-<area shape="rect" id="node9" href="$ui__screen_8H.html" title="wallclock/ui_screen.H" alt="" coords="670,229,821,256"/>
-<area shape="rect" id="node10" href="$ui__widgets_8H.html" title="wallclock/ui_widgets.H" alt="" coords="667,304,823,331"/>
-<area shape="rect" id="node11" href="$floorplan_8H.html" title="wallclock/floorplan.H" alt="" coords="674,379,817,405"/>
+<area shape="rect" id="node1" title=" " alt="" coords="394,5,513,32"/>
+<area shape="rect" id="node2" href="$env_8H.html" title=" " alt="" coords="163,80,272,107"/>
+<area shape="rect" id="node12" href="$streamer_8H.html" title=" " alt="" coords="297,80,437,107"/>
+<area shape="rect" id="node13" href="$app__music_8H.html" title=" " alt="" coords="461,80,619,107"/>
+<area shape="rect" id="node14" href="$app__phone_8H.html" title=" " alt="" coords="643,80,800,107"/>
+<area shape="rect" id="node3" href="$resources_8H.html" title=" " alt="" coords="140,155,295,181"/>
+<area shape="rect" id="node4" href="$brownies_8H.html" title=" " alt="" coords="5,229,149,256"/>
+<area shape="rect" id="node6" href="$ui__base_8H.html" title=" " alt="" coords="427,155,565,181"/>
+<area shape="rect" id="node5" href="$system_8H.html" title=" " alt="" coords="174,229,311,256"/>
+<area shape="rect" id="node7" href="$alarmclock_8H.html" title=" " alt="" coords="336,229,493,256"/>
+<area shape="rect" id="node8" href="$apps_8H.html" title=" " alt="" coords="517,229,640,256"/>
+<area shape="rect" id="node9" href="$ui__screen_8H.html" title=" " alt="" coords="665,229,815,256"/>
+<area shape="rect" id="node10" href="$ui__widgets_8H.html" title=" " alt="" coords="662,304,818,331"/>
+<area shape="rect" id="node11" href="$floorplan_8H.html" title=" " alt="" coords="669,379,811,405"/>
 </map>

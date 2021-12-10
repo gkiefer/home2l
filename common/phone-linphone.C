@@ -812,6 +812,7 @@ void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
   else lpConfigFile = NULL;
 
   // Create the 'lpCore' object...
+  EnvGetPath (envPhoneLinphonercKey, envPhoneLinphonerc);
   LIBDATA.lpCore = linphone_core_new (&lpCoreVtable, lpConfigFile, envPhoneLinphonerc, this);
   linphone_core_set_user_agent (LIBDATA.lpCore, agentName, buildVersion);
 
@@ -842,7 +843,10 @@ void CPhone::Setup (const char *agentName, int _mediaSelected, int withLogging,
   LpUpdateMediaSelection (this, pmAll);
 
   // Set parameters...
-  if (envPhoneRingbackFile) linphone_core_set_ringback (LIBDATA.lpCore, envPhoneRingbackFile);
+  if (envPhoneRingbackFile) {
+    EnvGetPath (envPhoneRingbackFileKey, envPhoneRingbackFile);
+    linphone_core_set_ringback (LIBDATA.lpCore, envPhoneRingbackFile);
+  }
   //~ linphone_core_set_ring_during_incoming_early_media (LIBDATA.lpCore, 0);     // no ringing during early media
   if (envPhoneRotation != 0) linphone_core_set_device_rotation (LIBDATA.lpCore, envPhoneRotation);
 

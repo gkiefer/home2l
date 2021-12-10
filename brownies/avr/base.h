@@ -26,8 +26,9 @@
 /** @file
  *
  * This file contains basic definitions for the *Brownie* firmware.
- *
- * @addtogroup brownies_firmware
+ */
+
+/** @addtogroup brownies_firmware
  *
  * This module describes some internal interfaces of the *Brownie* firmware.
  * They are relevant for extending the firmware by, for example, adding new

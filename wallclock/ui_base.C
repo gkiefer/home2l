@@ -128,7 +128,7 @@ void UiIterate (bool noWait) {
   CScreen *activeScreen = CScreen::ActiveScreen ();
   void (*func) (void *);
   ESystemMode newMode, lastMode;
-  TTicksMonotonic t, t1;
+  TTicks t, t1;
   bool haveEvent;
   //~ int events;
 
@@ -153,11 +153,11 @@ void UiIterate (bool noWait) {
     //~ INFO ("### Wait for event (normal) ...");
     if (noWait) haveEvent = SDL_PollEvent (&ev) == 1;
     else {
-      t = TicksMonotonicNow ();               // WORKAROUND (see below)
+      t = TicksNowMonotonic ();               // WORKAROUND (see below)
       haveEvent = SDL_WaitEventTimeout (&ev, t1 = TimerGetDelay ()) == 1;
-      if (TicksMonotonicNow () - t > 2000) {  // WORKAROUND (see below)
+      if (TicksNowMonotonic () - t > 2000) {  // WORKAROUND (see below)
         WARNINGF (("### SDL_WaitEventTimeout () returned late after %i ms: TimerGetDelay () = %i ms",
-                 TicksMonotonicNow () - t, t1));
+                 TicksNowMonotonic () - t, t1));
         // WORKAROUND (2019-05-20, SDL 2.07 on Android):
         //   Sometimes SDL_WaitEventTimeout () repeatedly waits for approx. 1 minute
         //   instead of the maximum wait time passed after some run time making the UI
@@ -279,7 +279,7 @@ void UiIterate (bool noWait) {
           longPushMouseEvent = ev;
           longPushMouseEvent.button.timestamp = ev.button.timestamp + envUiLongPushTime;
           longPushMouseEvent.button.clicks = 2;
-          longPushTimer.Set (TicksMonotonicNow () + envUiLongPushTime, 0, CbLongPushTimer);
+          longPushTimer.Set (TicksNowMonotonic () + envUiLongPushTime, 0, CbLongPushTimer);
           //~ INFOF (("### Setting long push event: x = %i/%i, y = %i/%i", ev.button.x, longPushMouseEvent.button.x, ev.button.y, longPushMouseEvent.button.y));
         }
         if (ev.button.clicks == 2) {
@@ -359,7 +359,7 @@ void UiPushUserEvent (EUserEvent code, void *data1, void *data2) {
 
 static CTimer audioTimer;
 static int audioRepetitions;      // -1 : repeat forever (e.g. for phone ringing)
-static TTicksMonotonic audioRepetitionGap;   // time to wait between two repetitions
+static TTicks audioRepetitionGap;   // time to wait between two repetitions
 static bool audioPlaying = false;
 
 static const char *sdlAudioDeviceName = NULL;
@@ -397,13 +397,13 @@ static void AudioIterate (CTimer *timer = NULL, void *data = NULL) {
 
   // Schedule next iteration...
   if (!ok) {
-    audioTimer.Reschedule (TicksMonotonicNow () + 1000);   // had error: retry in one second
+    audioTimer.Reschedule (TicksNowMonotonic () + 1000);   // had error: retry in one second
   }
   else {
     if (audioRepetitions == 0) AudioStop ();   // neither <0 (repeat forever) nor >0 (finite repetions left)
     else {
       audioTimer.Reschedule (
-        TicksMonotonicNow ()
+        TicksNowMonotonic ()
         + (1000 * 8 / SDL_AUDIO_BITSIZE (sdlAudioSpec.format) * sdlAudioLen / sdlAudioSpec.freq)
             // 1000 ms * 8 bits per byte / bits per sample * sdlAudioLen / frequency
         + audioRepetitionGap
@@ -613,12 +613,16 @@ void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel) {
   Uint32 *pixels, *line, color, alpha, factor;
   int x, y;
 
+  // Sanity ...
+  if (!surf) return;
+
   ASSERT (COL_MASK_R == 0x00ff0000 && COL_MASK_A == 0xff000000);
   ASSERT (surf->format->format == SELECTED_SDL_PIXELFORMAT);
 
+
+  // Go ahead ...
   ASSERT (SDL_LockSurface (surf) == 0);
   pixels = (Uint32 *) surf->pixels;
-
   line = pixels;
   if (opaqueLevel == 0xff) {
     for (y = 0; y < surf->h; y++) {
@@ -643,6 +647,7 @@ void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel) {
     }
   }
 
+  // Done ...
   SDL_UnlockSurface (surf);
 }
 
@@ -1256,7 +1261,7 @@ void CTextItem::SetText (const char *_text, int len) {
   Done ();    // clean up earlier data
   if (len < 0) len = strlen (_text);
   text = (char *) malloc (len + 1);
-  strncpy (text, _text, len);
+  strncpy (text, _text, len + 1);   // "+1" is not necessary, but avoids the GCC '-Wstringop-truncation' warning
   text[len] = '\0';
 }
 

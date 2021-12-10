@@ -1,0 +1,13 @@
+<map id="CListRaw" name="CListRaw">
+<area shape="rect" id="node1" title="Raw list (base class for other list variants)." alt="" coords="496,5,576,32"/>
+<area shape="rect" id="node2" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="317,80,400,107"/>
+<area shape="rect" id="node9" href="$classCList.html" title="Dynamic list." alt="" coords="493,80,579,107"/>
+<area shape="rect" id="node11" href="$classCListCompact.html" title="Compact list." alt="" coords="603,80,741,107"/>
+<area shape="rect" id="node3" href="$classCDictCompact.html" title=" " alt="" coords="5,155,152,181"/>
+<area shape="rect" id="node4" href="$classCDict.html" title="Dictionary." alt="" coords="176,155,264,181"/>
+<area shape="rect" id="node7" href="$classCDictCompact.html" title="Compact dictionary." alt="" coords="288,155,429,181"/>
+<area shape="rect" id="node8" href="$classCKeySet.html" title="Set of strings (keys)." alt="" coords="453,155,528,181"/>
+<area shape="rect" id="node5" href="$classCDictRef.html" title=" " alt="" coords="55,229,222,256"/>
+<area shape="rect" id="node6" href="$classCDictRef.html" title="Dictionary of references." alt="" coords="247,229,356,256"/>
+<area shape="rect" id="node10" href="$classCListRef.html" title="Reference list." alt="" coords="552,155,659,181"/>
+</map>

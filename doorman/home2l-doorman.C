@@ -81,7 +81,7 @@ class CDoorPhone: public CPhone, public CTimer {
 
     // Work variables...
     CRcEventDriver *driver;
-    CResource *rcDial, *rcButton;
+    CResource *rcDial, *rcButton, *rcPhoneState;
     CRcSubscriber subscriber;
     TTicks tHangup;             // time for auto-hangup (-1 = no auto-hangup)
     TTicks tButtonPushed;       // last time the button was pushed
@@ -89,7 +89,7 @@ class CDoorPhone: public CPhone, public CTimer {
 
 
 CDoorPhone::CDoorPhone () {
-  rcDial = rcButton = rcExtButton = rcExtOpener = NULL;
+  rcDial = rcButton = rcPhoneState = rcExtButton = rcExtOpener = NULL;
   tHangup = tButtonPushed = -1;
 }
 
@@ -117,6 +117,7 @@ void CDoorPhone::Setup () {
 
   // Setup resources...
   driver = RcRegisterDriver ("doorman", rcsValid);
+
   rcButton = RcRegisterResource (driver, "button", rctBool, true);
   rcButton->SetDefault (false);
     /* [RC:doorman] Virtual bell button of the specified doorphone
@@ -130,6 +131,7 @@ void CDoorPhone::Setup () {
      * resource \refenv{doorman.buttonRc}.
      * Internally, both resources are logically OR'ed.
      */
+
   rcDial = RcRegisterResource (driver, "dial", rctString, true);
     /* [RC:doorman] Number to dial for the specified doorphone
      *
@@ -140,8 +142,14 @@ void CDoorPhone::Setup () {
      * out of home.
      */
   if (envDial) rcDial->SetDefault (envDial);
+
   //~ rcOpener = RcRegisterResource (s.Get (), "opener", rctBool, true);  // [RC:-]
   //~ rcOpener->SetDefault (false);
+
+  rcPhoneState = RcRegisterResource (driver, "phone", rctPhoneState, false);
+    /* [RC:doorman] Report phone state
+     */
+  rcPhoneState->ReportValue (rcvPhoneIdle);
 
   // Setup subscriber...
   //~ INFOF (("### Subscribing '%s'...", rcExtButton));
@@ -190,19 +198,19 @@ void CDoorPhone::OnTime () {
       rcDial->ValidString (&dial);
       if (dial.IsEmpty ()) WARNING ("No valid number to dial defined");
       else {
-        INFOF (("# Dialing '%s'", dial.Get ()));
+        INFOF (("Button pushed: Dialing '%s'", dial.Get ()));
         Dial (dial);
       }
     }
     else {                           // Else => hangup...
-      INFO ("# Hanging up");
+      INFO ("Button pushed: Hanging up");
       Hangup ();
     }
   }
 
   // Check for auto-hangup...
   if (tHangup >= 0) if (TicksNow () >= tHangup) {
-    INFO ("# %s: Auto-Hanging up");
+    INFO ("No reply: Auto-hanging up");
     Hangup ();
     tHangup = -1;
   }
@@ -213,22 +221,40 @@ void CDoorPhone::OnTime () {
 
 
 void CDoorPhone::OnPhoneStateChanged (EPhoneState oldState) {
+  ERctPhoneState reportedState;
+
+  // Call subclass ...
   CPhone::OnPhoneStateChanged (oldState);
 
-  INFO ("# OnPhoneStateChanged");
+  // Report to resource ...
   switch (state) {
+    case psNone:
+    case psIdle:                 ///< Phone is idle.
+      reportedState = rcvPhoneIdle;
+      break;
     case psRinging:
-      INFOF (("# ... call received from '%s' (should pick up and establish now)", GetPeerUrl ()));
-      break;
-    case psInCall:
-      INFOF (("# ... call established."));
-      break;
-    case psIdle:
-      INFOF (("# ... idle now."));
+      reportedState = rcvPhoneRinging;
       break;
     default:
-      break;
+      reportedState = rcvPhoneInCall;
   }
+  if (rcPhoneState) rcPhoneState->ReportValue (reportedState);
+
+  //~ // Debugging ...
+  //~ INFO ("# OnPhoneStateChanged");
+  //~ switch (state) {
+    //~ case psRinging:
+      //~ INFOF (("# ... call received from '%s' (should pick up and establish now)", GetPeerUrl ()));
+      //~ break;
+    //~ case psInCall:
+      //~ INFOF (("# ... call established."));
+      //~ break;
+    //~ case psIdle:
+      //~ INFOF (("# ... idle now."));
+      //~ break;
+    //~ default:
+      //~ break;
+  //~ }
 }
 
 

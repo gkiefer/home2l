@@ -1,6 +1,19 @@
 <map id="brownies/brownies.H" name="brownies/brownies.H">
-<area shape="rect" id="node2" href="$env_8H.html" title="env.H" alt="" coords="463,155,521,181"/>
-<area shape="rect" id="node15" href="$resources_8H.html" title="resources.H" alt="" coords="529,80,623,107"/>
-<area shape="rect" id="node16" href="$interface_8h.html" title="avr/interface.h" alt="" coords="737,80,842,107"/>
-<area shape="rect" id="node3" href="$base_8H.html" title="base.H" alt="" coords="460,229,524,256"/>
+<area shape="rect" id="node1" title=" " alt="" coords="504,5,648,32"/>
+<area shape="rect" id="node2" href="$env_8H.html" title=" " alt="" coords="465,155,519,181"/>
+<area shape="rect" id="node15" href="$resources_8H.html" title=" " alt="" coords="529,80,623,107"/>
+<area shape="rect" id="node16" href="$interface_8h.html" title=" " alt="" coords="737,80,842,107"/>
+<area shape="rect" id="node3" href="$base_8H.html" title=" " alt="" coords="460,229,524,256"/>
+<area shape="rect" id="node4" title=" " alt="" coords="5,304,67,331"/>
+<area shape="rect" id="node5" title=" " alt="" coords="833,304,897,331"/>
+<area shape="rect" id="node6" title=" " alt="" coords="91,304,157,331"/>
+<area shape="rect" id="node7" title=" " alt="" coords="922,304,987,331"/>
+<area shape="rect" id="node8" title=" " alt="" coords="181,304,245,331"/>
+<area shape="rect" id="node9" title=" " alt="" coords="270,304,338,331"/>
+<area shape="rect" id="node10" title=" " alt="" coords="363,304,429,331"/>
+<area shape="rect" id="node11" title=" " alt="" coords="454,304,530,331"/>
+<area shape="rect" id="node12" title=" " alt="" coords="554,304,619,331"/>
+<area shape="rect" id="node13" title=" " alt="" coords="644,304,713,331"/>
+<area shape="rect" id="node14" title=" " alt="" coords="738,304,809,331"/>
+<area shape="rect" id="node17" title=" " alt="" coords="752,155,827,181"/>
 </map>

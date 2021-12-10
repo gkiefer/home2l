@@ -255,12 +255,12 @@ with open (sampleName, 'w') as sampleFile:
 
 imgBase = objDir + "/mini"
 print ("Creating '" + imgBase + ".bmp'...")
-subprocess.check_call ("inkscape " + svgName + " -i layer1 -C -j -w 256 -h 128 -e " + imgBase + ".png", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.check_call ("inkscape " + svgName + " -i layer1 -C -j -w 256 -h 128 -o " + imgBase + ".png", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 subprocess.check_call ("convert " + imgBase + ".png +level 0%,80%,1 -colorspace gray -separate -average -colors 256 -compress None BMP3:" + imgBase + ".bmp", shell=True)
 os.unlink (imgBase + ".png")
 
 imgBase = objDir + "/full"
 print ("Creating '" + imgBase + ".bmp'...")
-subprocess.check_call ("inkscape " + svgName + " -i layer1 -C -j -w 1024 -h 512 -e " + imgBase + ".png", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.check_call ("inkscape " + svgName + " -i layer1 -C -j -w 1024 -h 512 -o " + imgBase + ".png", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 subprocess.check_call ("convert " + imgBase + ".png -colorspace gray -separate -average -colors 256 -compress None BMP3:" + imgBase + ".bmp", shell=True)
 os.unlink (imgBase + ".png")

@@ -28,8 +28,9 @@
 /** @file
  *
  * This file contains core functionality of the *Brownie* firmware.
- *
- * @addtogroup brownies_firmware
+ */
+
+/** @addtogroup brownies_firmware
  *
  * @{
  */
@@ -271,7 +272,7 @@ static inline void MinitimerStop () {
 /// pseudo-module "core", which implements some core functionality.
 ///
 /// **If you are developing a feature module: Never call these functions directly.
-/// they are only documented here in order to document the general module interface
+/// They are only documented here in order to document the general module interface
 /// functions.**
 ///
 /// @{

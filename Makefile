@@ -92,7 +92,7 @@ endif
 
 
 # Preset release build...
-export RELEASE ?= 1
+export DEBUG ?= 0
 
 
 
@@ -179,20 +179,20 @@ help:
 	@echo "  docker-run:    Run the docker showcase image (latest)"
 	@echo
 	@echo "Variables:"
-	@echo "  ARCHS: List of architectures to build for (available: amd64 armhf i386) [ all ]"
-	@echo "  MODS:  Modules (sub-projects) to build (space-separated list of directory names) [ all ]"
-	@echo "  MOD:   If set, build only the given module (overrides MODS, DRVS)."
-	@echo "  DRVS:  Drivers to build [ all integrated ]"
-	@echo "  DRV:   If set, build only the given driver (overrides MODS, DRVS). It is allowed to pass an absolute path."
-	@echo "  CFG:   Configuration preset"
-	@echo "           'minimal' = only the very basic tools and module 'resources' for the host architecture"
-	@echo "           'basic'   = same as 'minimal', but with python support and GPIO driver"
-	@echo "           'demo'    = most common modules (including WallClock) for the host architecture"
+	@echo "  ARCHS:   List of architectures to build for (available: amd64 armhf i386) [ all ]"
+	@echo "  MODS:    Modules (sub-projects) to build (space-separated list of directory names) [ all ]"
+	@echo "  MOD:     If set, build only the given module (overrides MODS, DRVS)."
+	@echo "  DRVS:    Drivers to build [ all integrated ]"
+	@echo "  DRV:     If set, build only the given driver (overrides MODS, DRVS). It is allowed to pass an absolute path."
+	@echo "  CFG:     Configuration preset"
+	@echo "             'minimal' = only the very basic tools and module 'resources' for the host architecture"
+	@echo "             'basic'   = same as 'minimal', but with python support and GPIO driver"
+	@echo "             'demo'    = most common modules (including WallClock) for the host architecture"
 	@echo "  INSTALL: Target directory for the installation [ $(HOME2L_INSTALL) ]"
 	@echo "           This can be preset by the environment variable HOME2L_INSTALL."
 	@echo "  BUILD:   Directory for intermediate files when building [ $(HOME2L_BUILD) ]"
 	@echo "           This can be preset by the environment variable HOME2L_BUILD."
-	@echo "  RELEASE: Select whether to compile with optimizations (1) or for debugging (0) [ 1 ]"
+	@echo "  DEBUG:   Compile with optimizations (0), for debugging (1) or with profiling information (2) [ 0 ]"
 	@echo
 	@echo "Examples:"
 	@echo "  > make CFG=demo install     # Build and install everything for the demo"

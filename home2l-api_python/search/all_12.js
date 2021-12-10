@@ -1,18 +1,13 @@
 var searchData=
 [
-  ['values_2c_20types_20and_20states',['Values, Types and States',['../group__resources__values.html',1,'']]],
-  ['validbool',['ValidBool',['../classhome2l_1_1CRcValueState.html#afee7151cf3404c1ecdff611889fcb8bc',1,'home2l::CRcValueState']]],
-  ['validenumidx',['ValidEnumIdx',['../classhome2l_1_1CRcValueState.html#a22fc62f9cd177d9465c2ddf023f583eb',1,'home2l::CRcValueState']]],
-  ['validfloat',['ValidFloat',['../classhome2l_1_1CRcValueState.html#a1cd0a79f6a0439e8759b781e62c38d5a',1,'home2l::CRcValueState']]],
-  ['validint',['ValidInt',['../classhome2l_1_1CRcValueState.html#af75d788f398a6b01c0c27007fde385d8',1,'home2l::CRcValueState']]],
-  ['validmutex',['ValidMutex',['../classhome2l_1_1CRcValueState.html#a5b077de0b61998be1a65305c2d21488d',1,'home2l::CRcValueState']]],
-  ['validstring',['ValidString',['../classhome2l_1_1CRcValueState.html#a7ae7d2035496e5349d89be3ffddab286',1,'home2l::CRcValueState']]],
-  ['validtime',['ValidTime',['../classhome2l_1_1CRcValueState.html#a6d4e30e59a72ac2a5b3f171c0939b324',1,'home2l::CRcValueState']]],
-  ['validtrigger',['ValidTrigger',['../classhome2l_1_1CRcValueState.html#a58d84715d8a509feb4b05380cd25b8f2',1,'home2l::CRcValueState']]],
-  ['validunitfloat',['ValidUnitFloat',['../classhome2l_1_1CRcValueState.html#a56e7ca3423357e0e649d79c7928f3520',1,'home2l::CRcValueState']]],
-  ['validunitint',['ValidUnitInt',['../classhome2l_1_1CRcValueState.html#a19b36373de05abb97c97478c9348b180',1,'home2l::CRcValueState']]],
-  ['validvalue',['ValidValue',['../classhome2l_1_1CRcValueState.html#abb472b0daf944194a2e842f74d6bc9a9',1,'home2l.CRcValueState.ValidValue()'],['../classhome2l_1_1CResource.html#abb472b0daf944194a2e842f74d6bc9a9',1,'home2l.CResource.ValidValue()']]],
-  ['value',['Value',['../classhome2l_1_1CRcValueState.html#aa96ff708bd0aa33b22b4665be6bedb45',1,'home2l.CRcValueState.Value()'],['../classhome2l_1_1CResource.html#aa96ff708bd0aa33b22b4665be6bedb45',1,'home2l.CResource.Value()'],['../classhome2l_1_1CRcRequest.html#aa96ff708bd0aa33b22b4665be6bedb45',1,'home2l.CRcRequest.Value()']]],
-  ['valueequals',['ValueEquals',['../classhome2l_1_1CRcValueState.html#ace427b445c17eb6fdb89c507d7e6f9cf',1,'home2l::CRcValueState']]],
-  ['valuestate',['ValueState',['../classhome2l_1_1CResource.html#a169926766474174085b5445b71f91ed1',1,'home2l.CResource.ValueState()'],['../classhome2l_1_1CRcEvent.html#a169926766474174085b5445b71f91ed1',1,'home2l.CRcEvent.ValueState()']]]
+  ['unitfloat_246',['UnitFloat',['../classhome2l_1_1CRcValueState.html#a9dd330ffeee9c73025f27643a5bc4f72',1,'home2l::CRcValueState']]],
+  ['unitint_247',['UnitInt',['../classhome2l_1_1CRcValueState.html#a6f924fb15fd74846af9b1401ba225cbf',1,'home2l::CRcValueState']]],
+  ['unlocklocalrequests_248',['UnlockLocalRequests',['../classhome2l_1_1CResource.html#a3d84685dca120daec8f8215e85c16be4',1,'home2l::CResource']]],
+  ['unlocklocalsubscribers_249',['UnlockLocalSubscribers',['../classhome2l_1_1CResource.html#a43f7f989b41acdf2b056a07ff156cf78',1,'home2l::CResource']]],
+  ['unregister_250',['Unregister',['../classhome2l_1_1CResource.html#a1fded2e220581911c95bb06cd427ab08',1,'home2l.CResource.Unregister()'],['../classhome2l_1_1CRcSubscriber.html#a1fded2e220581911c95bb06cd427ab08',1,'home2l.CRcSubscriber.Unregister()']]],
+  ['unsubscribe_251',['Unsubscribe',['../classhome2l_1_1CResource.html#a7c0445c91dd38baf04964ec7507330ce',1,'home2l.CResource.Unsubscribe()'],['../classhome2l_1_1CRcSubscriber.html#aa4a2aeee4f1c59346509ab78a2ec39ed',1,'home2l.CRcSubscriber.Unsubscribe()']]],
+  ['unwrite_252',['UnWrite',['../classhome2l_1_1CResource.html#a4adf78d867992e2851519dc2d2a056a7',1,'home2l::CResource']]],
+  ['urcvalue_253',['URcValue',['../classhome2l_1_1URcValue.html',1,'home2l']]],
+  ['uri_254',['Uri',['../classhome2l_1_1CResource.html#ae07a37e0634de0e4c5f0865b284fc04d',1,'home2l::CResource']]],
+  ['userdata_255',['UserData',['../classhome2l_1_1CResource.html#ae8f3dc1b2dcfbcd106c6fb72aee89206',1,'home2l::CResource']]]
 ];

@@ -75,7 +75,8 @@
 
 // Types that need to be handled specially...
 typedef long long TTicks;     // should be 'int64_t'; "#include <stdint.h>" apparently does not work
-typedef int TTicksMonotonic;  // should be 'int32_t'
+typedef long long TTicks;  // should be 'int32_t'
+# ~ typedef int TTicks;  // should be 'int32_t'
 
 
 // Other files to be exported to Python...
@@ -793,7 +794,7 @@ def RunAt (func, t = 0, dt = 0, args = None, subscrId = None):
   if not subscrId: subscrId = _SubscrIdFromFunc (func)
   ep = CRcEventTimer (subscrId)
   ep.SetInSelectSet (True)
-  ep.Set (TicksAbsOf (t), TicksRelOf (dt))
+  ep.Set (TicksMonotonicFromAbs (TicksAbsOf (t)), TicksRelOf (dt))
   # ~ print ("### " + str (TicksNow ()) + ": RunAt(" + str (TicksAbsOf(t)) + ", " + str (TicksRelOf (dt)) + "): " + str (ep))
   _timerDict[subscrId] = (func, args, ep)
     # Note: We store 'ep' in '_timerDict' just to keep a reference to it.
@@ -923,6 +924,9 @@ static inline TTicks TicksOfSeconds (int secs) { return TICKS_FROM_SECONDS (secs
 static inline TTicks TicksOfSeconds (float secs) { return (float) TICKS_FROM_SECONDS (secs); }
 static inline TTicks TicksOfMillis (int ms) { return ms; }
 %}
+
+TTicks TicksAbsFromMonotic (TTicks tm);
+TTicks TicksMonotonicFromAbs (TTicks ta);
 
 
 

@@ -52,7 +52,7 @@ OBJ_DAEMON := $(SRC_DAEMON:%.C=$(DIR_OBJ)/%.o)
 
 
 $(DAEMON_BIN): $(DEP_CONFIG) $(OBJ_DAEMON)
-	@echo LD $(DAEMON)
+	@echo LD$(LD_SUFF) $(DAEMON)
 	@$(CC) -o $@ $(OBJ_DAEMON) $(LDFLAGS)
 
 

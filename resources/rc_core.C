@@ -158,7 +158,7 @@ ENV_PARA_INT ("rc.relTimeThreshold", envRelTimeThreshold, 60000);
 
 bool serverEnabled = false;
 
-TTicksMonotonic RcNetTimeout () { return (TTicksMonotonic) envNetTimeout; }
+TTicks RcNetTimeout () { return (TTicks) envNetTimeout; }
 
 
 
@@ -181,7 +181,7 @@ CDict<CRcDriver> driverMap;
 CMutex subscriberMapMutex;
 CDictRef<CRcSubscriber> subscriberMap;  // References to all registered subscribers
 
-CDictFast<CString> aliasMap;
+CDictCompact<CString> aliasMap;
 
 CMutex unregisteredResourceMapMutex;
 CDictRef<CResource> unregisteredResourceMap;
@@ -190,101 +190,519 @@ CDictRef<CResource> unregisteredResourceMap;
 
 
 
-// *************************** URI Path analysis *******************************
+// *************************** URI Path Handling *******************************
 
 
-const char *uriRootArr [] = { "local", "host", "alias", "env" };
-#define uriRoots (sizeof (uriRootArr) / sizeof (char *))
-
-/* Note: When analysing paths, the domains can be abbreviated. Only the first
- *       letter is checked. Anything starting with the respective first letter
- *       is accepted as the respective domain.
- *
- * This may ba changed in the future.
- */
+#define RC_MAX_ALIAS_DEPTH 8            // maximum number of redirections when resolving aliases
 
 
-const char *RcGetRealPath (CString *ret, const char *uri, const char *workDir, int maxDepth) {
-  CString aliasPart, *s, realUri, absUri;
-  const char *p;
-  int n;
+const char *pathRootNames [] = { "alias", "host", "local" };
+ERcPathDomain pathRootDomains [] = { rcpAlias, rcpHost, rcpLocal };
 
-  // Resolve relative path...
-  if (uri[0] != '/' && workDir) {
-    absUri.SetF ("%s/%s", workDir, uri);
-    absUri.PathNormalize ();
-    uri = absUri.Get ();
-  }
 
-  // Handle "local" domain...
-  if (uri[0] == '/' && uri[1] == 'l') {
 
-    // Handle path in "local" domain...
-    p = uri + 2;
-    while (p[0] != '\0' && p[-1] != '/') p++;
-    ret->SetF ("/host/%s/%s", localHostId.Get (), p);
-  }
+// ***** Path Normalization and Resolution *****
 
-  // Handle alias...
-  else if (uri[0] == '/' && uri[1] == 'a') {
-    p = uri + 2;
-    while (p[0] && p[-1] != '/') p++;
-    if (!p[0]) {
 
-      // No second path component (e.g. URI = "/alias/")...
-      //~ INFOF (("#   no second path component -> '%s'", uri));
-      ret->Set (uri);
+const char *RcPathNormalize (CString *ret, const char *uri, const char *workDir) {
+  if (!workDir) workDir = "/alias";
+  if (uri[0] == '/') ret->SetC (uri);
+  else ret->SetF ("%s/%s", workDir, uri);
+  ret->PathNormalize ();
+  return ret->Get ();
+}
+
+
+static void PrepareAliasMap () {          // Helper for 'RcReadConfig()'...
+  CKeySet unresolved;
+  CString s, *value;
+  const char *key, *key0, *key1;
+  int key0len, key1len, n;
+  bool resolvedOne;
+
+  // Check for aliases where one is a prefix of another...
+  //   In this case, the other will be overloaded by the first and must be deleted with a warning.
+  //
+  //   Note: It is not possible so support it with reasonable effort, as this example shows:
+  //     A first         /host/a/1    ; resources /host/a/1/x/wow, /host/a/1/y exist
+  //     A first/second  /host/b      ; resources /host/b/2/x, /host/b/2/y exist
+  //     A third         /alias/first -> /host/a/1
+  //     => Directory of "/alias/first":        x y second
+  //     => Directory of "/alias/first/second": 2
+  //     => Directory of "/alias/third/second": 2  (A)
+  //
+  //   Case (A) cannot be processed correctly if aliases are pre-resolved ("third" -> "/host/a/1").
+  //   Instead, in each indidual redirection step, a check must be performed. This would make directory
+  //   discovery much more complex than it is implemented now.
+  //
+  key0 = aliasMap.GetKey (0);
+  key0len = strlen (key0);
+  n = 1;
+  while (n < aliasMap.Entries ()) {
+    key1 = aliasMap.GetKey (n);
+    key1len = strlen (key1);
+    if (strncmp (key0, key1, MIN (key0len, key1len)) == 0 && (key1[key0len] == '/' || key0[key0len] == '/')) {
+      ASSERT (key0len < key1len);   // we assert that prefixes are sorted before the longer string (see strcmp(3) ).
+      WARNINGF (("Alias '%s' is invisible behind '%s' and has no effect.", key1, key0));
+      aliasMap.Del (n);
     }
     else {
+      n++;
+      key0 = key1;
+      key0len = key1len;
+    }
+  }
+
+  // Normalize targets ...
+  for (n = 0; n < aliasMap.Entries (); n++) {
+    value = aliasMap.Get (n);
+    s.Set (*value);
+    RcPathNormalize (value, s);
+  }
+
+  // Pre-resolve targets ...
+  // a) Collect all indirect references ...
+  for (n = 0; n < aliasMap.Entries (); n++) {
+    value = aliasMap.Get (n);
+    if (RcPathGetRootDomain (value->Get ()) != rcpHost) {
+      //~ INFOF (("  unresolved (domain = %i): '%s -> %s'", RcPathGetRootDomain (value->Get ()), aliasMap.GetKey (n), value->Get ()));
+      unresolved.Set (aliasMap.GetKey (n));
+    }
+  }
+  // b) Iteratively try to resolve them ...
+  resolvedOne = true;
+  while (resolvedOne) {
+    resolvedOne = false;
+    for (n = unresolved.Entries () - 1; n >= 0; n--) {
+      //~ const char *key = unresolved[n];
+      //~ value = aliasMap.Get (key);
+      //~ INFOF (("### n = %i/%i, key = '%s', value = '%s'", n, unresolved.Entries (), key, value ? value->Get () : NULL));
+      value = aliasMap.Get (unresolved[n]);
+      s.Set (value->Get ());
+      RcPathResolve (value, s);
+      if (RcPathGetRootDomain (value->Get ()) == rcpHost) {
+        // Success!
+        unresolved.Del (n);
+        resolvedOne = true;
+        //~ unresolved.Dump ();
+      }
+    }
+  }
+  // c) Warn and dismiss unresolvables ...
+  for (n = unresolved.Entries () - 1; n >= 0; n--) {
+    key = unresolved[n];
+    value = aliasMap.Get (key);
+    WARNINGF (("Unable to resolve alias: '%s' -> '%s'", key, value->Get ()));
+    aliasMap.Del (key);
+  }
+
+  //~ for (n = 0; n < aliasMap.Entries (); n++)
+    //~ INFOF (("  %s -> %s", aliasMap.GetKey (n), aliasMap.Get (n)->Get ()));
+}
+
+
+const char *RcPathResolve (CString *ret, const char *uri, const char *workDir, const char **retTarget, const char **retLocalPath) {
+  CString absUri, aliasPart, *s;
+  const char *p, *target;
+  char *q;
+  int len;
+
+  // Preset return values and normalize input ...
+  if (!retTarget && !retLocalPath) uri = RcPathNormalize (&absUri, uri);
+  if (retTarget) *retTarget = NULL;
+  ret->Set (uri);
+
+  // Check root domain...
+  switch (RcPathGetRootDomain (uri)) {
+
+    case rcpNone:
+    case rcpHost:
+
+      // Syntax error or host domain: Return unmodified path ...
+      ret->Set (uri);
+      break;
+
+    case rcpLocal:
+
+      // Handle path in "local" domain...
+      for (p = uri + 2; p[0] != '\0' && p[-1] != '/'; p++);   // move 'p' to start of next component
+      ret->SetF ("/host/%s/%s", localHostId.Get (), p);
+      break;
+
+    case rcpAlias:
+
+      // Handle alias...
+      for (p = uri + 2; p[0] != '\0' && p[-1] != '/'; p++);   // move 'p' to start of next component
+      if (!p[0]) {
+        // No second path component: Skip (e.g. URI = "/alias/") ...
+        //~ INFOF (("#   no second path component -> '%s'", uri));
+        ret->Set (uri);
+        break;
+      }
 
       // Try to match sub-paths, start with the longest...
       aliasPart.Set (p);
       while (true) {
         //~ INFOF (("#   looking up '%s'", aliasPart.Get ()));
         s = aliasMap.Get (aliasPart.Get ());
-        if (s) {
-
-          // Found alias...
-          ret->SetC (s->Get ());
-          ret->Append (p + aliasPart.Len ());
-          //~ INFOF (("#   found alias '%s' -> '%s'", s->Get (), ret->Get ()));
-          if (maxDepth > 0 && (*ret)[0] == '/' && (*ret)[1] == 'a') {
-            // The alias maps to another alias: Resolve it recursively...
-            aliasPart.Set (*ret);      // save contents of 'realUri'
-            ret->Set (RcGetRealPath (&realUri, aliasPart.Get (), NULL, maxDepth - 1));
-            //~ INFOF (("#   ('%s') after recursion -> '%s'", uri, realUri.Get ()));
-          }
+        if (s) {          // Found alias...
+          target = s->Get ();
+          len = aliasPart.Len ();
+          ret->SetC (target);        // alias target
+          ret->Append (p + len);     // ... + local part
+          if (retTarget) *retTarget = target;
+          if (retLocalPath) *retLocalPath = p + len;
           break;
         }
-        else {
-
-          // Cut off last path component and search again...
-          n = aliasPart.RFind ('/');
-          if (n <= 0) {
+        else {            // Sub-path not found: Cut off last path component and search again...
+          q = strrchr (aliasPart, '/');
+          if (!q) {   // no more components...
             //~ INFOF (("   no matching alias found -> '%s'", uri));
             ret->Set (uri);
-            break;      // no more components
+            break;
           }
-          else aliasPart[n] = '\0';
+          else q[0] = '\0';
         }
-      }
-    }
-  }
+      } // while (true);
+      break;
 
-  // Not an alias: Return unmodified (full) path ...
-  else {
+    default:
+      ASSERT (false);
 
-    //~ INFOF (("###   not an alias -> '%s'", uri));
-    ret->Set (uri);
   }
 
   // Done...
-  //~ INFOF(("### RcGetRealPath ('%s') -> '%s'", uri, ret->Get ()));
+  //~ INFOF(("### RcPathResolve ('%s') -> '%s'", uri, ret->Get ()));
   return ret->Get ();
 }
 
 
-bool RcUriMatches (const char *uri, const char *pattern) {
+
+
+
+// ***** Path Analysis *****
+
+
+static inline ERcPathDomain DoGetRootDomain (const char *str, int len) {
+  const char *key;
+  int n;
+
+  // Search for keyword ...
+  for (n = 0; n < ENTRIES (pathRootNames); n++)
+    if (str[0] == (key = pathRootNames[n]) [0]) {       // quick pre-check for initial character
+      if (len == (int) strlen (key))                    // pre-check length
+        if (strncmp (str, key, len) == 0)  return pathRootDomains[n];
+    }
+
+  // Not found ...
+  return rcpNone;
+}
+
+
+ERcPathDomain RcPathGetRootDomain (const char *uri) {
+  const char *p;
+  int len;
+
+  // Sanity ...
+  if (!uri) return rcpNone;
+  if (uri[0] != '/') return rcpNone;
+
+  // Get length ...
+  p = strchr (uri + 1, '/');
+  if (p) len = p - (uri + 1);
+  else len = strlen (uri + 1);
+
+  // Go ahead ...
+  return DoGetRootDomain (uri + 1, len);
+}
+
+
+ERcPathAnalysisState RcPathAnalyse (const char *uri, TRcPathInfo *ret, bool allowWait) {
+  ERcPathAnalysisState state;
+  CString s;
+  const char *p, *q;
+
+  //~ INFOF (("### RcPathAnalyse ('%s') ...", uri));
+
+  // Set default return values...
+  RcPathInfoClear (ret);
+  ret->localPath = uri;
+
+  // Sanity checks...
+  ASSERT (ret != NULL);
+  if (!uri) { state = rcaNone; goto done; }
+  if (uri[0] != '/') { state = rcaNone; goto done; }
+
+  // Check root (level-0) component...
+  //   From now on, 'p' points to the start of the current path component, and 'q' points to its end.
+  p = q = uri + 1;
+  while (*q && *q != '/') q++;
+  //~ INFOF (("###   level-0: p = '%s', q = '%s'", p, q));
+  if (*q != '/') {
+    // No trailing slash => leave it with root state...
+    ret->localPath = p;
+    state = rcaRoot;
+    goto done;
+  }
+
+  // Determine domain ...
+  switch ( (ret->domain = DoGetRootDomain (p, q - p)) ) {
+    case rcpHost:   state = rcaHost;   break;
+    case rcpLocal:  state = rcaDriver; break;
+    case rcpAlias:  state = rcaAlias;  break;
+    default:        state = rcaNone;   goto done;
+  }
+  //~ INFOF (("###   state (level-0): %i", state));
+
+  // Move next (level-1) component...
+  p = (++q);
+  while (*q && *q != '/') q++;
+
+  // Try to further evaluate host path...
+  if (state == rcaHost && *q == '/') {
+    //~ INFOF (("RcPathAnalyse ('%s'): state == rcaHost ...", uri));
+    s.Set (p, q - p);
+    //~ INFOF(("  comparing '%s' with '%s'...", comp.Get (), localHostId.Get ()));
+    if (s.Compare (localHostId.Get ()) == 0)
+      state = rcaDriver;     // local host
+    else {
+      state = rcaResource;   // remote host
+      ret->host = hostMap.Get (s.Get ());
+    }
+
+    // Move on to next path component...
+    p = (++q);
+    while (*q && *q != '/') q++;
+  }
+
+  // Try to further evaluate driver path...
+  if (state == rcaDriver && *q == '/') {
+    s.Set (p, q-p);
+    state = rcaResource;
+    ret->driver = driverMap.Get (s.Get ());
+
+    // Move on to next path component...
+    p = (++q);
+    while (*q && *q != '/') q++;
+  }
+
+  // Now 'p' is the local path...
+  ret->localPath = p;
+
+  // Try to identify the resource ...
+  //~ INFOF (("p = '%s'", p));
+  if (state == rcaResource) {
+    // Resource: Try to determine resource object ...
+    if (ret->driver) ret->resource = ret->driver->GetResource (ret->localPath);
+    else if (ret->host) ret->resource = ret->host->GetResource (ret->localPath, ret ? allowWait : false);
+  }
+
+  // And finally: Resolve aliases! ...
+  else if (state == rcaAlias) {
+    // Try to resolve alias ...
+    RcPathResolve (&s, uri, NULL, &ret->target, &ret->localPath);
+    //~ INFOF (("### Resolved alias: '%s' -> '%s' = '%s' + '%s'", uri, s.Get (), ret->target, ret->localPath));
+    if (ret->target) state = rcaAliasResolved;
+  }
+
+done:
+  //~ INFOF(("### Analyse '%s': state = %i, localPath = '%s', host = %08x, driver = %08x", uri, state, _retLocalPath, _retHost, _retDriver));
+  ret->state = state;
+  return state;
+}
+
+
+bool RcPathGetDirectory (const char *uri, CKeySet *ret, bool *retExists, CString *retPrefix, bool allowWait) {
+  TRcPathInfo info;
+  CString s, _prefix, *prefix, uriResolved;
+  CResource *rc;
+  int n, localOffset, idx0, idx1, items;
+  bool ok, dirExists;
+
+  // Sanity ...
+  ASSERT (uri != NULL);
+  if (uri[0] != '/') return false;
+  dirExists = false;
+
+  // Prepare URI and prefix ...
+  prefix = retPrefix ? retPrefix : &_prefix;
+  prefix->SetC (uri);
+  prefix->Append ('/');
+  prefix->PathNormalize ();
+
+  //~ INFOF (("### RcPathGetDirectory ('%s' -> '%s') ...", uri, prefix->Get ()));
+
+  // Analyse URI ...
+  RcPathAnalyse (prefix->Get (), &info, allowWait);
+  //~ INFOF (("###   Analysis: state = %i, localPath = '%s'", info.state, info.localPath));
+
+  // Handle various states ...
+  if (ret) ret->Clear ();
+  ok = true;
+  switch (info.state) {
+
+    case rcaRoot:
+      if (ret) for (n = 0; n < ENTRIES (pathRootNames); n++)
+        ret->Set (StringF (&s, "%s/", pathRootNames[n]));
+      dirExists = true;
+      break;
+
+    case rcaHost:
+      if (ret) for (n = 0; n < hostMap.Entries (); n++)
+        ret->Set (StringF (&s, "%s/", hostMap.GetKey (n)));
+      ret->Set (StringF (&s, "%s/", localHostId.Get ()));
+      dirExists = true;
+      break;
+
+    case rcaDriver:
+      if (ret) for (n = 0; n < driverMap.Entries (); n++)
+        ret->Set (StringF (&s, "%s/", driverMap.GetKey (n)));
+      dirExists = true;
+      break;
+
+    case rcaResource:
+      // Lock host or driver resources, respectively ...
+      items = info.host ? info.host->LockResources () : info.driver ? info.driver->LockResources () : 0;
+      //~ INFOF (("###   state 'resource': host = %s, driver = %s, items = %i", info.host ? info.host->ToStr () : "-", info.driver ? info.driver->ToStr () : "-", items));
+      for (n = 0; n < items; n++) {
+        // Get host or driver resource, respectively (one of the is always != NULL if we get here) ...
+        rc = info.host ? info.host->GetResource (n) : info.driver->GetResource (n);
+        localOffset = strlen (info.localPath);
+        if (strncmp (rc->Lid (), info.localPath, localOffset) == 0) {
+          if (ret) {
+            s.Set (rc->Lid () + localOffset);
+            s.Truncate ("/", true);
+            ret->Set (s.Get ());
+            //~ INFOF (("### resource dir: '%s' -> '%s'", rc->Uri (), s.Get ()));
+          }
+          if (retExists) {
+            dirExists = true;
+            if (!ret) break;
+          }
+        }
+      }
+      // Unlock host or driver resources, respectively ...
+      if (info.host) info.host->UnlockResources ();
+      else if (info.driver) info.driver->UnlockResources ();
+      break;
+
+    case rcaAlias:
+    case rcaAliasResolved:
+      if (info.target) {
+
+        // a) We did a full or partial resolution: Recurse and get the directory of the target ...
+        uriResolved.SetC (info.target);
+        uriResolved.Append (info.localPath);
+        ok = RcPathGetDirectory (uriResolved.Get (), ret, &dirExists, NULL, allowWait);
+      }
+      else {
+
+        // b) No resolution at all: List sub-aliases ...
+        aliasMap.PrefixSearch (info.localPath, &idx0, &idx1);
+        if (ret) {
+          CString subUri;
+
+          localOffset = strlen (info.localPath);
+          for (n = idx0; n < idx1; n++) {
+            s.Set (aliasMap.GetKey (n));
+            StringTruncate (s.Get () + localOffset, "/", true);
+            if (s[-1] != '/') {
+              // Last component of alias: Check if it points to a directory ...
+              subUri.SetC (prefix->Get ());
+              subUri.Append (s.Get () + localOffset);
+              if (RcPathIsDir (subUri.Get ())) s.Append ('/');
+            }
+            ret->Set (s.Get () + localOffset);
+            //~ INFOF (("### alias dir: '%s' -> '%s'", aliasMap.GetKey (n), s.Get () + localOffset));
+          }
+        }
+        if (idx1 > idx0) dirExists = true;
+      }
+      break;
+
+    default:
+      ok = false;
+  }
+
+  // Done ...
+  if (retExists) *retExists = dirExists;
+  //~ if (ret) ret->Dump ();
+  if (!ok) WARNINGF (("Invalid URI: '%s'", uri));
+  return ok;
+}
+
+
+bool RcPathIsDir (const char *uri, const TRcPathInfo *info, bool allowWait) {
+  TRcPathInfo _info;
+  bool dirExists;
+
+  if (!info) {
+    RcPathAnalyse (uri, &_info);
+    info = &_info;
+  }
+  switch (info->state) {
+    case rcaRoot:
+    case rcaHost:
+    case rcaLocal:
+    case rcaDriver:
+      // It's clearly a directory ...
+      return true;
+    case rcaResource:
+    case rcaAlias:
+    case rcaAliasResolved:
+      // Need further investigations ...
+      RcPathGetDirectory (uri, NULL, &dirExists, NULL, allowWait);
+      return dirExists;
+    default:  // rcaNone
+      // any other cases ...
+      return false;
+  }
+}
+
+
+
+
+
+// ***** Pattern Matching and Expansion *****
+
+
+bool RcPathMatchesSingle (const char *uri, const char *exp) {
+  for (; exp[0]; exp++) switch (exp[0]) {
+    case '?':
+      if (!uri[0] || uri[0] == '/') return false;
+      uri++;
+      break;
+    case '+':
+      if (!uri[0] || uri[0] == '/') return false;
+      uri++;
+      // fall through to match 0 or more characters
+    case '*':
+      // Any character sequence except '/' ...
+      //   Skip repeated '+' or '*' ...
+      while (exp[1] == '*' || exp[1] == '+') exp++;
+      //   Loop over the current dir level of 'uri' and try to match its remainder recursively ...
+      while (uri[0] && uri[0] != '/') {
+        if (uri[0] == exp[1] || !exp[1] || exp[1] == '?' || exp[1] == '#')
+          // select only cases that have a chance to match 'uri'
+          if (RcPathMatchesSingle (uri, exp + 1)) return true;
+        uri++;
+      }
+      //   Now 'uri' points to the end of the string or to the next '/'.
+      //   We are now left with the case that the wildcard matches the complete component.
+      break;
+    case '#':
+      // Any character sequence up to the end ...
+      return true;
+    default:
+      // Normal case: the characters must be equal ...
+      if (exp[0] != uri[0]) return false;
+      uri++;
+  }
+  return exp[0] == uri[0];    // both point to a '\0' => strings match
+}
+
+
+bool RcPathMatches (const char *uri, const char *pattern) {
   CSplitString patternSet;
   const char *pat;
   int n;
@@ -293,180 +711,153 @@ bool RcUriMatches (const char *uri, const char *pattern) {
   patternSet.Set (pattern, INT_MAX, "," WHITESPACE);
   for (n = 0; n < patternSet.Entries (); n++) {
     pat = patternSet.Get (n);
-    if (pat[0]) if (fnmatch (pat, uri, URI_FNMATCH_OPTIONS) == 0) return true;
+    if (pat[0]) if (RcPathMatchesSingle (uri, pat)) return true;
   }
   return false;
 }
 
 
-ERcPathDomain RcAnalysePath (const char *uri, const char **retLocalPath, CRcHost **retHost, CRcDriver **retDriver, CResource **retResource, bool allowWait) {
-  const char *p, *q;
-  CString comp;
-  ERcPathDomain domain;
-  const char *_retLocalPath;
-  CRcHost *_retHost;
-  CRcDriver *_retDriver;
-  CResource *_retResource;
+static bool DoResolvePattern (const char *_exp, CKeySet *retResolvedPattern, CListRef<CResource> *retResources) {
+  // '_exp' must be a single, stripped, absolute pattern. The return structures are not cleared, and new resources are added.
+  // 'retResolvedPattern' can be NULL so that partially expanded pattern are not added in recursive calls.
+  // If 'retResolvedPattern == NULL', the caller MUST have made sure that '_exp' is resolved.
+  CString exp, uri;
+  TRcPathInfo info;
+  char *wild;
+  int n;
+  bool ok;
 
-  //~ INFOF (("RcAnalysePath ('%s') ...", uri));
+  //~ INFOF (("# DoResolvePattern('%s') ...", _exp));
 
-  // Set default return values...
-  _retLocalPath = uri;
-  _retHost = NULL;
-  _retDriver = NULL;
-  _retResource = NULL;
+  // Sanity ...
+  if (_exp[0] != '/') return false;
 
-  // Sanity checks...
-  if (!uri) { domain = rcpNone; goto done; }
-  if (uri[0] != '/')  { domain = rcpNone; goto done; }
+  // Search for the first wildcard ...
+  exp.Set (_exp);
+  wild = exp.Get () + strcspn (exp.Get (), "?*+#");
 
-  // Check root (level-0) component...
-  p = q = uri + 1;
-  while (*q && *q != '/') q++;
-  if (*q != '/') {
-    // No trailing slash => leave it with root domain...
-    _retLocalPath = p;
-    domain = rcpRoot;
-    goto done;
-  }
-  switch (*p) {
-    case 'l': domain = rcpDriver; break;
-    case 'h': domain = rcpHost; break;
-    case 'a': domain = rcpAlias; break;
-    case 'e': domain = rcpEnv; break;
-    default: domain = rcpNone; goto done;
-  }
-
-  // Move next (level-1) component...
-  p = (++q);
-  while (*q && *q != '/') q++;
-
-  // Try to further evaluate host path...
-  if (domain == rcpHost && *q == '/') {
-    //~ INFOF (("RcAnalysePath ('%s'): domain == rcpHost ...", uri));
-    comp.Set (p, q - p);
-    //~ INFOF(("  comparing '%s' with '%s'...", comp.Get (), localHostId.Get ()));
-    if (comp.Compare (localHostId.Get ()) == 0) domain = rcpDriver;       // local host?
-    else if ( (_retHost = hostMap.Get (comp.Get ())) ) domain = rcpResource;   // known remote host?
-
-    // If host was known: Move on to next path component...
-    if (domain != rcpHost) {
-      p = (++q);
-      while (*q && *q != '/') q++;
+  // Handle cases with no wildcard ...
+  if (!*wild) {
+    RcPathResolve (&uri, exp.Get ());
+    RcPathAnalyse (uri.Get (), &info);
+    if (info.resource && retResources) {
+      // Resource known => can just add it ...
+      //~ INFOF (("#   adding resource: %s", info.resource->Uri ()));
+      retResources->Append (info.resource);
     }
-  }
-
-  // Try to further evaluate driver path...
-  if (domain == rcpDriver && *q == '/') {
-    comp.Set (p, q-p);
-    if ( (_retDriver = driverMap.Get (comp.Get ()))) {
-      domain = rcpResource;
-      p = (++q);
-      while (*q && *q != '/') q++;
-    }
-  }
-
-  // Now 'p' is the local path...
-  _retLocalPath = p;
-
-  // Try to identify the resource...
-  //~ INFOF (("p = '%s'", p));
-  if (domain == rcpResource) {
-    if (_retHost) _retResource = _retHost->GetResource (p, retResource ? allowWait : false);
-    if (_retDriver) _retResource = _retDriver->GetResource (p);
-  }
-
-done:
-  if (retLocalPath) *retLocalPath = _retLocalPath;
-  if (retHost) *retHost = _retHost;
-  if (retDriver) *retDriver = _retDriver;
-  if (retResource) *retResource = _retResource;
-  //~ INFOF(("### Analyse '%s': domain = %i, localPath = '%s', host = %08x, driver = %08x", uri, domain, _retLocalPath, _retHost, _retDriver));
-  return domain;
-}
-
-
-bool RcSelectResources (const char *pattern, int *retItems, CResource ***retItemArr, CKeySet *retWatchSet) {
-  CString realPattern, realUri, aliasPart;
-  const char *localPath;
-  ERcPathDomain dom;
-  CRcHost *rcHost;
-  CRcDriver *rcDriver;
-  CResource *rc;
-  CKeySet newWatchSet;
-  int n, k;
-
-  *retItems = 0;
-  *retItemArr = NULL;
-  if (retWatchSet) retWatchSet->Clear ();
-
-  // Resolve aliases and analyse path...
-  realPattern.Set (RcGetRealPath (&realUri, pattern));
-  dom = RcAnalysePath (realPattern.Get (), &localPath, &rcHost, &rcDriver, &rc);
-
-  // Interpret for cases with at least host or driver fully specified...
-  if (dom == rcpResource && (rcHost || rcDriver)) {
-    if (rc) {
-
-      // Case 1: 'RcAnalysePath' found an exact match => no wildcard, resource known => can just add it ...
-      *retItems = 1;
-      *retItemArr = MALLOC (CResource *, 1);
-      (*retItemArr)[0] = rc;
-      return true;
+    else if (info.state == rcaResource) {
+      // Resource not known => add it to the watch set ...
+      //~ INFOF (("#   adding resolution: %s", uri.Get ()));
+      if (retResolvedPattern) retResolvedPattern->Set (uri.Get ());
     }
     else {
-
-      // Case 2: No exact match => may have a wildcard or not-yet existing resource...
-      retWatchSet->Set (realPattern.Get ());   // need to watch it later
-
-      if (rcHost) {
-        // walk through all resources of the host...
-        n = rcHost->LockResources ();
-        *retItems = 0;
-        *retItemArr = MALLOC (CResource *, n);
-        for (k = 0; k < n; k++) {
-          rc = rcHost->GetResource (k);
-          rc->Lock ();
-          if (fnmatch (localPath, rc->Lid (), URI_FNMATCH_OPTIONS) == 0)
-            (*retItemArr) [(*retItems)++] = rc;
-          rc->Unlock ();
-        }
-        rcHost->UnlockResources ();
-      }
-
-      if (rcDriver) {
-        // walk through all resources of the host...
-        n = rcDriver->LockResources ();
-        *retItems = 0;
-        *retItemArr = MALLOC (CResource *, n);
-        for (k = 0; k < n; k++) {
-          rc = rcDriver->GetResource (k);
-          rc->Lock ();
-          if (fnmatch (localPath, rc->Lid (), URI_FNMATCH_OPTIONS) == 0)
-            (*retItemArr) [(*retItems)++] = rc;
-          rc->Unlock ();
-        }
-        rcDriver->UnlockResources ();
-      }
-      return true;
+      if (retResources && info.state == rcaNone)    // avoid warnings if lazy wildcards are used (e.g.: "s- /#")
+        WARNINGF (("Invalid URI or unresolvable alias: '%s' - skipping.", _exp));
     }
   }
 
-  // All other cases are invalid or not implemented yet.
-  return false;
+  // Handle cases with wildcards ...
+  else {
+    CKeySet dir;
+    CString cur, post, patResolved, key;
+    char *p, *q;
+    int preLen;
+    bool isResolved, isDir;
+
+    // Add the expression to the watch set, but only if it is resolvable ...
+    if (retResolvedPattern) {
+      RcPathResolve (&patResolved, exp.Get ());
+      isResolved = (RcPathGetRootDomain (patResolved) == rcpHost);
+      if (isResolved) retResolvedPattern->Set (patResolved.Get ());
+      //~ else WARNINGF (("Failed to resolve '%s' - skipping.", patResolved.Get ()));
+    }
+    else
+      isResolved = true;      // The caller made sure that '_exp' was already resolved.
+
+    // Expand one level ...
+    //   This only needs to be done if the pattern was not yet passed to 'retResolvedPattern'
+    //   and no resources have to be returned.
+    if (!isResolved || retResources) {
+
+      // Determine the "pre" (in 'exp'), "cur" and "post" components, where "cur" is the first path component containing a wildcard ...
+      p = q = wild;
+      while (*p != '/') p--;
+      while (*q != '/' && *q) q++;
+      if (*q) post.Set (q);
+      *q = '\0';
+      cur.Set (p + 1);
+      p[1] = '\0';        // cut off 'exp' after the final '/' of the prefix
+      preLen = p + 1 - exp.Get ();
+      //~ INFOF (("#   pre = '%s', cur = '%s', post = '%s'", exp.Get (), cur.Get (), post.Get ()));
+
+      // Get directory and recurse for all matching patterns ...
+      //~ INFOF (("#   reading directory '%s' ...", exp.Get ()));
+      ok = RcPathGetDirectory (exp.Get (), &dir);
+      for (n = 0; n < dir.Entries () && ok; n++) {
+        key.Set (dir [n]);
+        p = strchr (key.Get (), '/');
+        isDir = (p != NULL);
+        if (isDir) *p = '\0';   // truncate trailing "/" to ensure correct matching
+        if (RcPathMatchesSingle (key.Get (), cur.Get ())) {
+          exp[preLen] = '\0';        // reset "pre" string ...
+          exp.Append (key);
+          //~ INFOF (("#     match: '%s' -> '%s'", key.Get (), exp.Get ()));
+          exp.Append (post);
+          if (!post.IsEmpty () || !isDir)
+            DoResolvePattern (exp.Get (), isResolved ? NULL : retResolvedPattern, retResources);
+          if (isDir && strchr (cur, '#')) {
+            // Handle '#' wildcard: decend to next deeper directory
+            exp.Append ("/#");
+            DoResolvePattern (exp.Get (), isResolved ? NULL : retResolvedPattern, retResources);
+          }
+        }
+      }
+      //~ INFOF (("#   ... done reading directory."));
+    }
+  }
+
+  // Done ...
+  return ok;
 }
 
 
-// ***** URI Root *****
+bool RcPathResolvePattern (const char *pattern, CKeySet *retResolvedPattern, CListRef<CResource> *retResources) {
+  CSplitString patternSet;
+  CString exp;
+  int n;
+  bool ok, allOk;
 
+  // Sanity ...
+  ASSERT (pattern != NULL && retResolvedPattern != NULL);
 
-int RcGetUriRoots () {
-  return uriRoots;
-}
+  // Clear returned containers ...
+  retResolvedPattern->Clear ();
+  if (retResources) retResources->Clear ();
 
+  // Iterate over sub-patterns ...
+  patternSet.Set (pattern, INT_MAX, "," WHITESPACE);
+  allOk = true;
+  for (n = 0; n < patternSet.Entries (); n++) {
+    ok = true;
 
-const char *RcGetUriRoot (int n) {
-  return uriRootArr[n];
+    // Make pattern absolute ...
+    RcPathNormalize (&exp, patternSet [n]);
+
+    // Accelerator: Skip non-host domains if the general "/#" pattern is given ...
+    if (strrchr (exp.Get (), '/') == exp.Get () && strchr (exp.Get (), '#') != NULL)
+      // 'exp' only contains a top-level, which contains the '#' wildcard ...
+      if (RcPathMatchesSingle ("/host", exp.Get ()))    // ... and matches "/host"
+        exp.SetC ("/host/#");                           // => limit the search to the "host" domain, which contains everything
+
+    // Process pattern ...
+    if (ok) DoResolvePattern (exp.Get (), retResolvedPattern, retResources);
+
+    // Wrap up ...
+    if (!ok) allOk = false;
+  }
+
+  // Done ...
+  return allOk;
 }
 
 
@@ -483,28 +874,31 @@ const char *RcGetUriRoot (int n) {
  *
  *  a) Operational messages
  *
- *    h <client host id> <prog name> <version>     # connect ("hello") message
+ *    h <client host id> <prog name> <version>   # connect ("hello") message
  *
- *    s+ <subscriber> <driver>/<rcname>            # subscribe to resource (no wildcards allowed); <subscriber> is the origin of the subscriber
- *    s- <subscriber> <driver>/<rcname>            # unsubscribe to resource (no wildcards allowed)
+ *    s+ <subscriber> <driver>/<rcLid>           # subscribe to resource (no wildcards allowed); <subscriber> is the origin of the subscriber
+ *    s- <subscriber> <driver>/<rcLid>           # unsubscribe to resource (no wildcards allowed)
  *
- *    r+ <driver>/<rcname> <reqGid> <request specification>     # add or change a request
- *    r- <driver>/<rcname> <reqGid>                             # remove a request
+ *    r+ <driver>/<rcLid> <reqGid> <request specification>    # add or change a request
+ *    r- <driver>/<rcLid> <reqGid> [<t1>]                     # remove a request
  *
  *  b) Informational messages
  *
  *    # i* messages must be issued synchronously, no new request may be issued before the "i."
  *    # response has been received.
  *
- *    ir <driver>/<rcname> <verbosity>  # request the output of 'CResource::GetInfo'
+ *    iq <driver>/<rcLid>               # request all pending resource requests (one per line)
+ *                                      # (not a human-readable info, but using the same, blocking protocol)
+ *
+ *    ir <driver>/<rcLid> <verbosity>   # request the output of 'CResource::GetInfo'
  *
  *    is <verbosity>                    # request the output of 'CRcSubscriber::GetInfoAll'
  *
  *  c) Shell execution
  *
- *    ec <command name> [<args>]      # Execute command defined by "sys.cmd.<command name>"
- *    e <text>                        # Supply data sent to STDIN of the previously started command
- *    e.                              # Send EOF to the previously started command
+ *    ec <command name> [<args>]        # Execute command defined by "sys.cmd.<command name>"
+ *    e <text>                          # Supply data sent to STDIN of the previously started command
+ *    e.                                # Send EOF to the previously started command
  *
  *
  * 2. From server to client:
@@ -513,12 +907,14 @@ const char *RcGetUriRoot (int n) {
  *
  *    h <prog name> <version>           # connect ("hello") message, sent in reply to client's "h ..." and sometimes as "alive" message
  *
- *    d <driver>/<rcname> <type> <rw>   # declaration of exported resource; is sent automatically for all resources after a connect
+ *    d <driver>/<rcLid> <type> <rw>    # declaration of exported resource; is sent automatically for all resources after a connect
  *    d.                                # no more resources follow: client may disconnect if there are no other wishes
  *    d-                                # forget (unregister) all resources from this host
  *
- *    v <driver>/<rcname> [~]<value> [<timestamp>] # value/state changed; timestamp is set by client, the server timestamp is optional and presently ignored if sent
- *    v <driver>/<rcname> ?             # state changed to "unknown"
+ *    v <driver>/<rcLid> [~]<value> [<timestamp>]   # value/state changed; timestamp is set by client, the server timestamp is optional and presently ignored if sent
+ *    v <driver>/<rcLid> ?                          # state changed to "unknown"
+ *
+ *    r <driver>/<rcLid> [<reqGid>]     # request changed (details can later be queried using 'iq').
  *
  *  b) Informational messages
  *
@@ -535,21 +931,6 @@ const char *RcGetUriRoot (int n) {
  *    At least every 'envMaxAge*2/3' milliseconds, a message is sent.
  *    If no other events occur, this is the "h ..." message.
  *
- */
-
-
-/* On the updating of resource values:
- * (comment originally from CResource::ReadValueState)
- * TBD: Should we do this? Normally, a new subscriber should ASAP receive an
- *   event with the most up-to-date value. The stored value is already up-to-date,
- *   if another subscription to the resource already exists and no error
- *   (network disconnection) has happend.
- *   => In the network code, we must make sure, that on a connection loss,
- *      all dependent resources are set to 'rcsUnknown' after a given timeout.
- *   => Drivers are fully responsible for invalidations, i.e. if they loose
- *      contact to their hardware, they must activly invalidate the value.
- *   => Then, this code is correct. Also, this code does not require
- *      that the subscription receives an initial event.
  */
 
 
@@ -575,27 +956,26 @@ struct TNetTask {
 };
 
 
-static const char *GetLocalUri (const char *localPath) {
-  CString *ret = GetTTS ();
+static const char *GetLocalUri (CString *ret, const char *localPath) {
   ret->SetF ("/host/%s/%s", localHostId.Get (), localPath);
   return ret->Get ();
 }
 
 
-static CResource *GetLocalResource (const char *localPath) {
-  return RcGetResource (GetLocalUri (localPath), false);
+static CResource *GetLocalResource (CString *ret, const char *localPath) {
+  return RcGetResource (GetLocalUri (ret, localPath), false);
 }
 
 
-static const char *GetRemoteUri (CRcHost *host, const char *localPath) {
-  CString *ret = GetTTS ();
+static const char *GetRemoteUri (CString *ret, CRcHost *host, const char *localPath) {
   ret->SetF ("/host/%s/%s", host->Id (), localPath);
   return ret->Get ();
 }
 
 
 static CResource *GetRemoteResource (CRcHost *host, const char *localPath) {
-  return RcGetResource (GetRemoteUri (host, localPath), false);
+  CString s;
+  return RcGetResource (GetRemoteUri (&s, host, localPath), false);
 }
 
 
@@ -740,7 +1120,7 @@ void *CNetThread::Run () {
 
     // Handle task...
     //~ INFOF(("### CNetThread: Handle tasks..."));
-    if (sleeper.GetCmd (&netTask)) {
+    while (!done && sleeper.GetCmd (&netTask)) {
       switch (netTask.opcode) {
         case noExit:
           // Notify hosts to let them join their connection threads...
@@ -834,7 +1214,7 @@ void RcNetStart () {
 
 
 void RcNetStop () {
-  TTicksMonotonic timeLeft;
+  TTicks timeLeft;
   bool haveOpenRequests;
   int n;
 
@@ -955,7 +1335,7 @@ static bool CRcServerCbOnSubscriberEvent (CRcEventProcessor *subscr, CRcEvent *e
 
 
 void CRcServer::OnFdReadable () {
-  CString line, def, info;
+  CString s, line, def, info;
   bool error;
   CSplitString args;
   CResource *rc;
@@ -966,7 +1346,7 @@ void CRcServer::OnFdReadable () {
   TTicks t1;
   int n, k, num, verbosity;
 
-  if (!receiveBuf.AppendFromFile (fd)) {
+  if (!receiveBuf.AppendFromFile (fd, HostId ())) {
     DEBUGF (1, ("Server for '%s': Network receive error, disconnecting", HostId ()));
     Disconnect ();
   }
@@ -997,7 +1377,7 @@ void CRcServer::OnFdReadable () {
           num = driver->LockResources ();
           for (k = 0; k < num; k++) {
             rc = driver->GetResource (k);
-            sendBuf.AppendF ("d %s/%s\n", driver->Lid (), rc->ToStr (true));
+            sendBuf.AppendF ("d %s/%s\n", driver->Lid (), rc->ToStr (&s, true));
           }
           driver->UnlockResources ();
         }
@@ -1010,8 +1390,8 @@ void CRcServer::OnFdReadable () {
         RcBump (NULL, true);
         break;
 
-      case 's':   // s+ <subscriber lid> <driver>/<rcname>             # subscribe to resource (no wildcards allowed)
-                  // s- <subscriber lid> <driver>/<rcname>             # unsubscribe to resource (no wildcards allowed)
+      case 's':   // s+ <subscriber lid> <driver>/<rcLid>             # subscribe to resource (no wildcards allowed)
+                  // s- <subscriber lid> <driver>/<rcLid>             # unsubscribe to resource (no wildcards allowed)
         args.Set (line.Get ());
         if (args.Entries () != 3) { error = true; break; }
         def.SetF ("%s/%s", hostId.Get (), args[1]);   // subscriber GID
@@ -1025,7 +1405,7 @@ void CRcServer::OnFdReadable () {
           subscrDict.Set (subscr->Lid (), subscr);
           Unlock ();
         }
-        uri = GetLocalUri (args[2]);
+        uri = GetLocalUri (&s, args[2]);
         switch (line[1]) {
           case '+':
             subscr->DelResources (uri);   // unsubscribe first - it may not have been properly cleared before
@@ -1038,10 +1418,10 @@ void CRcServer::OnFdReadable () {
         }
         break;
 
-      case 'r':   // r+ <driver>/<rcname> <reqGid> <request specification>     # add or change a request
-                  // r- <driver>/<rcname> <reqGid>                             # remove a request
+      case 'r':   // r+ <driver>/<rcLid> <reqGid> <request specification>     # add or change a request
+                  // r- <driver>/<rcLid> <reqGid> [<t1>]                      # remove a request
         args.Set (line.Get (), 3);
-        rc = args.Entries () < 3 ? NULL : GetLocalResource (args[1]);
+        rc = args.Entries () < 3 ? NULL : GetLocalResource (&s, args[1]);
         error = true;
         if (rc) switch (line[1]) {
           case '+':
@@ -1066,24 +1446,47 @@ void CRcServer::OnFdReadable () {
       case 'i':
         switch (line[1]) {
 
-          case 'r':   // ir <driver>/<rcname> <verbosity>  # request the output of 'CResource::GetInfo'
+          case 'q':   // iq <driver>/<rcLid>               # request all pending resource requests
+            // The output of this will be used and parsed by 'CResource::GetRequestSet()'.
+            args.Set (line.Get ());
+            if (args.Entries () != 2) { error = true; break; }
+            rc = GetLocalResource (&s, args[1]);
+            if (!rc) { WARNINGF (("Unknown resource '%s'", args[1])); error = true; break; }
+            else {
+              CRcRequestSet reqSet;
+              CRcRequest *req;
+
+              ASSERT (rc->GetRequestSet (&reqSet, false));   // 'allowNet == false' to avoid accidental recursion
+              for (n = 0; n < reqSet.Entries (); n++) {
+                req = reqSet.Get (n);
+                sendBuf.AppendF ("i %s\n", req->ToStr (&s, /* precise = */ true, false, 0, "i"));
+                  // i <text>                  # response to any "i*" request
+              }
+            }
+            break;
+
+          case 'r':   // ir <driver>/<rcLid> <verbosity>  # request the output of 'CResource::GetInfo'
+            // The output of this will usually be read by the human user.
             args.Set (line.Get ());
             if (args.Entries () != 3) { error = true; break; }
             verbosity = args[2][0] - '0';
             if (verbosity < 0 || verbosity > 3) { error = true; break; }
-            rc = GetLocalResource (args[1]);
+            rc = GetLocalResource (&s, args[1]);
             if (!rc) { WARNINGF (("Unknown resource '%s'", args[1])); error = true; break; }
 
-            rc->GetInfo (&info, verbosity);
+            rc->GetInfo (&info, verbosity, false);   // 'allowNet == false' to avoid recursion
             sendBuf.AppendFByLine ("i %s\n", info.Get ());
+              // i <text>                  # response to any "i*" request
             break;
 
           case 's':   // is <verbosity>                    # request the output of 'CRcSubscriber::GetInfoAll'
+            // The output of this will usually be read by the human user.
             if (line.Len () != 4) { error = true; break; }
             verbosity = line[3] - '0';
             if (verbosity < 0 || verbosity > 3) { error = true; break; }
             CRcSubscriber::GetInfoAll (&info, verbosity);
             sendBuf.AppendFByLine ("i %s\n", info.Get ());
+              // i <text>                  # response to any "i*" request
             break;
 
           default:
@@ -1091,6 +1494,7 @@ void CRcServer::OnFdReadable () {
         }
         if (!error) {
           sendBuf.Append ("i.\n");
+            // i.                        # end of info
           ResetAliveTimer ();
         }
         break;
@@ -1156,10 +1560,21 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
 
       while (((CRcSubscriber *) data)->PollEvent (&ev)) {
         //~ INFOF (("###   ev = %s", ev.ToStr ()));
-        if (ev.Type () == rceValueStateChanged) {
-          sendBuf.AppendF ("v %s/%s %s\n", ev.Resource ()->Driver ()->Lid (), ev.Resource ()->Lid (),
-                            ev.ValueState ()->ToStr (&s, false, false, true));
-          canPostponeAliveTimer = true;
+        switch (ev.Type ()) {
+          case rceValueStateChanged:
+            sendBuf.AppendF ("v %s/%s %s\n", ev.Resource ()->Driver ()->Lid (), ev.Resource ()->Lid (),
+                              ev.ValueState ()->ToStr (&s, false, false, true));
+              // v <driver>/<rcLid> [~]<value> [<timestamp>]   # value/state changed
+              // v <driver>/<rcLid> ?                          # state changed to "unknown"
+            canPostponeAliveTimer = true;
+            break;
+          case rceRequestChanged:
+            sendBuf.AppendF ("r %s/%s %s\n", ev.Resource ()->Driver ()->Lid (), ev.Resource ()->Lid (),
+                             ev.ValueState ()->ValidString (CString::emptyStr));
+              // r <driver>/<rcLid> [<reqGid>]       # request changed
+            break;
+          default:
+            break;    // other events are not relevant
         }
       }
       break;
@@ -1167,14 +1582,17 @@ void CRcServer::NetRun (ENetOpcode opcode, void *data) {
     case snoAliveTimer:
       if (ATOMIC_READ (state) != scsConnected) break;
       sendBuf.AppendF ("h %s %s\n", EnvInstanceName (), buildVersion);
+        // h <prog name> <version>           # connect ("hello") message
       break;
 
     case snoExecTimer:
       if (ATOMIC_READ (state) != scsConnected) break;
       while (execShell->ReadLine (&line))
         sendBuf.AppendF ("e %s\n", line.Get ());
+          // e <text>                  # response to an 'e *' request (shell command)
       if (!execShell->IsRunning ()) {
         sendBuf.Append ("e.\n");
+          // e.                        # end of the response
         execTimer.Clear ();
       }
       break;
@@ -1219,7 +1637,7 @@ void CRcServer::SendFlush () {
 
 
 void CRcServer::ResetAliveTimer () {
-  aliveTimer.Set (TicksMonotonicNow () + envMaxAge * 2 / 3, envMaxAge * 2 / 3, CRcServerAliveTimerCallback, this);
+  aliveTimer.Set (TicksNowMonotonic () + envMaxAge * 2 / 3, envMaxAge * 2 / 3, CRcServerAliveTimerCallback, this);
 }
 
 
@@ -1388,7 +1806,7 @@ void *CConThread::Run () {
       RcBump (NULL, true);    // Soft-bump other connections, since we may just have regained network connectivity
     }
     else {
-      if (newErrStr.Compare (errString.Get ()) != 0) {
+      if (newErrStr.Compare (errString) != 0) {
         errString.SetO (newErrStr.Disown ());
         DEBUGF (1, ("Cannot %s '%s': %s - continue trying", port ? "connect to" : "resolve", hostId.Get (), errString.Get ()));
       }
@@ -1425,7 +1843,7 @@ CRcHost::CRcHost () {
   sendBufEmpty = true;
   infoBusy = infoComplete = false;
   execBusy = execComplete = execWriteClosed = false;
-  tAge = tRetry = tIdle = NEVER;
+  tAge = tRetry = tIdle = 0;
   ResetFirstRetry ();
   timer.Set (CRcHostTimerCallback, this);
   tLastAlive = NEVER;
@@ -1471,7 +1889,7 @@ void CRcHost::ClearResources () {
 
 CResource *CRcHost::GetResource (const char *rcLid, bool allowWait) {
   CResource *ret;
-  TTicksMonotonic tWait;
+  TTicks tWait;
 
   Lock ();
   ret = resourceMap.Get (rcLid);
@@ -1535,9 +1953,39 @@ void CRcHost::RemoteSetRequest (CResource *rc, CRcRequest *req) {
 
 void CRcHost::RemoteDelRequest (CResource *rc, const char *reqGid, TTicks t1) {
   CString s1, s2;
-  if (t1) s2.SetF ("%s -%s", reqGid, TicksAbsToString (&s1, t1, INT_MAX, true));
+  if (t1 != NEVER) s2.SetF ("%s -%s", reqGid, TicksAbsToString (&s1, t1, INT_MAX, true));
   else s2.SetC (reqGid);
   Send (RequestCommand (&s1, rc, s2.Get (), '-'));
+}
+
+
+bool CRcHost::RemoteGetRequestSet (CResource *rc, CRcRequestSet *ret) {
+  CSplitString reqStrings;
+  CString s, reply;
+  CRcRequest *req;
+  int n;
+
+  // Sanity and init ...
+  if (!RemoteInfo (StringF (&s, "iq %s", rc->Lid ()), &reply))
+    return false;
+  ret->Clear ();
+  reply.Strip ("\n\r" WHITESPACE);
+  reqStrings.Set (reply.Get (), INT_MAX, "\n");
+
+  // Parse returned strings ...
+  for (n = 0; n < reqStrings.Entries (); n++) {
+    //~ INFOF (("### reqStrings[%i] = '%s'", n, reqStrings.Get (n)));
+    req = new CRcRequest ();
+    if (!req->SetFromStr (reqStrings[n])) {
+      SECURITYF (("Invalid request as a reply to an 'iq ...' message: '%s'", reqStrings.Get (n)));
+      delete req;
+      return false;
+    }
+    ret->Set (req->Gid (), req);
+  }
+
+  // Success ...
+  return true;
 }
 
 
@@ -1551,7 +1999,6 @@ bool CRcHost::RemoteInfoSubscribers (int verbosity, CString *retText) {
   CString s;
   return RemoteInfo (StringF (&s, "is %i", verbosity), retText);
 }
-
 
 
 // ***** Helpers *****
@@ -1579,10 +2026,10 @@ bool CRcHost::CheckIfIdle () {
 }
 
 
-TTicksMonotonic CRcHost::ResetTimes (bool resetAge, bool resetRetry, bool resetIdle) {
-  TTicksMonotonic tNow, tNext;
+TTicks CRcHost::ResetTimes (bool resetAge, bool resetRetry, bool resetIdle) {
+  TTicks tNow, tNext;
 
-  tNow = TicksMonotonicNow ();
+  tNow = TicksNowMonotonic ();
 
   // Reset the selected timers...
   if (resetAge) {
@@ -1624,8 +2071,9 @@ void CRcHost::OnFdReadable () {
   char **argv;
   int k, num, argc;
 
-  if (!receiveBuf.AppendFromFile (fd)) {
+  if (!receiveBuf.AppendFromFile (fd, Id ())) {
     //~ INFOF(("### CRcHost: EOF (fd = %i)", fd));
+    WARNINGF (("Connection lost to host '%s' - disconnecting.", Id ()));
     netThread.AddTask ((ENetOpcode) hnoDisconnnect, this); // connection seems to be closed from peer -> disconnect ourself, too
   }
 
@@ -1642,7 +2090,7 @@ void CRcHost::OnFdReadable () {
         ResetAgeTime ();
         break;
 
-      case 'd':   // d <driver>/<rcname> <type> <rw>  # declaration of exported resource
+      case 'd':   // d <driver>/<rcLid> <type> <rw>  # declaration of exported resource
         if (line[1] == '-') {
           // Unregister all resources...
           ClearResources ();
@@ -1681,7 +2129,7 @@ void CRcHost::OnFdReadable () {
         }
         break;
 
-      case 'v':   // v <driver>/<rcname> ?|([~]<value>) [<timestamp>]  # value/state changed
+      case 'v':   // v <driver>/<rcLid> ?|([~]<value>) [<timestamp>]  # value/state changed
         //~ INFOF (("### Received: '%s'", line.Get ()));
         line.Split (&argc, &argv, 4);
         if (argc < 3) { error = true; break; }
@@ -1695,6 +2143,14 @@ void CRcHost::OnFdReadable () {
         //~ INFOF (("### Received: '%s'", line.Get ()));
         //~ INFOF (("#   vs = '%s'", vs.ToStr (&s)));
         ResetAgeTime ();
+        break;
+
+      case 'r':   // r <driver>/<rcLid> [<reqGid>]       # request changed
+        line.Split (&argc, &argv);
+        if (argc < 2 || argc > 3) { error = true; break; }
+        rc = GetRemoteResource (this, argv[1]);
+        if (!rc) { error = true; break; }
+        rc->NotifySubscribers (rceRequestChanged, argc == 3 ? argv[2] : NULL);
         break;
 
       case 'i':   // i <text> | i.       # response to any 'i*' request | end of info
@@ -1740,7 +2196,7 @@ void CRcHost::OnFdWritable () {
 
 
 void CRcHost::NetRun (ENetOpcode opcode, void *) {
-  TTicksMonotonic tNow;
+  TTicks tNow;
   int bytesToWrite, bytesWritten;
   bool doConnect, doDisconnect, resetIdleTime, resetRetryTime;
   CResource *rc;
@@ -1923,32 +2379,32 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
   // Update all times and timer...
   if (state != hcsRetryWait && state != hcsNewRetryWait) {    // retries can only be initiated in these states...
     // Clear and disable the retry timer...
-    tRetry = NEVER;
+    tRetry = 0;
     resetRetryTime = false;
   }
   if (state != hcsConnected) {    // idle disconnects can only be initiated in this state...
     // Clear and disable the idle timer...
-    tIdle = NEVER;
+    tIdle = 0;
     resetIdleTime = false;
   }
   tNow = ResetTimes (false, resetRetryTime, resetIdleTime);
   // Note: Whether an action is applicable can be decided by the 't...' time variables now.
 
   // Check & handle age timeout ...
-  if (tAge != NEVER && tNow >= tAge) {
+  if (tAge && tNow >= tAge) {
     //~ INFOF (("### Age timout on host '%s' (tNow = %i, tAge = %i)", Id (), (int) tNow, (int) tAge));
     // Acknowledge / disable age time,,,
-    tAge = NEVER;
+    tAge = 0;
     UpdateTimer ();
     // Schedule 'hnoDisconnect'...
     netThread.AddTask ((ENetOpcode) hnoDisconnnect, this);
   }
 
   // Check & handle retry timeout ...
-  if (tRetry != NEVER && tNow >= tRetry) {
+  if (tRetry && tNow >= tRetry) {
     //~ INFOF (("### Retry timout on host '%s' (tNow = %i, tRetry = %i)", Id (), (int) tNow, (int) tRetry));
     // Acknowledge / disable retry time,,,
-    tRetry = NEVER;
+    tRetry = 0;
     UpdateTimer ();
     //~ INFOF (("### Retry timeout ('%s')", Id ()));
     // Schedule a connection attempt now...
@@ -1956,11 +2412,11 @@ void CRcHost::NetRun (ENetOpcode opcode, void *) {
   }
 
   // Check & handle idle timeout ...
-  if (tIdle != NEVER && tNow >= tIdle) {
+  if (tIdle && tNow >= tIdle) {
     //~ INFOF (("### Idle check for host '%s' (tNow = %i, tIdle = %i)", Id (), (int) tNow, (int) tIdle));
     if (CheckIfIdle ()) {     // Really idle? Yes...
       // Acknowledge / disable idle time,,,
-      tIdle = NEVER;
+      tIdle = 0;
       UpdateTimer ();
       // Schedule 'hnoDisconnect'...
       netThread.AddTask ((ENetOpcode) hnoDisconnnect, this);
@@ -1980,7 +2436,7 @@ void CRcHost::GetInfo (CString *ret, int verbosity) {
     "OK, connected (since %s)\n",   // hcsConnected
     "OK, standby (since %s)\n"      // hcsStandby
   };
-  CString info;
+  CString s, info;
   EHostConnectionState _state;
   const char *stateFormat;
   bool haveInfo;
@@ -1992,13 +2448,13 @@ void CRcHost::GetInfo (CString *ret, int verbosity) {
     // Note: Access to 'state' is not synchronized by a mutex and may be inaccurate!
     //       We copy it to a local variable here.
   stateFormat = stateFormats[_state];
-  if (_state == hcsNewRetryWait && TicksIsNever (conThread->LastAttempt ()))
+  if (_state == hcsNewRetryWait && conThread->LastAttempt () == NEVER)
     // There is a special case to consider: In the construction, the state
     // is initialized with 'hcsNewRetryWait' to initiate a new connection soon.
     // Since no valid timestamp and no error string is available, we replace
     // the format string and do not show misleading time/error strings.
     stateFormat = "New, trying...\n";
-  ret->AppendF (stateFormat, TicksAbsToString (conThread->LastAttempt (), 0), conThread->ErrorString ());
+  ret->AppendF (stateFormat, TicksAbsToString (&s, conThread->LastAttempt (), 0), conThread->ErrorString ());
   conThread->Unlock ();
   Unlock ();
 
@@ -2035,7 +2491,7 @@ bool CRcHost::Start (const char *cmd, bool readStdErr) {
 
 bool CRcHost::StartRestricted (const char *name, const char *args) {
   CString s;
-  TTicksMonotonic tWait;
+  TTicks tWait;
 
   // Preamble...
   tWait = envNetTimeout;
@@ -2070,7 +2526,7 @@ void CRcHost::Wait () {
 }
 
 
-void CRcHost::CheckIO (bool *canWrite, bool *canRead, TTicksMonotonic timeOut) {
+void CRcHost::CheckIO (bool *canWrite, bool *canRead, TTicks timeOut) {
   bool _canWrite, _canRead;
 
   _canWrite = _canRead = false;
@@ -2134,7 +2590,7 @@ void CRcHost::SendAL (const char *line) {
 
 bool CRcHost::RemoteInfo (const char *msg, CString *ret) {
   CString line;
-  TTicksMonotonic tWait;
+  TTicks tWait;
 
   //~ INFOF(("### CRcHost::RemoteInfo (%s, '%s')", Id (), msg));
 
@@ -2366,10 +2822,10 @@ void RcReadConfig (CString *retSignals, CString *retAttrs) {
             // Syntax: A <name> <target> [<attrs>]
             args.Set (p, 4);
             if (args.Entries () < 3) { error = true; break; }
-            GetAbsPath (&str, args[2], "/alias");
+            str.SetC (args[2]);
             aliasMap.Set (args[1], &str);
             // Store attributes if given ...
-            if (args.Entries () > 3) retAttrs->AppendF ("%s %s\n", str.Get (), args[3]);
+            if (args.Entries () > 3) retAttrs->AppendF ("%s %s\n", args[1], args[3]);
             // Auto-add host ...
             if (strncmp (str.Get (), "/host/", 6) == 0) {
               p = q = (char *) str.Get () + 6;
@@ -2420,6 +2876,8 @@ void RcReadConfig (CString *retSignals, CString *retAttrs) {
 
   // Set local host ID for clients...
   if (localPort < 0) localHostId.SetF ("%s<%s:%i>", EnvMachineName (), EnvInstanceName (), EnvPid ());
-
   //~ INFOF(("### localHostId = '%s'", localHostId.Get ()));
+
+  // Sanitize alias map ...
+  PrepareAliasMap ();
 }
