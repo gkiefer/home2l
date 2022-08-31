@@ -1743,6 +1743,7 @@ CRcRequest *CResource::GetRequest (const char *reqGid, bool allowNet) {
 
   // Get request set ...
   if (!GetRequestSet (&set, allowNet)) return NULL;
+  //~ set.Dump ("request set");
 
   // Pick out selected request ...
   req = set.DisownValue (reqGid);
@@ -1751,6 +1752,7 @@ CRcRequest *CResource::GetRequest (const char *reqGid, bool allowNet) {
   if (!req) req = new CRcRequest (NO_VALUE_STATE, reqGid);
 
   // Done ...
+  //~ CString s; INFOF (("### req = '%s'", req->ToStr (&s)));
   return req;
 }
 
@@ -2124,7 +2126,7 @@ void CResource::EvaluateRequests (bool force) {
   // Handle repetitions: Update 't0' / 't1' based on 'repeat' attributes ...
   for (req = requestList; req; req = req->next)
     if (req->repeat > 0 && req->t0 != NEVER && req->t1 != NEVER) {
-      // Note: The repeat attribute only makes sense if both 't0' and 't1' are defined.
+      // Note: The repeat attribute only makes sense if both 't0' and 't1' are defined and 'repeat > 0'.
       //
       // Note: We do not update a persistent request afterwards, we rely on the fact that
       //       t0 and t1 are always updated appropriately here, even if their original
@@ -2812,8 +2814,7 @@ void CRcRequest::Reset () {
   // Set default attributes ...
   if (gid.IsEmpty ()) gid.SetC (EnvInstanceName ());
   priority = rcPrioNormal;
-  t0 = t1 = NEVER;
-  repeat = 0;
+  t0 = t1 = repeat = NEVER;
   hysteresis = 0;
 
   // Set origin stamp ...

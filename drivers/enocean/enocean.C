@@ -202,10 +202,10 @@ static void EnoOpen () {
   tLastRetry = tNow;
 
   // Open device file ...
-  enoFd = open (envEnoLinkDev, O_RDONLY);
+  enoFd = open (envEnoLinkDev, O_RDONLY | O_NONBLOCK);
   //~ INFOF (("# open (envEnoLinkDev, O_RDONLY) -> %i", enoFd));
   if (enoFd < 0) {
-    if (!isRetry) WARNINGF (("Failed to open EnOcean link '%s': %s", envEnoLinkDev, strerror (errno)));
+    /* if (!isRetry) */ WARNINGF (("Failed to open EnOcean link '%s': %s", envEnoLinkDev, strerror (errno)));
     return;
   }
 

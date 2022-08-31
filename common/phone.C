@@ -179,7 +179,7 @@ ENV_PARA_STRING ("phone.secret", envPhoneSecret, NULL);
    */
 
 
-ENV_PARA_PATH ("phone.ringback", envPhoneRingbackFile, NULL);
+ENV_PARA_PATH ("phone.ringback", envPhoneRingbackFile, "share/sounds/ringback.wav");
   /* Ringback audio file
    *
    * This is the sound to be played to the caller while ringing.

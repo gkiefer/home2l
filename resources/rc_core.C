@@ -725,7 +725,7 @@ static bool DoResolvePattern (const char *_exp, CKeySet *retResolvedPattern, CLi
   TRcPathInfo info;
   char *wild;
   int n;
-  bool ok;
+  bool ok = true;
 
   //~ INFOF (("# DoResolvePattern('%s') ...", _exp));
 
@@ -751,8 +751,10 @@ static bool DoResolvePattern (const char *_exp, CKeySet *retResolvedPattern, CLi
       if (retResolvedPattern) retResolvedPattern->Set (uri.Get ());
     }
     else {
-      if (retResources && info.state == rcaNone)    // avoid warnings if lazy wildcards are used (e.g.: "s- /#")
+      if (retResources && info.state == rcaNone) {   // avoid warnings if lazy wildcards are used (e.g.: "s- /#")
         WARNINGF (("Invalid URI or unresolvable alias: '%s' - skipping.", _exp));
+        ok = false;
+      }
     }
   }
 
@@ -804,11 +806,11 @@ static bool DoResolvePattern (const char *_exp, CKeySet *retResolvedPattern, CLi
           //~ INFOF (("#     match: '%s' -> '%s'", key.Get (), exp.Get ()));
           exp.Append (post);
           if (!post.IsEmpty () || !isDir)
-            DoResolvePattern (exp.Get (), isResolved ? NULL : retResolvedPattern, retResources);
+            ok = DoResolvePattern (exp.Get (), isResolved ? NULL : retResolvedPattern, retResources);
           if (isDir && strchr (cur, '#')) {
             // Handle '#' wildcard: decend to next deeper directory
             exp.Append ("/#");
-            DoResolvePattern (exp.Get (), isResolved ? NULL : retResolvedPattern, retResources);
+            ok = DoResolvePattern (exp.Get (), isResolved ? NULL : retResolvedPattern, retResources);
           }
         }
       }
@@ -850,7 +852,7 @@ bool RcPathResolvePattern (const char *pattern, CKeySet *retResolvedPattern, CLi
         exp.SetC ("/host/#");                           // => limit the search to the "host" domain, which contains everything
 
     // Process pattern ...
-    if (ok) DoResolvePattern (exp.Get (), retResolvedPattern, retResources);
+    if (ok) ok = DoResolvePattern (exp.Get (), retResolvedPattern, retResources);
 
     // Wrap up ...
     if (!ok) allOk = false;
@@ -1973,14 +1975,17 @@ bool CRcHost::RemoteGetRequestSet (CResource *rc, CRcRequestSet *ret) {
   reqStrings.Set (reply.Get (), INT_MAX, "\n");
 
   // Parse returned strings ...
+  //~ INFOF (("### RemoteGetRequestSet (%s)", rc->Uri ()));
   for (n = 0; n < reqStrings.Entries (); n++) {
-    //~ INFOF (("### reqStrings[%i] = '%s'", n, reqStrings.Get (n)));
+    //~ INFOF (("###   reqStrings[%i] = '%s'", n, reqStrings.Get (n)));
     req = new CRcRequest ();
     if (!req->SetFromStr (reqStrings[n])) {
       SECURITYF (("Invalid request as a reply to an 'iq ...' message: '%s'", reqStrings.Get (n)));
       delete req;
       return false;
     }
+    req->Convert (rc);
+    //~ INFOF (("###   storing request '%s'", req->ToStr (&s)));
     ret->Set (req->Gid (), req);
   }
 

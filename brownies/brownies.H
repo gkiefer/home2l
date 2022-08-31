@@ -91,9 +91,9 @@ extern const char *envBrLinkDev;        ///< @brief Name of the selected link de
 const char *BrStatusStr (EBrStatus s);
   ///< @brief Get a readable string for Brownie status codes.
 
-const char *BrMcuStr (int mcuType);
+const char *BrMcuStr (int mcuType, const char *unknown = NULL);
   ///< @brief Get a readable string (for example, "t84") for an MCU model ID (see BR_MCU_* macros).
-  /// On error, 'NULL' is returned.
+  /// On error, the value passed by 'unkown' is returned.
 int BrMcuFromStr (const char *mcuStr);
   ///< @brief Get the MCU model ID (see BR_MCU_* macros) from a string (for example, "t84").
   /// On error, @ref BR_MCU_NONE is returned.
@@ -389,7 +389,8 @@ typedef enum {
   ifNone = 0,     ///< (None)
   ifSocket,       ///< Unix domain socket (to connect to already running Brownie driver instance on the local machine)
   ifI2cDev,       ///< Linux i2c dev
-  ifElvI2c        ///< ELV USB-i2c
+  ifElvI2c,       ///< ELV USB-i2c
+  ifEND
 } ETwiIfType;
 
 

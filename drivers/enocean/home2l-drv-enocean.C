@@ -407,7 +407,10 @@ static void *DriverThread (void *) {
   do {
     status = EnoReceive (&telegram);
     if (status == enoOk) {
-      tNoLink = NEVER;
+      if (tNoLink != NEVER) {
+        INFO (("Link is back again."));
+        tNoLink = NEVER;
+      }
       found = false;
       for (i = 0; i < devices; i++) {
         device = deviceList[i];
@@ -430,6 +433,7 @@ static void *DriverThread (void *) {
       if (tNoLink == NEVER) tNoLink = TicksNowMonotonic ();
       else if (tNoLink != LINK_LOST) {
         if (TicksNowMonotonic () - tNoLink > TICKS_FROM_SECONDS (envEnoLinkMaxAge * 60)) {
+          WARNINGF (("No link for more than %i minute(s): Reporting resources as unknown.", envEnoLinkMaxAge));
           for (i = 0; i < devices; i++) deviceList[i]->OnLinkLost ();
           tNoLink = LINK_LOST;
         }

@@ -282,8 +282,8 @@ bool RcPathResolvePattern (const char *pattern, CKeySet *retResolvedPattern, CLi
   // The pattern may be a comma- or whitespace-separated list of URIs. Wildcards are allowed.
   //
   // All URIs are be resolved into the "/host" domain and, unless stored in 'retResources' (see below),
-  // stored in 'retResolvedPattern'. They may contain unregistered resources or a expressions with wildcards.
-  // Remote resources may be advertised by their host at some later time, so the 'retResolvedPattern' set may be
+  // stored in 'retResolvedPattern'. Such an URI may represent an unregistered resource or be an expression with wildcards.
+  // Remote resources may be advertised by their host at some later time, so the 'retResolvedPattern' set may need to be
   // observed afterwards.
   //
   // If 'retResources' is defined, matched known resources are returned via '*retResources'.

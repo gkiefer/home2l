@@ -1672,6 +1672,17 @@ void CListRaw::InsertRaw (int idx, void *value) {
 }
 
 
+void *CListRaw::DisownRaw (int idx) {
+  void **pVal, *ret;
+
+  pVal = (void **) GetValueAdr (idx);
+  if (!pVal) return NULL;
+  ret = *pVal;
+  *pVal = NULL;
+  return ret;
+}
+
+
 void CListRaw::Del (int idx) {
   int n;
 
@@ -1885,13 +1896,11 @@ TTicks TicksNow () {
 
 
 TTicks TicksNowMonotonic () {
-  static int initSeconds = INT_MIN;
   struct timespec ts;
   TTicks ret;
 
   clock_gettime (CLOCK_MONOTONIC, &ts);
-  if (initSeconds == INT_MIN) initSeconds = ts.tv_sec - 1;   // must substract one to ensure that the return value is >0, even for a small 'ts.tv_nsec'
-  ret = ( (ts.tv_sec - initSeconds) * 1000) + ts.tv_nsec / 1000000;
+  ret = ( ((TTicks) ts.tv_sec) * 1000) + ts.tv_nsec / 1000000;
   ASSERT (ret > 0);   // 0 and negativ values may be interpreted as special values
   return ret;
 }

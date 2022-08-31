@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-12-g78c4 (2021-12-10)</span>
+   &#160;<span id="projectnumber">v1.2-0-ga055 (2022-08-31)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -125,6 +125,7 @@ Enumerations</h2></td></tr>
 , <a class="el" href="group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccda0e8cbe356477aebf1aa10bde5a4b9fd9">ifSocket</a>
 , <a class="el" href="group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccdadef111b1c18623d59824b4fd047f1ad8">ifI2cDev</a>
 , <a class="el" href="group__brownies__linux.html#ggae932a1f1180b5de39f4b5765baab9ccda7f3b53952eb6ae6a78f38fc9292f0faf">ifElvI2c</a>
+, <b>ifEND</b>
  }</td></tr>
 <tr class="memdesc:gae932a1f1180b5de39f4b5765baab9ccd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Brownie link interface type.  <a href="group__brownies__linux.html#gae932a1f1180b5de39f4b5765baab9ccd">More...</a><br /></td></tr>
 <tr class="separator:gae932a1f1180b5de39f4b5765baab9ccd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,10 +136,10 @@ Functions</h2></td></tr>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#gaeeec73fd028a88cc8572be394097f5de">BrStatusStr</a> (<a class="el" href="group__brownies__interface__protocol.html#ga13c43bc7bff85146d71e6515fd28882b">EBrStatus</a> s)</td></tr>
 <tr class="memdesc:gaeeec73fd028a88cc8572be394097f5de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string for Brownie status codes. <br /></td></tr>
 <tr class="separator:gaeeec73fd028a88cc8572be394097f5de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga6ce55ef742afe006b88df079da2fbb30"><td class="memItemLeft" align="right" valign="top">
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga6ce55ef742afe006b88df079da2fbb30">BrMcuStr</a> (int mcuType)</td></tr>
-<tr class="memdesc:ga6ce55ef742afe006b88df079da2fbb30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string (for example, "t84") for an MCU model ID (see BR_MCU_* macros). On error, 'NULL' is returned. <br /></td></tr>
-<tr class="separator:ga6ce55ef742afe006b88df079da2fbb30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaca3a54a29c6adf2b24c6ad3f9d60c096"><td class="memItemLeft" align="right" valign="top">
+const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#gaca3a54a29c6adf2b24c6ad3f9d60c096">BrMcuStr</a> (int mcuType, const char *unknown=NULL)</td></tr>
+<tr class="memdesc:gaca3a54a29c6adf2b24c6ad3f9d60c096"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a readable string (for example, "t84") for an MCU model ID (see BR_MCU_* macros). On error, the value passed by 'unkown' is returned. <br /></td></tr>
+<tr class="separator:gaca3a54a29c6adf2b24c6ad3f9d60c096"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7b441daca5556ade1953a760ad850111"><td class="memItemLeft" align="right" valign="top">
 int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__linux.html#ga7b441daca5556ade1953a760ad850111">BrMcuFromStr</a> (const char *mcuStr)</td></tr>
 <tr class="memdesc:ga7b441daca5556ade1953a760ad850111"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the MCU model ID (see BR_MCU_* macros) from a string (for example, "t84"). On error, <a class="el" href="group__brownies__interface__memory.html#gaf11edc384a15fbe32b6f41f62f5757a0">BR_MCU_NONE</a> is returned. <br /></td></tr>

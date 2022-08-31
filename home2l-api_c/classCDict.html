@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.0-12-g78c4 (2021-12-10)</span>
+   &#160;<span id="projectnumber">v1.2-0-ga055 (2022-08-31)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -78,7 +78,7 @@ class CDict&lt; T &gt;</h3>
 <p>A dictionary stores arbitrary (key, value) pairs. The key is always of type <code><a class="el" href="classCString.html" title="Dynamically allocated string.">CString</a></code> / <code>const char *</code>. Internally, the dictionary is stored in an array containing the (key, value) pairs, which is kept ordered by the keys.</p>
 <p>The values are dynamically allocated objects, to which pointers are stored in the array. All 'Set...' methods require dynamic objects to be passed and take over their ownerships. On element deletion, these objects are deleted. It is legal to pass NULL to 'Set...' methods. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01190">1190</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01193">1193</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 </div>
 <p><code>#include &quot;<a class="el" href="base_8H_source.html">base.H</a>&quot;</code></p>
 <div class="dynheader">
@@ -206,7 +206,7 @@ template&lt;typename T &gt; </div>
 <p>Add or replace the keyed entry. Complexity is O(n). </p>
 <dl class="section return"><dt>Returns</dt><dd>Index of new entry </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01207">1207</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01210">1210</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 
 </div>
 </div>
@@ -255,7 +255,7 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01210">1210</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01213">1213</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 
 </div>
 </div>
@@ -288,7 +288,7 @@ template&lt;typename T &gt; </div>
 <p>Merge another dictionary into this one. Complexity is O(n_this + n_dict2). 'dict2' will be empty afterwards. </p>
 <p>The recommended way to add a bunch of new entries to a dictionary is to first add them to a new dictionary and then use this method to merge them into 'this'. </p>
 
-<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01221">1221</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
+<p class="definition">Definition at line <a class="el" href="base_8H_source.html#l01224">1224</a> of file <a class="el" href="base_8H_source.html">base.H</a>.</p>
 
 </div>
 </div>

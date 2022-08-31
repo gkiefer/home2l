@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2021-11-29 19:51+0100\n"
+        "POT-Creation-Date: 2022-02-19 12:42+0100\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -22,151 +22,151 @@ msgstr  "Project-Id-Version: Home2L\n"
 msgid   ". (decimal point)"
 msgstr  ","
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "January"
 msgstr  "Januar"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "February"
 msgstr  "Februar"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "March"
 msgstr  "März"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "April"
 msgstr  "April"
 
-#: ../common/base.C:2204 ../common/base.C:2205
+#: ../common/base.C:2216 ../common/base.C:2217
 msgid   "May"
 msgstr  "Mai"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "June"
 msgstr  "Juni"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "July"
 msgstr  "Juli"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "August"
 msgstr  "August"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "September"
 msgstr  "September"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "October"
 msgstr  "Oktober"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "November"
 msgstr  "November"
 
-#: ../common/base.C:2204
+#: ../common/base.C:2216
 msgid   "December"
 msgstr  "Dezember"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Jan"
 msgstr  "Jan"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Feb"
 msgstr  "Feb"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Mar"
 msgstr  "Mär"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Apr"
 msgstr  "Apr"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Jun"
 msgstr  "Jun"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Jul"
 msgstr  "Jul"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Aug"
 msgstr  "Aug"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Sep"
 msgstr  "Sep"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Oct"
 msgstr  "Okt"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Nov"
 msgstr  "Nov"
 
-#: ../common/base.C:2205
+#: ../common/base.C:2217
 msgid   "Dec"
 msgstr  "Dez"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Monday"
 msgstr  "Montag"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Tuesday"
 msgstr  "Dienstag"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Wednesday"
 msgstr  "Mittwoch"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Thursday"
 msgstr  "Donnerstag"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Friday"
 msgstr  "Freitag"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Saturday"
 msgstr  "Samstag"
 
-#: ../common/base.C:2206
+#: ../common/base.C:2218
 msgid   "Sunday"
 msgstr  "Sonntag"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Mon"
 msgstr  "Mo"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Tue"
 msgstr  "Di"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Wed"
 msgstr  "Mi"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Thu"
 msgstr  "Do"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Fri"
 msgstr  "Fr"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Sat"
 msgstr  "Sa"
 
-#: ../common/base.C:2207
+#: ../common/base.C:2219
 msgid   "Sun"
 msgstr  "So"
 

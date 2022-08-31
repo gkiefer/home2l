@@ -712,7 +712,7 @@ static bool CmdScan (int argc, const char **argv) {
                   BrownieIdStr (&brownie),
                   brownie.FeatureRecord ()->fwName,
                   BrVersionGetAsStr (&s, brownie.FeatureRecord ()),
-                  BrMcuStr (brownie.FeatureRecord ()->mcuType));
+                  BrMcuStr (brownie.FeatureRecord ()->mcuType, "?"));
         }
         else
           printf ("%s\n", BrownieIdStr (&brownie));
@@ -1349,7 +1349,7 @@ static bool CmdProgram (int argc, const char **argv) {
     shellLink.CheckDevice (shellAdr, &brownie)
   )) return false;
   s.SetF (".%s.", mcuModel = BrMcuStr (brownie.FeatureRecord ()->mcuType));
-  if (strstr (elfFileName.Get (), s.Get ()) == NULL) {
+  if (!mcuModel || strstr (elfFileName.Get (), s.Get ()) == NULL) {
     printf ("WARNING: According to its name, the ELF file '%s'\n"
             "         is not compatible with the current MCU type (%s).\n"
             "\n"

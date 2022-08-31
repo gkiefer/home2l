@@ -249,12 +249,12 @@ static struct { int id; const char *const name; } brMcuNameMap[] = {
 };
 
 
-const char *BrMcuStr (int mcuType) {
+const char *BrMcuStr (int mcuType, const char *unknown) {
   int i;
 
   for (i = 0; i < ENTRIES(brMcuNameMap); i++)
     if (brMcuNameMap[i].id == mcuType) return brMcuNameMap[i].name;
-  return NULL;
+  return unknown;
 }
 
 
@@ -1653,7 +1653,7 @@ const char *CBrownie::GetOptValue (CString *ret, int optIdx) {
       BrFeaturesToStr (ret, &featureRecord);
       break;
     case ctMcu:
-      ret->SetF (opt->fmt, BrMcuStr (featureRecord.mcuType));
+      ret->SetF (opt->fmt, BrMcuStr (featureRecord.mcuType, "?"));
       break;
     case ctFw:
       ret->SetF (opt->fmt, featureRecord.fwName);
@@ -2742,15 +2742,13 @@ static inline EBrStatus IfElvI2cFetch (int fd, int adr, void *buf, int bytes, co
 
 
 const char *TwiIfTypeStr (ETwiIfType type) {
-  static const char *names[] = {
+  static const char *names[ifEND] = {
     "(none)",
     "local socket",
     "i2c_dev",
     "ELV USB-i2c"
   };
-  if (type < sizeof(names) / sizeof(names[0]))
-    return names[type];
-  else return names[0];
+  return names[type];
 }
 
 
@@ -3271,7 +3269,7 @@ void CBrownieLink::Flush (int adr) {
   // Fetch a reply...
   for (n = 0; n < TWI_FLUSH_TRIES; n++) {
     st = TwiFetch (adr, &dummy, sizeof (dummy));
-    if (st != brNoDevice || st != brNoReply) break;
+    if (st != brNoDevice && st != brNoReply) break;
       // All other status codes indicate that we have successfully fetched a reply
       // and thus no reply may be pending.
   }

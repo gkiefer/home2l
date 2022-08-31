@@ -121,7 +121,7 @@ var searchData=
   ['brillegaloperation_187',['brIllegalOperation',['../group__brownies__interface__protocol.html#gga13c43bc7bff85146d71e6515fd28882ba9a2caf9fb1068f4ca7b3f0cb583a0787',1,'interface.h']]],
   ['brincomplete_188',['brIncomplete',['../group__brownies__interface__protocol.html#gga13c43bc7bff85146d71e6515fd28882babf971c4fedbd6a1f94a9990ed64fad34',1,'interface.h']]],
   ['brmcufromstr_189',['BrMcuFromStr',['../group__brownies__linux.html#ga7b441daca5556ade1953a760ad850111',1,'brownies.H']]],
-  ['brmcustr_190',['BrMcuStr',['../group__brownies__linux.html#ga6ce55ef742afe006b88df079da2fbb30',1,'brownies.H']]],
+  ['brmcustr_190',['BrMcuStr',['../group__brownies__linux.html#gaca3a54a29c6adf2b24c6ad3f9d60c096',1,'brownies.H']]],
   ['brnobrownie_191',['brNoBrownie',['../group__brownies__interface__protocol.html#gga13c43bc7bff85146d71e6515fd28882ba6badc6596e5fc7d3a6a446519b9fbb86',1,'interface.h']]],
   ['brnobus_192',['brNoBus',['../group__brownies__interface__protocol.html#gga13c43bc7bff85146d71e6515fd28882baabc59b4c7b47198fe52afeb2f8d19a33',1,'interface.h']]],
   ['brnodevice_193',['brNoDevice',['../group__brownies__interface__protocol.html#gga13c43bc7bff85146d71e6515fd28882ba1f73f57ec4e89df56b60f70b9c904dfd',1,'interface.h']]],

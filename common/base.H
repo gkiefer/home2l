@@ -962,7 +962,7 @@ class CListRaw {
     uint8_t *GetValueAdr (int idx) const { return idx < 0 ? NULL : data + recSize * idx + tagSize; }
       // Get memory address of the value part of the record (for '...Compact' classes)
     void *GetValuePtr (int idx) const { return idx < 0 ? NULL : * (void **) (GetValueAdr (idx)); }
-      // Take the value part inside the record as a pointer to the real value and dereference it (for non-compact classes)
+      // (for non-compact classes) Take the value part inside the record as a pointer to the real value and dereference it
 
     void Copy (int idxDst, int idxSrc);   // byte-copy entry
     void Swap (void *rec0, void *rec1);   // byte-swap two entries (potentially from different objects)
@@ -973,6 +973,9 @@ class CListRaw {
     void InsertRaw (int idx, void *value);
       // Insert a new entry in position 'idx'.
       // 'value' may either be copied or moved, see comment to 'ValueSet()'.
+    void *DisownRaw (int idx);
+      // (for non-compact classes) Take the value part inside the record as a pointer to the real value,
+      // return it and set it to NULL in the record.
 
     // Data ...
     uint8_t *data;
@@ -1015,7 +1018,7 @@ template <typename T> class CList: public CListRaw {
     void Append (T *value) { InsertRaw (INT_MAX, value); }
       ///< @brief Append a new value.
       /// Complexity is O(1) if no resizing is necessary, else O(1).
-    T *Disown (int idx) { T *ret = Get (idx); RecInit (ret); return ret; }
+    T *Disown (int idx) { return (T *) DisownRaw (idx); }
       ///< @brief Disown a value and clear it in the array.
     /// @}
 
@@ -1185,9 +1188,9 @@ template <typename T> class CDict: public CDictRaw {
       /// @param value must be a dynamically allocated object or 'NULL'.
       ///        The dictionary will take over ownership and call 'delete' on it later.
       /// The entry must exist and 'idx' be valid. Complexity is O(1).
-    T *DisownValue (int idx) { T *ret = Get (idx); RecInit (ret); return ret; }
+    T *DisownValue (int idx) { return (T *) DisownRaw (idx); }
       ///< @brief Disown a value and clear it in the dictionary.
-    T *DisownValue (const char *key) { T *ret = Get (key); RecInit (ret); return ret; }
+    T *DisownValue (const char *key) { return (T *) DisownRaw (Find (key)); }
       ///< @brief Disown a value and clear it in the dictionary.
 
     void Merge (CDict<T> *dict2) { MergeRaw (dict2); }

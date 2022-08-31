@@ -119,4 +119,4 @@ build-arch: $(DOORMAN_BIN)
 install-arch:
 	BIN=$(HOME2L_INSTALL)/bin/$(ARCH);   \
 	LIB=$(HOME2L_INSTALL)/lib/$(ARCH);   \
-	install -Dp $(STRIP) -m 755 -t $$BIN $(DOORMAN_BIN);   \
+	install -Dp $(STRIP) -m 755 -t $$BIN $(DOORMAN_BIN)

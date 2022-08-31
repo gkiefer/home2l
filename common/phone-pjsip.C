@@ -857,7 +857,7 @@ struct TPhoneData {
   pjsua_call_id pjCallId[2];
   int callStatus[2];                // last known call status code, -1 == unknown
   pjsua_player_id playerId;         // audio player ID for ringback
-  TTicks tLastStatusLog;   // used for regular status logs, e.g. during calls
+  TTicks tLastStatusLog;            // used for regular status logs, e.g. during calls
 
   TMgmtCheckRec check;              // [T:any] - data potentially accessed by assynchronous callbacks;
                                     //           protected by the mutex 'mgmtMutex'
@@ -1831,7 +1831,7 @@ static void UpdatePhoneState (CPhone *phone) {
         // Start ringback sound ...
         //~ INFOF (("### Playing ringback sound '%s' ...", envPhoneRingbackFile));
         //   create player ...
-        EnvGetPath (envPhoneRingbackFileKey, envPhoneRingbackFile);
+        EnvGetPath (envPhoneRingbackFileKey, &envPhoneRingbackFile);
         pj_strset2 (&ringbackFilePj, (char *) envPhoneRingbackFile);
         pjStatus = pjsua_player_create (&ringbackFilePj, 0, &(phoneData->playerId));
         if (pjStatus != PJ_SUCCESS) phoneData->playerId = PJSUA_INVALID_ID;

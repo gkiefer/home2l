@@ -3440,8 +3440,13 @@ void CScreenFloorplan::OnButtonPushed (CButton *btn, bool longPush) {
     case btnIdFpUseNight:
     case btnIdFpUseLeaving:
     case btnIdFpUseVacation:
-      req = NewUserRequest (rc->Type ());
-      req->SetValue ((ERctUseState) (btnId - btnIdFpUseDay));
+      req = new CRcRequest ((ERctUseState) (btnId - btnIdFpUseDay), RcGetUserRequestId (), rcPrioUser);
+        // For the use state request we do not call 'NewUserRequest' and thus ignore eventual user request
+        // attributes. This is to to enforce that the user request does not time out and is only set
+        // by manual interaction. Otherwise, it may, for example, unintentionally happen that the home
+        // automation switches back from "vacation" to "at home" shortly after the user left for vacation.
+      //~ req = NewUserRequest (rc->Type ());
+      //~ req->SetValue ((ERctUseState) (btnId - btnIdFpUseDay));
       rc->SetRequest (req);
       break;
     default:
@@ -3507,7 +3512,7 @@ void CScreenFloorplan::UpdateUseStateView () {
   // Get and visualize user request ...
   req = floorplan->UseStateRc ()->GetRequest (RcGetUserRequestId ());
   if (req) {
-    //~ INFOF (("###   request = '%s'", req.ToStr ()));
+    //~ CString s; INFOF (("###   request = '%s'", req->ToStr (&s)));
     _useStateReq = (ERctUseState) req->Value ()->ValidEnumIdx (rctUseState, -1);
     FREEO (req);
   }
