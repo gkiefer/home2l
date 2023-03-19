@@ -445,7 +445,7 @@ class CMqttImport {
         }
         else
           vs->ToStr (&payload, false, false, false, INT_MAX);
-        mosqErr = mosquitto_publish (mosq, NULL, reqTopic.Get (), payload.Len () + 1, payload.Get (), envMqttQoS, true);
+        mosqErr = mosquitto_publish (mosq, NULL, reqTopic.Get (), payload.Len (), payload.Get (), envMqttQoS, true);
         if (mosqErr != MOSQ_ERR_SUCCESS)
           WARNINGF (("MQTT: Failed to publish '%s' <- '%s': %s", reqTopic.Get (), payload.Get (), mosquitto_strerror (mosqErr)));
         vs->SetToReportBusy ();
@@ -738,7 +738,7 @@ class CMqttExport: public CRcSubscriber {
         }
 
         // Publish ...
-        mosqErr = mosquitto_publish (mosq, NULL, _topic, payload[0] ? payload.Len () + 1 : 0, payload.Get (), envMqttQoS, true);
+        mosqErr = mosquitto_publish (mosq, NULL, _topic, payload[0] ? payload.Len () : 0, payload.Get (), envMqttQoS, true);
           // 'mid' = NULL (do not keep reference for later tracking), 'retain' = true
         if (mosqErr != MOSQ_ERR_SUCCESS)
           WARNINGF (("MQTT: Failed to publish '%s' = '%s': %s", _topic, payload.Get (), mosquitto_strerror (mosqErr)));
@@ -949,7 +949,7 @@ static void MqttCallbackOnConnect (struct mosquitto *mosq, void *, int connackCo
 
     // Publish birth ...
     if (!mqttBirthAndWillTopic.IsEmpty ()) {
-      mosqErr = mosquitto_publish (mosq, NULL, mqttBirthAndWillTopic.Get (), mqttBirthPayload.Len () + 1, mqttBirthPayload.Get (), envMqttQoS, true);
+      mosqErr = mosquitto_publish (mosq, NULL, mqttBirthAndWillTopic.Get (), mqttBirthPayload.Len (), mqttBirthPayload.Get (), envMqttQoS, true);
       if (mosqErr != MOSQ_ERR_SUCCESS)
         WARNINGF (("MQTT: Failed to set last will: %s", mosquitto_strerror (mosqErr)));
     }
