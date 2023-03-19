@@ -1065,11 +1065,11 @@ static void MqttInit () {
     mqttBirthAndWillTopic.Clear ();
   }
   else {
-    mqttWillPayload.SetC (args.Entries () <= 1 ? "0" : args[1]);
+    mqttWillPayload.SetF (args.Entries () <= 1 ? "0" : args[1]);
     mosqErr = mosquitto_will_set (mosq, mqttBirthAndWillTopic.Get (), mqttWillPayload.Len () + 1, mqttWillPayload.Get (), envMqttQoS, true);
     if (mosqErr != MOSQ_ERR_SUCCESS)
       WARNINGF (("MQTT: Failed to set last will: %s", mosquitto_strerror (mosqErr)));
-    mqttBirthPayload.SetC (args.Entries () <= 2 ? "1" : args[2]);
+    mqttBirthPayload.SetF (args.Entries () <= 2 ? "1" : args[2]);
   }
 
   // Start background thread ...
