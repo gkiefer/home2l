@@ -860,7 +860,7 @@ static int MqttExportOnConnect (const char **mqttSub) {
   if (mqttSetExport) subs += mqttSetExport->OnConnect (mqttSub);
 
   // Done ...
-  return subs;
+  return mqttExports;
 }
 
 
@@ -938,10 +938,14 @@ static void MqttCallbackOnConnect (struct mosquitto *mosq, void *, int connackCo
     // (Re-)subscribe to all requested topics ...
     //   TBD: Switch to 'mosquitto_subscribe_multiple()' (not yet available in v1.5.7 / Debian Buster)
     for (i = 0; i < mqttSubs; i++) {
-      //~ INFOF (("###   Subscribing to '%s'.", mqttSubList[i]));
-      mosqErr = mosquitto_subscribe (mosq, NULL, mqttSubList[i], envMqttQoS);
-      if (mosqErr != MOSQ_ERR_SUCCESS)
-        WARNINGF (("MQTT: Failed to subscribe to '%s': %s", mqttSubList[i], mosquitto_strerror (mosqErr)));
+      // Fix for mqttSubList:
+      // mqttSubList contains empty or NULL entry, if exported resource has no request topic (e.g. brownie GPIO input button)
+      if (mqttSubList[i] && mqttSubList[i][0]) {
+        //~ INFOF (("###   Subscribing to '%s'.", mqttSubList[i]));
+        mosqErr = mosquitto_subscribe (mosq, NULL, mqttSubList[i], envMqttQoS);
+        if (mosqErr != MOSQ_ERR_SUCCESS)
+          WARNINGF (("MQTT: Failed to subscribe to '%s': %s", mqttSubList[i], mosquitto_strerror (mosqErr)));
+      }
     }
 
     // Cleanup ...
@@ -1122,7 +1126,7 @@ static void MqttDone () {
 
   // Publish that we are offline ...
   if (!mqttBirthAndWillTopic.IsEmpty ()) {
-    mosqErr = mosquitto_publish (mosq, NULL, mqttBirthAndWillTopic.Get (), mqttWillPayload.Len () + 1, mqttWillPayload.Get (), envMqttQoS, true);
+    mosqErr = mosquitto_publish (mosq, NULL, mqttBirthAndWillTopic.Get (), mqttWillPayload.Len (), mqttWillPayload.Get (), envMqttQoS, true);
     if (mosqErr != MOSQ_ERR_SUCCESS)
       WARNINGF (("MQTT: Failed to publish '%s' <- '%s': %s", mqttBirthAndWillTopic.Get (), mqttWillPayload.Get (), mosquitto_strerror (mosqErr)));
   }
