@@ -632,7 +632,8 @@ class CMqttExport: public CRcSubscriber {
           reqTopic.PathNormalize ();
         }
         else if (arg[0] != '\0') reqTopic.SetF ("%s/%s", envMqttPrefix, arg);
-        if (mosquitto_pub_topic_check (reqTopic.Get ()) != MOSQ_ERR_SUCCESS) errStr.SetF ("Invalid MQTT request topic '%'", reqTopic.Get ());
+        if (!reqTopic.IsEmpty ())
+          if (mosquitto_pub_topic_check (reqTopic.Get ()) != MOSQ_ERR_SUCCESS) errStr.SetF ("Invalid MQTT request topic '%'", reqTopic.Get ());
       }
       if (errStr.IsEmpty () && args.Entries () > 3) {
         // Boolean value strings ...
@@ -852,12 +853,11 @@ static int MqttExportOnConnect (const char **mqttSub) {
   // Notify all single exports and collect request topics for subscriptions ...
   subs = 0;
   for (i = 0; i < mqttExports; i++) {
-    subs = mqttExportList[i]->OnConnect (mqttSub);
-    mqttSub += subs;
+    subs += mqttExportList[i]->OnConnect (&mqttSub[subs]);
   }
 
   // Notify set export (if present) ...
-  if (mqttSetExport) subs += mqttSetExport->OnConnect (mqttSub);
+  if (mqttSetExport) subs += mqttSetExport->OnConnect (&mqttSub[subs]);
 
   // Done ...
   return subs;
