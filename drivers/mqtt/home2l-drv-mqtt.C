@@ -166,6 +166,17 @@ ENV_PARA_STRING("mqtt.prefix", envMqttPrefix, "home2l");
   /* Prefix for MQTT topics of exported resources and ''birth-and-will'' messages
    */
 
+ENV_PARA_BOOL("mqtt.nullTerminatePayload", envMqttNullTerminatePayload, false);
+  /* Transmit all payloads with a terminating null character
+   *
+   * If set, all transmitted payloads are sent as null-terminated strings including
+   * the null character. If unset, no null character is appended, and the payload
+   * size is equal to the length of the string.
+   *
+   * On the receiving side, any strings with or without a terminating null character
+   * are accepted, independent from this setting.
+   */
+
 ENV_PARA_STRING("mqtt.birthAndWill", envMqttBirthAndWill, "online");
   /* Subtopic stating whether the Home2L client is connected
    *
@@ -445,14 +456,24 @@ class CMqttImport {
         }
         else
           vs->ToStr (&payload, false, false, false, INT_MAX);
-        mosqErr = mosquitto_publish (mosq, NULL, reqTopic.Get (), payload.Len () + 1, payload.Get (), envMqttQoS, true);
+        mosqErr = mosquitto_publish (
+          mosq, NULL,
+          reqTopic.Get (),
+          payload.Len () + envMqttNullTerminatePayload ? 1 : 0, payload.Get (),
+          envMqttQoS, true
+        );
         if (mosqErr != MOSQ_ERR_SUCCESS)
           WARNINGF (("MQTT: Failed to publish '%s' <- '%s': %s", reqTopic.Get (), payload.Get (), mosquitto_strerror (mosqErr)));
         vs->SetToReportBusy ();
       }
       else {
         // No value: Clear (retained) message ...
-        mosqErr = mosquitto_publish (mosq, NULL, reqTopic.Get (), 0, payload.Get (), envMqttQoS, true);
+        mosqErr = mosquitto_publish (
+          mosq, NULL,
+          reqTopic.Get (),
+          0, NULL,
+          envMqttQoS, true
+        );
         if (mosqErr != MOSQ_ERR_SUCCESS)
           WARNINGF (("MQTT: Failed to clear topic '%s': %s", reqTopic.Get (), mosquitto_strerror (mosqErr)));
       }
@@ -739,7 +760,12 @@ class CMqttExport: public CRcSubscriber {
         }
 
         // Publish ...
-        mosqErr = mosquitto_publish (mosq, NULL, _topic, payload[0] ? payload.Len () + 1 : 0, payload.Get (), envMqttQoS, true);
+        mosqErr = mosquitto_publish (
+          mosq, NULL,
+          _topic,
+          payload[0] ? (payload.Len () + envMqttNullTerminatePayload ? 1 : 0) : 0, payload.Get (),
+          envMqttQoS, true
+        );
           // 'mid' = NULL (do not keep reference for later tracking), 'retain' = true
         if (mosqErr != MOSQ_ERR_SUCCESS)
           WARNINGF (("MQTT: Failed to publish '%s' = '%s': %s", _topic, payload.Get (), mosquitto_strerror (mosqErr)));
@@ -949,7 +975,12 @@ static void MqttCallbackOnConnect (struct mosquitto *mosq, void *, int connackCo
 
     // Publish birth ...
     if (!mqttBirthAndWillTopic.IsEmpty ()) {
-      mosqErr = mosquitto_publish (mosq, NULL, mqttBirthAndWillTopic.Get (), mqttBirthPayload.Len () + 1, mqttBirthPayload.Get (), envMqttQoS, true);
+      mosqErr = mosquitto_publish (
+        mosq, NULL,
+        mqttBirthAndWillTopic.Get (),
+        mqttBirthPayload.Len () + envMqttNullTerminatePayload ? 1 : 0, mqttBirthPayload.Get (),
+        envMqttQoS, true
+      );
       if (mosqErr != MOSQ_ERR_SUCCESS)
         WARNINGF (("MQTT: Failed to set last will: %s", mosquitto_strerror (mosqErr)));
     }
@@ -1065,11 +1096,16 @@ static void MqttInit () {
     mqttBirthAndWillTopic.Clear ();
   }
   else {
-    mqttWillPayload.SetC (args.Entries () <= 1 ? "0" : args[1]);
-    mosqErr = mosquitto_will_set (mosq, mqttBirthAndWillTopic.Get (), mqttWillPayload.Len () + 1, mqttWillPayload.Get (), envMqttQoS, true);
+    mqttWillPayload.Set (args.Entries () <= 1 ? "0" : args[1]);
+    mosqErr = mosquitto_will_set (
+      mosq,
+      mqttBirthAndWillTopic.Get (),
+      mqttWillPayload.Len () + 1, mqttWillPayload.Get (),
+      envMqttQoS, true
+    );
     if (mosqErr != MOSQ_ERR_SUCCESS)
       WARNINGF (("MQTT: Failed to set last will: %s", mosquitto_strerror (mosqErr)));
-    mqttBirthPayload.SetC (args.Entries () <= 2 ? "1" : args[2]);
+    mqttBirthPayload.Set (args.Entries () <= 2 ? "1" : args[2]);
   }
 
   // Start background thread ...
@@ -1114,7 +1150,12 @@ static void MqttDone () {
 
   // Clear all retained messages ...
   for (i = 0; i < mqttRetainedTopics.Entries (); i++) {
-    mosqErr = mosquitto_publish (mosq, NULL, mqttRetainedTopics[i], 0, NULL, envMqttQoS, true);
+    mosqErr = mosquitto_publish (
+      mosq, NULL,
+      mqttRetainedTopics[i],
+      0, NULL,
+      envMqttQoS, true
+    );
     if (mosqErr != MOSQ_ERR_SUCCESS)
       WARNINGF (("MQTT: Failed to clear retained message on topic '%s': %s", mqttRetainedTopics[i], mosquitto_strerror (mosqErr)));
   }
@@ -1122,7 +1163,12 @@ static void MqttDone () {
 
   // Publish that we are offline ...
   if (!mqttBirthAndWillTopic.IsEmpty ()) {
-    mosqErr = mosquitto_publish (mosq, NULL, mqttBirthAndWillTopic.Get (), mqttWillPayload.Len () + 1, mqttWillPayload.Get (), envMqttQoS, true);
+    mosqErr = mosquitto_publish (
+      mosq, NULL,
+      mqttBirthAndWillTopic.Get (),
+      mqttWillPayload.Len () + envMqttNullTerminatePayload ? 1 : 0, mqttWillPayload.Get (),
+      envMqttQoS, true
+    );
     if (mosqErr != MOSQ_ERR_SUCCESS)
       WARNINGF (("MQTT: Failed to publish '%s' <- '%s': %s", mqttBirthAndWillTopic.Get (), mqttWillPayload.Get (), mosquitto_strerror (mosqErr)));
   }

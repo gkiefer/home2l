@@ -204,7 +204,7 @@ ifeq ($(BROWNIE_VARIANT),gatekeeper)
 endif
 
 
-# garage (t861): General-purpose with
+# garage (t861): General-purpose IOs with temperature support
 ifeq ($(BROWNIE_VARIANT),garage)
 	BROWNIE_CFG ?= GPIO_IN_PRESENCE=0xee0 GPIO_IN_PULLUP=0x000 GPIO_OUT_PRESENCE=0x00f GPIO_OUT_PRESET=0x000 \
 	               WITH_TEMP_ZACWIRE=1

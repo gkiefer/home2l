@@ -1134,14 +1134,14 @@ void CString::SetFromIso8859 (const char *iso8859str) {
 }
 
 
-void CString::SetAsIso8859 (const char *str) {
+bool CString::SetAsIso8859 (const char *str) {
   const char *src;
   char *dst, c;
-  bool error;
+  bool ok;
 
-  if (!str) { Clear (); return; }
+  if (!str) { Clear (); return true; }
   SetSize (strlen (str) + 1);
-  error = false;
+  ok = true;
   src = str;
   dst = ptr;
   while ( (c = *src++) ) {
@@ -1152,17 +1152,18 @@ void CString::SetAsIso8859 (const char *str) {
       if ((c & 0xc0) == 0x80) *dst |= (c & 0xbf);
       else {
         *dst = '?';
-        error = true;
+        ok = false;
       }
       dst++;
     }
     else {
       *dst++ = '?';
-      error = true;
+      ok = false;
     }
   }
   *dst = '\0';
-  if (error) WARNINGF(("Cannot encode string to ISO 8859: '%s'", ptr));
+  if (!ok) WARNINGF(("Failed to encode string to ISO 8859, replaced some characters by '?': '%s'", ptr));
+  return ok;
 }
 
 

@@ -132,7 +132,10 @@ SDL_Texture *CWidget::GetTexture () {
     surf = GetSurface ();
     if (surf) {
       texture = SDL_CreateTextureFromSurface (UiGetSdlRenderer (), surf);
-      SDL_SetTextureBlendMode (texture, sdlBlendMode);
+      if (!texture)
+        WARNINGF (("SDL_CreateTextureFromSurface() failed: %s", SDL_GetError()));
+      else
+        SDL_SetTextureBlendMode (texture, sdlBlendMode);
     }
   }
   return texture;

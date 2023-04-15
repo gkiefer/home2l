@@ -1320,7 +1320,12 @@ void CInputLine::Setup (int fontSize) {
 
 
 void CInputLine::SetInput (const char *_inputStr, int _mark0, int _markD) {
-  input.SetAsIso8859 (_inputStr);
+  if (!input.SetAsIso8859 (_inputStr))
+    RunInfoBox (_("Caution: The input string\ncontained unsupported characters\nand has been modified!"));
+  if (input.Len () > INPUTLINE_MAXLEN) {
+    RunInfoBox (_("Caution: The input string\nis too long\nand has been truncated!"));
+    input[INPUTLINE_MAXLEN] = '\0';
+  }
   ClearHistory ();
   ChangedInput ();
   SetMark (_mark0, _markD);
@@ -1373,8 +1378,10 @@ void CInputLine::MoveMark (int _mark0) {
 
 void CInputLine::InsChar (char c) {
   DelMarked ();
-  input.Insert (mark0, c);
-  mark0++;
+  if (input.Len () < INPUTLINE_MAXLEN) {
+    input.Insert (mark0, c);
+    mark0++;
+  }
   ChangedInput ();
 }
 
@@ -1382,8 +1389,11 @@ void CInputLine::InsChar (char c) {
 void CInputLine::InsText (const char *txt, int chars) {
   DelMarked ();
   if (chars < 0) chars = strlen (txt);
-  input.Insert (mark0, txt, chars);
-  mark0 += chars;
+  if (input.Len () + chars > INPUTLINE_MAXLEN) chars = INPUTLINE_MAXLEN - input.Len ();
+  if (chars > 0) {
+    input.Insert (mark0, txt, chars);
+    mark0 += chars;
+  }
   ChangedInput ();
   ChangedMark ();
 }

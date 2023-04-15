@@ -1603,8 +1603,7 @@ const char *BrFeaturesToStr (CString *ret, TBrFeatureRecord *featureRecord) {
   uint8_t *p;
 
   ret->Clear ();
-  //~ for (p = (uint8_t *) &featureRecord->features; p < (uint8_t *) &featureRecord->fwName; p++)
-  for (p = ((uint8_t *) &featureRecord) + brFeatureRecordRcVec0; p < ((uint8_t *) &featureRecord) + brFeatureRecordRcVec1; p++)
+  for (p = ((uint8_t *) featureRecord) + brFeatureRecordRcVec0; p < ((uint8_t *) featureRecord) + brFeatureRecordRcVec1; p++)
     ret->AppendF ("%02x", (int) *p);
   return ret->Get ();
 }
@@ -1616,8 +1615,7 @@ bool BrFeaturesFromStr (TBrFeatureRecord *featureRecord, const char *str) {
   uint8_t *p;
 
   buf[2] = '\0';
-  //~ for (p = (uint8_t *) &featureRecord->features; p < (uint8_t *) &featureRecord->fwName; p++) {
-  for (p = ((uint8_t *) &featureRecord) + brFeatureRecordRcVec0; p < ((uint8_t *) &featureRecord) + brFeatureRecordRcVec1; p++) {
+  for (p = ((uint8_t *) featureRecord) + brFeatureRecordRcVec0; p < ((uint8_t *) featureRecord) + brFeatureRecordRcVec1; p++) {
     if (!(buf[0] = *(str++))) return false;
     if (!(buf[1] = *(str++))) return false;
     val = strtol (buf, &endPtr, 16);
@@ -1842,7 +1840,7 @@ bool CBrownie::IsCompatible (const char *_databaseString) {
   CBrownie tmp;
   CString s;
 
-  // Create temporary copy of 'this'...
+  // Create temporary copy of 'this' ...
   tmp.SetId (Id ());
   tmp.SetFeatureRecord (FeatureRecord ());
   tmp.SetConfigRecord (ConfigRecord ());
@@ -1850,7 +1848,7 @@ bool CBrownie::IsCompatible (const char *_databaseString) {
   // Apply settings from '_dataBaseString' ...
   tmp.SetFromStr (_databaseString, &s);
 
-  // Check if that changed something...
+  // Check if that changed something ...
   if (strcmp (idRecord, tmp.idRecord) != 0) {
     //~ INFO ("### incompatible ID");
     return false;
@@ -1878,7 +1876,7 @@ bool CBrownie::UpdateFromDevice (class CBrownieLink *link) {
   if (link->CheckDevice (Adr (), &devBrownie) != brOk) return false;
 
   // Check compatibility ...
-  if (!IsCompatible (databaseString.Get ())) return false;
+  if (!devBrownie.IsCompatible (databaseString.Get ())) return false;
 
   // Update records ...
   if (devBrownie.HasDeviceFeatures ()) SetFeatureRecord (devBrownie.FeatureRecord ());
@@ -1904,10 +1902,7 @@ void CBrownie::RegisterAllResources (class CRcDriver *rcDriver, class CBrownieLi
   // If no feature information is available from the database: Try to get it from the device now ...
   if (link) CheckDeviceForResources (link);
   if (!HasFeatures ()) {
-    if (link)
-      DEBUGF (1, ("Failed to contact Brownie %03i:%s to obtain feature information", Adr (), Id ()));
-    else
-      DEBUGF (1, ("No feature information in the database for Brownie %03i:%s: no resources registered for it", Adr (), Id ()));
+    WARNINGF (("Brownie %03i:%s has no 'feature' record in the database and is not accessible now: no resources registered for it", Adr (), Id ()));
     return;
   }
 
@@ -1949,14 +1944,18 @@ void CBrownie::CheckDeviceForResources (CBrownieLink *link) {
   if (!deviceChecked) {
     //~ INFOF (("### CBrownie::CheckDeviceForResources (%03i, fast=%i)", Adr ()));
     if (UpdateFromDevice (link)) {
+      //~ INFOF (("### ... success: marking %03i as checked", Adr ()));
       deviceChecked = true;
+
       // Call initial updates for the features ...
       for (n = 0; n < features; n++) featureList[n]->Update (link, 0, true);
     }
     else
       if (link->Status () == brOk) {
-        WARNINGF (("Brownie %03i:%s appears to deviate from the database: not reading data", Adr (), Id ()));
-        deviceChecked = true;    // Mark device as checked, it is permanently unusable
+
+        // Device and its database entry are inconsistent: Mark device as checked, it is permanently unusable ...
+        WARNINGF (("Brownie %03i:%s is incompatible with its database entry - disabled.", Adr (), Id ()));
+        deviceChecked = true;
       }
   }
 }
@@ -3331,7 +3330,7 @@ EBrStatus CBrownieLink::FetchReply (int adr, bool noResend) {
       // If everything worked fine so far: Set status to status reported by slave.
     if (status == brOk || status == brNoBus /* || status == brNoDevice */) break;
       // Success or general failure (no sense to retry).
-      // Note: 'brNoDevice' is returned from TwiSend() and TwiFetch() and  if
+      // Note: 'brNoDevice' is returned from TwiSend() and TwiFetch() and if
       //       the system reports an I/O error via errno. This may be a time-out
       //       after a long waiting time, so a retry should be avoided.
       // TBD: Remove the last comment? 'brNoDevice' is mostly delivered after an adress NACK -> fast

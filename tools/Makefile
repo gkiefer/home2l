@@ -66,7 +66,7 @@ $(DAEMON_BIN): $(DEP_CONFIG) $(OBJ_DAEMON)
 ############################## Misc. Scripts ###################################
 
 
-SCRIPTS := home2l home2l-adb home2l-install home2l-rollout home2l-sudo home2l-demo
+SCRIPTS := home2l home2l-adb home2l-install home2l-rollout home2l-sudo home2l-demo home2l-usbtree
 INITD := initd-home2l
 
 

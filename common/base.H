@@ -651,7 +651,7 @@ class CString {
     /// @name Character encoding (see special not on string encoding in this file) ...
     ///@{
     void SetFromIso8859 (const char *iso8859str);   ///< 'this' will be a (normal) UTF-8 string, the source is expected to be ISO-8859
-    void SetAsIso8859 (const char *str);            ///< 'this' will be ISO-8859-encoded string, the source is expected to be (normal) UTF-8
+    bool SetAsIso8859 (const char *str);            ///< 'this' will be ISO-8859-encoded string, the source is expected to be (normal) UTF-8
     ///@}
 
     /// @name Read access ...
@@ -1247,8 +1247,8 @@ template <typename T> class CDictCompact: public CDictRaw {
     /// @}
 
   protected:
-    virtual void ValueInit (void *p) { memcpy (p, &emptyObj, sizeof (emptyObj)); }
-    virtual void ValueClear (void *p) { ValueSet (p, &emptyObj); }
+    virtual void ValueInit (void *p) { memcpy (p, (void *) &emptyObj, sizeof (emptyObj)); }
+    virtual void ValueClear (void *p) { ValueSet (p, (void *) &emptyObj); }
     virtual void ValueSet (void *p, void *orig) { * (T *) p = * (T *) orig; }
     virtual const char *ValueToStr (CString *ret, void *p) { return ::ToStr<T> (ret, (T*) p); }
 

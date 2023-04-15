@@ -25,69 +25,41 @@
 ############################## Configuration ###################################
 
 
-# Preset architectures to build for ...
-ifeq ($(CFG),minimal)
-  # Minimal set ...
-  ARCHS ?= $(shell dpkg --print-architecture)
-else ifeq ($(CFG),demo)
-  # Fair set to run the demos ...
-  ARCHS ?= $(shell dpkg --print-architecture)
-else
-  # Default: All architectures ...
-  ARCHS ?= amd64 armhf i386
-endif
-
-
-# Preset modules (sub-projects) to build ...
+# Preset modules (sub-projects), drivers, architectures, and non-standard compile-time settings ...
+#   By default, all compile-time-settings are preset to '1' in the module Makefile.
+#   For a complete build (no configuration set), all architectures are activated.
+#   In all other cases, the build is performed for the current native architecture.
 ifeq ($(CFG),minimal)
   # Minimal set ...
   MODS ?= tools resources
-else ifeq ($(CFG),basic)
-  # Basic set ...
-  MODS ?= tools resources brownies
-else ifeq ($(CFG),demo)
-  # Modules for the demo image ...
-  MODS ?= tools resources brownies wallclock locales
-else
-  # Default: All modules...
-  MODS ?= tools resources brownies wallclock locales doorman doc
-endif
-
-
-# Preset drivers to build ...
-ifeq ($(CFG),minimal)
-  # Minimal set ...
   DRVS ?=
-else ifeq ($(CFG),basic)
-  # Basic set ...
-  DRVS ?= gpio mqtt brownies weather
-else ifeq ($(CFG),demo)
-  # Fair set to run the demos ...
-  DRVS ?= demo gpio mqtt brownies weather
-else
-  # Default: All modules...
-  DRVS ?= $(shell ls drivers)
-endif
-
-
-# Preset compile-time settings if CFG is set ...
-#   By default, they are all set to '1' in the module Makefile
-ifeq ($(CFG),minimal)
-  # Minimal set ...
+  ARCHS ?= $(shell dpkg --print-architecture)
   export WITH_PYTHON ?= 0
   export WITH_READLINE ?= 0
 else ifeq ($(CFG),basic)
-  # (WallClock settings presently have no effect, since WallClock is excluded from the basic build)
+  # Basic set ...
+  MODS ?= tools resources brownies
+  DRVS ?= gpio mqtt brownies weather
+  ARCHS ?= $(shell dpkg --print-architecture)
+  # (the following WallClock settings presently have no effect, since WallClock is excluded from the basic build)
   export WITH_ANDROID ?= 0
   export WITH_PHONE ?= 0
   export WITH_CALENDAR ?= 0
   export WITH_MUSIC ?= 0
   export WITH_GSTREAMER ?= 0
 else ifeq ($(CFG),demo)
-  # Fair set to run the demos ...
+  # Modules for the demo image ...
+  MODS ?= tools resources brownies wallclock locales
+  DRVS ?= demo gpio mqtt brownies weather
+  ARCHS ?= $(shell dpkg --print-architecture)
   export WITH_ANDROID ?= 0
   export WITH_PHONE ?= 0
   export WITH_GSTREAMER ?= 0
+else
+  # Default: All modules, drivers and architectures ...
+  MODS ?= tools resources brownies wallclock locales doorman doc
+  DRVS ?= $(shell ls drivers)
+  ARCHS ?= amd64 armhf i386
 endif
 
 

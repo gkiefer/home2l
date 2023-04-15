@@ -776,7 +776,9 @@ void StopMessageBox (CMessageBox *msgBox);
 
 #define INPUTLINE_FONTSIZE 24
 #define INPUTLINE_UNDOS 32
-
+#define INPUTLINE_MAXLEN 512
+  // The maximum length must be selected such that the rendered string does not exceed the
+  // maximum texture width of currently 16384 pixels [2022-11-04].
 
 /** @brief Input line widget.
  */

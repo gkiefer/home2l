@@ -1,0 +1,918 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2015-2022 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# This is an EXPERIMENTAL tool for keeping alive the USB connection to various
+# devices, which may be subject to spurious disconnects when connected
+# permanently for a long time due to EMI and or hardware or software bugs.
+# Particularly supported devices are WLAN interfaces and "influence devices",
+# which are Android tablets running WallClock instances.
+
+
+from home2l import *
+
+import os
+import time
+import subprocess
+
+
+
+############################## Init ############################################
+
+
+Home2lInit (server = True)
+
+print ("Starting USB tree manager ...", flush = True)
+
+
+
+
+
+################################################################################
+#
+#   USB Device Base Class
+#
+################################################################################
+
+
+def System (cmd, timeout = None, retOutput = False):
+  """Replacement for 'os.system()', being silent on success and print the output in case of a failure."""
+  ok = False
+  a = None
+  try:
+    p = subprocess.run (("/bin/bash", "-c", cmd), capture_output = True, text = True, timeout = timeout)
+    ok = (p.returncode == 0)
+    a = p.stdout.strip ('\n\r').split ('\n') + p.stderr.strip ('\n\r').split ('\n')
+    if not ok:
+      print ("WARNING: Command '{}' failed:".format (cmd))
+      for l in a: print ("... {}".format (l.strip ('\n\r')))
+      print (end ='', flush = True)
+  except subprocess.TimeoutExpired:
+    print ("WARNING: Command '{}' failed: Timeout expired ({} seconds).".format (cmd, timeout))
+
+  if not retOutput:
+    return ok
+  else:
+    try:
+      return ok, "\n".join (a)
+    except TypeError:
+      return ok, None
+
+
+class UsbDevice:
+
+
+  ##### Class constants and variables ... #####
+
+  # Constants ...
+  sysUsbPrefix = "/sys/bus/usb/devices/"    # USB root in sysfs
+
+  # Variables ...
+
+  allDevices = {}
+
+  _mapSerial = {}
+  _mapNet = {}
+  _anyReqHubReset = False      # some device requested a hub reset
+  _anyReqUsbRestart = False    # some device requested a full USB restart
+
+
+  ##### Constructor ... #####
+
+  def __init__(self, _id, serial = None, net = None):
+    self.id = _id
+
+    # USB device identification (one of the following must be set by the derived class) ...
+    self.usbSerial = serial       # USB device identification (alternative: serial number)
+    self.usbNet = net             # USB device identification (alternative: network interface name)
+    self.usbPath = None           # USB path, maintained by 'ScanAll()'
+    self.usbPathLastKnown = None  # last known USB path
+
+    # Flags to interact with USB control ...
+    self._reqHubReset = False      # request a hub reset
+    self._reqUsbRestart = False    # request a full USB restart
+
+    # Add to maps ...
+    UsbDevice.allDevices [_id] = self
+    if serial: self._mapSerial[serial] = self
+    if net: self._mapNet[net] = self
+
+
+  ##### Global functions ... #####
+
+  @classmethod
+  def ScanAll (cls):
+    """Scan the USB bus for known devices.
+    The dictionaries 'hostUsbPaths' and 'wifiUsbPaths' are updated, but not
+    cleared here, so that in case of an error they always reflect the last
+    known USB paths.
+    """
+
+    # Clear all USB paths ...
+    for d in cls.allDevices.values (): d.usbPath = None
+
+    # Determine all USB paths ...
+    usbPaths = os.listdir (cls.sysUsbPrefix)
+    for p in usbPaths:
+      # Check for serial (e.g. influence decices) ...
+      # ~ print ("### Checking USB path '{}'".format (p))
+      try:
+        with open (cls.sysUsbPrefix + p + "/serial", "r") as reader:
+          serial = reader.read ().strip ()
+          # ~ print ("###   serial = {}".format (serial))
+          cls._mapSerial[serial].usbPath = p
+      except (FileNotFoundError, IndexError, KeyError): pass
+      # Check for net interface name (e.g. wlan adapters) ...
+      net = None
+      try:
+        net = os.listdir (cls.sysUsbPrefix + p + ":1.0/net") [0]
+        # ~ print ("###    USB path = {}, net = {}".format (p, net))
+        cls._mapNet[net].usbPath = p
+      except (FileNotFoundError, IndexError, KeyError): pass
+
+    # Update last known paths ...
+    for d in cls.allDevices.values ():
+      if d.usbPath: d.usbPathLastKnown = d.usbPath
+      # ~ print ("### ScanAll (): {} = {}, last known = {}".format (d.id, d.usbPath, d.usbPathLastKnown))
+
+
+
+  ##### Resetting devices, hubs or everything ... #####
+
+  @staticmethod
+  def ResetDevice (usbPath):
+    """Reset a USB device or hub as specified by the 'usbPath' argument."""
+    print ("Resetting USB device or hub '" + usbPath + "' ...", flush = True)
+    try:
+      usbBus = usbPath[0]
+      with open (UsbDevice.sysUsbPrefix + usbPath + "/devnum", "r") as reader:
+        usbDev = reader.read ().strip ()
+      System ("home2l sudo usb-reset " + usbBus + "/" + usbDev)
+    except (FileNotFoundError, IndexError) as e:
+      print ("WARNING: UsbReset ('" + usbPath + "') failed: " + str (e), flush = True)
+
+
+  @classmethod
+  def ResetHubsAsRequested (cls):
+    """Reset all USB hubs in front of devices that requested a hub reset."""
+    # ~ print ("### ResetHubsAsRequested ({})".format (cls._anyReqHubReset))
+    if cls._anyReqHubReset:
+      hubSet = set ()
+      devSet = set ()
+      for dev in cls.allDevices.values ():
+        if dev._reqHubReset:
+          print ("###   resetting '{}' ({}) ...".format (dev.id, dev.usbPathLastKnown))
+          devSet.add (dev)
+          if not dev.usbPathLastKnown:
+            print ("{}: WARNING: Device has never been seen on a USB bus - skipping hub reset.".format (dev.id), flush = True)
+          else:
+            hubSet.add (dev.usbPathLastKnown[:-2])
+      for hub in hubSet: cls.ResetDevice (hub)
+      for dev in devSet:
+        wasRequested = dev._reqHubReset
+        dev._reqHubReset = False
+        dev.AfterHubReset (wasRequested)
+      cls._anyReqHubReset = False
+
+
+  @classmethod
+  def RestartUsbAsRequested (cls):
+    """Restart the USB system if it was requested by some device."""
+    if cls._anyReqUsbRestart:
+      print ("Restarting USB system ...", flush = True)
+      System ("home2l sudo usb-restart")
+        # TBD: use process.run(); eliminate stdout
+      for dev in cls.allDevices.values ():
+        wasRequested = dev._reqUsbRestart
+        dev._reqUsbRestart = False
+        dev.AfterUsbRestart (wasRequested)
+      cls._anyReqUsbRestart = False
+
+
+
+  ##### Service functionality (for derived classes) ... #####
+
+  def RequestHubReset (self):
+    '''Request the hub(s) before this device to be reset.'''
+    self._reqHubReset = True
+    UsbDevice._anyReqHubReset = True
+
+  def RequestUsbRestart (self):
+    '''Request a full restart of the USB system.'''
+    self._reqUsbRestart = True
+    UsbDevice._anyReqUsbRestart = True
+
+
+  # Callbacks (for derived classes) ...
+
+  def AfterHubReset (self, wasRequested):
+    # This is called after a hub in front of this device has been reset.
+    pass
+
+  def AfterUsbRestart (self, wasRequested):
+    # This is called after the complete USB system has been restarted.
+    pass
+
+
+
+
+
+################################################################################
+#
+#   Influence Devices
+#
+################################################################################
+
+
+
+def SystemAdb (host, adbCmd, timeout = None):
+  """Run 'System ("home2l adb " + cmd)' and do some ADB-specific recovery."""
+  ok, output = System ("home2l adb {} {}".format (host, adbCmd), timeout = timeout, retOutput = True)
+  if not ok and ("unauthorized" in output or "offline" in output):
+    print ("{}: Device unauthorized, trying to fix using ADB ... ".format (host), flush = True)
+    System ("home2l adb {} reconnect offline".format (host))
+    # ~ print ("ADB is stuck with 'device unauthorized' - restarting ADB ... ", flush = True)
+    # ~ # TBD: Remove this, since this is sufficiently handled inside 'RestartAdb()'?
+    # ~ if System ("home2l adb {} kill-server".format (host)):
+      # ~ time.sleep (5)
+      # ~ ok, devList = System ("home2l adb {} devices -l".format (host), retOutput = True)
+      # ~ print (devList)
+      # ~ print (" ... done.", flush  = True)
+  return ok
+
+
+class InfDevice (UsbDevice):
+
+
+  ##### Class constants and variables ... #####
+
+  # State constants ...
+  ST_OFF = 0                        # switched off or rebooting into power-off mode
+  ST_ON = 1                         # switched on and connected
+  ST_BOOTING = 2                    # Device is booting into the normal "on" state (not into power-off state)
+  ST_FAIL = 10                      # just failed
+  ST_FAIL_AFTER_RECONNECT = 11      # just reconnected
+  ST_FAIL_REQUEST_HUB_RESET = 12    # request a hub reset (may affect other devices)
+  ST_FAIL_AFTER_HUB_RESET = 13      # failed and hub reset has just been performed
+  ST_FAIL_REQUEST_USB_RESTART = 14  # request a full USB restart
+  ST_FAIL_AFTER_USB_RESTART = 15    # failed and full restart has just been performed
+  ST_LOST = 20                      # all measures taken, device is lost
+  ST_LOST_AFTER_RECONNECT = 21      # device is lost, just tried an occasional reconnect
+
+  _stateStr = {
+    ST_OFF:                       "OFF",
+    ST_ON:                        "ON",
+    ST_BOOTING:                   "BOOTING",
+    ST_FAIL:                      "FAIL",
+    ST_FAIL_AFTER_RECONNECT:      "FAIL_AFTER_RECONNECT",
+    ST_FAIL_REQUEST_HUB_RESET:    "REQUEST_HUB_RESET",
+    ST_FAIL_AFTER_HUB_RESET:      "AFTER_HUB_RESET",
+    ST_FAIL_REQUEST_USB_RESTART:  "REQUEST_USB_RESTART",
+    ST_FAIL_AFTER_USB_RESTART:    "AFTER_USB_RESTART",
+    ST_LOST:                      "LOST",
+    ST_LOST_AFTER_RECONNECT:      "LOST_AFTER_RECONNECT"
+    }
+
+  # Class variables ...
+  allInfDevices = {}          # map of all influence devices for the current machine
+
+  _tLastOvpnRestart = 0       # time of last OpenVPN restart
+  _tLastAdbRestart = 0        # time of last ADB restart
+
+
+
+  ###### Global initialization ... #####
+
+
+  @classmethod
+  def ClassInit (cls):
+    # Read 'androidb.conf' and create 'allInfDevices' ...
+    machine = os.uname().nodename
+    with open (EnvGetHome2lEtcPath ("androidb.conf"), "r") as reader:
+      for line in reader.readlines():
+        # ~ line = line.strip ();
+        # ~ print ("### {}".format (line))
+        # ~ if line and len (line) >= 1 and line[0] != '#':
+        args = line.split ();
+        try:
+          if args[0][0] != '#' and args[1] == machine:
+            cls.allInfDevices[args[0]] = InfDevice (args[0], args[2])
+        except IndexError: pass
+
+
+
+  ##### Constructor ... #####
+
+  def __init__ (self, host, serial):
+
+    # Init base class ...
+    UsbDevice.__init__ (self, host, serial = serial)
+
+    # Init local attributes ...
+    self._tInState = 0      # time of last state change
+    self._tLastSense = 0    # time of last state check (when device is not driven to be on)
+    self._tLastReboot = 0   # time of last reboot (for battery recovery)
+
+    # Init resources ...
+    self._rcPower = NewResource ("inf/{}/power".format (self.id), rctBool, self.DriveRcPower, self)
+      # TBD: After API adaption: change to '... NewResource (..., rctBool, self.DriveRcPower)'
+    self._rcBattery = NewResource ("inf/{}/battery".format (self.id), rctPercent, None, self)
+    self._rcCurrent = NewResource ("inf/{}/current".format (self.id), rctInt, None, self)
+    self._valPowerDriven = None
+
+    # Check and report current device state ...
+    self._state = None
+    sense = self.SensePowerState ()
+    self.SetState (sense if sense != self.ST_ON else self.ST_BOOTING)
+
+
+  ##### Helpers and Actions ... #####
+
+  def ReportPowerState (self):
+    """Report the actual power resource value, depending on 'state' (internal method)."""
+    if    self._state == self.ST_OFF:   self._rcPower.ReportValue (False)
+    elif  self._state == self.ST_ON:    self._rcPower.ReportValue (True)
+    elif  self._state >= self.ST_LOST:  self._rcPower.ReportUnknown ()      # Special case: Lost devices report as unknown to shout out loud
+    else:                               self._rcPower.ReportValue (False, rcsBusy)         # this covers all 'fail' and the booting state
+
+
+  def SetState (self, state):
+    """Set the state, keeping the time of the state change and report the state change to the power resource."""
+    if state != None and state != self._state:
+      self._state = state
+      self._tInState = TicksNow ()
+      print ("{}: State is {}".format (self.id, self._stateStr[self._state]), flush = True)
+      # ~ print ("{}: {} = {}".format (TicksAbsStr (self._tInState), self.id, self._stateStr[self._state]), flush = True)
+      self.ReportPowerState ()
+
+
+  def SensePowerState (self):
+    """Check the device for its state, returns either 'ST_OFF', 'ST_ON' or 'ST_FAIL'."""
+    p = subprocess.run (("/bin/bash", "-c", "home2l adb " + self.id + " shell 'ps | grep charger'"), capture_output=True, text=True)
+    # ~ print ("### SensePowerState () = {}: {}".format (p.returncode, p.stdout))
+    if p.returncode == 0:
+      if "charger" in p.stdout: return self.ST_OFF
+      else: return self.ST_ON
+    else: return self.ST_FAIL
+
+
+  def SwitchOnOff (self, on, force = False):
+    """Try to switch the device on and off.
+    Unless forced, it has no effect if the device was already in the respective state or in a failure or 'lost' state.
+    """
+    print ("### InfDevice.SwitchOnOff ({}, on = {}, force = {})".format (self.id, on, force))
+    if on == False:
+      if self._state != self.ST_OFF or force == True:
+        SystemAdb (self.id, "x-stop", timeout = 10)
+        print ("{}: Shutting down ... ". format (self.id), end = '', flush = True)
+        if SystemAdb (self.id, "shell reboot -p", timeout = 10):
+          print ("OK", flush = True)
+          self.SetState (self.ST_OFF)
+    elif on == True:
+      if self._state == self.ST_OFF or force == True:
+        if self._state == self.ST_ON:
+          SystemAdb (self.id, "x-stop", timeout = 10)
+        print ("{}: (Re-)Booting ... ".format (self.id), end = '', flush = True)
+        if SystemAdb (self.id, "shell reboot", timeout = 10):
+          print ("OK", flush = True)
+          self.SetState (self.ST_BOOTING)
+
+
+  @staticmethod
+  def DriveRcPower (rc, val, self):
+      # TBD: After API adaption: change to 'DriveRcPower (self, rc, val)'
+    print ("### InfDevice.DriveRcPower ({}, {})".format (self.id, val))
+    if val == True and self._valPowerDriven == False and self._state == self.ST_LOST:
+      # If the previously driven value was not 'True', no recovery has been tried before losing the device.
+      # => Enable the recovery procedure.
+      self.SetState (self.ST_FAIL)
+    self._valPowerDriven = val
+    if val != None: self.SwitchOnOff (val)
+
+
+  def SenseAndReportBattery (self):
+    """Read battery level and current and report it to the resources. Returns (level, current)."""
+    p = subprocess.run(("/bin/bash", "-c", "home2l adb " + self.id + " shell cat /sys/devices/platform/battery_manager/power_supply/battery/capacity /sys/devices/platform/battery_manager/power_supply/battery/current_avg"), capture_output=True, text=True)
+    level, current = None, None
+    if p.returncode != 0:
+      print ("{}: WARNING: Failed to read battery status: device unreachable".format (self.id), flush = True)
+    else:
+      try:
+        ret = p.stdout.split ()
+        level, current = int(ret[0]), int(ret[1])
+        # ~ print ("{:3d}%,{:5d}mA".format (level, current), flush = True)
+      except (IndexError, ValueError):
+        print ("{}: WARNING: Failed to read battery status: invalid output: {}".format (self.id, p.stdout.strip ()), flush = True)
+    self._rcBattery.ReportValue (level)
+    self._rcCurrent.ReportValue (current)
+    return (level, current)
+
+
+  def Reconnect (self):
+    """Reconnect an influence device using home2l-adb."""
+    print ("{}: Reconnecting ... ".format (self.id), end = '', flush = True)
+    ok = SystemAdb (self.id, "x-connect", timeout = 10)
+    if ok:
+      ok = SystemAdb (self.id, "x-start", timeout = 10)
+    if ok:
+      print ("OK", flush = True)
+    return ok
+
+
+  def RestartOvpn (self):
+    """Restart OpenVPN, but only if this has not already happened recently."""
+    tNow = TicksNow ()
+    if tNow >= InfDevice._tLastOvpnRestart + 30000:
+      # No OpenVPN restart in the past 30 seconds: Restart OpenVPN ...
+      print ("{}: Restarting OpenVPN ...".format (self.id), flush = True)
+      System ("home2l sudo openvpn-restart")
+      InfDevice._tLastOvpnRestart = tNow
+      return True
+    else:
+      return False
+
+
+  def RestartAdb (self):
+    """Restart the ADB server."""
+    tNow = TicksNow ()
+    if tNow >= InfDevice._tLastAdbRestart + 30000:
+      print ("{}: Restarting ADB ...".format (self.id), flush = True)
+      SystemAdb (self.id, "kill-server")
+        # ~ time.sleep (10)   # wait since otherwise "unauthorized" messages may occur
+      InfDevice._tLastAdbRestart = tNow
+      return True
+    else:
+      return False
+
+
+
+  ##### State recovery ... #####
+
+  def CheckAndRecoverState (self):
+    """Check the state and if necessary perform measures to recover.
+    Should be called every 10-60 seconds."""
+
+    # ~ print ("### {}: CheckAndRecoverState () ...".format (self.id), flush = True)
+
+    # Handle all cases where the device is NOT driven to be on ...
+
+    if self._valPowerDriven != True:
+      if self._valPowerDriven == False and self._state != self.ST_OFF:
+        # Keep it switched off if driven to be off ...
+        self.SwitchOnOff (False)
+
+      # Sense and report the actual state (but not more frequent than once per minute) ...
+      tNow = TicksNow ()
+      if tNow >= self._tLastSense + 60000 and self._state != self.ST_ON:
+        sense = self.SensePowerState ()
+        self.SetState (self.ST_BOOTING if sense == self.ST_ON else sense if sense == self.ST_OFF else None)
+        self._tLastSense = TicksNow ()
+
+    # All following cases imply 'self._valPowerDriven == True' ...
+
+    elif self._state == self.ST_OFF:
+      # Device is (still) off: Power on ...
+      self.SwitchOnOff (True)
+
+    elif self._state == self.ST_BOOTING:
+      # ~ print ("### {}: Booting, reconnecting ...".format (self.id), flush = True)
+      sense = self.SensePowerState ()
+      if sense == self.ST_OFF:
+        self.SetState (sense)       # Device is off: Switch on ...
+        self.SwitchOnOff (True)
+      else:
+        if self.Reconnect ():       # Reconnect (= build IP forwarding, (re-)start app)
+          if sense == self.ST_ON:
+            self.RestartOvpn ()     # Device is on: Restart OpenVPN (just in case) ...
+        if TicksNow () >= self._tInState + 120000:
+          # Booting for longer than 2 minutes: Something is wrong ...
+          self.SetState (self.ST_FAIL)
+
+    elif self._state == self.ST_FAIL:
+      # ~ print ("### {}: Booting, reconnecting ...".format (self.id), flush = True)
+      sense = self.SensePowerState ()
+      if sense == self.ST_OFF:
+        self.SetState (sense)       # Device is off: Switch on ...
+        self.SwitchOnOff (True)
+      else:
+        if self.Reconnect ():       # Reconnect (= build IP forwarding, (re-)start app)
+          if sense == self.ST_ON:
+            self.RestartOvpn ()     # Device is on: Restart OpenVPN (just in case) ...
+        self.SetState (self.ST_FAIL_AFTER_RECONNECT)
+
+    elif self._state == self.ST_FAIL_AFTER_RECONNECT:
+      # ~ if self._tInState >= InfDevice._tLastOvpnRestart: self.RestartOvpn ()       # Restart OpenVPN (just in case) ...
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 60000:
+        # 1 minute (-> 3 minutes?) after reconnection: Request hub reset ...
+        print ("{}: Triggering USB hub reset (last known USB path = {}) ...".format (self.id, self.usbPathLastKnown), flush = True)
+        self.RequestHubReset ()
+        self.SetState (self.ST_FAIL_REQUEST_HUB_RESET)
+
+    elif self._state == self.ST_FAIL_AFTER_HUB_RESET:
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 5000:
+        # 5 seconds after hub reset: the USB device should have been discovered again
+        sense = self.SensePowerState ()
+        if sense == self.ST_OFF:
+          self.SetState (sense)     # Device is off: Switch on ...
+          self.SwitchOnOff (True)
+        elif self.Reconnect ():     # Reconnect (= build IP forwarding, (re-)start app)
+          if sense == self.ST_ON:
+            self.RestartOvpn ()     # Device is on: Restart OpenVPN (just in case) ...
+
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 120000:
+        # 2 minutes after hub reset: Request full USB restart ...
+        print ("{}: Triggering full USB restart ...".format (self.id), flush = True)
+        self.RequestUsbRestart ()
+        self.SetState (self.ST_FAIL_REQUEST_USB_RESTART)
+
+    elif self._state == self.ST_FAIL_AFTER_USB_RESTART:
+      if self._tInState >= InfDevice._tLastAdbRestart: self.RestartAdb ()   # restart ADB
+
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 10000:
+        # 10 seconds after USB restart: the USB devices should have been discovered again
+        sense = self.SensePowerState ()
+        if sense == self.ST_OFF:
+          self.SetState (sense)     # Device is off: Switch on ...
+          self.SwitchOnOff (True)
+        elif self.Reconnect ():     # Reconnect (= build IP forwarding, (re-)start app)
+          if sense == self.ST_ON:
+            self.RestartOvpn ()     # Device is on: Restart OpenVPN (just in case) ...
+
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 60000:
+        # 1 minute after USB restart and an ADB restart has happened: Consider host lost ...
+        print ("{}: WARNING: Not back again after full USB restart: Host is lost!".format (self.id), flush = True)
+        self.SetState (self.ST_LOST)
+
+    elif self._state == self.ST_LOST:
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 60000:
+        # Each minute: Try an occasional reconnect ...
+        self.Reconnect ()
+        self.SetState (self.ST_LOST_AFTER_RECONNECT)
+
+    elif self._state == self.ST_LOST_AFTER_RECONNECT:
+      self.SetState (self.ST_LOST)
+
+
+  def AfterHubReset (self, wasRequested):
+    if self._state in (self.ST_FAIL_REQUEST_HUB_RESET, self.ST_FAIL_AFTER_RECONNECT, self.ST_FAIL):
+      self.SetState (self.ST_FAIL_AFTER_HUB_RESET)
+      self.CheckAndRecoverState ()
+
+
+  def AfterUsbRestart (self, wasRequested):
+    if self._state >= self.ST_FAIL and self._state < self.ST_LOST:
+      self.SetState (self.ST_FAIL_AFTER_USB_RESTART)
+      self.CheckAndRecoverState ()
+
+
+
+  ##### Battery recovery ... #####
+
+  def CheckAndRecoverBattery (self):
+    """Check the battery status and perform a reboot or request a power-down if necessary.
+    Should be called approx. every 60 seconds."""
+    level, current = self.SenseAndReportBattery ()
+    if level == None or current == None: return
+
+    if level < 20 and self._state != self.ST_OFF:
+      # Level very low: Request a shutdown ...
+      print ("{}: WARNING: Battery level very low ({}%, {}mA): Requesting a shutdown ...".format (self.id, level, current))
+      self._rcPower.SetRequest ("0 #battery *8 ")
+
+    if level < 50 and current <= 0 and self._state != self.ST_OFF:
+      # Level lower than usual and not charging: Reboot, but only at night and only once per night ...
+      print ("{}: WARNING: Battery level is low ({}%, {}mA): May reboot next night.".format (self.id, level, current))
+      tNow = TicksNow ()
+      tDay = tNow - TicksToday ()
+      if tNow - self._tLastReboot >= TicksOfTime (12, 0, 0) and tDay >= TicksOfTime (2, 0, 0) and tDay < TicksOfTime (5, 0, 0):
+        # Reboot, but only at night (between 2:00 and 5:00) and at most every 12 hours ...
+        self.SwitchOnOff (True, force = True)
+        self._tLastReboot = tNow
+
+    elif level >= 70:
+      # Level high enough to release a requested shutdown ...
+      self._rcPower.DelRequest ("#battery")
+
+
+InfDevice.ClassInit ()
+
+
+
+
+
+################################################################################
+#
+#   WLAN Adapters
+#
+################################################################################
+
+
+class WlanDevice (UsbDevice):
+
+
+  ##### Class constants and variables ... #####
+
+  # State constants ...
+  ST_OFF = 0                        # switched off
+  ST_ON = 1                         # switched on and ok
+  ST_BUSY = 2                       # busy
+  ST_FAIL = 10                      # just failed
+  ST_FAIL_REQUEST_HUB_RESET = 12    # request a hub reset (may affect other devices)
+  ST_FAIL_AFTER_HUB_RESET = 13      # failed and hub reset has just been performed
+  ST_FAIL_REQUEST_USB_RESTART = 14  # request a full USB restart
+  ST_FAIL_AFTER_USB_RESTART = 15    # failed and full restart has just been performed
+  ST_LOST = 20                      # all measures taken, device is lost
+
+  _stateStr = {
+    ST_OFF:                       "OFF",
+    ST_ON:                        "ON",
+    ST_BUSY:                      "BUSY",
+    ST_FAIL:                      "FAIL",
+    ST_FAIL_REQUEST_HUB_RESET:    "REQUEST_HUB_RESET",
+    ST_FAIL_AFTER_HUB_RESET:      "AFTER_HUB_RESET",
+    ST_FAIL_REQUEST_USB_RESTART:  "REQUEST_USB_RESTART",
+    ST_FAIL_AFTER_USB_RESTART:    "AFTER_USB_RESTART",
+    ST_LOST:                      "LOST",
+    }
+
+  # Class variables ...
+  allWlanDevices = {}         # map of all WLAN devices for the current machine
+
+
+
+  ###### Global initialization ... #####
+
+  # Read '/etc/network/interfaces' and create 'allWlanDevices' ...
+  @classmethod
+  def ClassInit (cls):
+    with open ("/etc/network/interfaces", "r") as reader:
+      for line in reader.readlines():
+        args = line.strip().split ();
+        try:
+          if args[0] == "iface" and args[3] == "manual":
+            # ~ print ("### found: " + args[1])
+            cls.allWlanDevices[args[1]] = WlanDevice (args[1])
+        except IndexError: pass
+
+
+
+  ##### Constructor ... #####
+
+  def __init__ (self, net):
+
+    # Init base class ...
+    UsbDevice.__init__(self, net, net = net)
+
+    # Init local attributes ...
+    self._tInState = 0      # time of last state change
+    self._tLastSense = 0    # time of last state check (when device is not driven to be on)
+
+    # Init resources ...
+    self._rcPower = NewResource ("wlan/" + net, rctBool, self.DriveRcState, self)
+      # TBD: After API adaption: change to '... NewResource (..., rctBool, self.DriveRcState)'
+    self._valPowerDriven = None
+
+    # Check and report current device state ...
+    self._state = None
+    self.SetState (self.SensePowerState ())
+
+
+
+  ##### Helpers and Actions ... #####
+
+  def ReportState (self):
+    """Report the actual state resource value, depending on 'state' (internal method)."""
+    if    self._state == self.ST_OFF:   self._rcPower.ReportValue (False)
+    elif  self._state == self.ST_ON:    self._rcPower.ReportValue (True)
+    elif  self._state >= self.ST_LOST:  self._rcPower.ReportUnknown ()      # Special case: Lost devices report as unknown to shout out loud
+    else:                               self._rcPower.ReportBusy ()         # this covers all 'fail' state
+
+
+  def SetState (self, state):
+    """Set the state, keeping the time of the state change and report the state change to the power resource."""
+    if state != self._state:
+      self._state = state
+      self._tInState = TicksNow ()
+      # ~ print ("{}: {} = {}".format (TicksAbsStr (self._tInState), self.id, _stateStr[self._state]), flush = True)
+      print ("{}: State is {}".format (self.id, self._stateStr[self._state]), flush = True)
+      self.ReportState ()
+
+
+  def SetFailure (self):
+    """Set to a failure state, unless the object is already in failure. To be called if a failure occured."""
+    if self._state < self.ST_FAIL:     # ignore, if we are already in some failure state
+      self.SetState (self.ST_FAIL)
+
+
+  def SensePowerState (self):
+    """Check the device for its state, returns either 'ST_OFF', 'ST_ON' or 'ST_FAIL'."""
+    p = subprocess.run (("/bin/bash", "-c", "ip link show " + self.id), capture_output = True, text = True)
+    if p.returncode == 0:
+      if "BROADCAST,MULTICAST,UP" in p.stdout: return self.ST_ON
+      else: return self.ST_OFF
+    else: return self.ST_FAIL
+
+
+  def SwitchOnOff (self, on, force = False, failState = ST_FAIL):
+    """Try to switch the device on and off.
+    Unless forced, it has no effect if the device was already in the respective state or in a failure or 'lost' state.
+    """
+    if (force): print ("### WlanDevice.SwitchOnOff ({}, on = {}, force = {})".format (self.id, on, force))
+    if (on == False and self._state == self.ST_ON) or (on == True and self._state == self.ST_OFF) or force == True:
+      cmd = [ "ifdown", "ifup" ] [on]
+      self.SetState (self.ST_BUSY)
+      print ("{}: {} ... ".format (self.id, ["Shutting down", "Starting up"] [on]), end = '', flush = True)
+      p = subprocess.run (("/bin/bash", "-c", "sudo /sbin/{} --force {}".format (cmd, self.id)), capture_output = True, text = True)
+      if p.returncode == 0:
+        sense = self.SensePowerState ()
+      else:
+        sense = self.ST_FAIL
+      print ("OK" if sense != self.ST_FAIL else "FAILED", flush = True)
+      self.SetState (sense if sense != self.ST_FAIL else failState)
+
+
+  @staticmethod
+  def DriveRcState (rc, val, self):
+      # TBD: After API adaption: change to 'DriveRcPower (self, rc, val)'
+    print ("### WlanDevice.DriveRcState ({}, {})".format (self.id, val))
+    if val == True and self._state == self.ST_LOST: self.SetState (self.ST_FAIL)
+      # If the previously driven value was not 'True', no recovery has been tried before losing the device.
+      # => Enable the recovery procedure.
+    self._valPowerDriven = val
+    if val != None: self.SwitchOnOff (val)
+
+
+
+  ##### State recovery ... #####
+
+  def CheckAndRecoverState (self):
+    """Check the state and if necessary perform measures to recover.
+    Should be called every 10-60 seconds."""
+
+    # ~ print ("### WlanDevice.CheckAndRecoverState (driven = {}, state = {})".format (self._valPowerDriven, self._stateStr[self._state]))
+
+    # Handle all cases where the device is NOT driven to be up ...
+
+    if self._valPowerDriven != True:
+      if self._valPowerDriven == False and self._state != self.ST_OFF:
+        # Keep it switched off if driven to be off ...
+        self.SwitchOnOff (False)
+      # Sense and report the actual state ...
+      sense = self.SensePowerState ()
+      self.SetState (sense if sense != self.ST_FAIL else self.ST_LOST)
+      self._tLastSense = TicksNow ()
+
+    # All following cases imply 'self._valPowerDriven == True' ...
+
+    elif self._state == self.ST_OFF:
+      # Device is (still) off for some reason: Power on ...
+      self.SwitchOnOff (True)
+
+    elif self._state in (self.ST_ON, self.ST_FAIL, self.ST_LOST):
+      # Device is up, has just failed or is lost: Check and softly rewake it ...
+
+      # a) Check and update status ...
+      failState = self.ST_LOST if self._state == self.ST_LOST else self.ST_FAIL
+      sense = self.SensePowerState ()
+      self.SetState (sense if sense != self.ST_FAIL else failState)
+
+      # b) Check for an actively hanging RT2800 adapter flooding the syslog ...
+      syslog = subprocess.run (("tail", "-1", "/var/log/syslog"), capture_output=True, text=True).stdout
+      if ("rt2800usb" in syslog or "rt2x00usb" in syslog) and ("failed" in syslog or "Error" in syslog):
+        print ("WARNING: Some wifi adapter produces suspicious syslog entries: Stopping '{}'".format (self.id), flush=True)
+        self.SwitchOnOff (False, force = True, failState = failState)
+
+      # c) Try to switch on again ...
+      self.SwitchOnOff (True, failState = failState)
+
+      # d) If failed: request a hub reset ...
+      if self._state == self.ST_FAIL:
+        print ("{}: Interface failed: Triggering USB hub reset (last known USB path = {}) ...".format (self.id, self.usbPathLastKnown), flush = True)
+        self.RequestHubReset ()
+        self.SetState (self.ST_FAIL_REQUEST_HUB_RESET)
+
+    elif self._state == self.ST_FAIL_AFTER_HUB_RESET:
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 10000:
+        # 10 seconds after hub reset: Try again and eventually request full USB restart ...
+        self.SwitchOnOff (True, force = True, failState = self.ST_FAIL_REQUEST_USB_RESTART)
+        if self._state == self.ST_FAIL_REQUEST_USB_RESTART:
+          print ("{}: Interface not back after hub reset: Triggering full USB restart ...".format (self.id), flush = True)
+          self.RequestUsbRestart ()
+          self.SetState (self.ST_FAIL_REQUEST_USB_RESTART)
+
+    elif self._state == self.ST_FAIL_AFTER_USB_RESTART:
+      # ~ print ("###   case ST_FAIL_AFTER_USB_RESTART ...")
+      tNow = TicksNow ()
+      if tNow >= self._tInState + 30000:
+        # 30 seconds after hub reset: Try again and eventually report as lost ...
+        self.SwitchOnOff (True, force = True, failState = self.ST_LOST)
+        if self._state == self.ST_LOST:
+          print ("{}: WARNING: Not back after full USB restart: Device lost!".format (self.id), flush = True)
+          self.SetState (self.ST_LOST)
+
+
+  def AfterHubReset (self, wasRequested):
+    if self._state in (self.ST_FAIL_REQUEST_HUB_RESET, self.ST_FAIL):
+      self.SetState (self.ST_FAIL_AFTER_HUB_RESET)
+      self.CheckAndRecoverState ()
+
+
+  def AfterUsbRestart (self, wasRequested):
+    if self._state >= self.ST_FAIL and self._state < self.ST_LOST:
+      self.SetState (self.ST_FAIL_AFTER_USB_RESTART)
+      self.CheckAndRecoverState ()
+
+
+WlanDevice.ClassInit ()
+
+
+
+
+
+################################################################################
+#
+#   Global Rules
+#
+################################################################################
+
+
+# All rules and time procedures are put here to maintain an overview on the
+# global control flow and eventual interferences.
+
+
+@at(0, "10s")
+def CheckStates ():
+
+  # Update USB bus notion ...
+  UsbDevice.ScanAll ()
+
+  # Check all influence devices ...
+  for dev in InfDevice.allInfDevices.values ():
+    dev.CheckAndRecoverState ()
+
+  # Check all WLAN adapters ...
+  for dev in WlanDevice.allWlanDevices.values ():
+    dev.CheckAndRecoverState ()
+
+  # Perform (semi-)global operations if requested ...
+  UsbDevice.ResetHubsAsRequested ()
+  UsbDevice.RestartUsbAsRequested ()
+
+
+@at(0, "5m")
+def CheckBatteries ():
+  for dev in InfDevice.allInfDevices.values ():
+    dev.CheckAndRecoverBattery ()
+
+
+@onEvent (list (map (lambda h: "/host/" + h + "/timer/daily", InfDevice.allInfDevices.keys ())))
+def OnHostEvent (ev, rc, vs, data):
+  """Rule to monitor if an influence device is fully functional."""
+  # ~ print ("###", ev, "#", rc, "#", vs.ToStr (True), "#", data, flush = True)
+  # ~ print ("# type = ", vs.Type (), flush = True)
+  # ~ print ("# value = ", vs.Value (), flush = True)
+  host = rc.Uri ().split('/')[2]
+  self = InfDevice.allDevices [host]
+  if ev == rceDisconnected:
+    print ("{}: Disconnected.".format (host), flush = True)
+    if self._state == self.ST_ON:
+      self.SetState (self.ST_FAIL)
+      self.CheckAndRecoverState ()
+  if ev == rceConnected:
+    print ("{}: Connected.".format (host), flush = True)
+    self.SetState (self.ST_ON)
+
+
+
+
+
+############################## Go ahead ########################################
+
+
+print ("Detected influence devices: " + str (list (InfDevice.allInfDevices.keys ())), flush = True)
+print ("Detected WLAN devices: " + str (list (WlanDevice.allWlanDevices.keys ())), flush = True)
+
+Home2lRun ()

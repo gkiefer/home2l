@@ -1711,7 +1711,7 @@ static void UpdatePhoneState (CPhone *phone) {
     //~ INFOF (("### #%i = (%i), #%i = (%i)", 0, phoneData->pjCallId[0], 1, phoneData->pjCallId[1]));
 
     // Assign call status...
-    for (n = 0; n < 2; n++) if (_check.callId == phoneData->pjCallId[n] && _check.callStatus >= 0) {
+    for (n = 0; n < 2; n++) if (_check.callId == phoneData->pjCallId[n]) {
       //~ INFOF (("### storing call status (%i) = %i to slot #%i", _check.callId, _check.callStatus, n));
       phoneData->callStatus[n] = _check.callStatus;
     }
@@ -1868,20 +1868,20 @@ static void UpdatePhoneState (CPhone *phone) {
 
       newPhoneState = phone->GetIncomingCallAction ();    // desired incoming call action
       if (phone->GetState () != psIdle || phoneData->pjCallId[0] != NO_ID_PJ) newPhoneState = psIdle;     // we are busy => must reject
-      if (!MediaLock (phone)) newPhoneState = psIdle;        // another phone is using the devices => must reject
+      if (!MediaLock (phone)) newPhoneState = psIdle;     // another phone is using the devices => must reject
       switch (newPhoneState) {
         case psRinging:
           phoneData->pjCallId[0] = _check.incomingCallId;
-          ok = (PJ_SUCCESS == pjsua_call_answer (phoneData->pjCallId[0], 180, NULL, NULL));  // Provisional - "Ringing"
+          ok = (PJ_SUCCESS == pjsua_call_answer (_check.incomingCallId, 180, NULL, NULL));  // Provisional - "Ringing"
           ASSERT_WARN (ok);
           if (ok) phone->ReportState (psRinging);
           break;
         case psInCall:
           phoneData->pjCallId[0] = _check.incomingCallId;
-          ASSERT_WARN (PJ_SUCCESS == pjsua_call_answer (phoneData->pjCallId[0], 200, NULL, NULL));  // Accept - "OK"
+          ASSERT_WARN (PJ_SUCCESS == pjsua_call_answer (_check.incomingCallId, 200, NULL, NULL));  // Accept - "OK"
           break;
         default:
-          ASSERT_WARN (PJ_SUCCESS == pjsua_call_hangup (phoneData->pjCallId[0], 486, NULL, NULL));  // Decline - "Busy Here"
+          ASSERT_WARN (PJ_SUCCESS == pjsua_call_hangup (_check.incomingCallId, 486, NULL, NULL));  // Decline - "Busy Here"
       }
     }
   }

@@ -390,9 +390,6 @@
 
 #ifndef SHADES_0_RINT_FAILSAFE
 #define SHADES_0_RINT_FAILSAFE 0xff
-#endif
-#ifndef SHADES_1_RINT_FAILSAFE
-#define SHADES_1_RINT_FAILSAFE 0xff
   ///< @brief Failsafe internal request value(s) (RINT) for the case the brownie has lost
   /// its connection to the master (-1 = RINT is not changed on time-out).
   ///
@@ -405,6 +402,9 @@
   /// - after the first successful read or write access to any of the shades registers or the
   ///   @ref BR_REG_CHANGED register: if no further such access happens within the time period specified
   ///   by @ref SHADES_TIMEOUT.
+#endif
+#ifndef SHADES_1_RINT_FAILSAFE
+#define SHADES_1_RINT_FAILSAFE 0xff
 #endif
 
 #ifndef SHADES_PERSISTENCE

@@ -81,7 +81,8 @@ else: debug = False
 urlLocalData = "http://opendata.dwd.de/weather/weather_reports/poi/" + str (optStationID) + "-BEOB.csv"
 
 # Radar: URL to the opendata server of the DWD (german weather service)...
-urlRadar = "http://opendata.dwd.de/weather/radar/composit/pg/raa00-pc_10015-latest-dwd---bin"
+urlRadarDir = "http://opendata.dwd.de/weather/radar/composite/pg/"
+urlRadarFileFilter = "raa00-pc_10015-.*-dwd---bin"
 
 
 # d) Some parameters to tune the rain warning...
@@ -464,8 +465,13 @@ class Radar:
   def update ():
     """Check if new radar data is available and eventually update the data from server.
     """
+    # Find latest radar file ...
+    with os.popen ("curl -s " + urlRadarDir + " | grep " + urlRadarFileFilter) as f:
+      s = f.read ().strip().split('\n')[-1]     # read directory and obtain last line
+      s = s.split('"')[1]                       # extract relative link target (= file name)
+      urlRadarFile = urlRadarDir + s            # absolut file name
     # Check time stamp on web server...
-    with os.popen("curl -sI " + urlRadar + "| grep -i ^last-modified") as f:
+    with os.popen("curl -sI " + urlRadarFile + "| grep -i ^last-modified") as f:
       timeStamp = f.read ().strip ()
     #~ print ("\n### Radar.update (): timeStamp = '" + timeStamp + "'", file = sys.stderr, flush=True)
     if Radar.lastTimeStamp and timeStamp == Radar.lastTimeStamp:
@@ -474,7 +480,7 @@ class Radar:
     #~ print ("### Radar.update ():    -> read new\n", file = sys.stderr, flush=True)
 
     # Get radar image from server...
-    with os.popen ("curl -s " + urlRadar + " | hexdump -v -e '/1 \"%02X\n\"'") as f:
+    with os.popen ("curl -s " + urlRadarFile + " | hexdump -v -e '/1 \"%02X\n\"'") as f:
       Radar.fullMap = Radar.readFullMap (f)
 
     # Render radar eye...

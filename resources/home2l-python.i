@@ -281,7 +281,7 @@ def NewGate (rcName, rcType, rcSet, func, subscrId = None):
 
   # Register callback and finish ...
   if not subscrId: subscrId = _SubscrIdFromFunc (func)
-  RunOnUpdate (_OnUpdateFunc, rcSet, subscrId)
+  RunOnUpdate (_OnUpdateFunc, rcSet, subscrId = subscrId)
   return rc
 
 
@@ -477,7 +477,7 @@ def _BuildSubscriber (id, rcList):
 
 
 ## Define a function to be called on events.
-def RunOnEvent (func, rcSet = None, data = None, subscrId = None):
+def RunOnEvent (func, rcSet, data = None, subscrId = None):
   """Define a function to be called whenever an event for a set of\n\
   resources occurs.\n\
   \n\
@@ -502,8 +502,8 @@ def RunOnEvent (func, rcSet = None, data = None, subscrId = None):
   event in the correct order in time, so that no temporary value changes\n\
   get lost.\n\
   \n\
-  The parameter 'subscrId' sets the subscriber ID. It can usually be left unspecified,\n\
-  in which case, the function name is used as an identifier.\n\
+  The parameter 'subscrId' sets the subscriber ID. It can usually be left\n\
+  unspecified, in which case, the function name is used as an identifier.\n\
   """
   if not subscrId: subscrId = _SubscrIdFromFunc (func)
   subscr = _BuildSubscriber (subscrId, _BuildRcList (rcSet))
@@ -535,22 +535,23 @@ def onEvent (*rcSet):
 
 
 ## Define a function to be called on value/state changes of resources.
-def RunOnUpdate (func, rcSet = None, subscrId = None):
+def RunOnUpdate (func, rcSet, data = None, subscrId = None):
   """Define a function to be called on value/state changes of resources.\n\
   \n\
-  For if any of the specified resources changes its value or state,\n\
+  'rcSet' can either be a 'CResource' object, an URI string or a tuple\n\
+  or a list of any of those. 'data' is an optional reference to user\n\
+  data that will be passed unchanged to any 'func' invocations.\n\
+  \n\
+  If any of the specified resources changes its value or state,\n\
   the function 'func' will be called as follows\n\
   \n\
-      func (a, b, c, ...)\n\
+      func (a, b, c, ... [ , data ] )\n\
   \n\
   where "a, b, c, ..." are arbitrary positional arguments, which (if present)\n\
   are filled with the current values of the resources specified by 'rcSet'.\n\
   The arguments are optional, and their names can be chosen arbitratily.\n\
   Values are filled in in the same order as the ordering of the resources\n\
-  specified by 'rcSet'. The values are obtained by CResource.Value().\n\
-  \n\
-  'rcSet' can either be a 'CResource' object, an URI string or a tuple\n\
-  or a list of any of those.\n\
+  specified by 'rcSet'. The values are obtained by calling 'CResource.Value()'.\n\
   \n\
   Unlike 'RunOnEvent', only 'rceValueStateChanged' events cause\n\
   invocations of 'func', and multiple events quickly following each\n\
@@ -563,8 +564,8 @@ def RunOnUpdate (func, rcSet = None, subscrId = None):
   values (or states) are queried again within the function, they may differ\n\
   from the result of a previous query.\n\
   \n\
-  The parameter 'subscrId' sets the subscriber ID. It can usually be left unspecified,\n\
-  in which case, the function name is used as an identifier.\n\
+  The parameter 'subscrId' sets the subscriber ID. It can usually be left\n\
+  unspecified, in which case, the function name is used as an identifier.\n\
   """
 
   # Build subscriber ...
@@ -572,7 +573,7 @@ def RunOnUpdate (func, rcSet = None, subscrId = None):
   rcList = _BuildRcList (rcSet)
   subscr = _BuildSubscriber (subscrId, rcList)
 
-  # Cut 'rcList' to match the number of function arguments present ...
+  # Determine the number of function arguments or 'None' if it is variable ...
   funcArgs = func.__code__.co_argcount
   try:
     # Dirty trick to check if 'func' has variable positional arguments:
@@ -580,13 +581,13 @@ def RunOnUpdate (func, rcSet = None, subscrId = None):
     # that the header continues with "*args".
     # TBD: Is there a better solution?
     if 'args' == func.__code__.co_varnames[funcArgs]:
-      funcArgs = len (rcList)
+      funcArgs = None
   except IndexError: pass
-  rcList = rcList[:funcArgs]
   # ~ print ("### RunOnUpdate(): funcArgs = " + str(funcArgs) + ", rcList = " + str (rcList))
+  # ~ print ("### RunOnUpdate(): ... func.__code__.co_varnames = " + str (func.__code__.co_varnames))
 
   # Store record ...
-  _onUpdateDict[subscrId] = (func, subscr, rcList)
+  _onUpdateDict[subscrId] = (func, subscr, rcList, funcArgs, data)
 
 
 ## Decorator to define a function to be called on value/state changes.
@@ -707,8 +708,9 @@ def Connect (target, rcSet, func = lambda x: x, attrs = None, id = None, priorit
     # ~ print ("### _OnUpdateFunc (" + str (args) + "): value = " + str (value))
 
   # Register callback ...
+  # ~ print ("### Connect(): rcList = " + str (rcSet))
   if not subscrId: subscrId = _SubscrIdFromFunc (func)
-  RunOnUpdate (_OnUpdateFunc, rcSet, subscrId)
+  RunOnUpdate (_OnUpdateFunc, rcSet, subscrId = subscrId)
 
 
 ## Decorator to define a connector.
@@ -841,8 +843,6 @@ def RunDaily (func, hostSet = None, data = None, subscrId = None):
       func ( [host [ , data ] ] )\n\
   \n\
   'host' is the host name for which rules must be updated.\n\
-  Arguments are passed as keyword arguments. Hence, the names must match,\n\
-  and unsused arguments can be abbreviated by '**kwargs'.\n\
   \n\
   Important: On each host in the set, the 'timer' driver must be enabled.\n\
   \n\
@@ -1281,7 +1281,7 @@ def Home2lIterate (maxTime = 0):
 
     # Check 'RunOnUpdate'...
     elif epLid in _onUpdateDict:
-      func, subscr, rcList = _onUpdateDict[epLid]
+      func, subscr, rcList, funcArgs, data = _onUpdateDict[epLid]
       lastEv = None
       while ev:
         if ev.Type () == rceValueStateChanged: lastEv = ev
@@ -1290,6 +1290,12 @@ def Home2lIterate (maxTime = 0):
         argList = []
         # ~ print ("### rcList = " + str(rcList))
         for rc in rcList: argList.append (rc.Value ())
+        if funcArgs != None or data != None: argList.append (data)
+          # If the function arguments are variable (as in '_OnUpdateFunc()' in 'Connect()'),
+          # we add the 'data' argument iff it is != 'None'. Otherwise, we pass as many
+          # arguments as 'func' takes.
+        if funcArgs != None: del argList[funcArgs:]     # tolerate functions with fewer arguments ...
+        # ~ print ("### Home2lIterate() on update: funcArgs = " + str(funcArgs) + ", argList = " + str(argList))
         func (*argList)
 
     # Check 'RunDaily'...

@@ -765,7 +765,7 @@ static const char *CmdRegExtraHelp () {
 
 static bool CmdRegRead (int argc, const char **argv) {
   EBrStatus status;
-  int reg0, reg1, val;
+  int reg0 = 0, reg1, val;
   char *endPtr;
   int n;
   bool ok;
@@ -807,7 +807,7 @@ static bool CmdRegRead (int argc, const char **argv) {
 
 static bool CmdRegWrite (int argc, const char **argv) {
   EBrStatus status;
-  int reg, val;
+  int reg = 0, val;
   char *endPtr;
   bool ok;
 
@@ -857,7 +857,7 @@ static const char *CmdMemReadExtraHelp () {
 static bool CmdMemRead (int argc, const char **argv) {
   EBrStatus status;
   uint8_t data[BR_MEM_BLOCKSIZE];
-  int adr0, adr1;
+  int adr0 = 0, adr1;
   char *endPtr;
   int n;
   bool ok;
@@ -907,7 +907,7 @@ static bool CmdMemRead (int argc, const char **argv) {
 
 
 #define CMD_CONFIG \
-  { "c", CmdConfig, "[ <name>[=<val>] ] ...", "Configure the device / query configuration", CmdConfigExtraHelp }, \
+  { "c", CmdConfig, "[<options>] [ <name>[=<val>] ] ...", "Configure the device / query configuration", CmdConfigExtraHelp }, \
   { "config", CmdConfig, NULL, NULL, NULL }
 
 
@@ -1085,12 +1085,13 @@ static bool CmdConfig (int argc, const char **argv) {
 
 
 #define CMD_BOOT \
-  { "boot", CmdBoot, "<options>", "Reboot brownie", CmdBootExtraHelp } \
+  { "boot", CmdBoot, "<options>", "Reboot brownie and/or switch firmware", CmdBootExtraHelp } \
 
 
 static const char *CmdBootExtraHelp () {
   return  "Options:\n"
           "-i : Ask for confirmation when changing system\n"
+          "-s : Only boot if the selected system is not already active\n"
           "-m : Activate and boot into maintenance system\n"
           "-o : Activate and boot into operational (main) system\n";
 }
@@ -1100,7 +1101,7 @@ static bool CmdBoot (int argc, const char **argv) {
   CBrownie brownie;
   uint8_t val;
   int n, fwBaseBlock;
-  bool yesSure, intoMaintenance, intoOperational;
+  bool yesSure, soft, intoMaintenance, intoOperational;
 
   // Sanity ...
   if (!CheckLegalTwiAdr ()) return false;
@@ -1112,6 +1113,7 @@ static bool CmdBoot (int argc, const char **argv) {
     if (argv[n][0] != '-') return ArgError (argv);
     switch (argv[n][1]) {
       case 'i': yesSure = false; break;
+      case 's': soft = true; break;
       case 'm': intoMaintenance = true; break;
       case 'o': intoOperational = true; break;
       default:
@@ -1126,16 +1128,35 @@ static bool CmdBoot (int argc, const char **argv) {
   )) return false;
 
   if (!intoMaintenance && !intoOperational) {
+    if (soft) {
+      puts ("Nothing to do!");
+      return true;
+    }
+    else {
 
-    // Normal reboot ...
-    printf ("Rebooting device %03i ... ", shellAdr);
-    fflush (stdout);
-    if (PrintOnError (
-      shellLink.RegWrite (shellAdr, BR_REG_CTRL, BR_CTRL_REBOOT)
-    )) return false;
-    puts ("OK");
+      // Normal reboot ...
+      printf ("Rebooting device %03i ... ", shellAdr);
+      fflush (stdout);
+      if (PrintOnError (
+        shellLink.RegWrite (shellAdr, BR_REG_CTRL, BR_CTRL_REBOOT)
+      )) return false;
+      puts ("OK");
+    }
   }
   else {
+    fwBaseBlock = intoOperational ? (BR_FLASH_BASE_OPERATIONAL / BR_FLASH_PAGESIZE) :
+                             (BR_FLASH_BASE_MAINTENANCE / BR_FLASH_PAGESIZE);
+    if (soft) {
+
+      // Check present base block ...
+      if (PrintOnError (
+        shellLink.RegRead (shellAdr, BR_REG_FWBASE, &val)
+      )) return false;
+      if (fwBaseBlock == (int) val) {
+        puts ("Selected firmware is already active - nothing to do.");
+        return true;
+      }
+    }
 
     // Ask for confirmation ...
     if (!yesSure) {
@@ -1146,8 +1167,6 @@ static bool CmdBoot (int argc, const char **argv) {
     }
 
     // Activate new firmware and reboot into it ...
-    fwBaseBlock = intoOperational ? (BR_FLASH_BASE_OPERATIONAL / BR_FLASH_PAGESIZE) :
-                             (BR_FLASH_BASE_MAINTENANCE / BR_FLASH_PAGESIZE);
     printf ("Switching device %03i to %s firmware (block 0x%02x, adr=0x%04x) ... ",
             shellAdr, intoMaintenance ? "MAINTENANCE" : "OPERATIONAL",
             fwBaseBlock, fwBaseBlock * BR_FLASH_PAGESIZE);
@@ -1767,7 +1786,7 @@ static bool CmdResources (int argc, const char **argv) {
   drv->UnlockResources ();
   subscriber.GetInfo (&s1);
   s2.SetFByLine ("  %s\n", s1.Get ());
-  printf (s2.Get ());
+  printf ("%s", s2.Get ());
   fflush (stdout);
 
   rcSubscriber = &subscriber;   // let signal handler interrupt us

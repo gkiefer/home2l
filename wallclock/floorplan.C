@@ -2314,9 +2314,13 @@ bool CGadgetIcon::UpdateSurface () {
           break;
       }
 
-      if (rcPower) {
-        // Highlight, if on during vacation ...
-        if (floorplan->GetValidUseState () >= rcvUseVacation) {
+      // Highlight, if on during vacation ...
+      if (floorplan->GetValidUseState () >= rcvUseVacation) {
+        if (!rcPower) {
+          // 'vs' still contains the phone state ...
+          if (vs.IsKnown ()) surfEmph = geAttention;
+        }
+        else {
           rcPower->GetValueState (&vs);
           if (vs.IsValid () && vs.ValidBool (true)) surfEmph = geAttention;
         }
@@ -3442,7 +3446,7 @@ void CScreenFloorplan::OnButtonPushed (CButton *btn, bool longPush) {
     case btnIdFpUseVacation:
       req = new CRcRequest ((ERctUseState) (btnId - btnIdFpUseDay), RcGetUserRequestId (), rcPrioUser);
         // For the use state request we do not call 'NewUserRequest' and thus ignore eventual user request
-        // attributes. This is to to enforce that the user request does not time out and is only set
+        // attributes. This is to enforce that the user request does not time out and is only set
         // by manual interaction. Otherwise, it may, for example, unintentionally happen that the home
         // automation switches back from "vacation" to "at home" shortly after the user left for vacation.
       //~ req = NewUserRequest (rc->Type ());

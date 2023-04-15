@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="home2l-icon-web.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Home2L - C/C++ API
-   &#160;<span id="projectnumber">v1.2-0-ga055 (2022-08-31)</span>
+   &#160;<span id="projectnumber">v1.2-2-ga4fe (2023-04-15)</span>
    </div>
    <div id="projectbrief">Smart Tools for a Private Home</div>
   </td>
@@ -273,11 +273,11 @@ Collaboration diagram for Microcontroller: Feature Selection:</div>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga74e048d2c5c89178135630676db9f403">SHADES_REVERSE_DELAY</a>&#160;&#160;&#160;1000</td></tr>
 <tr class="memdesc:ga74e048d2c5c89178135630676db9f403"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum time (in ms) the actor is kept off before it is switched on again (either in the same or other direction). <br /></td></tr>
 <tr class="separator:ga74e048d2c5c89178135630676db9f403"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga20d798a59b087f410c596641054d8ad7"><td class="memItemLeft" align="right" valign="top"><a id="ga20d798a59b087f410c596641054d8ad7"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>SHADES_0_RINT_FAILSAFE</b>&#160;&#160;&#160;0xff</td></tr>
+<tr class="memitem:ga20d798a59b087f410c596641054d8ad7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#ga20d798a59b087f410c596641054d8ad7">SHADES_0_RINT_FAILSAFE</a>&#160;&#160;&#160;0xff</td></tr>
+<tr class="memdesc:ga20d798a59b087f410c596641054d8ad7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Failsafe internal request value(s) (RINT) for the case the brownie has lost its connection to the master (-1 = RINT is not changed on time-out).  <a href="group__brownies__features.html#ga20d798a59b087f410c596641054d8ad7">More...</a><br /></td></tr>
 <tr class="separator:ga20d798a59b087f410c596641054d8ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaabce2fcdda34e6b59556d6d7d88c057d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gaabce2fcdda34e6b59556d6d7d88c057d">SHADES_1_RINT_FAILSAFE</a>&#160;&#160;&#160;0xff</td></tr>
-<tr class="memdesc:gaabce2fcdda34e6b59556d6d7d88c057d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Failsafe internal request value(s) (RINT) for the case the brownie has lost its connection to the master (-1 = RINT is not changed on time-out).  <a href="group__brownies__features.html#gaabce2fcdda34e6b59556d6d7d88c057d">More...</a><br /></td></tr>
+<tr class="memitem:gaabce2fcdda34e6b59556d6d7d88c057d"><td class="memItemLeft" align="right" valign="top"><a id="gaabce2fcdda34e6b59556d6d7d88c057d"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SHADES_1_RINT_FAILSAFE</b>&#160;&#160;&#160;0xff</td></tr>
 <tr class="separator:gaabce2fcdda34e6b59556d6d7d88c057d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae33529ee36571cad47a790f32f4f7d21"><td class="memItemLeft" align="right" valign="top"><a id="gae33529ee36571cad47a790f32f4f7d21"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__brownies__features.html#gae33529ee36571cad47a790f32f4f7d21">SHADES_PERSISTENCE</a>&#160;&#160;&#160;1</td></tr>
@@ -408,14 +408,14 @@ Collaboration diagram for Microcontroller: Feature Selection:</div>
 
 </div>
 </div>
-<a id="gaabce2fcdda34e6b59556d6d7d88c057d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaabce2fcdda34e6b59556d6d7d88c057d">&#9670;&nbsp;</a></span>SHADES_1_RINT_FAILSAFE</h2>
+<a id="ga20d798a59b087f410c596641054d8ad7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga20d798a59b087f410c596641054d8ad7">&#9670;&nbsp;</a></span>SHADES_0_RINT_FAILSAFE</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define SHADES_1_RINT_FAILSAFE&#160;&#160;&#160;0xff</td>
+          <td class="memname">#define SHADES_0_RINT_FAILSAFE&#160;&#160;&#160;0xff</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -430,7 +430,7 @@ Collaboration diagram for Microcontroller: Feature Selection:</div>
 <li>after the first successful read or write access to any of the shades registers or the <a class="el" href="group__brownies__interface__registers.html#gae8292fb574f54e6342f290b3f4bb0a27">BR_REG_CHANGED</a> register: if no further such access happens within the time period specified by <a class="el" href="group__brownies__features.html#ga4b97db4b3505a0d76f982067b16c87f0">SHADES_TIMEOUT</a>. </li>
 </ul>
 
-<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00407">407</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="configure_8h_source.html#l00404">404</a> of file <a class="el" href="configure_8h_source.html">configure.h</a>.</p>
 
 </div>
 </div>

@@ -33,8 +33,6 @@ The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for autom
 What is New?
 ============
 
-* Adaptations for building on **Debian 11 (Bullseye)**
-
 * Several improvements and cleanups in the **Resources** library:
     - Support for MQTT-like and shell-like wildcards ('+', '#', '*', '?')
     - Default URI prefix is now always */alias*, allowing for smaller scripts
