@@ -459,7 +459,7 @@ class CMqttImport {
         mosqErr = mosquitto_publish (
           mosq, NULL,
           reqTopic.Get (),
-          payload.Len () + envMqttNullTerminatePayload ? 1 : 0, payload.Get (),
+          payload.Len () + (envMqttNullTerminatePayload ? 1 : 0), payload.Get (),
           envMqttQoS, true
         );
         if (mosqErr != MOSQ_ERR_SUCCESS)
@@ -763,7 +763,7 @@ class CMqttExport: public CRcSubscriber {
         mosqErr = mosquitto_publish (
           mosq, NULL,
           _topic,
-          payload[0] ? (payload.Len () + envMqttNullTerminatePayload ? 1 : 0) : 0, payload.Get (),
+          payload[0] ? (payload.Len () + (envMqttNullTerminatePayload ? 1 : 0)) : 0, payload.Get (),
           envMqttQoS, true
         );
           // 'mid' = NULL (do not keep reference for later tracking), 'retain' = true
@@ -978,7 +978,7 @@ static void MqttCallbackOnConnect (struct mosquitto *mosq, void *, int connackCo
       mosqErr = mosquitto_publish (
         mosq, NULL,
         mqttBirthAndWillTopic.Get (),
-        mqttBirthPayload.Len () + envMqttNullTerminatePayload ? 1 : 0, mqttBirthPayload.Get (),
+        mqttBirthPayload.Len () + (envMqttNullTerminatePayload ? 1 : 0), mqttBirthPayload.Get (),
         envMqttQoS, true
       );
       if (mosqErr != MOSQ_ERR_SUCCESS)
@@ -1166,7 +1166,7 @@ static void MqttDone () {
     mosqErr = mosquitto_publish (
       mosq, NULL,
       mqttBirthAndWillTopic.Get (),
-      mqttWillPayload.Len () + envMqttNullTerminatePayload ? 1 : 0, mqttWillPayload.Get (),
+      mqttWillPayload.Len () + (envMqttNullTerminatePayload ? 1 : 0), mqttWillPayload.Get (),
       envMqttQoS, true
     );
     if (mosqErr != MOSQ_ERR_SUCCESS)
