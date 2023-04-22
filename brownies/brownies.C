@@ -2527,8 +2527,8 @@ static inline bool IfElvI2cInit (int fd, const char *ifName) {
   char buf[ELV_GREETING_MAX_SIZE], *lineArr[ELV_GREETING_LINES];
   char cmd[32];
   char *p, c;
-  int n, bytes, lines, verMajor, verMinor;
-  bool ok;
+  int n, bytes, lines, verMajor, verMinor, retryc;
+  bool ok, retried;
 
   // Check for serial interface and set parameters ...
   ok = (tcgetattr (fd, &ts) == 0);
@@ -2559,46 +2559,80 @@ static inline bool IfElvI2cInit (int fd, const char *ifName) {
 
   // Flush input and output buffers of the serial device ...
   tcflush (fd, TCIOFLUSH);
-
-  // Query the interface status ...
-  lines = 0;
-  p = buf;
-  lineArr[0] = buf;
-  if (write (fd, "?", 1) != 1) ok = false;
-  else {
-    while (lines < ELV_GREETING_LINES) {
-      if (p >= buf + ELV_GREETING_MAX_SIZE - 1) { ok = false; break; }
-      if (read (fd, &c, 1) != 1) { ok = false; break; }
-      if (c == '\n') {      // Note: This assums that the ELV interface sends "\r\n" at the end of each line!
-        if (p > buf) p[-1] = '\0';
-        lines++;
-        if (lines < ELV_GREETING_LINES) lineArr[lines] = p;
-      }
-      else *(p++) = c;
-    }
-    *(p++) = '\0';
-  }
-  //~ for (n = 0; n < lines; n++) INFOF (("### IfElvI2cInit (): %2i: %s", n, lineArr[n]));
-
-  // Check version string and options ...
-  if (ok) {
-    if (sscanf (lineArr[ELV_VERSION_LINE], "ELV USB-I2C-Interface v%i.%i", &verMajor, &verMinor) != 2) ok = false;
-    if (verMajor != 1 || verMinor != 8) // ok = false;
-      WARNINGF (("%s: Untested ELV firmware version v%i.%i, supported firmware is v1.8. Problems may occur.", ifName, verMajor, verMinor));
-  }
-  bytes = 0;
-  for (n = 0; n < lines; n++) if ((p = lineArr[n]) [0] == 'Y') {
-    if (p[1] < '0' || p[1] > '7') ok = false;
-    else {
-      c = configY[p[1] - '0'];
-      if (p[2] != c) {
-        cmd[bytes++] = 'Y';
-        cmd[bytes++] = p[1];
-        cmd[bytes++] = c;
+  
+  // reset device and retry once on wrong response
+  retried = false;
+  for (retryc = 0; retryc < 2; retryc++) {
+    ok = true;
+    
+    // Reset interface if 1st round failed
+    if (retryc == 1) {
+      retried = true;
+      WARNINGF (("Resetting ELV interface"));
+      if (write (fd, "Z4B", 3) != 3) {
+        WARNINGF (("Could not write reset command for ELV interface"));
+        ok = false;
+      } else {
+      // Wait for reset to complete
+        Sleep (800);
+        lines = 0;
+        p = buf;
+        lineArr[0] = buf;
+        while (lines < ELV_GREETING_LINES) {
+          if (p >= buf + ELV_GREETING_MAX_SIZE - 1) break; 
+          if (read (fd, &c, 1) != 1) break;
+          if (c == '\n') {      // Note: This assums that the ELV interface sends "\r\n" at the end of each line!
+            if (p > buf) p[-1] = '\0';
+            lines++;
+            if (lines < ELV_GREETING_LINES) lineArr[lines] = p;
+          }
+        }
       }
     }
+    if (ok) {
+      // Query the interface status ...
+      lines = 0;
+      p = buf;
+      lineArr[0] = buf;
+      if (write (fd, "?", 1) != 1) ok = false;
+      else {
+        while (lines < ELV_GREETING_LINES) {
+          if (p >= buf + ELV_GREETING_MAX_SIZE - 1) { ok = false; break; }
+          if (read (fd, &c, 1) != 1) { ok = false; break; }
+          if (c == '\n') {      // Note: This assums that the ELV interface sends "\r\n" at the end of each line!
+            if (p > buf) p[-1] = '\0';
+            lines++;
+            if (lines < ELV_GREETING_LINES) lineArr[lines] = p;
+          }
+          else *(p++) = c;
+        }
+        *(p++) = '\0';
+      }
+    }
+    //~ for (n = 0; n < lines; n++) INFOF (("### IfElvI2cInit (): %2i: %s", n, lineArr[n]));
+  
+    // Check version string and options ...
+    if (ok) {
+      if (sscanf (lineArr[ELV_VERSION_LINE], "ELV USB-I2C-Interface v%i.%i", &verMajor, &verMinor) != 2) ok = false;
+      if (verMajor != 1 || verMinor != 8) // ok = false;
+        WARNINGF (("%s: Untested ELV firmware version v%i.%i, supported firmware is v1.8. Problems may occur.", ifName, verMajor, verMinor));
+    }
+    bytes = 0;
+    for (n = 0; n < lines; n++) if ((p = lineArr[n]) [0] == 'Y') {
+      if (p[1] < '0' || p[1] > '7') ok = false;
+      else {
+        c = configY[p[1] - '0'];
+        if (p[2] != c) {
+          cmd[bytes++] = 'Y';
+          cmd[bytes++] = p[1];
+          cmd[bytes++] = c;
+        }
+      }
+    }
+    if (ok) break;
   }
   if (!ok) {
+    if (retried) WARNINGF (("Resetting of ELV interface failed"));
     DEBUGF (1, ("%s: Not an ELV interface (invalid reply or unsupported firmware version).", ifName));
     return false;
   }
