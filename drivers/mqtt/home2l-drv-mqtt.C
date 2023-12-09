@@ -1100,7 +1100,7 @@ static void MqttInit () {
     mosqErr = mosquitto_will_set (
       mosq,
       mqttBirthAndWillTopic.Get (),
-      mqttWillPayload.Len () + 1, mqttWillPayload.Get (),
+      mqttWillPayload.Len () + (envMqttNullTerminatePayload ? 1 : 0), mqttWillPayload.Get (),
       envMqttQoS, true
     );
     if (mosqErr != MOSQ_ERR_SUCCESS)
