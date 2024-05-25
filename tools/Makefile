@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ $(DAEMON_BIN): $(DEP_CONFIG) $(OBJ_DAEMON)
 
 # Automatic dependencies...
 -include $(OBJ_DAEMON:%.o=%.d)
-#~ -include $(patsubst %.o,%.d,$(OBJ_DAEMON))
+
 
 
 
@@ -66,18 +66,8 @@ $(DAEMON_BIN): $(DEP_CONFIG) $(OBJ_DAEMON)
 ############################## Misc. Scripts ###################################
 
 
-SCRIPTS := home2l home2l-adb home2l-install home2l-rollout home2l-sudo home2l-demo home2l-usbtree
+SCRIPTS := home2l home2l-adb home2l-install home2l-rollout home2l-sudo home2l-usbtree
 INITD := initd-home2l
-
-
-
-
-############################## etc/floorplan ###################################
-
-
-etc/floorplan.fpo:
-	$(HOME2L_SRC)/wallclock/home2l-fpc etc/floorplan.svg
-
 
 
 
@@ -86,10 +76,9 @@ etc/floorplan.fpo:
 
 
 clean: clean-build
-	rm -fr etc/floorplan.fpo
 
 
-build-indep: etc/floorplan.fpo
+build-indep:
 
 
 build-arch: $(DAEMON_BIN)
@@ -97,14 +86,10 @@ build-arch: $(DAEMON_BIN)
 
 install-indep:
 	@echo "Creating "$(HOME2L_INSTALL)"/VERSION..."; echo "Home2l "$(BUILD_VERSION)" "$(BUILD_DATE) > $(HOME2L_INSTALL)/VERSION; chmod 644 $(HOME2L_INSTALL)/VERSION
-	install -Dp -m 755 -t $(HOME2L_INSTALL)/bin $(SCRIPTS)
 	install -Dp -m 644 -t $(HOME2L_INSTALL) env.sh README
+	install -Dp -m 755 -t $(HOME2L_INSTALL)/bin $(SCRIPTS)
 	install -Dp -m 755 -t $(HOME2L_INSTALL)/install $(INITD)
 	install -Dp -m 755 -t $(HOME2L_INSTALL)/bin h2l-mkdir.sh
-	if [ ! -e $(HOME2L_INSTALL)/etc ]; then \
-	  find etc/ -type f -exec install -Dpm 644 "{}" "$(HOME2L_INSTALL)/{}" \; ; \
-	  chmod a+x $(HOME2L_INSTALL)/etc/rules-* ; \
-	fi
 
 
 install-arch:

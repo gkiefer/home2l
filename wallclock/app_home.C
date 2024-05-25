@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,6 +94,23 @@ ENV_PARA_STRING ("ui.indoorData2Rc", envIndoorData2Rc, NULL);
   /* Resource for the lower data field of the right info area (indoor)
    */
 
+ENV_PARA_STRING ("ui.meterSolarPower", envMeterSolarPower, "/alias/electrical/solarPower");
+  /* Resource (power) representing the solar power for the energy meter)
+   */
+ENV_PARA_STRING ("ui.meterExtPower", envMeterExtPower, "/alias/electrical/extPower");
+  /* Resource (power) representing the externally delivered power for the energy meter)
+   *
+   * The value may be negative if the house is delivering electrical power.
+   * Usually, the sum of \refenv{ui.solarPower} and \refenv{ui.extPower} is
+   * the power consumed inside the house.
+   */
+ENV_PARA_FLOAT ("ui.meterMin", envMeterMin, -2930.0);
+  /* Minimum value shown by the energy meter
+   */
+ENV_PARA_FLOAT ("ui.meterMax", envMeterMax, +3570.0);
+  /* Maximum value shown by the energy meter
+   */
+
 ENV_PARA_STRING ("ui.radarEyeRc", envRadarEyeRc, "/alias/weather/radarEye");
   /* Resource for the radar eye as provided by the 'home2l-weather' driver
    */
@@ -116,6 +133,8 @@ ENV_PARA_STRING ("ui.radarEye.cmd", envRadarEyeCmd, "cat $HOME2L_ROOT/tmp/weathe
 
 
 
+
+
 // *************************** Global variables ********************************
 
 
@@ -129,7 +148,7 @@ static SDL_Surface *surfDroids = NULL, *surfDroidsGrey = NULL;
 
 
 
-// *************************** Helpers for Home Screen *************************
+// *************************** CWidgedMultiData ********************************
 
 
 class CWidgetMultiData: public CFlatButton {
@@ -154,22 +173,6 @@ class CWidgetMultiData: public CFlatButton {
 };
 
 
-static void MultiDataFormat (char *buf, int bufSize, CRcValueState *val) {
-  CString s;
-
-  // TBD: Merge with floorplan.C:TextFormatData()?
-  switch (RcTypeGetBaseType (val->Type ())) {
-    case rctFloat:
-      sprintf (buf, "%.1f%s", val->GenericFloat (), RcTypeGetUnit (val->Type ()));
-      LangTranslateNumber (buf);
-      break;
-    default:
-      strncpy (buf, val->ToStr (&s), bufSize - 1);
-      buf[bufSize - 1] = '\0';
-  }
-}
-
-
 CWidgetMultiData::CWidgetMultiData () {
   rcData[0] = rcData[1] = rcData[2] = NULL;
   rcChanged[0] = rcChanged[1] = rcChanged[2] = false;
@@ -189,7 +192,7 @@ void CWidgetMultiData::SetResources (CResource *_rcMain, CResource *_rcSub1, CRe
 
 
 void CWidgetMultiData::SubscribeAll (CRcSubscriber *subscr) {
-  for (int n = 0; n < 3; n++) if (rcData[n]) subscr->AddResource (rcData[n]);
+  for (int n = 0; n < 3; n++) subscr->AddResource (rcData[n]);
 }
 
 
@@ -203,7 +206,7 @@ void CWidgetMultiData::Iterate () {
   int n, temp;
 
   // Return if nothing may have changed...
-  if (!rcChanged[0] && !rcChanged[1] && !rcChanged[2] && tLastPushed == NEVER) return;
+  if (!rcChanged[0] && !rcChanged[1] && !rcChanged[2] && !showSub && tLastPushed == NEVER) return;
 
   // Capture resources...
   for (n = 0; n < 3; n++) {
@@ -216,14 +219,14 @@ void CWidgetMultiData::Iterate () {
   if (vs[0].Type () != rctTemp) valid[0] = false; // main field must be a temperature
 
   // Determine view to present...
-  _showSub = false;    // Default: Main view
-  if (!valid[1] || !valid[2]) _showSub = true;   // One of the sub values is invalid => show the problem
-  if (tLastPushed != NEVER) {                     // Button was pushed => swap view
-    _showSub = !_showSub;
-    if (TicksNowMonotonic () > tLastPushed + 3000) tLastPushed = NEVER;
+  _showSub = false;                               // Default: main view
+  if (tLastPushed != NEVER) if (TicksNowMonotonic () > tLastPushed + 10000)
+    tLastPushed = NEVER;                          // Return to main view after time-out ...
+  if (tLastPushed != NEVER) {                     // Sub view selected by button
+    _showSub = true;
   }
-  if (!valid[0]) _showSub = true;                // Nothing to see in main view => force sub view
-  if (!valid[1] && !valid[2]) _showSub = false;  // Nothing to see in sub view => force main view
+  if (!valid[0]) _showSub = true;                 // Nothing to see in main view => force sub view
+  if (!valid[1] && !valid[2]) _showSub = false;   // Nothing to see in sub view => force main view
 
   // Return if no visible change happened ...
   if (_showSub == showSub) {
@@ -234,7 +237,7 @@ void CWidgetMultiData::Iterate () {
 
   // Draw the (main) view...
   surf = NULL;
-  if (!_showSub) {
+  if (!showSub) {
     if (valid[0]) {
 
       // Main text...
@@ -266,14 +269,14 @@ void CWidgetMultiData::Iterate () {
     SDL_FillRect (surf, NULL, ToUint32 (TRANSPARENT));
 
     if (valid[1]) {
-      MultiDataFormat (buf, sizeof (buf), &vs[1]);
+      vs[1].ToHuman (buf, sizeof (buf));
       surf2 = FontRenderText (font, buf, WHITE); // LIGHT_GREY);
       SurfaceBlit (surf2, NULL, surf, NULL, 0, -1);
       SurfaceFree (surf2);
     }
 
     if (valid[2]) {
-      MultiDataFormat (buf, sizeof (buf), &vs[2]);
+      vs[2].ToHuman (buf, sizeof (buf));
       surf2 = FontRenderText (font, buf, WHITE); // LIGHT_GREY);
       SurfaceBlit (surf2, NULL, surf, NULL, 0, 1);
       SurfaceFree (surf2);
@@ -295,8 +298,166 @@ void CWidgetMultiData::OnRcEvent (CResource *rc) {
 
 void CWidgetMultiData::OnPushed (bool longPushed) {
   if (tLastPushed == NEVER) tLastPushed = TicksNowMonotonic ();
+  else tLastPushed = NEVER;
+  INFOF (("### CWidgetMultiData::OnPushed(): tLastPushed = %i", (int) tLastPushed));
   Iterate ();
 }
+
+
+
+
+
+// *************************** CWidgetEnergyMeter ******************************
+
+
+class CWidgetEnergyMeter: public CWidget {
+  // Widget for the (solar) energy meter.
+  public:
+    CWidgetEnergyMeter ();
+    ~CWidgetEnergyMeter ();
+
+    void SetArea (SDL_Rect _area);
+    void SetResources (CResource *_rcSolarPower, CResource *_rcExtPower);
+    void SubscribeAll (CRcSubscriber *subscr);
+    void OnRcEvent (CResource *rc);    // To be called on any 'rceValueStateChanged' event
+
+    void Iterate ();
+
+  protected:
+    CResource *rcSolarPower, *rcExtPower;
+    SDL_Surface *surf;
+    bool rcChanged;
+};
+
+
+CWidgetEnergyMeter::CWidgetEnergyMeter () {
+  rcSolarPower = rcExtPower = NULL;
+  surf = NULL;
+  rcChanged = true;
+}
+
+
+CWidgetEnergyMeter::~CWidgetEnergyMeter () {
+  SurfaceFree (&surf);
+}
+
+
+void CWidgetEnergyMeter::SetArea (SDL_Rect _area) {
+  SurfaceFree (&surf);
+  CWidget::SetArea (_area);
+}
+
+
+void CWidgetEnergyMeter::SetResources (CResource *_rcSolarPower, CResource *_rcExtPower) {
+  rcSolarPower = _rcSolarPower;
+  rcExtPower = _rcExtPower;
+}
+
+
+void CWidgetEnergyMeter::SubscribeAll (CRcSubscriber *subscr) {
+  subscr->AddResource (rcSolarPower);
+  subscr->AddResource (rcExtPower);
+}
+
+
+void CWidgetEnergyMeter::OnRcEvent (CResource *rc) {
+  if (rc == rcSolarPower || rc == rcExtPower) rcChanged = true;
+}
+
+
+void CWidgetEnergyMeter::Iterate () {
+  float scaleMin = envMeterMin, scaleMax = envMeterMax;
+  SDL_Rect r;
+  float valSolarPower, valExtPower;
+  float pos0, posDperW, pos, posD;
+
+  if (!rcChanged) return;
+
+  // Get updated values ...
+  valSolarPower = valExtPower = NAN;
+  if (rcSolarPower) rcSolarPower->GetValue (&valSolarPower);
+  if (rcExtPower) rcExtPower->GetValue (&valExtPower);
+
+  //~ static int count = 0;
+  //~ if (count++ > 20 && count < 30) valSolarPower = valExtPower = NAN;
+  //~ valSolarPower = 5500.0;
+  //~ valExtPower = -1200.0;
+
+  // Draw surface ...
+  if (isnan (valSolarPower) && isnan (valExtPower)) {
+
+    // No numbers Make meter disappear ...
+    if (surf) SurfaceFree (&surf);
+  }
+  else {
+
+    // At least one number is defined ...
+    if (isnan (valSolarPower)) valSolarPower = 0.0;         // assert no solar power
+    if (isnan (valExtPower)) valExtPower = -valSolarPower;  // assert no power consumption
+
+    // Adapt scale limits (shift, then zoom out as necessary) ...
+    if (scaleMax < valSolarPower) {
+      // shift both limits right ...
+      scaleMin += (valSolarPower - scaleMax);
+      scaleMax = valSolarPower;
+    }
+    if (scaleMin > -valExtPower) {
+      // shift both limits left ...
+      scaleMax += (-valExtPower - scaleMin);
+      scaleMin = -valExtPower;
+    }
+    if (valSolarPower > scaleMax) scaleMax = valSolarPower;
+      // the upper limit is too high again
+      // => lower just the upper in order to scale
+
+    // Init surface ...
+    if (!surf) surf = CreateSurface (area.w, area.h);
+    SurfaceFill (surf, BLACK);
+
+    // Calculate geometry parameters ...
+    posDperW = ((float) area.w) / (scaleMax - scaleMin);
+    pos0 = posDperW * -scaleMin;
+
+    r.y = 0;
+    r.h = area.h;
+
+    // Draw bars ...
+
+    // ... solar plus ...
+    r.x = round (pos0) + 2;   // "+2": ommit main tick mark
+    r.w = round (-valExtPower * posDperW) - 2;
+    if (r.w > 0) SurfaceFillRect (surf, &r, GREY);
+
+    // ... consumption ...
+    r.x += r.w;
+    r.w = round ((valSolarPower + valExtPower) * posDperW);
+    SurfaceFillRect (surf, &r, LIGHT_GREY);
+
+    // Draw tick marks ...
+
+    // ... main (zero) mark ...
+    r.w = 3;
+    r.x = round (pos0) - 1;
+    SurfaceFillRect (surf, &r, WHITE);
+
+    // ... side marks ...
+    posD = posDperW * 1000.0;
+    r.w = 3;
+    for (pos = pos0 - posD; pos >= 0.0; pos -= posD) {
+      r.x = round (pos) - 1;
+      SurfaceFillRect (surf, &r, BLACK);
+    }
+    for (pos = pos0 + posD; pos < area.w; pos += posD) {
+      r.x = round (pos) - 1;
+      SurfaceFillRect (surf, &r, BLACK);
+    }
+  }
+
+  // Done ...
+  SetSurface (surf);
+}
+
+
 
 
 
@@ -320,6 +481,8 @@ void CWidgetMultiData::OnPushed (bool longPushed) {
 #define RADIOS_Y 16
 #define RADIO_W 72
 #define RADIO_H 72
+
+#define METER_H 12
 
 
 #define RADAR_W 128             // must match INFO_H!
@@ -388,6 +551,9 @@ class CScreenHome: public CScreen {
     // Radios...
     CFlatButton btnAccessPoint, btnBluetooth;
     CResource *rcAccessPoint;
+
+    // Energy meter ...
+    CWidgetEnergyMeter wdgEnergyMeter;
 
     // Data displays (outdoor/left, indoor/right)...
     CWidgetMultiData wdgDataOutdoor, wdgDataIndoor;
@@ -458,6 +624,7 @@ CScreenHome::~CScreenHome () {
 
 
 void CScreenHome::SubscribeAll () {
+  wdgEnergyMeter.SubscribeAll (&subscr);
   wdgDataOutdoor.SubscribeAll (&subscr);
   wdgDataIndoor.SubscribeAll (&subscr);
   subscr.Subscribe (rcRadarEye);
@@ -534,6 +701,11 @@ void CScreenHome::Setup () {
   btnBluetooth.SetArea (Rect (RADIOS_X, RADIOS_Y + RADIO_H, RADIO_W, RADIO_H));
   btnBluetooth.SetLabel (COL_APP_LABEL_LIVE, "ic-bluetooth-48");
   btnBluetooth.SetCbPushed (CbScreenHomeOnButtonPushed, this);
+
+  // Energy meter ...
+  wdgEnergyMeter.SetArea (Rect (0, 0, UI_RES_X, METER_H));
+  wdgEnergyMeter.SetResources (RcGet (envMeterSolarPower), RcGet (envMeterExtPower));
+  AddWidget (&wdgEnergyMeter);
 
   // Data displays ...
   wdgDataOutdoor.SetArea (Rect (OUTDOOR_X, OUTDOOR_Y, OUTDOOR_W, OUTDOOR_H));
@@ -665,6 +837,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
       vs = ev.ValueState ();
 
       // Notify sub-objects...
+      wdgEnergyMeter.OnRcEvent (rc);
       wdgDataOutdoor.OnRcEvent (rc);
       wdgDataIndoor.OnRcEvent (rc);
 
@@ -698,7 +871,8 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     }
   }
 
-  // Deferred processing: Update data displays ...
+  // Deferred processing: Update energy meter and data displays ...
+  wdgEnergyMeter.Iterate ();
   wdgDataOutdoor.Iterate ();
   wdgDataIndoor.Iterate ();
 

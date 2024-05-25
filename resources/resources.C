@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -147,7 +147,8 @@ typedef struct {
 
 static const TRcUnitType rcUnitTypeList[rctUnitTypesEND - rctUnitTypesBase] = {
   { "percent", rctFloat, "%" },
-  { "temp", rctFloat, "°C" }
+  { "temp", rctFloat, "°C" },
+  { "power", rctFloat, "W" }
   // --> New unit types may be added here. <--
 };
 
@@ -873,6 +874,37 @@ bool CRcValueState::SetFromStrFast (const char *str, bool warn) {
   return ok;
 }
 
+
+
+// ***** Miscellaneous *****
+
+
+void CRcValueState::ToHuman (char *retBuf, int retBufSize) {
+  CString s;
+
+  switch (RcTypeGetBaseType (type)) {
+    case rctFloat:
+      switch (type) {
+        case rctPower:
+          if (val.vFloat < 1000.0 && val.vFloat > -1000.0)
+            snprintf (retBuf, retBufSize, "%.0fW", val.vFloat);
+          else if (val.vFloat < 10000.0 && val.vFloat > -10000.0)
+            snprintf (retBuf, retBufSize, "%.2fkW", val.vFloat / 1000.0);
+          else if (val.vFloat < 100000.0 && val.vFloat > -100000.0)
+            snprintf (retBuf, retBufSize, "%.1fkW", val.vFloat / 1000.0);
+          else
+            snprintf (retBuf, retBufSize, "%.0fkW", val.vFloat / 1000.0);
+          break;
+        default:
+          snprintf (retBuf, retBufSize, "%.1f%s", val.vFloat, RcTypeGetUnit (type));
+      }
+      LangTranslateNumber (retBuf);
+      break;
+    default:
+      strncpy (retBuf, ToStr (&s), retBufSize - 1);
+      retBuf[retBufSize - 1] = '\0';
+  }
+}
 
 
 

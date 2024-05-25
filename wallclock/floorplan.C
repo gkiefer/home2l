@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -100,9 +100,34 @@ ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.optional", bool, false);
    * but just disappear or grey out.
    */
 
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.icon", bool, false);
+  /* For icon-based gadgets (except 'lock' and 'light'): Define a custom icon
+   *
+   * If set, the specified icon is used instead of the default one.
+   * The argument is the icon base name, and specially prepared image files
+   * named \texttt{<name>-24.bmp}, \texttt{<name>-24.bmp} etc. must exist
+   * in \lst{etc/icons} or \lst{share/icons}. User-supplied icons can be
+   * prepared by \reftool{home2l-icon}.
+   */
+
+ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.attention", bool, false);
+  /* For icon-based gadgets: Set the attention level
+   *
+   * Depending on the attention level and use state, the resource is highlighted,
+   * if in an active state (e.g. 'true').
+   *
+   * The attention levels are:
+   * \begin{itemize}
+   *   \item 0: always
+   *   \item 1: at night
+   *   \item 2: when away
+   *   \item 3: when away for longer (vacation)
+   * \end{itemize}
+   */
+
 
 ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.interactive", const char *, "0");
-  /* Make the gadget interactive (currently supported window or garage door gadgets)
+  /* Make the gadget interactive (currently supported for window or garage door gadgets)
    *
    * If set to a value different from a boolean "false" (or "0"), the respective gadget is
    * interactive and can be pushed by the user (e.g. like icons of type 'gtService' or 'gtLight').
@@ -124,7 +149,7 @@ ENV_PARA_BOOL ("floorplan.win.handle", envFloorplanWinHandle, false);
    * for gadgets of type window (win).
    */
 ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.handle", bool, NODEFAULT);
-  /* For window (win) gadgets: Enable resource for an extra mechanical handle sensor
+  /* For window ('win') gadgets: Enable resource for an extra mechanical handle sensor
    *
    * If the window is equipped with sensors for detecting their actual
    * closed/open(/tilted) states \textit{and} with sensors to detect the state of
@@ -144,7 +169,7 @@ ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.handle", bool, NODEFAULT);
 
 
 ENV_PARA_BOOL ("floorplan.rwin.shades", envFloorplanRwinShades, false);
-  /* Enable/disable the shades resource for roof window (rwin) gadgets
+  /* Enable/disable the shades resource for roof window ('rwin') gadgets
    *
    * This sets the default for \refenv{floorplan.gadgets.<gadgetID>.shades}
    * for gadgets of type roof window (rwin).
@@ -159,13 +184,13 @@ ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.shades", bool, NODEFAULT);
 
 
 ENV_PARA_BOOL ("floorplan.rwin.opener", envFloorplanRwinOpener, false);
-  /* Enable/disable the opener resource for roof window (rwin) gadgets
+  /* Enable/disable the opener resource for roof window ('rwin') gadgets
    *
    * This sets the default for \refenv{floorplan.gadgets.<gadgetID>.opener}
    * for gadgets of type roof window (rwin).
    */
 ENV_PARA_SPECIAL ("floorplan.gadgets.<gadgetID>.opener", bool, NODEFAULT);
-  /* For roof window (rwin) gadgets: Enable an opener resource
+  /* For roof window ('rwin') gadgets: Enable an opener resource
    *
    * If \texttt{<gadgetID>} refers to a roof window with an electric opener
    * for opening/closing, this option should be activated ('true').
@@ -209,10 +234,30 @@ enum EFloorplanViewLevel {
 #define FP_MAX_GADGET_RESOURCES 4     // Maximum average number of resources the gadgets can depend on
 
 
+enum EGadgetColor {
+  gcInvisible = 0,  // invisible / not present
+                    //   Drawn as: not visible at all
+                    //   Examples: warning icon, if warning does not apply
+  gcOffline,        // gadget is offline
+                    //   Drawn as: dark grey
+                    //   Examples: resource unavailable, but not considered a technical problem
+  gcPassive,        // gadget has a passive value and cannot be interacted with
+                    //   Drawn as: grey
+                    //   Examples: a locked door or a switched-off light on main screen
+  gcNormal,         // gadget can be interacted with or has a weak active value (e.g. an unlocked door)
+                    //   Drawn as: white (floorplan screen) / grey (widget)
+                    //   Examples: a running service on widget; an unlocked door
+  gcActive          // gadget has an active value
+                    //   Drawn as: yellow (floorplan screen) / white (widget)
+                    //   (e.g. a device/service is on, mail has been received)
+};
+
+
 enum EGadgetEmph {
-  geNone = 0,
-  geAttention,  // attention recommended; e.g. unlocked door at night or running service when out of home.
-  geAlert,      // action required; e.g. open roof window during bad weather
+  geNone = 0,   // no emphasis
+  geAttention,  // attention recommended (e.g. unlocked door at night or running service when out of home)
+  geBusy,       // device is busy (e.g. garage door opening)
+  geAlert,      // action required (e.g. open roof window during bad weather)
   geError,      // technical problem (resource unavailable)
   geEND
 };
@@ -289,7 +334,7 @@ class CGadget {
     //   These fields are managed by the subclass and must be updated in 'UpdateSurface ()' depending
     //   on any other fields above.
     SDL_Surface *surf;              // owner is the subclass
-    EGadgetEmph surfEmph;
+    EGadgetEmph surfEmph;           // emphasis level of surface
 };
 
 
@@ -370,7 +415,7 @@ class CFloorplan {
     bool ChangedUseState () { return useStateChanged; }
       ///< Get whether the use state or a request to it changed after the last 'Iterate()' call.
 
-    bool HaveAlert () { return emphGadgetsBlinking != 0; }
+    bool HaveAlert () { return haveAlert; }
 
     // Statistics ...
     int EmphGadgets () { return emphGadgets; }
@@ -401,7 +446,7 @@ class CFloorplan {
       /// should be closed due to rain or similar conditions. In the future, a new weather
       /// condition type may be introduced so that, for example, a warning to open the shades
       /// during storm or snow may be issued, too.
-    bool GetValidWeather ();
+    bool WeatherWarning ();
       ///< Get the current value of the weather warning state.
     CResource *TimerRc () { return RcGet ("/local/timer/now"); }
       ///< Get the resource representing the current time.
@@ -438,6 +483,7 @@ class CFloorplan {
     // Gadget emphasis...
     int emphGadgets, *emphGadgetsIdxList;
     int emphGadgetsBlinking;
+    bool haveAlert;
 
     bool emphChanged;
     SDL_Surface *emphSurf;
@@ -1410,6 +1456,39 @@ BUTTON_TRAMPOLINE(CbGadgetOnButtonPushed, CGadget, OnPushed);
 // ********** Helpers **********
 
 
+static inline bool GadgetIsOpaque (EGadgetType t) { return t == gtWindow || t == gtDoor || t == gtGate || t == gtGarage; }
+  // Helper to identify gadgets visualized in a non-transparent way
+
+
+static const TColor GadgetColor (EGadgetColor gc, EFloorplanViewLevel level) {
+  switch (gc) {
+    case gcInvisible: return TRANSPARENT;
+    case gcOffline:   return DARK_DARK_GREY;
+    case gcPassive:   return GREY;
+    case gcActive:    return (level == fvlMini && !FLOORPLAN_MINI_COLORED) ? WHITE : YELLOW;
+    case gcNormal:
+    default:          return (level == fvlMini && !FLOORPLAN_MINI_COLORED) ? GREY : WHITE;
+  }
+}
+
+
+static const TColor GadgetEmphColor (EGadgetEmph ge, EFloorplanViewLevel level) {
+  switch (ge) {
+    case geAttention:
+    case geBusy:      return (level == fvlMini && !FLOORPLAN_MINI_COLORED) ? GREY : DARK_YELLOW;
+    case geAlert:     return DARK_YELLOW;
+    case geError:     return LIGHT_RED;
+    case geNone:
+    default:          return BLACK;
+  }
+}
+
+
+static inline const bool GadgetEmphBlinking (EGadgetEmph ge) {
+  return (ge == geBusy || ge == geAlert);
+}
+
+
 static CResource *GetGadgetResource (CGadget *gdt, const char *name) {
   static CString s;
   return RcGet (StringF (&s, "%s/%s/%s/%s", envFloorplanRcTree, gdt->Floorplan ()->Lid (), gdt->Id (), name));
@@ -1532,7 +1611,7 @@ static const struct {
   const char *name;
   const char *icon;
 } gdtTypeInfo [gtEND] = {
-  { NULL, NULL },      // gtNone = 0
+  { NULL, NULL },             // gtNone = 0
 
   { "win",        NULL },     // gtWindow
   { "door",       NULL },     // gtDoor
@@ -1543,16 +1622,16 @@ static const struct {
 
   { "temp",       NULL },     // gtTemp
 
-  { "lock",       NULL },              // gtLock  (varying icons: "padlock" / "padlock_open")
-  { "motion",     "walk" },            // gtMotion
-  { "light",      NULL },              // gtLight (varying icons: "light_off" / "light")
-  { "mail",       "email" },           // gtMail
-  { "phone",      "phone" },           // gtPhone
-  { "music",      "audio" },           // gtMusic
-  { "wlan",       "wifi_tethering" },  // gtWlan
-  { "bluetooth",  "bluetooth" },       // gtBluetooth
-  { "service",    "service" },         // gtService
-  { "warning",    "warning" }          // gtWarning
+  { "lock",       NULL },                 // gtLock  (varying icons: "padlock" / "padlock_open")
+  { "motion",     "ic-walk" },            // gtMotion
+  { "light",      NULL },                 // gtLight (varying icons: "light_off" / "light")
+  { "mail",       "ic-email" },           // gtMail
+  { "phone",      "ic-phone" },           // gtPhone
+  { "music",      "ic-audio" },           // gtMusic
+  { "wlan",       "ic-wifi_tethering" },  // gtWlan
+  { "bluetooth",  "ic-bluetooth" },       // gtBluetooth
+  { "service",    "ic-service" },         // gtService
+  { "warning",    "ic-warning" }          // gtWarning
 };
 
 
@@ -1573,6 +1652,7 @@ class CGadgetWindow: public CGadget {
   protected:
     CResource *rcState, *rcHandle, *rcInteraction;
     int orient, size;
+    bool inconsistentHandle;
 };
 
 
@@ -1621,18 +1701,20 @@ void CGadgetWindow::InitSub (int _x, int _y, int _orient, int _size) {
   if (rcHandle) RegisterResource (rcHandle);
   RegisterResource (floorplan->UseStateRc ());
   RegisterResource (floorplan->WeatherRc ());
+  inconsistentHandle = false;
 
   // Other static properties ...
   visibilityLevel = fvlMini;
   if ( (rcInteraction = GetInteractionResource (this, rcState)) ) pushable = true;
+  if (rcHandle) pushable = true;
 }
 
 
 bool CGadgetWindow::UpdateSurface () {
-  CRcValueState vs;
+  CRcValueState vs, vsHandle;
   ERctWindowState winState, handleState;
   char buf[16];
-  TColor color;
+  EGadgetColor color;
   int scale, surfOrient;
 
   // Get window state ...
@@ -1640,18 +1722,30 @@ bool CGadgetWindow::UpdateSurface () {
   winState = ReadValidWindowState (&vs);
   if (winState == rcvWindowOpenOrTilted || vs.IsBusy ()) winState = rcvWindowOpen;
 
-  // Determine color...
-  if (vs.IsBusy ()) color = LIGHT_RED;
-  else {
-    if (viewLevel == fvlMini) color = (winState != rcvWindowClosed) ? WHITE : GREY;
-    else color = (winState != rcvWindowClosed) ? YELLOW : WHITE;
+  // Check state of handle (if present) ...
+  inconsistentHandle = false;
+  if (rcHandle) {
+    rcHandle->GetValueState (&vsHandle);
+    if (!vsHandle.IsKnown ()) inconsistentHandle = true;
+    else {
+      handleState = ReadValidWindowState (&vsHandle);
+      if (handleState == rcvWindowOpenOrTilted) handleState = rcvWindowOpen;
+      if (handleState != winState) inconsistentHandle = true;
+    }
   }
+
+  // Determine color...
+  color = (winState != rcvWindowClosed) ? gcActive : gcNormal;
 
   // Get and scale icon...
   surfOrient = (winState == rcvWindowOpen) ? orient : (orient & 3);
   snprintf (buf, sizeof (buf), "fp-win%02i%c", size, "ctll" [winState]);
   scale = floorplan->GetViewScale (viewLevel);
-  surf = IconGet (buf, color, (viewLevel == fvlMini) ? TRANSPARENT : BLACK, 1 << (ICON_SCALE - scale), surfOrient, true);
+  surf = IconGet (buf,
+                  GadgetColor (color, viewLevel),
+                  (viewLevel == fvlMini) ? TRANSPARENT : BLACK,
+                  1 << (ICON_SCALE - scale),
+                  surfOrient, true);
     // Usually, all gadget surfaces must have a transparent background.
     // We make an exception here, since the window, door and gate surface must overwrite the building wall.
     // On the mini-floorplan, the gadget must be transparent again in order to avoid artifacts if
@@ -1659,24 +1753,16 @@ bool CGadgetWindow::UpdateSurface () {
 
   // Set highlight status...
   surfEmph = geNone;
+  if (vs.IsBusy ()) surfEmph = geBusy;
   if (!vs.IsKnown ()) surfEmph = geError;
   else if (winState != rcvWindowClosed) {
     if (vs.IsBusy ()) surfEmph = geAttention;
     if (floorplan->GetValidUseState () >= ((winState == rcvWindowTilted) ? rcvUseAway : rcvUseNight)) surfEmph = geAttention;
-    if (floorplan->GetValidWeather ()) surfEmph = (winState == rcvWindowTilted || gdtType == gtGate) ? geAttention : geAlert;
+    if (floorplan->WeatherWarning ()) surfEmph = (winState == rcvWindowTilted || gdtType == gtGate) ? geAttention : geAlert;
       // Open windows and doors lead to an alert on bad weather.
       // Gates and tilted windows do not lead to an alert on bad weather (but to an attention).
   }
-  if (surfEmph == geNone && rcHandle) {
-    // Check state of handle (if present) ...
-    rcHandle->GetValueState (&vs);
-    if (!vs.IsKnown ()) surfEmph = geAttention;
-    else {
-      handleState = ReadValidWindowState (&vs);
-      if (handleState == rcvWindowOpenOrTilted) handleState = rcvWindowOpen;
-      if (handleState != winState) surfEmph = geAttention;
-    }
-  }
+  if (surfEmph < geAttention && inconsistentHandle) surfEmph = geAttention;
 
   // Done...
   return true;
@@ -1684,9 +1770,18 @@ bool CGadgetWindow::UpdateSurface () {
 
 
 void CGadgetWindow::OnPushed (CButton *btn, bool longPush) {
-  ASSERT (rcInteraction != NULL);
-  if (longPush) HandleLongPush (rcInteraction);
-  else RunResourceDialog (rcInteraction, gdtType);
+  ASSERT (rcInteraction != NULL || rcHandle != NULL);
+
+  if (rcInteraction) {
+    if (longPush) HandleLongPush (rcInteraction);
+    else RunResourceDialog (rcInteraction, gdtType);
+  }
+  else if (rcHandle) {
+    CRcValueState vs;
+    rcState->GetValueState (&vs);
+    if (vs.IsValid () && inconsistentHandle)
+      rcHandle->SetRequest (&vs, RcGetUserRequestId (), rcPrioUser, NEVER, -1000);
+  }
 }
 
 
@@ -1752,14 +1847,14 @@ bool CGadgetShades::UpdateSurface () {
   float shades;
   int ratioInt, ratioFrac, thickness;
 
-  // Read 'rcShades' and set 'surfEmph'...
+  // Read 'rcShades' and preset 'surfEmph'...
   rcShades->GetValueState (&vs);
   if (!vs.IsKnown ()) {
     surfEmph = geError;
     shades = 99.0;    // make almost fully visible (almost to give it the highlight color)
   }
   else {
-    surfEmph = geNone;
+    surfEmph = vs.IsBusy () ? geBusy : geNone;
     shades = vs.ValidFloat (0.0);
     if (shades < 0.0) shades = 0.0;
     if (shades > 100.0) shades = 100.0;
@@ -1769,10 +1864,7 @@ bool CGadgetShades::UpdateSurface () {
   if (shades == 0.0) _surf = NULL;     // Fully open: Remove surface for efficiency reasons.
   else {
     _surf = CreateSurface (viewArea.w, viewArea.h);
-    if (viewLevel == fvlMini)
-      color = (shades < 100.0) ? WHITE : GREY;
-    else
-      color = (shades < 100.0) ? YELLOW : WHITE;    // consistent with 'CGadgetWindow'
+    color = GadgetColor ((shades < 100.0) ? gcActive : gcNormal, viewLevel);
     thickness = ((orient & 1) ? viewArea.w : viewArea.h) << 8;
     ratioFrac = shades / 100.0 * thickness;
     if (ratioFrac < 256) ratioFrac = 256;   // make almost-open shades visible clearly
@@ -1825,10 +1917,10 @@ bool CGadgetShades::UpdateSurface () {
   } // if (shades == 0.0) ... else ...
   SurfaceSet (&surf, _surf);
 
-  // Set highlight status (without geError) ...
+  // Set highlight status (attention and alert cases only) ...
   if (surfEmph != geError && shades > 0.0 && shades < 100.0) {
     if (floorplan->GetValidUseState () >= rcvUseVacation) surfEmph = geAttention;
-    //~ if (floorplan->GetValidWeather ()) surfEmph = geAttention;
+    //~ if (floorplan->WeatherWarning ()) surfEmph = geAttention;
   }
 
   // Done ...
@@ -1913,10 +2005,9 @@ bool CGadgetRoofWindow::UpdateSurface () {
   ERctUseState useState;
   int scale, pos0, posD, borderX2;
 
-  surfEmph = geNone;
-
-  // Read resources...
+  // Read resources and preset 'surfEmph' ...
   rcState->GetValueState (&vs);
+  surfEmph = vs.IsBusy () ? geBusy : geNone;
   if (!vs.IsKnown ()) {
     surfEmph = geError;
     stateOpen = true;
@@ -1949,10 +2040,8 @@ bool CGadgetRoofWindow::UpdateSurface () {
   }
 
   // Determine color...
-  if (viewLevel == fvlMini)
-    color = (stateOpen || (shades > 0.0 && shades < 100.0)) ? WHITE : GREY;
-  else
-    color = (stateOpen || (shades > 0.0 && shades < 100.0)) ? YELLOW : WHITE;    // consistent with 'CGadgetWindow'
+  color = GadgetColor ((stateOpen || (shades > 0.0 && shades < 100.0)) ? gcActive : gcNormal, viewLevel);
+    // consistent with 'CGadgetWindow'
 
   // Get icon(s)...
   surfShadesUp = surfShadesDown = surf = NULL;
@@ -2007,15 +2096,15 @@ bool CGadgetRoofWindow::UpdateSurface () {
     surf = surfMerged;
   }
 
-  // Set highlight status (without geError) ...
-  if (surfEmph != geError) {
+  // Set highlight status (attention and alert) ...
+  if (surfEmph < geAttention) {
     useState = floorplan->GetValidUseState ();
     if (useState >= rcvUseNight && stateOpen) surfEmph = geAttention;
     if (useState >= rcvUseVacation && shades > 0.0 && shades < 100.0) surfEmph = geAttention;
-    if (floorplan->GetValidWeather ()) {
-      if (shades > 0.0) surfEmph = geAttention;
-      if (stateOpen) surfEmph = geAlert;
-    }
+  }
+  if (floorplan->WeatherWarning ()) {
+    if (shades > 0.0 && surfEmph < geAttention) surfEmph = geAttention;
+    if (stateOpen && surfEmph < geAlert) surfEmph = geAlert;
   }
 
   // Done...
@@ -2104,18 +2193,17 @@ void CGadgetGarage::InitSub (int _x, int _y, int _orient, int _size) {
 bool CGadgetGarage::UpdateSurface () {
   CRcValueState vs;
   bool stateOpen;
-  TColor color;
+  EGadgetColor color;
 
-  surfEmph = geNone;
-
-  // Read resource ...
+  // Read resource and preset 'surfEmph' ...
   rcState->GetValueState (&vs);
+  surfEmph = geNone;
   switch (vs.State ()) {
     case rcsValid:
       stateOpen = (ReadValidWindowState (&vs) == rcvWindowClosed) ? false : true;
       break;
     case rcsBusy:
-      surfEmph = geAttention;
+      surfEmph = geBusy;
       stateOpen = true;
       break;
     default:
@@ -2124,25 +2212,23 @@ bool CGadgetGarage::UpdateSurface () {
   }
 
   // Determine color...
-  if (vs.IsBusy ()) color = LIGHT_RED;
-  else {
-    if (viewLevel == fvlMini) color = stateOpen ? WHITE : GREY;
-    else color = stateOpen ? YELLOW : WHITE;    // consistent with 'CGadgetWindow' (open garage is no worse than tilted window)
-  }
+  color = stateOpen ? gcActive : gcNormal;
 
   // Set surface...
   surf = IconGet (stateOpen ? "fp-garageo" : "fp-garagec",
-                  color, (viewLevel == fvlMini) ? TRANSPARENT : BLACK,
-                  1 << (ICON_SCALE - floorplan->GetViewScale (viewLevel)), orient, true);
+                  GadgetColor (color, viewLevel),
+                  (viewLevel == fvlMini) ? TRANSPARENT : BLACK,
+                  1 << (ICON_SCALE - floorplan->GetViewScale (viewLevel)),
+                  orient, true);
     // Usually, all gadget surfaces must have a transparent background.
     // We make an exception here, since the garage door surface must overwrite the building wall.
     // On the mini-floorplan, the gadget must be transparent again in order to avoid artifacts if
-    // the mini-floorplan is pushed-
+    // the mini-floorplan is pushed.
 
   // Set highlight status ...
-  if (stateOpen) {
+  if (stateOpen && surfEmph < geAttention) {
     if (floorplan->GetValidUseState () >= rcvUseNight) surfEmph = geAttention;
-    if (floorplan->GetValidWeather ()) surfEmph = geAttention; // geAlert;
+    if (floorplan->WeatherWarning ()) surfEmph = geAttention; // geAlert;
   }
   if (!vs.IsKnown ()) surfEmph = geError;
 
@@ -2179,6 +2265,8 @@ class CGadgetIcon: public CGadget {
                                 //   May by set if the resource is hosted somewhere an can be powered on/off.
     TTicks tLastMotion;
     bool isOptional;
+    ERctUseState attentionLevel;
+    const char *envIconBaseName;   // icon base name, if set by user (NULL = use default icon)
 };
 
 
@@ -2193,21 +2281,41 @@ void CGadgetIcon::InitSub (int _x, int _y, int _orient, int _size) {
   //~ visibilityLevel = (_size >= 1) ? fvlMini : fvlFull;
 
   // Resources and options ...
+  RegisterResource (floorplan->UseStateRc ());
   rcState = GetGadgetResource (this, "state");
   RegisterResource (rcState);
   rcPower = GetOptionalResource (this, "power");
   RegisterResource (rcPower);
+
+  // Options ...
   isOptional = EnvGetBool (GetGadgetEnvKey (this, "optional"), false);
+  envIconBaseName = EnvGetString (GetGadgetEnvKey (this, "icon"), (const char *) NULL);
 
   // Check explicit "interaction" option ...
   if ( (rcInteraction = GetInteractionResource (this, rcState)) ) pushable = true;
 
-  // Type-specifics...
+  // Attention levels ...
   switch (gdtType) {
-
-    case gtLock:
-      RegisterResource (floorplan->UseStateRc ());
+    case gtPhone:
+    case gtLight:
+      attentionLevel = rcvUseVacation;
       break;
+    case gtWlan:
+    case gtService:
+      attentionLevel = rcvUseAway;
+      break;
+    case gtMusic:
+    case gtBluetooth:
+    case gtWarning:
+      attentionLevel = rcvUseDay;
+      break;
+    default:
+      attentionLevel = rcvUseNight;
+  };
+  attentionLevel = (ERctUseState) EnvGetInt (GetGadgetEnvKey (this, "attention"), attentionLevel);
+
+  // Type-specifics ...
+  switch (gdtType) {
 
     case gtMotion:
       tLastMotion = 0;   // 0 = "never"
@@ -2216,22 +2324,14 @@ void CGadgetIcon::InitSub (int _x, int _y, int _orient, int _size) {
       break;
 
     case gtPhone:
-      RegisterResource (floorplan->UseStateRc ());
-      pushable = true;
-      break;
-
     case gtLight:
     case gtMusic:
     case gtWlan:
     case gtBluetooth:
     case gtService:
-      RegisterResource (floorplan->UseStateRc ());
       pushable = true;
       break;
 
-    case gtMail:
-      RegisterResource (floorplan->UseStateRc ());
-      break;
     default:
       break;
   };
@@ -2241,35 +2341,32 @@ void CGadgetIcon::InitSub (int _x, int _y, int _orient, int _size) {
 bool CGadgetIcon::UpdateSurface () {
   char buf[256];
   const char *iconBaseName;
-  CRcValueState vs;
-  ERctUseState attentionLevel;
+  CRcValueState vs, vsPower;
   ERctPhoneState phoneState;
-  TColor iconColor;
+  EGadgetColor iconColor;
   bool changePossible, locked, motion, showAsUnkown;
 
-  // Set defaults...
+  // Read main resource and set defaults ...
+  rcState->GetValueState (&vs);
+  iconBaseName = envIconBaseName ? envIconBaseName : gdtTypeInfo [gdtType].icon;
+  iconColor = (vs.ValidBool (false) ? gcActive : (pushable && rcState->IsWritable ()) ? gcNormal : gcPassive);
+  surfEmph = vs.IsBusy () ? geBusy : geNone;
+  showAsUnkown = !vs.IsKnown ();   // 'surfEmph' is set to 'geError' later by evaluating 'showAsUnknown'
   changePossible = true;
-  iconBaseName = gdtTypeInfo [gdtType].icon;
-  iconColor = (viewLevel == fvlMini) ? GREY : WHITE;
-  surfEmph = geNone;
-  showAsUnkown = false;
 
   // Type-specific appearances...
   switch (gdtType) {
 
     case gtLock:
-      rcState->GetValueState (&vs);
       locked = vs.ValidBool (false);
-      iconBaseName = locked ? "padlock" : "padlock_open";
-      iconColor = locked ? GREY : WHITE;
-      if (floorplan->GetValidUseState () >= rcvUseNight && !locked)
+      iconColor = locked ? gcPassive : gcActive;
+      if (!iconBaseName) iconBaseName = locked ? "ic-padlock" : "ic-padlock_open";
+      if (floorplan->GetValidUseState () >= attentionLevel && !locked)
         surfEmph = geAttention;
-      showAsUnkown = !vs.IsKnown ();
       break;
 
     case gtMotion:
-      iconColor = WHITE;
-      rcState->GetValueState (&vs);
+      iconColor = gcActive;
       if (!vs.IsKnown ()) {
         showAsUnkown = true;
         tLastMotion = -1;   // -1 = "never", but force UI update
@@ -2278,12 +2375,12 @@ bool CGadgetIcon::UpdateSurface () {
         motion = vs.Bool ();
         if (!motion) {
           if (tLastMotion <= 0) {
-            iconBaseName = NULL;
+            iconColor = gcInvisible;
             if (tLastMotion == 0) changePossible = false;   // give hint that no redrawing is necessary
           }
           else {
             if (TicksNowMonotonic () > tLastMotion + TICKS_FROM_SECONDS (envFloorplanMotionRetention)) {
-              iconBaseName = NULL;
+              iconColor = gcInvisible;
               tLastMotion = 0;   // 0 = "never"
             }
           }
@@ -2296,33 +2393,32 @@ bool CGadgetIcon::UpdateSurface () {
       break;
 
     case gtPhone:
-      rcState->GetValueState (&vs);
       phoneState = rcvPhoneIdle;
       if (vs.Type () == rctBool) phoneState = vs.ValidBool (false) ? rcvPhoneInCall : rcvPhoneIdle;
       else if (vs.Type () == rctPhoneState) phoneState = (ERctPhoneState) vs.ValidUnitInt (rctPhoneState);
       else vs.Clear (rctPhoneState);
 
-      if (!vs.IsKnown ()) showAsUnkown = true;
-      else switch (phoneState) {
+      iconColor = gcNormal;
+      if (vs.IsKnown ()) switch (phoneState) {
         case rcvPhoneRinging:
           surfEmph = geAttention;
           // fall through: icon color is the same as in call...
         case rcvPhoneInCall:
-          iconColor = YELLOW;
+          iconColor = gcActive;
           break;
         default:
           break;
       }
 
       // Highlight, if on during vacation ...
-      if (floorplan->GetValidUseState () >= rcvUseVacation) {
+      if (surfEmph < geAttention && floorplan->GetValidUseState () >= attentionLevel) {
+        // 'vs' still contains the phone state ...
         if (!rcPower) {
-          // 'vs' still contains the phone state ...
           if (vs.IsKnown ()) surfEmph = geAttention;
         }
         else {
-          rcPower->GetValueState (&vs);
-          if (vs.IsValid () && vs.ValidBool (true)) surfEmph = geAttention;
+          rcPower->GetValueState (&vsPower);
+          if (vsPower.ValidBool (true)) surfEmph = geAttention;
         }
       }
       break;
@@ -2333,43 +2429,36 @@ bool CGadgetIcon::UpdateSurface () {
     case gtBluetooth:
     case gtService:
 
-      // Set color ...
-      rcState->GetValueState (&vs);
-      if (vs.IsBusy ()) iconColor = LIGHT_RED;
-      else {
-        if (vs.ValidBool (false)) iconColor = YELLOW;
-      }
-
       // Determine emphasis ...
-      if (!vs.IsKnown ()) showAsUnkown = true;
-      else if (vs.ValidBool (false) == true && gdtType != gtLight) {
-        switch (gdtType) {
-          case gtLight:     attentionLevel = rcvUseVacation; break;
-          case gtMusic:
-          case gtBluetooth: attentionLevel = rcvUseDay;  break;
-          default:          attentionLevel = rcvUseNight;
-        }
-        if (floorplan->GetValidUseState () > attentionLevel) surfEmph = geAttention;
-      }
+      if (surfEmph < geAttention && vs.ValidBool (false) == true)
+        if (floorplan->GetValidUseState () >= attentionLevel) surfEmph = geAttention;
 
-      // Set icon (if not constant) ...
-      if (gdtType == gtLight) {
-        iconBaseName = vs.ValidBool (false) ? "light" : "light_off";
+      // Type-specific behavior ...
+      switch (gdtType) {
+        case gtLight:
+          iconBaseName = vs.ValidBool (false) ? "ic-light" : "ic-light_off";
+          break;
+        case gtBluetooth:
+          // Bluetooth devices are not meant to be switched on by the floorplan,
+          // hence we can render them passive if off.
+          if (vs.ValidBool (true) == false) iconColor = gcPassive;
+          break;
+        default:
+          break;
       }
       break;
 
     case gtMail:
     case gtWarning:
-      iconColor = YELLOW;
-      rcState->GetValueState (&vs);
-      if (!vs.IsKnown ()) {
-        if (!isOptional) showAsUnkown = true;   // if optional, the icon disappears completely
-      }
-      else {
-        if (vs.ValidBool (false)) {     // there is new mail ...
-          if (floorplan->GetValidUseState () >= rcvUseVacation || gdtType == gtWarning) surfEmph = geAttention;
+      if (vs.IsKnown ()) {
+        if (vs.ValidBool (false)) {     // there is new mail or a pending warning ...
+          // Set attention ...
+          if (floorplan->GetValidUseState () >= attentionLevel) surfEmph = geAttention;
         }
-        else iconBaseName = NULL;       // no new mail
+        else {
+          // No error and no mail/warning: let icon disappear completely ...
+          iconColor = gcInvisible;
+        }
       }
       break;
 
@@ -2379,42 +2468,39 @@ bool CGadgetIcon::UpdateSurface () {
 
   // Check power resource and adapt appearance accordingly if not clearly powered on ...
   if (rcPower) {
-    rcPower->GetValueState (&vs);
-    if (!vs.IsKnown ()) {
+    rcPower->GetValueState (&vsPower);
+    if (!vsPower.IsKnown ()) {
       showAsUnkown = true;
     }
-    else if (vs.IsBusy ()) {
-      iconColor = LIGHT_RED;
+    else if (vsPower.IsBusy ()) {
+      if (surfEmph < geBusy) surfEmph = geBusy;
       showAsUnkown = false;
     }
-    else if (vs.ValidBool (true) == false) {
-      iconColor = DARK_DARK_GREY;
+    else if (vsPower.ValidBool (true) == false) {
+      iconColor = gcOffline;
       showAsUnkown = false;
     }
   }
 
   // Show as unknown if applicable ...
   if (showAsUnkown) {
-    if (isOptional) iconColor = DARK_DARK_GREY;
+    if (isOptional) iconColor = gcOffline;
     else {
       surfEmph = geError;
-      iconColor = WHITE;
+      iconColor = gcNormal;
     }
   }
 
   // Set the surface...
-#if !FLOORPLAN_MINI_COLORED
-  if (viewLevel == fvlMini) if (iconColor == YELLOW) iconColor = WHITE;
-#endif
-  if (!iconBaseName || viewArea.w < 12) surf = NULL;      // icon not visible
+  if (iconColor == gcInvisible || viewArea.w < 12) surf = NULL;      // icon not visible
   else {
     if (viewArea.w >= 48) {
-      snprintf (buf, sizeof (buf),  "ic-%s-%02i", iconBaseName, viewArea.w);
-      surf = IconGet (buf, iconColor);
+      snprintf (buf, sizeof (buf),  "%s-%02i", iconBaseName, viewArea.w);
+      surf = IconGet (buf, GadgetColor (iconColor, viewLevel));
     }
     else {
-      snprintf (buf, sizeof (buf),  "ic-%s-48", iconBaseName);
-      surf = IconGet (buf, iconColor, TRANSPARENT, 48 / viewArea.w);
+      snprintf (buf, sizeof (buf),  "%s-48", iconBaseName);
+      surf = IconGet (buf, GadgetColor (iconColor, viewLevel), TRANSPARENT, 48 / viewArea.w);
     }
   }
 
@@ -2509,21 +2595,6 @@ class CGadgetText: public CGadget {
 #define TEXT_FONT FontGet (fntNormal, 20)
 
 
-static void TextFormatData (char *buf, int bufSize, CRcValueState *vs) {
-  CString s;
-
-  // TBD: Merge with app_home.C:ScreenHomeFormatData()?
-  switch (RcTypeGetBaseType (vs->Type ())) {
-    case rctFloat:
-      sprintf (buf, "%.1f%s", vs->GenericFloat (), RcTypeGetUnit (vs->Type ()));
-      LangTranslateNumber (buf);
-      break;
-    default:
-      strncpy (buf, vs->ToStr (&s), bufSize - 1); buf[bufSize - 1] = '\0';
-  }
-}
-
-
 void CGadgetText::InitSub (int _x, int _y, int _orient, int _size) {
   int w, h;
 
@@ -2551,15 +2622,18 @@ bool CGadgetText::UpdateSurface () {
   CRcValueState vs;
   char buf[64];
   SDL_Surface *surfText;
-  TColor color;
+  EGadgetColor color;
   int scale;
 
   // Clear surface...
   SurfaceFree (&surf);
-  surfEmph = geNone;
 
-  // Read resource...
+  // Read resource ...
   rcData->GetValueState (&vs);
+  surfEmph = geNone;
+  color = vs.IsBusy () ? gcPassive : gcNormal;
+    // unlike other gadgets, a "busy" state is visualized less noisy by
+    // just setting the text to a different color.
 
   // Check if unknown ...
   if (!vs.IsKnown ()) {
@@ -2573,21 +2647,14 @@ bool CGadgetText::UpdateSurface () {
     if (vs.ValidFloat (-1.0) == 0.0) return true;
   }
 
-  // Get color / handle busy state ...
-  if (vs.State () == rcsBusy) {
-    color = LIGHT_RED;
-    vs.SetState (rcsValid);   // to not print the "busy" character
-  }
-  else
-    color = WHITE;
-
   // Draw surface...
   surf = CreateSurface (viewArea.w, viewArea.h);
   SurfaceFill (surf, TRANSPARENT);
-  TextFormatData (buf, sizeof (buf), &vs);
+  vs.SetState (rcsValid);     // to not print an eventual "busy" character
+  vs.ToHuman (buf, sizeof (buf));
   scale = floorplan->GetViewScale (viewLevel) + size;
-  if (scale >= 0) {   // sanity, smaller text is probably unreadable anyway
-    surfText = FontRenderText (FontGet (fntNormal, 5 << scale), buf, color);
+  if (scale >= 0) {           // sanity, smaller text is probably unreadable anyway
+    surfText = FontRenderText (FontGet (fntNormal, 5 << scale), buf, GadgetColor (color, viewLevel));
     SurfaceBlit (surfText, NULL, surf, NULL, 0, 0);
     SurfaceFree (&surfText);
   }
@@ -2645,6 +2712,8 @@ void CFloorplan::Init () {
   emphGadgetsIdxList = NULL;
   emphChanged = false;
   emphSurf = NULL;
+
+  haveAlert = false;
 }
 
 
@@ -2819,7 +2888,7 @@ ERctUseState CFloorplan::GetValidUseState () {
 }
 
 
-bool CFloorplan::GetValidWeather () {
+bool CFloorplan::WeatherWarning () {
   if (!rcWeather) return false;         // No weather resource => Do not warn
   return rcWeather->ValidBool (true);   // Weather resource defined, but not available => Warn
 }
@@ -2879,6 +2948,7 @@ void CFloorplan::SetView (EFloorplanViewLevel _viewLevel, CScreen *_screen) {
 
     // Update gadgets ...
     emphGadgets = emphGadgetsBlinking = 0;
+    haveAlert = false;
     emphBlinkOn = true;
     emphBlinkT = NEVER;
     for (n = 0; n < gadgets; n++) {
@@ -2887,7 +2957,8 @@ void CFloorplan::SetView (EFloorplanViewLevel _viewLevel, CScreen *_screen) {
         gdt->SetView (_viewLevel);
         if (gdt->SurfaceEmph () != geNone) {
           emphGadgetsIdxList[emphGadgets++] = n;
-          if (gdt->SurfaceEmph () == geAlert) emphGadgetsBlinking++;
+          if (GadgetEmphBlinking (gdt->SurfaceEmph ())) emphGadgetsBlinking++;
+          if (gdt->SurfaceEmph () == geAlert) haveAlert = true;
         }
       }
     }
@@ -2929,6 +3000,7 @@ void CFloorplan::Iterate () {
   CResource *rc;
   CRcEvent ev;
   TTicks now;
+  EGadgetEmph emph;
   int n, k, idx, step, gdtIdx;
 
   // Poll subscriber events and mark all affected gadgets...
@@ -3001,11 +3073,15 @@ void CFloorplan::Iterate () {
     }
   }
 
-  // Handle blinking ...
+  // Handle blinking and update 'haveAlert' ...
   if (emphChanged) {            // Update 'emphGadgetsBlinking'...
     emphGadgetsBlinking = 0;
-    for (n = 0; n < emphGadgets; n++)
-      if (gadgetList[emphGadgetsIdxList[n]]->SurfaceEmph () == geAlert) { emphGadgetsBlinking++; }
+    haveAlert = false;
+    for (n = 0; n < emphGadgets; n++) {
+      emph = gadgetList[emphGadgetsIdxList[n]]->SurfaceEmph ();
+      if (GadgetEmphBlinking (emph)) { emphGadgetsBlinking++; }
+      if (emph == geAlert) haveAlert = true;
+    }
     if (!emphGadgetsBlinking) emphBlinkT = NEVER;
   }
   if (emphGadgetsBlinking) {    // Check if the blinking state changed...
@@ -3023,12 +3099,6 @@ void CFloorplan::Iterate () {
 
 
 SDL_Surface *CFloorplan::GetEmphSurface () {
-  static const TColor emphColors[geEND] = { BLACK, ColorScale (YELLOW, 0x80), DARK_YELLOW, LIGHT_RED };
-#if FLOORPLAN_MINI_COLORED
-  static const TColor *emphColorsMini = emphColors;
-#else
-  static const TColor emphColorsMini[geEND] = { BLACK, GREY, DARK_YELLOW, LIGHT_RED };
-#endif
   CGadget *gdt;
   SDL_Rect r;
   int n, e;
@@ -3041,7 +3111,7 @@ SDL_Surface *CFloorplan::GetEmphSurface () {
       // Note: For efficiency reasons (to keep the widget fast), the emphasis
       //       has the same resolution as the widget, independent of 'preScale'!
     SDL_FillRect (emphSurf, NULL, ToUint32 (TRANSPARENT));    // Clear
-    for (e = geAttention; e < geEND; e++) if (e != geAlert || emphBlinkOn)
+    for (e = geAttention; e < geEND; e++) if (!GadgetEmphBlinking ((EGadgetEmph) e) || emphBlinkOn)
       for (n = 0; n < emphGadgets; n++) {
         gdt = gadgetList[emphGadgetsIdxList[n]];
         if (gdt->SurfaceEmph () == e) {
@@ -3051,7 +3121,7 @@ SDL_Surface *CFloorplan::GetEmphSurface () {
           r.w <<= preScale;
           r.h <<= preScale;
           RectGrow (&r, 8, 8);
-          SDL_FillRect (emphSurf, &r, ToUint32 ((viewLevel == fvlMini) ? emphColorsMini[e] : emphColors[e]));
+          SDL_FillRect (emphSurf, &r, ToUint32 (GadgetEmphColor ((EGadgetEmph) e, viewLevel)));
         }
       }
   }
@@ -3325,10 +3395,6 @@ void CScreenFloorplan::CheckAlert (CScreen *_returnScreen) {
     haveAlert = _haveAlert;
   }
 }
-
-
-static inline bool GadgetIsOpaque (EGadgetType t) { return t == gtWindow || t == gtDoor || t == gtGate || t == gtGarage; }
-  // Helper to identify gadgets visualized in a non-transparent way
 
 
 void CScreenFloorplan::Activate (bool on) {

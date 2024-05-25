@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@
  *
  *  For handling slave communication, two actors (logical threads/processes) have to be distinguished:
  *
- *  a) ISR - The slave ISR in interaction with 'TwiSlIterate()', the  functionality implemented in this module.
+ *  a) ISR - The slave ISR in interaction with 'TwiSlIterate()', the functionality implemented in this module.
  *  b) APP - The (application) routines that generate replies on requests. These may be the
  *           application, the hub (below) or the error handler in 'TwiSlIterate()'.
  *
@@ -659,7 +659,7 @@ EBrStatus TwiSlIterate () {
 
     case slsSendingStall:
       // Master is waiting for a reply, but none has been prepared yet.
-      // If the message received so far with error, we prepare the reply here.
+      // If the message received so far has an error, we prepare the reply here.
       // If the message is OK or for a child (hub), the main program must prepare the reply.
 
       // Handle completed requests, reply to faulty requests to the own host ...
@@ -1067,8 +1067,8 @@ void TwiHubIterate () {
         hubState = hsIdle;
       }
       // Fall through to 'hsIdle' handling ...
-      //   This is important to handle the master bus locking situations that in this
-      //   we caused ourselves.
+      //   This is important to handle the master bus locking situations that in
+      //   this case we caused ourselves.
     case hsIdle:
 
       // Check for resurrection request ...
@@ -1153,7 +1153,7 @@ void TwiHubIterate () {
         }
       }
       else {
-        if (slReqStatus != brIncomplete) {    // request comlete and completely forwarded?
+        if (slReqStatus != brIncomplete) {    // request complete and completely forwarded?
           TwiMaSendStop ();
           hubState = hsIdle;
         }

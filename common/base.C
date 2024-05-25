@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -195,12 +195,6 @@ bool UnlinkTree (const char *relOrAbsPath, const char *skipPattern) {
           closedir (dir);
           return false;
         }
-        DEBUGF (2, ("Removing directory '%s'.", s.Get ()));
-        if (rmdir (s.Get ()) != 0) {
-          WARNINGF (("Failed to unlink directory '%s': %s", s.Get (), strerror (errno)));
-          closedir (dir);
-          return false;
-        }
       }
       else {
         DEBUGF (2, ("Removing file '%s'.", s.Get ()));
@@ -214,6 +208,16 @@ bool UnlinkTree (const char *relOrAbsPath, const char *skipPattern) {
 
   }
   closedir (dir);
+
+  // Remove the directory itself ...
+  EnvGetHome2lRootPath (&s, relOrAbsPath);
+  DEBUGF (2, ("Removing directory '%s'.", s.Get ()));
+  if (rmdir (s.Get ()) != 0) {
+    WARNINGF (("Failed to unlink directory '%s': %s", s.Get (), strerror (errno)));
+    return false;
+  }
+
+  // Done ...
   return true;
 }
 
@@ -2743,7 +2747,7 @@ void Sleep (TTicks mSecs) {
 // *************************** CShell ******************************************
 
 
-ENV_PARA_SPECIAL ("sys.cmd.<name>", const char *, NULL)
+ENV_PARA_SPECIAL ("sys.cmd.<name>", const char *, NULL);
   /* Predefine a shell command
    *
    * For security reasons, shell commands executed remotely are never transferred over the network
@@ -2803,7 +2807,7 @@ bool CShellBare::Start (const char *cmd, bool readStdErr) {
   int pipeToScript[2], pipeFromScript[2];
   CString s1, s2, sCmd;
 
-  DEBUGF (1, (host.Get () ? "Starting shell command on host '%2$s': '%1$s' ..." :  "Starting shell command locally: '%s' ...", cmd ? cmd : host.IsEmpty () ? "<bash>" : "<ssh>", host.Get ()));
+  DEBUGF (1, (host.Get () [0] ? "Starting shell command on host '%2$s': '%1$s' ..." :  "Starting shell command locally: '%s' ...", cmd ? cmd : host.IsEmpty () ? "<bash>" : "<ssh>", host.Get ()));
 
   // Preparation ...
   id.Set (cmd);

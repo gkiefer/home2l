@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 #include <time.h>
 #include <math.h>
+#include <ctype.h>
 
 
 
@@ -351,8 +352,10 @@ ENV_PARA_INT ("rc.drvCrashWait", envCrashWait, 60000);
    *
    * This parameter specifies the waitung time.
    */
-ENV_PARA_INT ("rc.drvMaxReportTime", envExtReportTime, 5000);
+ENV_PARA_INT ("rc.drvMaxReportTime", envExtReportTime, -1);
   /* Maximum time (ms) to wait until all external drivers have reported their resources
+   *
+   * If negative, the server waits without a time limit.
    */
 ENV_PARA_INT ("rc.drvIterateWait", envIterateWait, 256);
   /* Iteration interval (ms) for the manager of external drivers
@@ -384,7 +387,7 @@ class CExtDriver: public CRcDriver {
     static void ClassStart ();    // to be called to finalize the initialization phase
     static void ClassStop ();
 
-    void PutCmd (EExtDriverCmd cmd, TTicks t = 0, TTicks interval = 0);
+    static void PutCmd (EExtDriverCmd cmd, CExtDriver* drv, TTicks t = 0, TTicks interval = 0);
 
     static void ThreadRoutine ();
 
@@ -437,13 +440,12 @@ static void *CExtDriverThreadRoutine (void *) {
 
 
 static void CExtDriverIterateTimerCallback (CTimer *, void *) {
-  ((CExtDriver *) NULL)->PutCmd (cmdIterate);
+  CExtDriver::PutCmd (cmdIterate, NULL);
 }
 
 
 static void CExtDriverPollTimerCallback (CTimer *, void *data) {
-  CExtDriver *eDrv = (CExtDriver *) data;
-  eDrv->PutCmd (cmdInvokePoll);
+  CExtDriver::PutCmd (cmdInvokePoll, (CExtDriver *) data);
 }
 
 
@@ -461,7 +463,7 @@ CExtDriver::CExtDriver (const char *_lid, const char *_shellCmd): CRcDriver (_li
   first = this;
 
   // Schedule init command (init)...
-  PutCmd (cmdInvokeInit);
+  PutCmd (cmdInvokeInit, this);
 }
 
 
@@ -477,16 +479,16 @@ void CExtDriver::ClassStart () {
   int tMaxWait;
 
   // Wait until all external drivers have completed their initialization...
-  tMaxWait = envExtReportTime;
+  tMaxWait = (envExtReportTime >= 0) ? envExtReportTime : INT_MAX;
   for (drv = first; drv && tMaxWait > 0; drv = drv->next) {
     while (!drv->InitComplete () && tMaxWait > 0) {
-      Sleep (64);
-      tMaxWait -= 64;
+      Sleep (envIterateWait);
+      if (envExtReportTime >= 0) tMaxWait -= envIterateWait;
     }
   }
-  for (drv = first; drv && tMaxWait > 0; drv = drv->next) {
+  for (drv = first; drv; drv = drv->next) {
     if (!drv->InitComplete ())
-      WARNINGF(("Resource driver '%s' has not properly initialized itself - please fix the driver or disable it. Unexpected things may happen now."));
+      WARNINGF(("Resource driver '%s' has not properly initialized itself - please fix the driver or disable it. Unexpected things may happen now.", drv->Lid ()));
   }
 }
 
@@ -510,14 +512,14 @@ void CExtDriver::ClassStop () {
 }
 
 
-void CExtDriver::PutCmd (EExtDriverCmd cmd, TTicks t, TTicks interval) {
+void CExtDriver::PutCmd (EExtDriverCmd cmd, CExtDriver* drv, TTicks t, TTicks interval) {
   TExtDriverCmdRec cr;
 
 #if WITH_CLEANMEM
   bzero (&cr, sizeof (cr));
 #endif
   cr.cmd = cmd;
-  cr.drv = this;
+  cr.drv = drv;
   //~ INFOF(("### PutCmd (%i)", cmd));
   sleeper.PutCmd (&cr, t, interval);
 }
@@ -528,7 +530,7 @@ void CExtDriver::DriveValue (CResource *rc, CRcValueState *vs) {
 
   assignSetMutex.Lock ();
   assignSet.Set (rc->Lid (), vs);
-  PutCmd (cmdIterate);
+  PutCmd (cmdIterate, this);
   assignSetMutex.Unlock ();
   if (vs->IsValid ()) vs->SetToReportBusy ();
 }
@@ -539,11 +541,12 @@ void CExtDriver::OnShellReadable () {
   CSplitString arg;
   CResource *rc = NULL;
   CRcValueState vs;
+  const char *msg;
   bool ok = false;
 
   //~ INFO("# OnShellReadable");
   while (shell.ReadLine (&line)) {
-    //~ INFOF (("From '%s': %s", Lid (), line.Get ()));
+    DEBUGF (2, ("From '%s': %s", Lid (), line.Get ()));
     line.Strip ();
     arg.Set (line.Get (), 5);
     switch (line [0]) {
@@ -574,12 +577,14 @@ void CExtDriver::OnShellReadable () {
         break;
 
       case '.':             // initialization complete - enter polling mode
+        INFOF (("Driver '%s': Initialization complete - entering polling mode.", Lid ()));
         initComplete = true;
         keepRunning = false;
         ok = true;
         break;
 
       case ':':             // initialization/restarting complete - enter "keep running" mode
+        INFOF (("Driver '%s': Initialization complete - entering keep-running mode.", Lid ()));
         initComplete = true;
         keepRunning = true;
         ok = true;
@@ -609,6 +614,26 @@ void CExtDriver::OnShellReadable () {
           rc->ReportValueState (&vs);
         break;
 
+      case 'i': case 'I':   // "INFO: ..."
+      case 'w': case 'W':   // "WARNING: ..."
+      case 'e': case 'E':   // "ERROR: ..."
+        msg = strchr (line.Get (), ':');
+        if (msg) {
+          msg++;
+          while (isspace (*msg)) msg++;
+          switch (tolower (line[0])) {
+            case 'i': INFOF (("(%s) %s", Lid (), msg)); break;
+            case 'w': WARNINGF (("(%s) %s", Lid (), msg)); break;
+            case 'e': WARNINGF (("(%s) ERROR: %s", Lid (), msg)); break;
+          }
+          ok = true;
+        }
+        break;
+
+      case '#': case '\0':  // comment or empty line: ignore silently
+        ok = true;
+        break;
+
       default:
         ok = false;
     }
@@ -636,8 +661,8 @@ void CExtDriver::OnIterate () {
       if (keepRunning) {
         // A "keep running" process has died just now...
         WARNINGF (("Driver process '%s' died unexpectedly", Lid ()));
-        if (tNow - tStart >= envMinRunTime) PutCmd (cmdInvokeRestart);
-        else PutCmd (cmdInvokeRestart, TicksNowMonotonic () + envCrashWait);
+        if (tNow - tStart >= envMinRunTime) PutCmd (cmdInvokeRestart, this);
+        else PutCmd (cmdInvokeRestart, this, TicksNowMonotonic () + envCrashWait);
       }
     }
   }
@@ -647,8 +672,10 @@ void CExtDriver::OnIterate () {
   if (assignSet.Entries ()) {
     if (keepRunning) {
       if (shell.IsRunning ())
-        for (n = 0; n < assignSet.Entries (); n++)
+        for (n = 0; n < assignSet.Entries (); n++) {
           shell.WriteLine (StringF (&s, "%s %s", assignSet.GetKey (n), assignSet.Get (n)->ToStr (&s2)));
+          assignSet.Del (0);
+        }
     }
     else {
       if (!shellInUse) {
@@ -669,7 +696,7 @@ void CExtDriver::OnIterate () {
   assignSetMutex.Unlock ();
 
   // Trigger a new poll if one pending and shell is idle...
-  if (pollPending && !keepRunning && !shellInUse) PutCmd (cmdInvokePoll);
+  if (pollPending && !keepRunning && !shellInUse) PutCmd (cmdInvokePoll, this);
 }
 
 
@@ -704,7 +731,7 @@ void CExtDriver::OnInvoke (EExtDriverCmd cmd) {
   };
 
   // Start shell command ...
-  shellInUse = shell.Start (StringF (&s, fmt, shellCmd.Get ()));
+  shellInUse = shell.Start (StringF (&s, fmt, shellCmd.Get ()), true);
   if (shellInUse) tStart = TicksNow ();
 }
 

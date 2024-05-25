@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+
+    <!-- To disappear in the future -->
+    <issue id="ExpiredTargetSdkVersion" severity="ignore" />
+
+    <!-- [2024-01-04] libSDL contains lots of 'MissingPermission' and other violations ... -->
+    <issue id="all">
+        <ignore path="app/src/main/java/org/libsdl/*" />
+    </issue>
+
+    <!-- Reported issues considered to be correct in Home2L code ... -->
+    <issue id="IconLauncherShape" severity="ignore" />
+      <!-- [2024-01-06] The launcher complies with https://developer.android.com/develop/ui/views/launch/icon_design_adaptive -->
+    <issue id="Wakelock" severity="ignore" />
+      <!-- [2024-01-05] false positive in Home2l.java:327 ('WakeLock wl ...' aquired + immediately released) -->
+    <issue id="WakelockTimeout" severity="ignore" />
+      <!-- Timeouts can cause race conditions. -->
+    <issue id="StaticFieldLeak">
+        <ignore path="app/src/main/java/org/home2l/app/Home2l.java" />
+          <!-- 'Home2l.activity' must and can be static. -->
+    </issue>
+
+</lint>

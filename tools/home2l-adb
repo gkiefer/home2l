@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,12 @@
 #  <admin user> ALL=(home2l) NOPASSWD:/usr/bin/adb
 #
 
+
+ANDROID_UPDATE_DIR="/sdcard/home2l-update"
+  # Place on Android devices, where configuration updates are searched for and
+  # installed on app startup. This directory must match the directory set in
+  # 'system.C'.
+TMP_DIR="/tmp/home2l-adb"
 
 
 # Usage ...
@@ -70,16 +76,19 @@ REC=( `grep "^[^#]" $HOME2L_ROOT/etc/androidb.conf | grep $DEV_NAME` )
 DEV_NAME=${REC[0]}    # (Host)name of the Android device
 DEV_HOST=${REC[1]}    # (Host)name of the hosting machine, to which the Android device is connected
 DEV_ID=${REC[2]}      # ADB device ID
-DEV_PORT=${REC[3]}    # Forwarding port
+DEV_PORT=${DEV_ID##*:}
+if [[ "$DEV_ID" == "$DEV_PORT" ]]; then DEV_PORT=""; fi
+DEV_FORWARD=${REC[3]} # Forwarding port
 
 
-
-# Re-run the script on the correct hosting machine...
+# Re-run the script on the correct hosting machine and as user 'home2l' ...
 if [[ "$HOSTNAME" != "$DEV_HOST" ]]; then
   #~ echo HOSTNAME=-$HOSTNAME- DEV_HOST=-$DEV_HOST-
   exec ssh -o LogLevel=QUIET -t home2l@$DEV_HOST home2l ${0##*-} $@
 fi
-
+if [[ "`whoami`" != "home2l" ]]; then
+  exec sudo -u home2l home2l ${0##*-} $@
+fi
 
 
 # Invoke ADB with the desired device...
@@ -89,11 +98,21 @@ run_adb () {
   # - The output of 'adb' should not be filtered (such as appending "sed 's#^#  [adb] #'"),
   #   because otherwise, interaction is not possible and the TTY output gets scrambled.
 
-  #~ echo "### Running as '"`whoami`"': " adb -s $DEV_ID $@
-  if [[ "`whoami`" == "home2l" ]]; then
-    adb -s $DEV_ID $@
-  else
-    sudo -u home2l adb -s $DEV_ID $@
+  #~ echo "### Running as '"`whoami`"':" adb -s $DEV_ID $@
+  #~ echo "### DEV_PORT = '"$DEV_PORT"'"
+  if [[ "$DEV_PORT" != "" ]]; then
+    home2l r+ /host/$DEV_NAME/ui/adbTcp "$DEV_PORT #adb *7"
+    #~ home2l wait /host/$DEV_NAME/ui/adbTcp $DEV_PORT >/dev/null
+    OUT=`adb connect $DEV_ID`
+    while [[ ! "$OUT" =~ "connected" ]]; do
+      sleep 0.5
+      OUT=`adb connect $DEV_ID`
+    done
+    #~ echo $OUT
+  fi
+  adb -s $DEV_ID $@
+  if [[ "$DEV_PORT" != "" ]]; then
+    home2l r+ /host/$DEV_NAME/ui/adbTcp "$DEV_PORT #adb *7 -10000"
   fi
 }
 
@@ -123,28 +142,24 @@ case "$1" in
     ;;
   x-install-etc)
     echo "home2l-adb: Updating the Home2l app configuration ('etc') on $DEV_NAME ..."
-    # This procedure requires root permissions for adb (uses su).
-    # Determine root and UID of the APK owner...
-    APK_ROOT=/data/data/org.home2l.app/files
-    APK_STAT_VERSION=(`run_adb "shell stat -t $APK_ROOT/home2l/VERSION" | grep -v '^#'`)
-    APK_UID=${APK_STAT_VERSION[4]}
-      #~ echo "# APK_STAT_VERSION=${APK_STAT_VERSION[*]}"
-      #~ echo "# HOME2L_ROOT=$APK_ROOT HOME2L_UID=$APK_UID"
-    # Create an empty and writable temporary directory ...
-    #   Files pushed in there will be owned by 'shell' and must be removed from here
-    run_adb "root"
-    run_adb "shell rm -fr $APK_ROOT/.update"
-    run_adb "shell su $APK_UID mkdir -p $APK_ROOT/.update"
-    run_adb "shell su $APK_UID chmod 777 $APK_ROOT/.update"
-    # Push (upload) the 'etc' tree ...
-    run_adb "push `realpath /opt/home2l/etc` $APK_ROOT/.update/etc"
-    # Copy the upload into place (this will set the owner properly) ...
-    run_adb "shell su $APK_UID rm -fr $APK_ROOT/home2l/etc"
-    run_adb "shell su $APK_UID cp -r $APK_ROOT/.update/etc $APK_ROOT/home2l/"  2>&1 | grep -v etc/gpio
-    run_adb "shell su $APK_UID chmod -R 700 $APK_ROOT/home2l/etc" 2>&1 | grep -v "No such file or directory"
-    # Cleanup ...
-    run_adb "shell rm -fr $APK_ROOT/.update"
-    run_adb "unroot" || true
+
+    # Prepare a copy of the update directory in $TMP_DIR ...
+    rm -fr $TMP_DIR
+    mkdir -p $TMP_DIR
+    cd $HOME2L_ROOT/
+    for D in `find etc/ -type d`; do mkdir -p $TMP_DIR/$D; done
+    FILES="`find etc/ -type f`"
+    echo "$FILES" > $TMP_DIR/FILES
+    for F in $FILES; do cp -a $F $TMP_DIR/$F; done
+    find etc/ -type f -a -executable > $TMP_DIR/EXECUTABLE
+
+    # Tar the update directory and transfer it to the destination ...
+    cd $TMP_DIR
+    tar cf home2l-update.tar FILES EXECUTABLE etc/
+    run_adb "shell (rm -fr $ANDROID_UPDATE_DIR; mkdir -p $ANDROID_UPDATE_DIR)"
+    run_adb "push home2l-update.tar $ANDROID_UPDATE_DIR/"
+    run_adb "shell (cd $ANDROID_UPDATE_DIR/; tar xf home2l-update.tar && rm home2l-update.tar)"
+    rm -fr $TMP_DIR
     ;;
 
   x-ssh)
@@ -172,7 +187,7 @@ case "$1" in
     ;;
 
   x-connect)
-    run_adb "forward tcp:$DEV_PORT tcp:1194"
+    run_adb "forward tcp:$DEV_FORWARD tcp:1194"
     echo "home2l-adb: Connecting $DEV_NAME ..."
     ;;
 

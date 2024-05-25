@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ SHELL := /bin/bash
 
 
 # Python (used in 'resources') ...
-PYTHON_INCLUDE := /usr/include/python3.9
+PYTHON_INCLUDE := /usr/include/python3.11
 
 
 # C/C++ Compiler & strip option for 'install'...
@@ -91,17 +91,10 @@ ifeq ($(ARCH),$(HOST_ARCH))
   STRIP := -s
 else
   ifeq ($(ARCH),amd64)
-    # Note: Cross-building for 'amd64' on 'i386' under Debian Jessie (8.0) requires
-    #       the package 'g++-multilib' (and dependencies). However, 'gcc-multilib'
+    # Note: Cross-building for 'i386' on 'amd64' under Debian Bookworm (12) requires
+    #       the package 'gcc-multilib' (and dependencies). However, 'gcc-multilib'
     #       conflicts with the 'armhf' cross-building tools (see below).
-    #       The workaround is to install 'g++-4.9-multilib' instead.
-    #
-    #       Under Debian Stretch, things appear to be similar. Here, 'g++-6-multilib'
-    #       has been installed manually.
-    #
-    #       Under Debian Buster, things appear to be similar again. Here,
-    #       'g++-8-multilib' has been installed manually. The same holds for
-    #       compiling 'i386' binaries on an 'amd64' machine.
+    #       The workaround is to install 'g++-12-multilib' instead.
     ifeq ($(HOST_ARCH),i386)
       CC := g++ -m64 -no-pie
       STRIP := -s
@@ -109,7 +102,7 @@ else
   endif
   ifeq ($(ARCH),i386)
     # Note: Cross-building for 'i386' on 'amd64' works after installing
-    #       'g++-10-multilib' (see comments above).
+    #       'g++-*-multilib' (see comments above).
     ifeq ($(HOST_ARCH),amd64)
       CC := g++ -m32 -no-pie
       STRIP := -s

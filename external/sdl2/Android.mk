@@ -47,16 +47,26 @@ include $(PREBUILT_STATIC_LIBRARY)
 ##### SDL2_ttf (+ freetype) #####
 
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := SDL2_ttf_static
 LOCAL_SRC_FILES := $(LOCAL_PATH)/usr/android/lib/libSDL2_ttf.a
+include $(PREBUILT_STATIC_LIBRARY)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := freetype
+LOCAL_SRC_FILES := $(LOCAL_PATH)/usr/android/lib/libfreetype.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := harfbuzz
+LOCAL_SRC_FILES := $(LOCAL_PATH)/usr/android/lib/libharfbuzz.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 
-#~ include $(CLEAR_VARS)
 
-#~ LOCAL_MODULE := freetype
-#~ LOCAL_SRC_FILES += $(LOCAL_PATH)/usr/android/lib/libfreetype.a
+##### Import 'cpufeatures' #####
 
-#~ include $(PREBUILT_STATIC_LIBRARY)
+# Required for SDL2 2.28.5 [2024-01-04]
+# Also, "cpufeatures" must be added to LOCAL_STATIC_LIBRARIES in the main Android.mk file.
+# See: http://api.suwish.com/android/ndk/guides/cpu-features.html
+
+$(call import-module,android/cpufeatures)

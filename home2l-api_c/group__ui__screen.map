@@ -1,4 +1,4 @@
 <map id="Screen" name="Screen">
-<area shape="rect" id="node1" title="Screen and widget management." alt="" coords="132,5,195,31"/>
-<area shape="rect" id="node2" href="$group__ui.html" title="Lightweight UI toolkit based on SDL2." alt="" coords="5,5,84,31"/>
+<area shape="rect" id="node1" href="$group__ui.html" title="Lightweight UI toolkit based on SDL2." alt="" coords="5,5,84,31"/>
+<area shape="rect" id="node2" title="Screen and widget management." alt="" coords="132,5,195,31"/>
 </map>

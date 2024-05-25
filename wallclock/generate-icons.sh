@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,24 +29,7 @@ mkdir -p $DST_DIR
 
 
 # SVG icons...
-for f in ic-*.svg; do
-  echo -n "ICON $f:"
-  n=${f%%.svg}
-  inkscape $n.svg -w 96 -h 96 -o $n.png >/dev/null 2>&1 || exit 3
-    # FIXME [2019-12-22]: All stderr output is redirected to /dev/null here
-    #   because otherwise inkscape produces a lot of dbus-related
-    #   warnings. With a later version inkscape, the "2>&1" clause may and
-    #   should be removed again.
-    # NOTE: This refers to all invocations of 'inkscape' in this file!
-  for s in 24 48 96; do
-    #convert $n.png -geometry $sx$s $n-$s.bmp # -negate
-    convert $n.png -geometry $sx$s -channel A -separate -colors 256 -compress None BMP3:$n-$s.bmp
-    mv $n-$s.bmp $DST_DIR
-    echo -n " $s"
-  done
-  rm $n.png
-  echo
-done
+../home2l-icon -d $DST_DIR ic-*.svg
 
 
 

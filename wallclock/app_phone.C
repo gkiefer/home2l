@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -685,6 +685,7 @@ void CScreenPhone::OnPhoneStateChanged (EPhoneState oldState) {
     case psIdle:
       SystemActiveUnlock ("_phone");
       SystemUnmute ("_phone");
+      SystemSetAudioNormal ();
       AudioStop ();
 
       // Setup button bar...

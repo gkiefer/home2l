@@ -1,16 +1,16 @@
 var searchData=
 [
-  ['acsalarmmusicok_1929',['acsAlarmMusicOk',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda358116d88fb266c5fc3f375bf0380d25',1,'alarmclock.H']]],
-  ['acsalarmmusictrying_1930',['acsAlarmMusicTrying',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda4b92a8d0dac3b70f4a591e9aa1ff23b2',1,'alarmclock.H']]],
-  ['acsalarmpreringing_1931',['acsAlarmPreRinging',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fdaed841dffd279aa40e59380174d8ae3bf',1,'alarmclock.H']]],
-  ['acsalarmringing_1932',['acsAlarmRinging',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda2406205f71941d0c18d9cf60ba88e7bc',1,'alarmclock.H']]],
-  ['acsdisabled_1933',['acsDisabled',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fdac06b4ae2d8e3806e63e4aab1562fbd1f',1,'alarmclock.H']]],
-  ['acssnooze_1934',['acsSnooze',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda1902c8e2c9b07b3135b25bc3c2b7ea2d',1,'alarmclock.H']]],
-  ['acsstandby_1935',['acsStandby',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda8cae42bcabb52c7ea07d78d6dac5bc99',1,'alarmclock.H']]],
-  ['appopactivate_1936',['appOpActivate',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a92b26f63d79d14d857cc873d30b5e07d',1,'apps.H']]],
-  ['appopdone_1937',['appOpDone',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154ab6e5016f48aca903f5ecd4b04d7b7e16',1,'apps.H']]],
-  ['appopinit_1938',['appOpInit',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a152823bd97ace96baa04970327fff7c9',1,'apps.H']]],
-  ['appoplabel_1939',['appOpLabel',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a063ec681fa72d4513ae7c34cf6b17cdf',1,'apps.H']]],
-  ['appoplongpush_1940',['appOpLongPush',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a69c59a1533c282a9248615d03d34d02d',1,'apps.H']]],
-  ['appopuser_1941',['appOpUser',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a9cfce96ba969f1bbe176503da08134b3',1,'apps.H']]]
+  ['acsalarmmusicok_0',['acsAlarmMusicOk',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda358116d88fb266c5fc3f375bf0380d25',1,'alarmclock.H']]],
+  ['acsalarmmusictrying_1',['acsAlarmMusicTrying',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda4b92a8d0dac3b70f4a591e9aa1ff23b2',1,'alarmclock.H']]],
+  ['acsalarmpreringing_2',['acsAlarmPreRinging',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fdaed841dffd279aa40e59380174d8ae3bf',1,'alarmclock.H']]],
+  ['acsalarmringing_3',['acsAlarmRinging',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda2406205f71941d0c18d9cf60ba88e7bc',1,'alarmclock.H']]],
+  ['acsdisabled_4',['acsDisabled',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fdac06b4ae2d8e3806e63e4aab1562fbd1f',1,'alarmclock.H']]],
+  ['acssnooze_5',['acsSnooze',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda1902c8e2c9b07b3135b25bc3c2b7ea2d',1,'alarmclock.H']]],
+  ['acsstandby_6',['acsStandby',['../group__wallclock__alarmclock.html#gga3e76be72d7bdfeada7b01b755ea096fda8cae42bcabb52c7ea07d78d6dac5bc99',1,'alarmclock.H']]],
+  ['appopactivate_7',['appOpActivate',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a92b26f63d79d14d857cc873d30b5e07d',1,'apps.H']]],
+  ['appopdone_8',['appOpDone',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154ab6e5016f48aca903f5ecd4b04d7b7e16',1,'apps.H']]],
+  ['appopinit_9',['appOpInit',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a152823bd97ace96baa04970327fff7c9',1,'apps.H']]],
+  ['appoplabel_10',['appOpLabel',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a063ec681fa72d4513ae7c34cf6b17cdf',1,'apps.H']]],
+  ['appoplongpush_11',['appOpLongPush',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a69c59a1533c282a9248615d03d34d02d',1,'apps.H']]],
+  ['appopuser_12',['appOpUser',['../group__wallclock__apps.html#gga01bd6c3ad88e2325b6c4bbf8d52de154a9cfce96ba969f1bbe176503da08134b3',1,'apps.H']]]
 ];

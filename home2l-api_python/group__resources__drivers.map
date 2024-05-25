@@ -1,4 +1,4 @@
-<map id="Drivers in C/C++" name="Drivers in C/C++">
-<area shape="rect" id="node1" title="Native API for defining custom drivers." alt="" coords="139,5,261,31"/>
-<area shape="rect" id="node2" href="$group__resources.html" title="The Home2L Resources library." alt="" coords="5,5,91,31"/>
+<map id="Drivers" name="Drivers">
+<area shape="rect" id="node1" href="$group__resources.html" title="The Home2L Resources library." alt="" coords="5,5,91,31"/>
+<area shape="rect" id="node2" title="Low&#45;level access to the C/C++ driver&#45;related classes." alt="" coords="139,5,203,31"/>
 </map>

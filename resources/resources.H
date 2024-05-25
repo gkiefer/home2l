@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -149,9 +149,11 @@
 ## @brief Low-level access to the C/C++ request class.
 ## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__requests.html).
 ##
-## @defgroup resources_drivers Drivers in C/C++
-## @brief Native API for defining custom drivers.
-## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__requests.html).
+## @defgroup resources_drivers Drivers
+## @brief Low-level access to the C/C++ driver-related classes.
+## More details can be found in the [*C/C++ API documentation*](../home2l-api_c/group__resources__drivers.html).
+## Normally, the functions and decorators described in module [*Home2L / Resources*](group__home2l__resources.html)
+## should be used to define custom drivers in Python.
 %}
 #endif // SWIG
 
@@ -320,6 +322,7 @@ enum ERcType {
   rctPercent = rctUnitTypesBase,
                 ///< [float] Percentage (0.0 .. 100.0)
   rctTemp,      ///< [float] Temperature in degree centigrade
+  rctPower,     ///< [float] Electrical power in Watts
   rctUnitTypesEND,
   /// @}
 
@@ -725,6 +728,17 @@ class CRcValueState {
       ///
     /// @}
 
+    /// @name Miscellaneous ...
+    /// @{
+    void ToHuman (char *retBuf, int retBufSize);
+      ///< @brief Output a human-readable string representation for UIs.
+      ///
+      /// Unlike ToStr(), the output is not necessarily machine-readable.
+      /// The method generates an output with at most 'retBufSize' -1 characters and
+      /// does its best make it human-readable.
+      ///
+    /// @}
+
   protected:
     friend class CResource;
 
@@ -940,7 +954,6 @@ class CResource /* final */ {
     bool Is (CResource *rc) { return this == rc; }    ///< @brief Check identity (for Python & eventual wrapper classes).
     bool IsLike (const char *pattern);                ///< @brief Check identity by pattern.
 
-    ERcType Type () { return valueState.type; }
     bool IsWritable () { return writable; }
     /// @}
 
@@ -949,9 +962,7 @@ class CResource /* final */ {
     const char *ToStr (CString *ret, bool pathLocal = false);   // semi-static, iff 'pathLocal' == true!!
     /// @}
 
-#ifndef SWIG
-
-    /// @name (App) Getting the current value ...
+    /// @name (App) Getting the current value and state ...
     /// Access methods to get the last known value and state.
     ///
     /// The following '[Get]*'-methods immediately return the last known value/state of the resource,
@@ -962,6 +973,9 @@ class CResource /* final */ {
     /// returns a value/state consistent by itself.
     ///
     /// @{
+
+#ifndef SWIG
+
     void GetValueState (CRcValueState *retValueState);
       ///< @brief Get the value and state.
 
@@ -1009,9 +1023,26 @@ class CResource /* final */ {
     int           ValidEnumIdx (ERcType _type, int defaultVal = 0, TTicks *retTimeStamp = NULL);
       ///< @brief Get a valid enumeration value index.
 
-    /// @}
-
 #endif
+
+    // Get attributes  ...
+    ERcType Type () const { return ATOMIC_READ (valueState.type); }
+    ERcState State () const { return ATOMIC_READ (valueState.state); }
+    TTicks TimeStamp () const { return ATOMIC_READ (valueState.timeStamp); }
+
+    bool IsValid () const { return ATOMIC_READ (valueState.state) == rcsValid; }
+      ///< @brief State is `rcsValid`, neither `rcsBusy` nor `rcsUnknown`.
+    bool IsBusy () const { return ATOMIC_READ (valueState.state) == rcsBusy; }
+      ///< @brief State is `rcsBusy`, neither `rcsValid` nor `rcsUnknown`.
+    bool IsKnown () const { return ATOMIC_READ (valueState.state) != rcsUnknown; }
+      ///< @brief State is either `rcsValid` or `rcsBusy`; In other words: the value can be retrieved.
+
+    bool Equals (const CRcValueState *vs2) { CRcValueState vs; GetValueState (&vs); return vs.Equals (vs2); }
+      ///< @brief Strict comparison: state, type and value must match exactly; time stamps are not compared.
+    bool ValueEquals (const CRcValueState *vs2) { CRcValueState vs; GetValueState (&vs); return vs.ValueEquals (vs2); }
+      ///< @brief Relaxed comparison: type and value must match exactly; state and time stamps are not compared.
+
+    /// @}
 
     /// @name (App) Subscriptions ...
     /// The usual way to query values is to place a subscription.
@@ -1446,10 +1477,6 @@ class CResource /* final */ {
     def ValidValue (self, defaultVal):
       """Get a valid value of this resource (use ValueState() to get the complete value and state)."""
       return self.ValueState ().ValidValue (defaultVal)
-
-    def Type (self):
-      """Get the type of this resource."""
-      return self.ValueState ().Type ()
 
     def SetRequest (self, reqDef = None, attrs = None, value = None, id = None, priority = None, t0 = None, t1 = None, repeat = None, hysteresis = None, delDelay = None):
       """Set or delete a request with selected attributes.\n\
@@ -2492,6 +2519,9 @@ class CRcDriver {
       ///
       /// In all other cases, the state of '*vs' is preset with @ref rcsValid.
       ///
+      /// IMPORTANT: It is not allowed to call any method of the 'rc' object (e.g. 'Report' methods) from here,
+      /// since the resource may be locked.
+      ///
       /// It is legal to modify '*vs' to reflect a new state or even a value different from the driven one.
       /// The method shall change the value and eventually the state as adequate.
       ///
@@ -2503,11 +2533,8 @@ class CRcDriver {
       /// @ref rcsBusy and the value be set as appropriate or left as it is, in which case the driven value
       /// is reported. Again, a valid value (state of @ref rcsValid) should be reported later.
       ///
-      /// To report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs' or set the state
-      /// to @ref rcsUnknown.
-      ///
-      /// It is not allowed to call any method of the 'rc' object (e.g. 'Report' methods) from here, since the
-      /// resource may be locked.
+      /// To report nothing at all this time, call @ref CRcValueState::SetToReportNothing() on '*vs' or set
+      /// the state to @ref rcsUnknown.
       ///
       /// In most cases, just writing to the device is sufficient.
     /// @}
@@ -3085,7 +3112,7 @@ void RcDelRequest (const char *rcUri, const char *reqGid = NULL, TTicks t1 = NEV
     \n\
     - Request string value 'Hello *3' with priority 5 and an off time at 6pm today:\n\
         RcSetRequest (rc, value = 'Hello *3', attrs = '*5 -18:00');\n\
-        RcSetRequest (rc, value = 'Hello *3', prio = 5, t1 = '-18:00');\n\
+        RcSetRequest (rc, value = 'Hello *3', priority = 5, t1 = '-18:00');\n\
     \n\
     - Set request with user-supplied attributes, some of which must not be changed by user\n\
         RcSetRequest (rc, 7, userAttrs, t1 = '-23:00')    # t1 overrides an eventual off time in userAttrs\n\

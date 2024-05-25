@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,6 +67,8 @@ for fileName in fileList:
             macroType, dummy, argsRaw = line[9:].partition ('(')
             macroType = macroType.strip ()
             args = argsRaw.partition (");") [0].split (", ")
+            if not ");" in line: raise ValueError ("Missing ';' at end of line")
+
             #~ print ("INFO: line = '" + str (line) + "'", file=sys.stderr, flush=True);
             #~ print ("INFO: args = " + str (args), file=sys.stderr, flush=True);
             # ... determine (key, type, default) ...
@@ -81,7 +83,7 @@ for fileName in fileList:
             typeOut = typeRaw.rpartition (" ")[2].lower ()
             if typeOut == "*": typeOut = "string"
             if defaultOut:
-              if defaultOut == "NULL" or "NODEFAULT" in defaultOut: defaultOut = None
+              if defaultOut == "NULL" or "NODEFAULT" in line: defaultOut = None
             # Read brief description ...
             lineNo += 1
             briefOut = lineList[lineNo].partition ("/*")[2].strip () + "."
@@ -161,7 +163,7 @@ for fileName in fileList:
         # End of file reading loop...
         lineNo += 1
     except ValueError as e:
-      print (fileName + ":" + str(lineNo+1) + ": error: " + str(e.args), file=sys.stderr, flush=True)
+      print (fileName + ":" + str(lineNo+1) + ": ERROR: " + str(e.args), file=sys.stderr, flush=True)
       raise
 
 

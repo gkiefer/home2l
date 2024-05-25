@@ -11,6 +11,11 @@
 
 ########## Information ##########
 
+# Notes
+# -----
+#
+# - Compilation is only supported on amd64 host,
+
 # Configuration
 # -------------
 #
@@ -162,7 +167,7 @@ build_linux () {
   if [[ "$ARCH" != "$LOCAL_ARCH" ]]; then
     case "$ARCH" in
       i386)   # untested!
-        TARGET_FLAGS="--host i686-pc-linux-gnu"   # just to enable cross-compile mode
+        TARGET_FLAGS="--host i686-pc-linux-gnu"     # just to enable cross-compile mode
         TARGET_CFLAGS="$CFLAGS -m32"
         TARGET_LDFLAGS="$LDLAGS -m32"
         ;;

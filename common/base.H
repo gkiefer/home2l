@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -803,7 +803,9 @@ class CSplitString {
       /// @param str The string to split
       /// @param maxArgc Maximum number of strings to return. If more substrings are
       ///      contained in the input the last ones are returned unsplit as a whole.
-      /// @param sepChars Set of characters treated as separators
+      /// @param sepChars Set of characters treated as separators.
+      ///      If `NULL`, whitespace characters are used as separators, and multiple of
+      ///      them count as a single separation.
       ///
 
     int Entries () const { return argc; }     ///< Get number of string after splitting
@@ -1999,6 +2001,8 @@ class CShellBare: public CShell {
     void SetHost (const char *_host);
       ///< @brief Set host to run subsequent commands on; 'NULL' represents the local host.
     const char *Host () { return host; }
+    bool HasHost () { return !host.IsEmpty (); }
+      ///< @brief Return whether this is a remote shell (including remote SSH to 'localhost').
     void SetNewProcessGroup (bool on = true) { newProcessGroup = on; }
       ///< @brief Create a new process group and let this process become the leader (for daemon to support job control).
     bool StartSession (bool readStdErr = false) { return Start (NULL, readStdErr); }
@@ -2038,6 +2042,7 @@ class CShellSession: public CShell {
     void SetHost (const char *_host) { session.SetHost (_host); }
       ///< @brief Define a remote host; must be called before first Start() call.
     const char *Host () { return session.Host (); }
+    bool HasHost () { return session.HasHost (); }
     /// @}
 
     /// @name Execution control...

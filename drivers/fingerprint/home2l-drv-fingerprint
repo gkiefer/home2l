@@ -1,0 +1,717 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2024 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# "fingerprint" driver for the Home2l suite.
+#
+# This driver supports R503 fingerprint sensors.
+
+
+import time
+import sys
+import select
+import home2l
+import r503
+
+
+
+# Init 'home2l' ...
+home2l.Home2lInit()
+
+
+
+
+
+######################### Configuration ########################################
+
+
+# Dump extra data ...
+optDebug = home2l.EnvGet ("fingerprint.debug")
+  # ENV_PARA_BOOL("fingerprint.debug", none, false);
+  #  /* Dump extra debug info when running
+  #   */
+if optDebug == '1': optDebug = True
+else: optDebug = False
+
+# URL of the fingerprint device ...
+optDev = home2l.EnvGet ("fingerprint.dev")
+  # ENV_PARA_STRING("fingerprint.dev", none, "/dev/ttyUSB0");
+  #  /* UART device to connect to the fingerprint module
+  #   */
+if optDev == None: optDev = "/dev/ttyUSB0"
+
+# Refresh interval ...
+optInterval = home2l.EnvGet ("fingerprint.interval")
+  # ENV_PARA_INT("fingerprint.interval", none, 200);
+  #  /* Polling interval in milliseconds
+  #   */
+if optInterval == None: optInterval = 200
+optInterval = int (optInterval)
+
+# Security level ...
+optSecurity = home2l.EnvGet ("fingerprint.security")
+  # ENV_PARA_INT("fingerprint.security", none, 3);
+  #  /* Security level (1 = relaxed, 5 = strict)
+  #   */
+if optSecurity == None: optSecurity = 3
+optSecurity = int (optSecurity)
+if optSecurity < 1: optSecurity = 1
+if optSecurity > 5: optSecurity = 5
+
+# Expected module serial number ...
+optSerial = home2l.EnvGet ("fingerprint.serial")
+  # ENV_PARA_STRING("fingerprint.serial", none, none);
+  #  /* Serial number of fingerprint module
+  #   *
+  #   * If set, a matching and enrollment is only allowed for the module with
+  #   * the specified batch and serial number. This number is printed as
+  #   * a comment on startup.
+  #   */
+
+# Samples to take for enrolling ...
+optSamples = home2l.EnvGet ("fingerprint.samples")
+  # ENV_PARA_INT("fingerprint.samples", none, 3);
+  #  /* Number of samples to take for enrolling a new finger (2..6)
+  #   */
+if optSamples == None: optSamples = 3
+optSamples = int (optSamples)
+if optSamples < 2: optSamples = 2
+if optSamples > 6: optSamples = 6
+
+
+
+
+
+######################### Global variables #####################################
+
+
+valMatchColor = None    # value of resource 'matchColor'
+
+
+
+
+
+######################### Handling input #######################################
+
+
+inputKey = None
+inputValue = None
+
+
+def SleepAndCheckInput (delay = optInterval):
+  """
+  Check stdin for resource driving commands.
+  Returns 'True' if an input is received and 'False' otherwise
+  If an EOF is received, 'exit(0)' is called.
+  """
+  global inputKey
+  global inputValue
+
+
+  # ~ Print ("INFO: SleepAndCheckInput()")
+  if inputKey != None:
+    return True
+  try:
+    if select.select ([sys.stdin,],[],[], delay / 1000.0)[0]:
+      line = sys.stdin.readline ()    # returns "" on EOF and "\n" for an empty line
+      args = line.split ()
+      Print ("INFO: Received '{}'".format (line.strip ()))
+      inputKey = args[0].strip ()
+      inputValue = args[1].strip ()
+    else:
+      return False                    # time-out
+  except IndexError:
+    if line == "": raise KeyboardInterrupt    # EOF: Shutdown
+    Print ("WARNING: Ignoring invalid input: '{}'".format (line.strip ()))
+  return True if inputKey != None else False
+
+
+def InputGet ():
+  """
+  Receive input, returns (key, value) or (None, <something>)
+  """
+  global inputKey
+  global inputValue
+
+  ret = (inputKey, inputValue)
+  inputKey = None
+  inputValue = None
+  return ret
+
+
+def InputWaiting ():
+  global inputKey
+  return inputKey != None
+
+
+
+
+
+######################### Connecting + Helpers #################################
+
+
+def Print (txt): print (txt, flush = True)
+
+
+def Connect (verbose):
+  """
+  Connect to device, returns (<device object>, <info text or error reason>)
+  """
+
+  # Open device, set security level and read product info ...
+  try:
+    fp = r503.R503 (optDev)
+    status = fp.set_security (optSecurity)
+    if status != 0:
+      return (None, "ERROR: Failed to set security level {}: {}". format (optSecurity, fp.confirmation_decode (status)))
+    productInfo = fp.read_prod_info_decode()
+    batchAndSerialNo = productInfo["batch number"] + "-" + productInfo["serial number"]
+    sysPara = fp.read_sys_para_decode()
+    libSize = sysPara["finger_library_size"]
+  except:
+    return (None, f"ERROR: Failed to connect to fingerprint sensor at {optDev}")
+
+  # Print short status ...
+  info = ("Connecting to {} v{}.{} with {}, serial {}\n".format (
+          productInfo["module type"],
+          productInfo["hw main version"], productInfo["hw sub version"],
+          productInfo["sensor type"],
+          batchAndSerialNo))
+
+  # Verify serial ...
+  if optSerial != None and batchAndSerialNo != optSerial:
+    return (None, f"ERROR: Module does not match the required serial {optSerial}.")
+
+  # Print infos ...
+  if verbose:
+    info += "\nProduct info:\n"
+    for key in productInfo.keys():
+      info += "  {:20s} = {}\n".format (key, productInfo[key])
+    info += "\nSystem parameters:\n"
+    for key in sysPara.keys():
+      info += "  {:22s} = {}\n".format (key, sysPara[key])
+
+  # Done
+  return (fp, info)
+
+
+def VerifySerial (fp):
+  if optSerial == None: return True
+  productInfo = fp.read_prod_info_decode()
+  batchAndSerialNo = productInfo["batch number"] + "-" + productInfo["serial number"]
+  return batchAndSerialNo == optSerial
+
+
+def GetDb (fp):
+  return set (fp.read_index_table ())
+
+
+def GetDbInfo (fp):
+  db = GetDb (fp)
+  return "Templates: {}".format (str (db) if len (db) > 0 else "{}")
+
+
+def Recover (fp, driverMode):
+  """
+  Recover from a (potentially) lost connection
+  """
+
+  # Init ...
+  Print ("ERROR: Lost connection to sensor - trying to recover ...")
+  tries = 0
+
+  # Close previous connection ...
+  if fp != None:
+    fp.ser_close ()
+    fp = None
+
+  # Try to connect until successful ...
+  while fp == None:
+    fp, msg = Connect (False)
+    if fp == None:
+      delay = (1 if tries < 50 else 10)
+      if SleepAndCheckInput (delay): return None
+    tries += 1
+
+  # Done ...
+  return fp
+
+
+
+
+
+######################### LED Helpers ##########################################
+
+
+ledBlack = 0
+ledRed   = 1
+ledBlue  = 2
+ledWhite = 7    # may appear purple (like 3) if only red and blue are supported
+
+
+def LedOff (fp):
+  # ~ Print ("### LedOff()")
+  fp.led_control (ctrl = 4, color = 0)
+
+
+def LedOn (fp, color, cycles = 1, speed = 0):
+  if speed == 0: fp.led_control (ctrl = 3, color = color)
+  else: fp.led_control (ctrl = 2, color = color, cycles = cycles, speed = speed)
+
+
+def LedSetBreathing (fp, color = ledWhite, speed = 150):
+  fp.led_control (ctrl = 1, speed = speed, color = color)
+
+
+def LedSetFlashing (fp, color = ledWhite, speed = 20):
+  fp.led_control (ctrl = 2, speed = speed, color = color)
+
+
+
+
+
+######################### Matching #############################################
+
+
+matchLastIdx = None
+
+
+def MatchInit (fp):
+  LedOff (fp)
+
+
+def MatchIterate (fp, driverMode):
+  """
+  Returns: ( <index> | -1 | -2 | None, <confidence> | 0 )
+           <index> == None indicates an error (device needs recovery),
+                      -2 indicates that no finger is on device,
+                      -1 indicates that something unknown touches the device
+  """
+  global matchLastIdx
+
+  # Take image ...
+  status = fp.get_img ()   # 0 = success, 1 = error when receiving packet, 2 = no finger, 3 = failed to collect finger
+  if status != 0:
+    matchLastIdx = None
+    if status != 2:
+      Print ("ERROR: Failed to scan finger ({}).".format (fp.confirmation_decode (status)))
+      return (None, 0)
+    else:
+      return (-2, 0)
+
+  # Avoid repetition ...
+  if matchLastIdx != None: return (-1, 0)
+
+  # Extract features to generate character file ...
+  status = fp.img2tz (1)   # 0 = success, 1 = error when receiving packet, 6 = over-disorderly image, 7 = over-smallness of image
+  if status != 0:
+    Print ("INFO: Failed to characterize finger ({}).".format (fp.confirmation_decode (status)))
+    return (-1, 0)
+
+  # Search in template library ...
+  status, idx, score = fp.search (1)
+  if status != 0:
+    Print ("INFO: Unknown finger ({}).".format (fp.confirmation_decode (status)))
+    return (-1, 0)
+
+  # Check for correct serial ...
+  if not VerifySerial (fp):
+    Print ("ERROR: Invalid serial number, device not trusted.")
+    return (None, 0)
+
+  # Success ...
+  global valMatchColor
+  LedOn (fp, valMatchColor, speed = 128)
+  matchLastIdx = idx
+  Print ("INFO: Detected finger #{} with confidence {}".format (idx, score))
+  return (idx, score)
+
+
+def MatchDone (fp):
+  LedOff (fp)
+
+
+
+
+
+######################### Enrolling ############################################
+
+
+enrollChars = None
+  # buffer ID for next character to capture
+
+
+def EnrollInit (fp):
+  global enrollChars
+
+  enrollChars = 0
+  LedSetBreathing (fp)
+
+
+def EnrollIterate (fp, driverMode):
+  """
+  Returns: <index> | None
+           <index> == None indicates an error (device needs recovery),
+                      -1 indicates that no new template has been stored this time
+  """
+  global enrollChars
+
+  # Take image ...
+  status = fp.get_img ()   # 0 = success, 1 = error when receiving packet, 2 = no finger, 3 = failed to collect finger
+  if status != 0:
+    if status != 2:
+      Print ("ERROR: Failed to scan finger ({}).".format (fp.confirmation_decode (status)))
+      return None
+    else:
+      return -1
+
+  # From now, any control path ends in some result that should be indicated by the LED,
+  # followed by a loop to wait until the finger is lifted.
+  ret = -1
+
+  # Extract features to generate character file ...
+  status = fp.img2tz (enrollChars + 1)   # 0 = success, 1 = error when receiving packet, 6 = over-disorderly image, 7 = over-smallness of image
+  if status != 0:
+    LedOn (fp, ledRed, speed = 128)
+    Print ("INFO: Failed to characterize finger ({}).".format (fp.confirmation_decode (status)))
+    ret = -1
+  else:
+
+    # Success: Check if we have enough character files ...
+    LedOn (fp, ledBlue, speed = 128)
+    enrollChars += 1
+    Print ("INFO: Got sample {}/{}).".format (enrollChars, optSamples))
+    if enrollChars >= optSamples:
+
+      # Find new DB index ...
+      dbSet = GetDb (fp)
+      dbIdx = 0
+      while dbIdx in dbSet: dbIdx += 1
+
+      # Register model ...
+      #   NOTE [2024-05-08]: The R503 documentation is ambigious on how many and which
+      #     character files are processed by the "RegModel" command. A plausible
+      #     explanation is given at: https://github.com/hkieninger/fingerprint-R503/blob/6f6289b56b2e770aa0cb866599573670da4f5972/R503.hpp#L330
+      #     Quote (comment on 'int createTemplate()'):
+      #     /*
+      #      * combines the features from characterBuffer 1 to k into a template
+      #      * k is the characterBuffer where the most recent feature extraction was written to
+      #      * the template is written back to characterBuffer 1 and 2 (TODO check wether this is really the case)
+      #      *
+      #      *
+      #      * TODO check if create template only uses the first 2 feature buffers or more if more are available by registering different fingers
+      #      * check how many character buffers a template needs -> create template seems to really use the k fingers
+      #      */
+      status = fp.reg_model ()   # 0 = success, 1 = error when receiving packet, 2 = no finger, 3 = failed to collect finger
+      if status != 0:
+        Print ("INFO: Failed to generate model ({}).".format (fp.confirmation_decode (status)))
+        ret = -1
+      else:
+
+        # Store model ...
+        status = fp.store (1, dbIdx)
+        if status != 0:
+          Print ("ERROR: Failed to store model ({}).".format (fp.confirmation_decode (status)))
+          ret = -1
+
+      # Indicate success/failure ...
+      if status != 0:
+        # Failure ...
+        LedOn (fp, ledRed, cycles = 5, speed = 48)
+      else:
+        # Success ...
+        LedOn (fp, ledBlue, cycles = 7, speed = 24)
+        Print ("INFO: Learned new template #{}.".format (dbIdx))
+        ret = dbIdx
+      enrollChars = 0
+      SleepAndCheckInput (3000)
+
+  # Wait until finger is lifted ...
+  status = 0
+  while status != 2:
+    status = fp.get_img ()   # 0 = success, 1 = error when receiving packet, 2 = no finger, 3 = failed to collect finger
+    if status != 0 and status != 2:
+      Print ("ERROR: Failed to scan finger ({}).".format (fp.confirmation_decode (status)))
+      return None
+
+  # LED on to indicate that we expect or are ready for more prints ...
+  if enrollChars > 0:
+    # Waiting for next print of current template: Flash quickly ...
+    LedSetFlashing (fp)
+  else:
+    # Done with the previous template: Breath to show we are ready for the next one ...
+    LedSetBreathing (fp)
+
+  # Done ...
+  return ret
+
+
+def EnrollDone (fp):
+  # ~ Print ("### EnrollDone()")
+  enrollChars = None
+  LedOff (fp)
+
+
+
+
+
+######################### Testing ##############################################
+
+
+# ~ fp = Connect ()
+# ~ Print (fp.read_index_table())
+# ~ Print (fp.read_valid_template_num())
+# ~ exit(0)
+
+
+
+
+
+######################### Main program #########################################
+
+
+def UsageAndExit ():
+  Print (
+    "Usage: home2l-fingerprint2l <options> <command>\n"
+    "\n"
+    "Commands:\n"
+    "  -init | -restart: Run as driver\n"
+    "  -h | -help: Print this help\n"
+    "  -i | -info: Print device info sensor index table\n"
+    "  -reset: Reset device (remove all stored templates)\n"
+    "  -d | -delete <n>: Delete finger template with index <n>\n"
+    "  -m | -match: Run matching loop\n"
+    "  -e | -enroll: Enroll new fingers\n"
+    "\n"
+    "Allowed options are environment definitions in the form <key>=<value>,\n"
+    "for example: 'fingerprint.debug=1'.\n"
+  )
+  exit (0)
+
+
+# Determine operation and its (optional) parameter ...
+op=None
+para=None
+for a in sys.argv:
+  if op == None:
+    if a[0] == '-': op = a
+  else:
+    if para == None: para = a
+if op:
+  if op[0:1] == '--': op = op[1:]
+
+
+# Command: Help ...
+if op in (None, "-h", "--help"):
+  UsageAndExit ()
+
+
+# Command: Info ...
+elif op in ("-i", "-info"):
+  fp, info = Connect (True)
+  Print (info)
+  if fp != None:
+    Print (GetDbInfo (fp))
+
+
+# Command: Reset ...
+elif op == "-reset":
+  fp, info = Connect (False)
+  Print (info)
+  if fp:
+    fp.empty_finger_lib ()
+    Print (GetDbInfo (fp))
+
+
+# Command: Delete ...
+elif op in ("-d", "-delete"):
+  try:
+    idx = int (para)
+    if idx < 0: raise ValueError
+  except:
+    Print (f"ERROR: Invalid argument: {para}")
+    exit (3)
+  fp, info = Connect (False)
+  Print (info)
+  if fp:
+    status = fp.delete_char (idx)
+    if status != 0:
+      Print ("ERROR: Failed to remove template #{}: {}".format (idx, fp.confirmation_decode (status)))
+    Print (GetDbInfo (fp))
+
+
+# Command: Match ...
+elif op in ("-m", "-match"):
+  fp, info = Connect (False)
+  Print (info)
+  if fp:
+    Print ("Matching: Press Ctrl-C to stop ...\n")
+    MatchInit (fp)
+    try:
+      while True: MatchIterate (fp, driverMode = False)
+    except KeyboardInterrupt:
+      Print ("\nStopped.")
+    MatchDone (fp)
+    LedOff (fp)       # switch off LED twice, since the first command may have been lost
+
+
+# Command: Enroll ...
+elif op in ("-e", "-enroll"):
+  fp, info = Connect (False)
+  Print (info)
+  if fp:
+    Print ("Enrolling: Press Ctrl-C to stop ...\n")
+    EnrollInit (fp)
+    try:
+      while True: EnrollIterate (fp, driverMode = False)
+    except KeyboardInterrupt:
+      Print ("\nStopped.")
+    EnrollDone (fp)
+    LedOff (fp)       # switch off LED twice, since the first command may have been lost
+
+
+# Run as driver ...
+elif op in ("-init", "-restart"):
+
+  # Init and connect ...
+  lastIdx, lastConfidence = None, None
+  fp, info = Connect (optDebug)
+  if info != None:
+    for line in info.split ('\n'):
+      if line.strip () != "": Print (f"INFO: {line}")
+      else: Print ("")
+
+  # Print declarations ...
+  if op == "-init":
+    Print (
+      "d state      bool w 0\n"
+      "d finger     bool r\n"
+      "d match      int  r\n"
+      "d matchColor int  w 2\n"
+      "d confidence int  r\n"
+      "d enrolled   int  r\n"
+      ":"
+    )
+    #
+    # For the automatic documentation system:
+    #
+    #   RcRegisterResource (drv, "state", rctBool, true);
+    #   SetDefault (0);
+    #     /* [RC:fingerprint] State
+    #      *
+    #      * This resource can be used to switch between matching and enrollment
+    #      * mode. At the same time, its state indicates whether the sensor
+    #      * in general operates properly.
+    #      *
+    #      * A state of 'false' (default) indicates that the sensor performs
+    #      * continuous matching. If driven to 'true', automatic enrollment
+    #      * is done. In case of a failure, the resource value is 'rcsUnknown'.
+    #      */
+    #   RcRegisterResource (drv, "finger", rctBool, false);
+    #     /* [RC:fingerprint] Finger on device (known or unknown)
+    #      */
+    #   RcRegisterResource (drv, "match", rctInt, false);
+    #     /* [RC:fingerprint] Index of matched database template
+    #      *
+    #      * If >= 0, a finger matching a stored template has been detected.
+    #      */
+    #   RcRegisterResource (drv, "matchColor", rctInt, true);
+    #   SetDefault (2)
+    #     /* [RC:fingerprint] LED color to indicate a matched finger
+    #      *
+    #      * This can be used to override the LED color showing a matched
+    #      * finger. Valid values are 1 (= red), 2 (= blue) and 3 (= purple).
+    #      */
+    #   RcRegisterResource (drv, "confidence", rctInt, false);
+    #     /* [RC:fingerprint] Confidence of the recently reported match
+    #      */
+    #   RcRegisterResource (drv, "enrolled", rctInt, false);
+    #     /* [RC:fingerprint] Database index of the most recently enrolled template
+    #      */
+    #
+
+  # Main loop ...
+  error = True if fp == None else False
+  state = False      # False = Matching, True = Enrolling
+  if not error: MatchInit (fp)
+  try:
+    while True:
+
+      # Wait and handle input ...
+      if SleepAndCheckInput (delay = 0 if state == True else optInterval):
+        key, value = InputGet ()
+        if key == "state":
+          lastState = state
+          vs = home2l.CRcValueState (home2l.rctBool)
+          vs.SetFromStr (value)
+          state = vs.ValidBool (False)
+          Print ("v state {}".format ("?" if error else "1" if state else "0"))
+          if state != lastState and not error:
+            if lastState == False: MatchDone (fp)
+            if lastState == True: EnrollDone (fp)
+            if state == False: MatchInit (fp)
+            if state == True: EnrollInit (fp)
+        elif key == "matchColor":
+          valMatchColor = int (value)
+
+      # Handle recovery ...
+      if error:
+        Print ("v state ?")
+        fp = Recover (fp, driverMode = True)
+        error = True if fp == None else False
+        Print ("v state {}".format ("?" if error else "1" if state else "0"))
+        if not error:
+          if state == False: MatchInit (fp)
+          if state == True: EnrollInit (fp)
+
+      else:
+
+        # Handle Matching ...
+        if state == False:
+          idx, confidence = MatchIterate (fp, driverMode = True)
+          if idx == None: error = True
+          if confidence != lastConfidence:
+            Print ("v confidence {}".format ("?" if error or confidence == None else confidence))
+            lastConfidence = confidence
+            # Note: Confidence is reported first, so that a subscriber can just trigger on 'match'
+            #   and read 'confidence' without further waiting.
+          if idx != lastIdx:
+            Print ("v finger {}".format ("?" if error else 1 if idx >= -1 else 0))
+            Print ("v match {}".format ("?" if error else idx))
+            lastIdx = idx
+
+        # Handle Enrolling ...
+        else:
+          idx = EnrollIterate (fp, driverMode = True)
+          if idx == None: error = True
+          if not error:
+            if idx >= 0: Print (f"v enrolled {idx}")
+          else:
+            Print ("v enrolled ?")
+
+  except KeyboardInterrupt:
+    LedOff (fp)
+    if not error:
+      if state == False: MatchDone (fp)
+      if state == True: EnrollDone (fp)
+
+
+# Unknown command ...
+else:
+  UsageAndExit ()

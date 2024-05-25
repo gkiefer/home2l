@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1714,6 +1714,9 @@ void *CConThread::Run () {
   fd = -1;
   ok = true;
 
+  // (Debug) Simulate network absence ...
+  //~ ok = false;
+
   // Resolve hostname if required...
   if (!port) {
 
@@ -1780,7 +1783,7 @@ void *CConThread::Run () {
       close (fd);
       fd = -1;
     }
-    //~ else DEBUGF (("# ... conntected to '%s'.", hostId.Get ()));
+    //~ else DEBUGF (("# ... connected to '%s'.", hostId.Get ()));
   }
 
   // Send greeting...

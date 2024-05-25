@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 # To run the image:
 #     $ xhost +local:
 #     $ docker run -ti --rm --tmpfs /tmp --name home2l-showcase --hostname home2l-showcase \
-#         -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --device /dev/snd \
+#         -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host --device /dev/snd \
 #         gkiefer/home2l
 
 
@@ -83,7 +83,7 @@
 
 
 # Version of the Debian base image ...
-ARG DEBIAN_VERSION=bullseye
+ARG DEBIAN_VERSION=bookworm
 
 
 # Build version as reported by the tools ...
@@ -118,7 +118,7 @@ ARG PHONE_DEBS_BUILD
 
 
 # Install packages ...
-RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
+RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list.d/debian.sources && \
     apt-get update && \
     apt-get -y --no-install-recommends install \
       make g++ git \
@@ -135,7 +135,7 @@ RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
 WORKDIR /tmp/src
 COPY . .
 RUN make -j8 CFG=demo WITH_PHONE=$WITH_PHONE PHONE_LIB=$PHONE_LIB BUILD_VERSION=$BUILD_VERSION install && \
-    mkdir -p /var/opt/home2l && cp -a doc/showcase/var/* /var/opt/home2l/
+    mkdir -p /var/opt/home2l && cp -a showcase/var/* /var/opt/home2l/
 
 
 
@@ -150,7 +150,7 @@ ARG PHONE_DEBS_RUN
 
 
 # Install packages ...
-RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list && \
+RUN sed -i.bak 's#main\$#main contrib\$#' /etc/apt/sources.list.d/debian.sources && \
     apt-get update && \
     apt-get -y --no-install-recommends install \
       nano less procps psmisc \
@@ -177,9 +177,9 @@ RUN adduser --uid=5000 --disabled-password --gecos "User for auto-started Home2L
     adduser home2l audio && \
     adduser home2l i2c && \
     adduser home2l dialout && \
-    chown -R home2l.home2l /var/opt/home2l && \
+    chown -R home2l:home2l /var/opt/home2l && \
     mkdir -p /run/mosquitto && \
-    chown home2l.root /var/lib/mosquitto /var/log/mosquitto /run/mosquitto && \
+    chown home2l:root /var/lib/mosquitto /var/log/mosquitto /run/mosquitto && \
     /opt/home2l/bin/home2l-install -y -i && \
     echo "export PATH=\$PATH:/opt/home2l/bin:/opt/home2l/bin/`dpkg --print-architecture`" > /home/home2l/.bashrc
 

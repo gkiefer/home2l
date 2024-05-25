@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -89,6 +89,13 @@ ENV_PARA_SPECIAL("mqtt.import.<ID>", const char *, NULL);
    * Trailing colons can be omitted.
    *
    * The \texttt{<ID>} part of the key can be chosen arbitrarily.
+   *
+   * To \texttt{<topic>} and \texttt{<validtopic>} a JSON path specification can be
+   * appended in braces. In this case, the payload is analysed by a JSON parser, and
+   * only the specified portion is returned. For example, if \texttt{<topic>} is set to
+   * \texttt{device/status\{tmp/value\}} and the payload is
+   * \texttt{\{''motion'':true,''bat'':100,''tmp'':\{''value'':24.4,''units'': ''C''\}\}},
+   * then just the temperature value of \texttt{24.4} is reported.
    */
 
 
@@ -119,7 +126,7 @@ ENV_PARA_SPECIAL("mqtt.export.<ID>", const char *, NULL);
    * Trailing colons can be omitted.
    *
    * The topic name may contain slashes (''/''), but they should not start with
-   * ''host'' to avoid conflicts resources exported by \refenv{mqtt.exportSet}.
+   * ''host'' to avoid conflicts with resources exported by \refenv{mqtt.exportSet}.
    *
    * The \texttt{<ID>} part of the key can be chosen arbitrarily.
    */
@@ -299,6 +306,150 @@ ENV_PARA_STRING("mqtt.tls.identity", envMqttTlsIdentity, NULL);
 // *************************** MQTT Import *************************************
 
 
+// ***** JSON helpers *****
+
+
+#define JSMN_STATIC
+#include "jsmn.h"
+
+
+#define JSMN_TOKENS 128   // maximum number of tokens supported
+
+
+//~ static const char *JsmnTokenTypeStr (jsmntype_t type) {
+  //~ switch (type) {
+    //~ case JSMN_UNDEFINED:  return "UNDEFINED";
+    //~ case JSMN_OBJECT:     return "OBJECT";
+    //~ case JSMN_ARRAY:      return "ARRAY";
+    //~ case JSMN_STRING:     return "STRING";
+    //~ case JSMN_PRIMITIVE:  return "PRIMITIVE";
+  //~ }
+  //~ return "(invalid)";
+//~ }
+
+
+static const char *JsmnErrStr (int code) {
+  if (code > 0) return "OK";
+  switch (code) {
+    case 0: return "JSON string is empty";    // not an official error
+    case JSMN_ERROR_INVAL: return "bad token, JSON string is corrupted";
+    case JSMN_ERROR_NOMEM: return "not enough tokens, JSON string is too large";
+    case JSMN_ERROR_PART:  return "JSON string is too short, expecting more JSON data";
+  }
+  return "unknown error";
+}
+
+
+static bool TopicSplitJsonPath (CString *topic, CSplitString *retJsonPath) {
+  // Check, if 'topic' contains a JSON path specification an if so,
+  // return it and remove it from '*topic'.
+  CString pathSpec;
+  const char *s0, *s1;
+  int n;
+  bool ok;
+
+  ok = true;
+  retJsonPath->Clear ();
+  s0 = strchr (topic->Get (), '{');
+  if (s0) {
+    s1 = strchr (s0 + 1, '}');
+    if (s1) {
+      pathSpec.Set (s0 + 1, s1 - s0 - 1);
+      retJsonPath->Set (pathSpec.Get (), INT_MAX, "/");
+
+      // Sanity; Check for syntax errors in JSON path ...
+      for (n = 0; n < retJsonPath->Entries (); n++) {
+        if (retJsonPath->Get (n) [0] == '\0') ok = false;
+      }
+      if (!ok) {
+        WARNINGF (("MQTT: Invalid JSON path specified for topic '%s' - ignoring.", topic->Get ()));
+        retJsonPath->Clear ();
+      }
+
+      // Cut-off topic ...
+      topic->Del (s0 - topic->Get ());
+    }
+  }
+  return ok;
+}
+
+
+static bool PayloadGetJsonValue (const char *payload, CSplitString *jsonPath, const char *topic, CString *ret) {
+  // Return the value of a (potential) JSON-coded payload.
+  // If 'jsonPath' is empty, 'payload' itself is returned.
+  // Argument 'topic' is used for error messages.
+  // On error, the full string is returned.
+  jsmn_parser parser;
+  jsmntok_t tokenList[JSMN_TOKENS], *t;
+  int tokens, level, tokensToSkip, n;
+
+  // Default return string ...
+  ret->SetC (payload);
+
+  // Handle non-JSON case ...
+  if (!jsonPath->Entries ()) return true;
+
+  // Parse JSON payload ...
+  jsmn_init (&parser);
+  tokens = jsmn_parse (&parser, payload, strlen (payload), tokenList, JSMN_TOKENS);
+  if (tokens < 1) {
+    WARNINGF (("MQTT: Invalid JSON string received on topic '%s': %s", topic, JsmnErrStr (tokens)));
+    WARNINGF (("MQTT: ... JSON string is: '%s'", payload));
+    return false;
+  }
+
+  //~ INFOF (("### Parsing JSON: %s", payload));
+  //~ for (n = 0; n < tokens; n++) {
+    //~ CString s;
+    //~ s.Set (payload + tokenList[n].start, tokenList[n].end - tokenList[n].start);
+    //~ INFOF (("###   %3i. %9s(%i) = '%s'", n, JsmnTokenTypeStr (tokenList[n].type), tokenList[n].size, s.Get ()));
+  //~ }
+
+  // Search for right value ...
+  t = &tokenList[0];        // points to current token ...
+  level = 0;
+  while (level < jsonPath->Entries ()) {
+    if (t->type != JSMN_OBJECT) return false;
+      // error: the current token must be an object, otherwise we cannot find a path component in it
+    n = t->size;
+    while (true) {    // iterate over direkt sub-tokens (is left by "break" on success)
+      t++;        // point to key token
+
+      // Check key ...
+      if (t->type != JSMN_STRING) return false;   // error: key must be a string
+      if ((int) strlen (jsonPath->Get (level)) == t->end - t->start)
+        if (strncmp (jsonPath->Get (level), payload + t->start, t->end - t->start) == 0) {
+
+          // Success: Step in and go to next level ...
+          t++;    // value token
+          level++;
+          break;
+        }
+
+      // Return if value not found ...
+      if (n-- <= 0) return false;   // key not found
+
+      // Skip over value token(s) ...
+      //   This takes care of potential nested objects by counting the size of sub-tokens.
+      tokensToSkip = t->size;
+      while (tokensToSkip > 0) {
+        t++;
+        tokensToSkip += t->size;
+        tokensToSkip--;
+      }
+    }
+
+    // At this point: key at current level is found, 't' points to the value token: go to next level.
+  }
+
+  // Success: Return value ...
+  ret->Set (payload + t->start, t->end - t->start);
+  return true;
+}
+
+
+
+
 // ***** CMqttImport *****
 
 
@@ -331,8 +482,12 @@ class CMqttImport {
       else {                                              // state/main topic (mandantory) ...
         arg = args[0];
         if (!arg[0]) errStr.SetC ("Missing topic");
-        else if (mosquitto_pub_topic_check (arg) != MOSQ_ERR_SUCCESS) errStr.SetF ("Invalid MQTT state topic '%'", arg);
-        else topic.Set (arg);
+        else {
+          topic.Set (arg);
+          TopicSplitJsonPath (&topic, &topicJsonPath);
+          if (mosquitto_pub_topic_check (arg) != MOSQ_ERR_SUCCESS)
+            errStr.SetF ("Invalid MQTT state topic '%'", arg);
+        }
       }
       if (errStr.IsEmpty () && args.Entries () > 1) {    // request topic (optional) ...
         arg = args[1];
@@ -349,7 +504,7 @@ class CMqttImport {
         q = strchr (arg, '=');
         if (q) {
           validTopic.Set (arg, q - arg);
-          validPayload.Set (q + 1);
+          validValue.Set (q + 1);
         }
         else validTopic.Set (arg);
         if (validTopic[0] == '+') {
@@ -357,6 +512,7 @@ class CMqttImport {
           validTopic.Insert (0, topic.Get ());
           validTopic.PathNormalize ();
         }
+        TopicSplitJsonPath (&validTopic, &validTopicJsonPath);
         if (mosquitto_pub_topic_check (validTopic.Get ()) != MOSQ_ERR_SUCCESS)
           errStr.SetF ("Invalid MQTT valid topic '%s'", validTopic.Get ());
       }
@@ -412,16 +568,25 @@ class CMqttImport {
       //~ INFOF (("### CMqttImport::OnMqttMessage (%s, %s)", _topic, _payload));
       if (topic.Compare (_topic) == 0) {
         // Received a value for the state topic: report it ...
-        if (_payload) rc->ReportValue (_payload);
+        if (_payload) {
+          CString value;
+          PayloadGetJsonValue (_payload, &topicJsonPath, topic.Get (), &value);
+          rc->ReportValue (value.Get ());
+        }
         else rc->ReportUnknown ();
       }
-      else if (validTopic.Compare (_topic) == 0) {
+      if (validTopic.Compare (_topic) == 0) {
         // Received a value for the "valid" (alive) topic ...
-        CString payload (_payload);
+        CString payload (_payload), value;
         int mosqErr;
+        bool isValid;
 
         payload.Strip ();
-        if (strcasecmp (payload.Get (), validPayload.Get ()) == 0) {
+        PayloadGetJsonValue (payload.Get (), &validTopicJsonPath, validTopic.Get (), &value);
+        if (validValue.IsEmpty ()) isValid = ValidBoolFromString (value.Get (), false);
+        else isValid = (strcasecmp (value.Get (), validValue.Get ()) == 0);
+        if (isValid) {
+
           // Client became alive again: Re-subscribe to state topic to (try to) get the current state value ...
           mosqErr = mosquitto_unsubscribe (mosq, NULL, topic.Get ());
           if (mosqErr != MOSQ_ERR_SUCCESS)
@@ -431,7 +596,9 @@ class CMqttImport {
             WARNINGF (("MQTT: Failed to re-subscribe to topic '%s': %s", _topic, mosquitto_strerror (mosqErr)));
         }
         else {
+
           // Client got lost: Invalidate resource ...
+          //~ INFOF (("### %s: received non-alive value '%s' for valid topic", rc->Lid (), value.Get ()));
           rc->ReportUnknown ();
         }
       }
@@ -498,7 +665,8 @@ class CMqttImport {
     }
 
   protected:
-    CString topic, reqTopic, validTopic, validPayload, boolStr[2];
+    CString topic, reqTopic, validTopic, validValue, boolStr[2];
+    CSplitString topicJsonPath, validTopicJsonPath;
     CResource *rc;
 };
 
@@ -594,7 +762,7 @@ static bool MqttImportOnMqttMessage (const char *topic, const char *payload) {
 
   imp = mqttImportLookup.Get (idx);
   if (imp) imp->OnMqttMessage (topic, payload);     // topic relevant for a single import
-  else {      // topic relevant for a multiple imports: Check all ...
+  else {      // topic relevant for multiple imports: Check all ...
     for (i = 0; i < mqttImports; i++) mqttImportList[i]->OnMqttMessage (topic, payload);
   }
   return true;

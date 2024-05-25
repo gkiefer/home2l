@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -562,7 +562,7 @@ static inline void TextureRender (SDL_Texture *tex, SDL_Rect *srcRect = NULL, SD
 
 
 SDL_Surface *IconGet (const char *name, TColor color = WHITE, TColor bgColor = TRANSPARENT, int scaleDown = 1, int orient = 0, bool preserveThinLines = false);
-  ///< @brief Get a reference to an icon from the applications *share/icons/* folder.
+  ///< @brief Get a reference to an icon from the application's '*etc/icons/*' or '*share/icons/*' folder.
   ///
   /// The name is passed without a file name suffix. The returned reference remains owned by
   /// the library, which may perform some caching if icons are used muliple times.

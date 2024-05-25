@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2022 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -137,7 +137,7 @@ class UsbDevice:
           serial = reader.read ().strip ()
           # ~ print ("###   serial = {}".format (serial))
           cls._mapSerial[serial].usbPath = p
-      except (FileNotFoundError, IndexError, KeyError): pass
+      except (FileNotFoundError, IndexError, KeyError, OSError): pass
       # Check for net interface name (e.g. wlan adapters) ...
       net = None
       try:
@@ -244,16 +244,18 @@ class UsbDevice:
 def SystemAdb (host, adbCmd, timeout = None):
   """Run 'System ("home2l adb " + cmd)' and do some ADB-specific recovery."""
   ok, output = System ("home2l adb {} {}".format (host, adbCmd), timeout = timeout, retOutput = True)
-  if not ok and ("unauthorized" in output or "offline" in output):
-    print ("{}: Device unauthorized, trying to fix using ADB ... ".format (host), flush = True)
-    System ("home2l adb {} reconnect offline".format (host))
-    # ~ print ("ADB is stuck with 'device unauthorized' - restarting ADB ... ", flush = True)
-    # ~ # TBD: Remove this, since this is sufficiently handled inside 'RestartAdb()'?
-    # ~ if System ("home2l adb {} kill-server".format (host)):
-      # ~ time.sleep (5)
-      # ~ ok, devList = System ("home2l adb {} devices -l".format (host), retOutput = True)
-      # ~ print (devList)
-      # ~ print (" ... done.", flush  = True)
+  if not ok:
+    if "offline" in output:
+      print ("{}: Device offline, trying to fix using ADB ... ".format (host), flush = True)
+      System ("home2l adb {} reconnect offline".format (host))
+    if "unauthorized" in output:
+      print ("{}: Device unauthorized - restarting ADB ... ".format (host), flush = True)
+      # ~ print ("ADB is stuck with 'device unauthorized' - restarting ADB ... ", flush = True)
+      if System ("home2l adb {} kill-server".format (host)):
+        time.sleep (5)
+        ok, devList = System ("home2l adb {} devices -l".format (host), retOutput = True)
+        print (devList)
+        print (" ... done.", flush  = True)
   return ok
 
 
@@ -281,10 +283,10 @@ class InfDevice (UsbDevice):
     ST_BOOTING:                   "BOOTING",
     ST_FAIL:                      "FAIL",
     ST_FAIL_AFTER_RECONNECT:      "FAIL_AFTER_RECONNECT",
-    ST_FAIL_REQUEST_HUB_RESET:    "REQUEST_HUB_RESET",
-    ST_FAIL_AFTER_HUB_RESET:      "AFTER_HUB_RESET",
-    ST_FAIL_REQUEST_USB_RESTART:  "REQUEST_USB_RESTART",
-    ST_FAIL_AFTER_USB_RESTART:    "AFTER_USB_RESTART",
+    ST_FAIL_REQUEST_HUB_RESET:    "FAIL_REQUEST_HUB_RESET",
+    ST_FAIL_AFTER_HUB_RESET:      "FAIL_AFTER_HUB_RESET",
+    ST_FAIL_REQUEST_USB_RESTART:  "FAIL_REQUEST_USB_RESTART",
+    ST_FAIL_AFTER_USB_RESTART:    "FAIL_AFTER_USB_RESTART",
     ST_LOST:                      "LOST",
     ST_LOST_AFTER_RECONNECT:      "LOST_AFTER_RECONNECT"
     }
@@ -435,30 +437,30 @@ class InfDevice (UsbDevice):
     return ok
 
 
-  def RestartOvpn (self):
+  def RestartOvpn (self, soft = False):
     """Restart OpenVPN, but only if this has not already happened recently."""
     tNow = TicksNow ()
     if tNow >= InfDevice._tLastOvpnRestart + 30000:
       # No OpenVPN restart in the past 30 seconds: Restart OpenVPN ...
-      print ("{}: Restarting OpenVPN ...".format (self.id), flush = True)
-      System ("home2l sudo openvpn-restart")
+      print ("{}: {}Restarting OpenVPN ...".format (self.id, ("", "Soft-") [soft]), flush = True)
+      System ("home2l sudo openvpn-{}restart".format (("", "soft-") [soft]))
       InfDevice._tLastOvpnRestart = tNow
       return True
     else:
       return False
 
 
-  def RestartAdb (self):
-    """Restart the ADB server."""
-    tNow = TicksNow ()
-    if tNow >= InfDevice._tLastAdbRestart + 30000:
-      print ("{}: Restarting ADB ...".format (self.id), flush = True)
-      SystemAdb (self.id, "kill-server")
+  # ~ def RestartAdb (self):
+    # ~ """Restart the ADB server."""
+    # ~ tNow = TicksNow ()
+    # ~ if tNow >= InfDevice._tLastAdbRestart + 30000:
+      # ~ print ("{}: Restarting ADB ...".format (self.id), flush = True)
+      # ~ SystemAdb (self.id, "kill-server")
         # ~ time.sleep (10)   # wait since otherwise "unauthorized" messages may occur
-      InfDevice._tLastAdbRestart = tNow
-      return True
-    else:
-      return False
+      # ~ InfDevice._tLastAdbRestart = tNow
+      # ~ return True
+    # ~ else:
+      # ~ return False
 
 
 
@@ -499,7 +501,7 @@ class InfDevice (UsbDevice):
       else:
         if self.Reconnect ():       # Reconnect (= build IP forwarding, (re-)start app)
           if sense == self.ST_ON:
-            self.RestartOvpn ()     # Device is on: Restart OpenVPN (just in case) ...
+            self.RestartOvpn (True) # Device is on: Restart OpenVPN (just in case) ...
         if TicksNow () >= self._tInState + 120000:
           # Booting for longer than 2 minutes: Something is wrong ...
           self.SetState (self.ST_FAIL)
@@ -545,7 +547,7 @@ class InfDevice (UsbDevice):
         self.SetState (self.ST_FAIL_REQUEST_USB_RESTART)
 
     elif self._state == self.ST_FAIL_AFTER_USB_RESTART:
-      if self._tInState >= InfDevice._tLastAdbRestart: self.RestartAdb ()   # restart ADB
+      # ~ if self._tInState >= InfDevice._tLastAdbRestart: self.RestartAdb ()   # restart ADB (obsolete, to be resolved in 'SystemAdb()')
 
       tNow = TicksNow ()
       if tNow >= self._tInState + 10000:

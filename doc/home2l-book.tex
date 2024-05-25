@@ -2,7 +2,7 @@
 %%
 %% This file is part of the Home2L project.
 %%
-%% (C) 2015-2021 Gundolf Kiefer
+%% (C) 2015-2023 Gundolf Kiefer
 %%
 %% Home2L is free software: you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -668,7 +668,8 @@ The tutorial uses the following conventions in notation:
   \begin{lstlisting}[language=bash]
   $ xhost +local:        # allow X11 applications in the container to open windows
   $ docker run -ti --rm --name home2l-showcase --hostname home2l-showcase \
-  §    -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --device /dev/snd \
+  §    -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host \
+  §    --device /dev/snd \
   §    gkiefer/home2l
   \end{lstlisting}
 
@@ -2367,7 +2368,7 @@ The rule monitors the current time and whenever the time changes, the value is p
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{tools/etc/rules-showhouse}) contains a couple of example rules, the effects of which you may have already observed in previous tutorial steps. These are rules for
+The supplied automation script \reftool{rules-showhouse} (source tree: \refsrc{showcase/etc/rules-showhouse}) contains a couple of example rules, the effects of which you may have already observed in previous tutorial steps. These are rules for
 \begin{itemize}
   \item turning on the front light on motion at day time,
   \item closing the shades at night,
@@ -3040,14 +3041,14 @@ tutorial.
 
 \item
   The supplied rules file has already been inspected in Section~\ref{sec:tutorial-rules}
-  (source tree: \refsrc{tools/etc/rules-showhouse}):
+  (source tree: \refsrc{showcase/etc/rules-showhouse}):
   \begin{lstlisting}[language=bash]
     $ DOCKER nano /opt/home2l/etc/rules-showhouse
   \end{lstlisting}
 
 \item
   Inspect and read the \textit{ShowHouse} source file
-  (source tree: \refsrc{resources/home2l-showhouse}):
+  (source tree: \refsrc{showcase/home2l-showhouse}):
   \begin{lstlisting}[language=bash]
     $ DOCKER nano /opt/home2l/bin/home2l-showhouse
   \end{lstlisting}
@@ -3060,7 +3061,7 @@ tutorial.
   unnecessarily often. This is achieved by implementing the drawing function as a rule.
 
 \item
-  Inspect and read the main configuration file (source tree: \refsrc{tools/etc/home2l.conf}):
+  Inspect and read the main configuration file (source tree: \refsrc{showcase/etc/home2l.conf}):
   \begin{lstlisting}[language=bash]
     $ DOCKER nano /opt/home2l/etc/home2l.conf
   \end{lstlisting}
@@ -3570,7 +3571,9 @@ To integrate an Android device running the \textit{WallClock} into the \textit{H
       $ home2l adb <your_android_host> x-install-etc
     \end{lstlisting}
 
-  \item Some functionality (presently the \textit{WallClock Calendar}) requires that the app runs commands on a Linux host via \textit{SSH} as user \textit{home2l}. To set this up:
+  \item Some functionality (e.~g. the \textit{WallClock Calendar} with remote calendar storage) may
+        require that the app runs commands on a Linux host via \textit{SSH} as user \textit{home2l}.
+        To set this up:
     \begin{enumerate}[a)]
       \item Generate an SSH identity without and store it as
             \code{'etc/secrets/ssh/<your_android_host>[.pub]'}.
@@ -4878,7 +4881,14 @@ In the active phase, lines with the following contents can be output:
 \begin{lstlisting}[language=comments]
 v <resourceLID> <valueState>  # Report a new value/state.
 p <pollInterval>              # Change the polling interval (polling mode only).
+
+INFO: <text>                  # Let an info message be logged by the server.
+WARNING: <text>               # Let a warning message be logged by the server.
+ERROR: <text>                 # Let an error message be logged by the server.
+                              # This will not cause the driver (or server) to stop.
 \end{lstlisting}
+
+Empty lines or lines starting with \lst{#} are silently ignored.
 
 
 \subsubsection*{Syntax Reference}
@@ -4919,7 +4929,7 @@ Details are described in the \refapicgroup{resources__drivers}{code documentatio
 \label{sec:resources-drvdev-app-python}
 
 
-\textbf{Example:} \textit{The ShowHouse (\refsrc{resources/home2l-showhouse})}
+\textbf{Example:} \textit{The ShowHouse (\refsrc{showcase/home2l-showhouse})}
 
 Drivers can be registered as part of a Python application.
 
@@ -6035,7 +6045,7 @@ The \textit{Brownie tool} may access the bus either directly or attach to a runn
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-The \textit{Brownie database} represents the plan of a \textit{Brownie} bus tree. It is a text file with one line per \textit{Brownie}, which is a space-separated list of parameter assignments. An example is available at \refsrc{tools/etc/brownies.conf}. Table~\ref{tab:brownies-config} lists the possible parameters. The first block of parameters are information used by the maintenance tool \reftool{home2l-brownie2l} and the driver \reftool{home2l-drv-brownies}. The remaining parameters are configuration options for the \textit{Brownie} firmware.
+The \textit{Brownie database} represents the plan of a \textit{Brownie} bus tree. It is a text file with one line per \textit{Brownie}, which is a space-separated list of parameter assignments. An example is available at \refsrc{showcase/etc/brownies.conf}. Table~\ref{tab:brownies-config} lists the possible parameters. The first block of parameters are information used by the maintenance tool \reftool{home2l-brownie2l} and the driver \reftool{home2l-drv-brownies}. The remaining parameters are configuration options for the \textit{Brownie} firmware.
 
 \begin{table}[ht]
   \centering
@@ -6639,7 +6649,8 @@ With the buttons in the bottom line you can (from left to right)
 
 \begin{itemize}
 \item
-  select the ''virtual stereo system'' (\textit{MPD} instance).
+  select the ''virtual stereo system'' (\textit{MPD} server instance).
+  A long push on this button initiates a database update on the MPD server.
 \item
   take the currently playing music from one \textit{MPD} instance to another
   (e.g.~to seamlessly continue listening a song when moving from one room to another).
@@ -7113,6 +7124,38 @@ Service (DWD).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \textit{Fronius} Driver}
+\label{sec:drvlib-fronius} \labeltool{home2l-drv-fronius}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Description}
+\label{sec:drvlib-fronius-description}
+
+The \textit{Fronius} driver exports data provided by
+\textit{Fronius Datamanager 2.0} interfaces typically found in
+solar inverters of the named manufacturer.
+
+
+\subsection{Configuration Parameters}
+\label{sec:drvlib-fronius-env}
+\input{ref_env_drv_fronius}
+
+
+\subsection{Provided Resources}
+\label{sec:drvlib-fronius-rc}
+
+The driver is capable of providing any \textit{inverter} or \textit{meter} real-time
+data as delivered by the \textit{Fronius Solar API V1}. By default, the solar power
+(\lst{inverter/PAC}) and the real power value reported by the primary smart meter
+(\lst{meter/PowerReal_P_Sum}) are provided. Other values can be provided by
+editing \refsrc{drivers/fronius/home2l-drv-fronius}.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The \textit{MPD} Monitor Driver}
 \label{sec:drvlib-mpd} \labeltool{home2l-drv-mpd}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7136,6 +7179,66 @@ Also, MPD players being in a paused state for a longer time are stopped after a 
 \label{sec:drvlib-mpd-rc}
 
 For each defined MPD server, a read-only resource of type \refapic{ERctPlayerState} is provided with the local ID (LID) being equal to the server ID.
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The \textit{Fingerprint} Driver}
+\label{sec:drvlib-fingerprint}
+\labeltool{home2l-drv-fingerprint} \labeltool{home2l-fingerprint2l}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Description}
+\label{sec:drvlib-fingerprint-description}
+
+The \textit{fingerprint} driver supports matching and enrollment using fingerprint sensonrs. Presently, sensors of type \textit{Grow R503} are supported.
+
+For installation and testing, \reftool{home2l-fingerprint2l} provides some diagnostic operation.
+Run \lstf{home2l-fingerprint2l -h} to get details.
+
+In \textbf{matching mode}, the sensor is monitored continuously, and the presence of a known,
+identified finger is reported by \refrc{fingerprint/match} showing a valid value $\ge 0$.
+The aura LED is only lit if a known finger has been detected. In all other cases (i.e. if an
+unknown finger is presented), the LED stays off.
+
+In \textbf{enrollment mode}, new fingerprints are enrolled and stored in free template locations
+of the sensor's internal non-volatile memory. To enroll a finger, the user has to touch and release
+the sensor multiple times (see \refenv{fingerprint.samples}). The process is guided by the aura
+LED showing on of the following:
+
+\begin{itemize}
+  \item Breathing light, white or purple: Ready for enrolling a new finger.
+  \item Solid blue: Successfully captured a sample -- lift the finger and touch again.
+  \item Solid red: Faild to capture a sample -- lift the finger and touch again.
+  \item Fast flashing light, white or purple: Waiting for the next sample of the same finger.
+  \item Flashing blue (7 times): Successfully created template -- well done!
+  \item Flashing red (5 times): Failed to create a template from your samples -- please try again.
+\end{itemize}
+
+A note on security: The user is responsible for security and must be aware that various attacks
+are possible if physical access to the sensor or the serial link are possible. It is essential
+that a) the sensor cannot be easily dismounted and b) the communication cable cannot be accessed
+easily.
+
+
+\subsection{Prerequisites}
+\label{sec:drvlib-fingerprint-prerequisites}
+
+For the driver to operate, the Python module \lst{python-serial} is required,
+the installation of \lst{setserial} is recommended.
+
+
+\subsection{Configuration Parameters}
+\label{sec:drvlib-fingerprint-env}
+\input{ref_env_drv_fingerprint}
+
+
+\subsection{Provided Resources}
+\label{sec:drvlib-fingerprint-rc}
+\input{ref_rc_drv_fingerprint}
 
 
 

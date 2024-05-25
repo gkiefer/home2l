@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -67,6 +67,10 @@ ENV_PARA_SPECIAL ("music.<MPD>.password", const char *, NULL);
 
 ENV_PARA_SPECIAL ("music.(<MPD>|any)[.<OUTPUT>].name", const char *, NULL);
   /* Define a display name for an MPD server or an output
+   *
+   * The output ID is normalized to lower case, and all characters except
+   * letters ('a'..'z'), digits ('0'..'9') and '--' are replaced by underscores
+   * ('\_').
    */
 
 ENV_PARA_INT ("music.streamPort", envMpdDefaultStreamPort, 8000);
@@ -327,6 +331,9 @@ public:
   bool SkipForward ();
   bool SkipBack ();
 
+  // Database updating...
+  unsigned UpdateDatabase () { return mpd_run_update (mpdConnection, NULL); }
+
   // Error handling...
   bool InErrorRecovery () { return errorPermanent; }      // in error state (still hoping to recover)
   bool InError () { return errorPermanent; }              // in error state (non-recoverable)
@@ -474,6 +481,7 @@ class CScreenMusicMain: public CScreen, public CTimer {
 
     void RunServerMenu (int xPos, bool transfer);
     void RunOutputMenu (int xPos);
+    void RunUpdateDatabase ();
 
     // Model...
     CMusicPlayer player;
@@ -1118,10 +1126,10 @@ bool CMusicPlayer::SetRepeatMode (bool on) {
 
 void CMusicPlayer::ReadOutputs () {
   struct mpd_output *mpdOutput = NULL;
-  struct mpd_status *mpdStatus;
   CString s;
   const char *name;
-  int n, mpdPort, firstEnabledIdx;
+  int n, i, mpdPort, firstEnabledIdx;
+  char c;
   bool mpdOk;
 
   outputEntries = n = 0;
@@ -1131,6 +1139,11 @@ void CMusicPlayer::ReadOutputs () {
 
     // Key, name, and ID...
     outputKey[n].Set (mpd_output_get_name (mpdOutput));
+    for (i = 0; i < outputKey [n].Len (); i++) {
+      c = tolower (outputKey[n][i]);
+      if (!(c >= 'a' && c <= 'z') && !(c >= '0' && c <= '9') && c != '-') c = '_';
+      outputKey[n][i] = c;
+    }
     outputId[n] = mpd_output_get_id (mpdOutput);
     if (outputKey[n].Compare (envMpdRecordOut) == 0) {
 
@@ -1176,11 +1189,17 @@ void CMusicPlayer::ReadOutputs () {
     outputEntries = n;
     SetOutput (firstEnabledIdx < 0 ? 0 : firstEnabledIdx);
 
+    /*
     // WORKAROUND [2018-02-04]: Reanimate a potentially dead mixer...
     //   If a USB audio stick is unplugged, MPD disables the hardware mixer and
     //   does not enable it again when the device is plugged in again. To overcome
     //   this, the output is disabled and enabled again here.
-    mpdStatus = mpd_run_status (mpdConnection);
+    //
+    // UPDATE [2024-04-30]: The workaround stops playback and is bad for mobile
+    //   devices which may disconnect and reconnect due to wifi issues.
+    //   Hence, the workaround is disabled. Is it still needed?
+    //
+    struct mpd_status *mpdStatus = mpd_run_status (mpdConnection);
     if (mpdStatus) {
       if (mpd_status_get_volume (mpdStatus) <= 0) {
         mpd_run_disable_output (mpdConnection, outputId[outputIdx]);
@@ -1188,6 +1207,7 @@ void CMusicPlayer::ReadOutputs () {
       }
       mpd_status_free (mpdStatus);
     }
+    */
   }
 }
 
@@ -1336,15 +1356,16 @@ bool CMusicPlayer::DirLoad (const char *uri) {
 
       case 'P':
         // Playlists or playlist directory...
-        doSort = false;
         if (uri[2] == '\0') {
           // List of all playlists...
           lsPlaylists = true;
           mpdOk = mpd_send_list_playlists (mpdConnection);
         }
-        else if (uri[2] == '/')
+        else if (uri[2] == '/') {
           // List of a particular playlist content...
+          doSort = false;
           mpdOk = mpd_send_list_playlist_meta (mpdConnection, uri + 3);   // skip "~P/"
+        }
         else ok = false;
         break;
 
@@ -2123,7 +2144,7 @@ void CScreenMusicMain::ConnectServer () {
 
 
 void CScreenMusicMain::UpdateActiveState () {
-  // to be is called on screen (de-)activation or player state changes
+  // to be called on screen (de-)activation or player state changes
   bool isActive = IsActive ();
   bool _isPlayingActive;
 
@@ -2244,6 +2265,23 @@ void CScreenMusicMain::RunOutputMenu (int xPos) {
 }
 
 
+void CScreenMusicMain::RunUpdateDatabase () {
+  CString s;
+  int id;
+
+  if (RunSureBox (_("Request server to update its database?")) >= 1) {
+    id = player.UpdateDatabase ();
+    if (id > 0) {
+      s.SetF (_("Database update is started, job ID is %u."), id);
+      RunInfoBox (s.Get ());
+    }
+    // Error cases are handled inside 'Update()'.
+  }
+}
+
+
+
+
 
 // ***************** UI Callbacks ****************
 
@@ -2259,7 +2297,8 @@ void CScreenMusicMain::OnButtonPushed (CButton *btn, bool longPush) {
       AppEscape ();
       break;
     case btnIdMmSelServer:
-      RunServerMenu (btn->GetArea ()->x, false);
+      if (longPush and player.ServerConnected ()) RunUpdateDatabase ();
+      else RunServerMenu (btn->GetArea ()->x, false);
       break;
     case btnIdMmGoServer:
       RunServerMenu (btn->GetArea ()->x, true);

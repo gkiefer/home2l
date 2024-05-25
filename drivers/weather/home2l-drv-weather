@@ -2,7 +2,7 @@
 
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ if s: optLonE = float (s)
 # Station ID according to the DWD list "MOS + POI-Stationskatalog"
 optStationID = 10852   # Default = Augsburg
 s = home2l.EnvGet ("weather.stationID")
-  # ENV_PARA_INT("weather.stationID", none, NULL)
+  # ENV_PARA_INT("weather.stationID", none, 10852);
   #  /* Station ID according to the DWD station table
   #   *
   #   * See ''MOSMIX-Stationskatalog'', available for download
@@ -64,7 +64,7 @@ if s: optStationID = s
 
 # Suppress radar...
 debug = home2l.EnvGet ("weather.debug")
-  # ENV_PARA_INT("weather.debug", none, False)
+  # ENV_PARA_BOOL("weather.debug", none, false);
   #  /* Run the driver in debug mode
   #   *
   #   * In debug mode, radar eye images are not exported as a resource,
@@ -256,7 +256,7 @@ class Radar:
   #      */
   #
   #   RcRegisterResource (drv, "radarWarning", rctBool, false);
-  #     /* [RC:weather] Radar Warning (NOT IMPLEMENTED YET)
+  #     /* [RC:weather] Radar Warning
   #      *
   #      * Flag indicating whether it is raining or may be raining soon.
   #      * This can be used, for example, to indicate that roof windows should be closed.
@@ -428,7 +428,7 @@ class Radar:
     return (ix, iy)
 
   def makeRainWarning (fullMap, locX, locY):
-    """Heuristically determine whether a rain warnig should be issued.
+    """Heuristically determine whether a rain warning should be issued.
 
     'fullMap' is the (raw) radar map, 'locX'/'locY' specify the location.
     Returns '1' if rain is nearby, '0' if no rain is close, and '?' in case of an error.

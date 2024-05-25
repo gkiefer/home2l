@@ -3,17 +3,32 @@
 
 ##### Obtaining sources #####
 
-# Origin:
-#   SDL2-2.0.3.tar.gz       from https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
-#     -> src/SDL2
-#   SDL2_ttf-2.0.12.tar.gz  from https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.12.tar.gz
-#     -> src/SDL2_ttf
+# Initial:
+#   $ md -p src && cd src
+#   $ git clone https://github.com/libsdl-org/SDL.git
+#   $ git clone https://github.com/libsdl-org/SDL_ttf.git
 #
-# [2021-04-20] SDL2-2.0.11  requires Android NDK r21e or higher
-#
-# [2021-04-21] The latest versions compliant with Android-19 are:
-#    SDL2-2.0.8
-#    SDL2_ttf-2.0.14
+# Upgrade:
+#   $ cd src/SDL
+#   $ git pull
+#   $ git checkout release-2.28.5
+#   $ cd ../SDL_ttf
+#   $ git checkout release-2.20.2
+
+
+
+##### Configuration #####
+
+# Set Android NDK to use ...
+ANDROID_NDK=/opt/android/sdk/ndk/25.2.9519653
+
+
+
+
+
+######################################################################
+##### Preamble                                                   #####
+######################################################################
 
 
 set -e  # stop this script on error
@@ -91,11 +106,11 @@ build_linux () {
 
   echo
   echo "####################"
-  echo "#     SDL2 ...     #"
+  echo "#     SDL ...      #"
   echo "####################"
   echo
 
-  cd $MAINDIR/src/SDL2
+  cd $MAINDIR/src/SDL
   make maintainer-clean 2>/dev/null || true
   ./autogen.sh
   ./configure $TARGET_FLAGS --prefix=$BUILDDIR --disable-shared --enable-static
@@ -104,29 +119,16 @@ build_linux () {
   rm `grep "creating" config.log | sed 's#.*creating ##'`   # remove configure output
 
   echo
-  echo "#################################"
-  echo "#     SDL2-TTF/freetype ...     #"
-  echo "#################################"
-  echo
-
-  cd $MAINDIR/src/SDL2_ttf/external/freetype-*  
-  make distclean_project # 2>/dev/null || true
-  ./autogen.sh
-  ./configure $TARGET_FLAGS --prefix=$BUILDDIR --disable-shared --enable-static
-  make && make $MAKEFLAGS install     # The first 'make' is required to generate 'builds/unix/freetype-config'.
-  make clean
-
-  echo
   echo "########################"
-  echo "#     SDL2-TTF ...     #"
+  echo "#     SDL-TTF ...      #"
   echo "########################"
   echo
   
-  cd $MAINDIR/src/SDL2_ttf
+  cd $MAINDIR/src/SDL_ttf
   make maintainer-clean 2>/dev/null || true
   ./autogen.sh
   ./configure $TARGET_FLAGS --prefix=$BUILDDIR --disable-shared --enable-static \
-      --with-freetype-prefix=$BUILDDIR --with-sdl-prefix=$BUILDDIR
+      --with-sdl-prefix=$BUILDDIR
   make $MAKEFLAGS install
   make clean
 
@@ -154,33 +156,33 @@ build_linux () {
 
 build_android () {
   echo "#####################################################################"
-  echo "##### Pre-building for Android SDK ...                          #####"
+  echo "##### Pre-building for Android ...                              #####"
   echo "#####################################################################"
   echo
 
   cd $MAINDIR/dummy_app/jni
 
   echo "#############################################################"
-  echo "# Cleaning with Android SDK ...                             #"
+  echo "# Cleaning with Android NDK ...                             #"
   echo "#############################################################"
   echo
 
-  ndk-build clean
+  $ANDROID_NDK/ndk-build clean
 
   echo
   echo "#############################################################"
-  echo "# Building with Android SDK ...                             #"
+  echo "# Building with Android NDK ...                             #"
   echo "#############################################################"
   echo
 
   # Set Android default options and disable some that are not required or may cause problems ...
-  cp $MAINDIR/src/SDL2/include/SDL_config_android.h $MAINDIR/src/SDL2/include/SDL_config.h
+  cp $MAINDIR/src/SDL/include/SDL_config_android.h $MAINDIR/src/SDL/include/SDL_config.h
   #~ for CFG in SDL_AUDIO_DRIVER_OPENSLES \
              #~ SDL_JOYSTICK_ANDROID SDL_JOYSTICK_HIDAPI SDL_HAPTIC_ANDROID \
              #~ SDL_SENSOR_ANDROID SDL_LOADSO_DLOPEN SDL_FILESYSTEM_ANDROID; do
-    #~ sed -i 's#\('$CFG'\).*$#\1 0#' $MAINDIR/src/SDL2/include/SDL_config.h
+    #~ sed -i 's#\('$CFG'\).*$#\1 0#' $MAINDIR/src/SDL/include/SDL_config.h
   #~ done
-  ndk-build $MAKEFLAGS SDL2_static SDL2_ttf_static
+  $ANDROID_NDK/ndk-build $MAKEFLAGS SDL2_static SDL2_ttf_static freetype harfbuzz
 
   echo
   echo "#############################################################"
@@ -190,8 +192,8 @@ build_android () {
 
   cd $MAINDIR
   mkdir -p usr.new/android/include
-  cp -va src/SDL2/include/*.h usr.new/android/include
-  cp -va src/SDL2_ttf/SDL_ttf.h usr.new/android/include
+  cp -va src/SDL/include/*.h usr.new/android/include
+  cp -va src/SDL_ttf/SDL_ttf.h usr.new/android/include
   mkdir -p usr.new/android/lib
   cp -va dummy_app/obj/local/armeabi-v7a/*.a usr.new/android/lib
 
@@ -202,7 +204,7 @@ build_android () {
   echo
 
   cd $MAINDIR/dummy_app/jni
-  ndk-build clean
+  $ANDROID_NDK/ndk-build clean
 }
 
 
@@ -223,42 +225,9 @@ rm -fr include usr.new
 
 build_linux amd64
 build_linux armhf
-build_linux i386
+#~ build_linux i386     # [2024-01-04] build errors in SDL_ttf -> unsupported/obsolete
 
 
 ##### Build for Android SDK #####
 
 build_android
-
-
-##### Extract Debian packages that cannot be installed by foreign architecture #####
-
-#~ echo
-#~ echo
-#~ echo "#####################################################################"
-#~ echo "##### Extracting existing Debian packages ...                   #####"
-#~ echo "#####################################################################"
-#~ echo
-
-#~ cd $MAINDIR
-#~ mkdir build
-#~ shopt -s nullglob   # for empty directories in 'mv ...' commands
-#~ for ARCH in amd64 armhf; do
-  #~ for P in debs/*$ARCH.deb; do
-    #~ echo $P
-    #~ dpkg -x $P build
-  #~ done
-  #~ if [[ "$ARCH" == "amd64" ]]; then
-    #~ GNU_ARCH=x86_64-linux-gnu
-  #~ fi
-  #~ if [[ "$ARCH" == "armhf" ]]; then
-    #~ GNU_ARCH=arm-linux-gnueabihf
-  #~ fi
-  #~ # TBD: install & compile with correct includes
-  #~ # mkdir -p usr.new/$ARCH/include
-  #~ # mv build/usr/include/* usr.new/$ARCH/include
-  #~ mkdir -p usr.new/$ARCH/lib
-  #~ mv build/usr/lib/*.a build/usr/lib/$GNU_ARCH/*.a usr.new/$ARCH/lib
-  #~ rm -fr build
-#~ done
-#~ shopt -u nullglob

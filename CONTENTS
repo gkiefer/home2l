@@ -13,31 +13,32 @@ Gundolf Kiefer, 2018-11-21
 
 2. Documentation (generated)
 
-  README.pdf              - PDF version of README.md
-  home2l-book.pdf         - The Home2L Book
-  home2l-api_python       - Python API
-  home2l-api_c            - C/C++ API
-  home2l-figs             - Some nice figures (mainly for README.md)
-  home2l-demo-vm.tar.gz   - VirtualBox VM suitable for running the tutorial
+  README.pdf            - PDF version of README.md
+  home2l-book.pdf       - The Home2L Book
+  home2l-api_python     - Python API
+  home2l-api_c          - C/C++ API
+  home2l-figs           - Some nice figures (mainly for README.md)
+  home2l-showcase-vbox.tar.gz
+                        - VirtualBox VM suitable for running the tutorial
 
 
-3. Main Modules
-
-  resources/
-  brownies/
-  wallclock/
-  doorman/
+3. General Source Files
 
   tools/      - Collection of core tools
+  showcase/   - Examples and initial configuration files
   doc/        - Documentation source files
   locales/    - Translations
-
-
-4. Other Source Files
-
   common/     - Common C source files (base, env, phone, streamer)
   drivers/    - Resource drivers (gpio, weather)
   external/   - Scripts and notes for external dependencies
+
+
+4. Main Modules
+
+  resources/  - Resources: library and tools
+  brownies/   - Brownies: firmwares, library and tools
+  wallclock/  - WallClock application
+  doorman/    - DoorMan application
 
 
 5. Build System

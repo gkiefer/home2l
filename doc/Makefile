@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -229,6 +229,17 @@ ref_rc_drv_weather.tex: ../drivers/weather/home2l-drv-weather
 	@echo EXCODE $@
 	@./excode.py r : $^ > $@ || (rm $@; exit 7)
 
+ref_env_drv_fronius.tex: ../drivers/fronius/home2l-drv-fronius
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+
+ref_env_drv_fingerprint.tex: ../drivers/fingerprint/home2l-drv-fingerprint
+	@echo EXCODE $@
+	@./excode.py e : $^ > $@ || (rm $@; exit 7)
+ref_rc_drv_fingerprint.tex: ../drivers/fingerprint/home2l-drv-fingerprint
+	@echo EXCODE $@
+	@./excode.py r : $^ > $@ || (rm $@; exit 7)
+
 ref_env_drv_mpd.tex: ../drivers/mpd/home2l-drv-mpd.C
 	@echo EXCODE $@
 	@./excode.py e : $^ > $@ || (rm $@; exit 7)
@@ -243,12 +254,14 @@ ref_env_drv_mpd.tex: ../drivers/mpd/home2l-drv-mpd.C
 REFS_ENV := ref_env_common.tex ref_env_resources.tex ref_env_daemon.tex \
 						ref_env_brownies.tex \
 	          ref_env_wallclock.tex ref_env_doorman.tex \
-	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_enocean.tex ref_env_drv_weather.tex ref_env_drv_mpd.tex
+	          ref_env_drv_gpio.tex ref_env_drv_mqtt.tex ref_env_drv_enocean.tex \
+	          ref_env_drv_weather.tex ref_env_drv_fronius.tex ref_env_drv_mpd.tex ref_env_drv_fingerprint.tex \
+
 
 REFS_RC  := ref_rc_resources.tex  \
 						ref_rc_brownies.tex \
 	          ref_rc_wallclock.tex ref_rc_doorman.tex \
-	          ref_rc_drv_weather.tex
+	          ref_rc_drv_weather.tex ref_rc_drv_fingerprint.tex
 
 
 $(BOOK).pdf: $(REFS_ENV) $(REFS_RC) $(BOOK).tex

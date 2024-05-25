@@ -1,10 +1,11 @@
 <map id="CDictRaw" name="CDictRaw">
-<area shape="rect" id="node1" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="248,80,331,107"/>
-<area shape="rect" id="node3" href="$classCDictCompact.html" title=" " alt="" coords="5,155,152,181"/>
-<area shape="rect" id="node4" href="$classCDict.html" title="Dictionary." alt="" coords="176,155,264,181"/>
-<area shape="rect" id="node7" href="$classCDictCompact.html" title="Compact dictionary." alt="" coords="288,155,429,181"/>
-<area shape="rect" id="node8" href="$classCKeySet.html" title="Set of strings (keys)." alt="" coords="453,155,528,181"/>
-<area shape="rect" id="node2" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="249,5,329,32"/>
-<area shape="rect" id="node5" href="$classCDictRef.html" title=" " alt="" coords="55,229,222,256"/>
-<area shape="rect" id="node6" href="$classCDictRef.html" title="Dictionary of references." alt="" coords="247,229,356,256"/>
+<area shape="rect" id="node1" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="359,80,442,107"/>
+<area shape="rect" id="node3" href="$classCDict.html" title=" " alt="" coords="15,155,162,181"/>
+<area shape="rect" id="node5" href="$classCDictCompact.html" title=" " alt="" coords="186,155,333,181"/>
+<area shape="rect" id="node6" href="$classCDict.html" title="Dictionary." alt="" coords="357,155,445,181"/>
+<area shape="rect" id="node8" href="$classCDictCompact.html" title="Compact dictionary." alt="" coords="469,155,610,181"/>
+<area shape="rect" id="node9" href="$classCKeySet.html" title="Set of strings (keys)." alt="" coords="634,155,709,181"/>
+<area shape="rect" id="node2" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="361,5,441,32"/>
+<area shape="rect" id="node4" href="$classCDictRef.html" title=" " alt="" coords="5,229,172,256"/>
+<area shape="rect" id="node7" href="$classCDictRef.html" title="Dictionary of references." alt="" coords="346,229,455,256"/>
 </map>

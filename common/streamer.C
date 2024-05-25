@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,10 +69,19 @@ static int dbLevel;
 
 
 
-static void ReportStreamerError (const char *msg) {
+static void ReportError (const char *msg) {
   WARNINGF (("GStreamer error: %s", msg));
   if (stateError.IsEmpty ()) stateError.Set (msg);      // in a sequence of errors, report the first one
   stateStreamer = strError;
+}
+
+
+static void ReportGError (GError **err) {
+  if (*err) {
+    ReportError ((*err)->message);
+    g_error_free (*err);
+    *err = NULL;
+  }
 }
 
 
@@ -90,7 +99,7 @@ static void ReportStreamerError (const char *msg) {
 
 
 static void CbGstMessage (GstBus *bus, GstMessage *msg, void *) {
-  GError *err;
+  GError *gError = NULL;
   gchar *debug;
   const gchar *name;
   gint percent;
@@ -104,9 +113,8 @@ static void CbGstMessage (GstBus *bus, GstMessage *msg, void *) {
   switch (GST_MESSAGE_TYPE (msg)) {
 
     case GST_MESSAGE_ERROR:
-      gst_message_parse_error (msg, &err, &debug);
-      ReportStreamerError (err->message);
-      g_error_free (err);
+      gst_message_parse_error (msg, &gError, &debug);
+      ReportGError (&gError);
       g_free (debug);
 
       gst_element_set_state (gstPipeline, GST_STATE_READY);
@@ -191,7 +199,7 @@ static void GstLog (GstDebugCategory * category,
 
 void StreamerInit () {
   static bool streamerInitialized = false;
-  GError *gError;
+  GError *gError = NULL;
 
   DEBUGF (1, ("StreamerInit ()"));
 
@@ -206,10 +214,7 @@ void StreamerInit () {
   gstInitialized = gst_init_check (NULL, NULL, &gError);
   //~ gst_debug_set_default_threshold (GST_LEVEL_INFO /* GST_LEVEL_DEBUG */);
   //~ gst_debug_add_log_function (&GstLog, NULL);
-  if (!gstInitialized) {
-    ReportStreamerError (gError->message);
-    g_error_free (gError);
-  }
+  ReportGError (&gError);
 }
 
 
@@ -223,6 +228,7 @@ void StreamerDone () {
 void StreamerStart (const char *host, int port, TTicks bufferDuration) {
   static CString launchStr;
   GstStateChangeReturn ret;
+  GError *gError = NULL;
 
   // Sanity...
   if (!gstInitialized) return;
@@ -236,23 +242,25 @@ void StreamerStart (const char *host, int port, TTicks bufferDuration) {
   stateStreamer = strBusy;
 
   // Build the pipeline ...
-  launchStr.SetF ("playbin uri=http://%s:%i buffer-duration=%i000000 flags=2 audio-filter=level is-live=true keep-alive=true", host, port, bufferDuration);
-    // * Option 'flags=2' ...
-    //    a) disables video and text (optimization)
-    //    b) disables soft volume (the device buttons should be used)
-    // * Options 'is-live=true' and  'keep-alive=true' are not well documented, but may be good in this case.
-  //~ launchStr.SetF ("souphttpsrc location=http://%s:%i ! icydemux ! wavparse ! queue max-size-time=%i000000 ! audioconvert ! audioresample ! openslessink", host, port, bufferDuration);
-  //~ launchStr.SetF ("playbin uri=http://%s:%i", host, port, bufferDuration);
+  launchStr.SetF ("playbin uri=http://%s:%i buffer-duration=%i000000 flags=audio+download audio-filter=level", host, port, bufferDuration);
+    // Options to 'playbin' (see https://gstreamer.freedesktop.org/documentation/playback/playbin.html):
+    // * flags
+    //   - 'audio' enables audio (and disables anything else), also soft volume (the device buttons should be used)
+    //   - 'download' enables download
   //~ INFOF (("### launchStr = '%s'", launchStr.Get ()));
-  gstPipeline = gst_parse_launch (launchStr, NULL);
+  gstPipeline = gst_parse_launch (launchStr, &gError);
+  ReportGError (&gError);
+  if (!gstPipeline) return;
+
   gstBus = gst_element_get_bus (gstPipeline);
+  ASSERT (gstBus != NULL);
 
   // Start playing ...
   ret = gst_element_set_state (gstPipeline, GST_STATE_PLAYING);
   if (ret == GST_STATE_CHANGE_FAILURE) {
 
     // Report error...
-    ReportStreamerError ("Unable to set the pipeline to the playing state,");
+    ReportError ("Unable to set the pipeline to the playing state");
       // like GStreamer-generated messages, this string is not translated.
 
   } else {

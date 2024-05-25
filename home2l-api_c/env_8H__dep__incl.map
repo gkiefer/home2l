@@ -1,7 +1,7 @@
 <map id="common/env.H" name="common/env.H">
 <area shape="rect" id="node1" title=" " alt="" coords="163,5,272,32"/>
-<area shape="rect" id="node2" href="$resources_8H.html" title=" " alt="" coords="140,80,295,107"/>
-<area shape="rect" id="node3" href="$brownies_8H.html" title=" " alt="" coords="5,155,149,181"/>
+<area shape="rect" id="node2" href="$brownies_8H.html" title=" " alt="" coords="5,155,149,181"/>
+<area shape="rect" id="node3" href="$resources_8H.html" title=" " alt="" coords="140,80,295,107"/>
 <area shape="rect" id="node5" href="$ui__base_8H.html" title=" " alt="" coords="427,80,565,107"/>
 <area shape="rect" id="node4" href="$system_8H.html" title=" " alt="" coords="174,155,311,181"/>
 <area shape="rect" id="node6" href="$alarmclock_8H.html" title=" " alt="" coords="336,155,493,181"/>

@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -105,6 +105,74 @@ static void PrintSDL_Event (SDL_Event *ev) {
             (int) (ev->tfinger.dx * UI_RES_X), (int) (ev->tfinger.dy * UI_RES_Y),
             ev->tfinger.pressure));
       break;
+    case SDL_WINDOWEVENT:
+      switch (ev->window.event) {
+        case SDL_WINDOWEVENT_SHOWN:
+            INFOF(("Event: SDL_WINDOWEVENT_SHOWN (Window %d shown)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_HIDDEN:
+            INFOF(("Event: SDL_WINDOWEVENT_HIDDEN (Window %d hidden)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_EXPOSED:
+            INFOF(("Event: SDL_WINDOWEVENT_EXPOSED (Window %d exposed)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_MOVED:
+            INFOF(("Event: SDL_WINDOWEVENT_MOVED (Window %d moved to %d,%d)",
+                    ev->window.windowID, ev->window.data1,
+                    ev->window.data2));
+            break;
+        case SDL_WINDOWEVENT_RESIZED:
+            INFOF(("Event: SDL_WINDOWEVENT_RESIZED (Window %d resized to %dx%d)",
+                    ev->window.windowID, ev->window.data1,
+                    ev->window.data2));
+            break;
+        case SDL_WINDOWEVENT_SIZE_CHANGED:
+            INFOF(("Event: SDL_WINDOWEVENT_SIZE_CHANGED (Window %d size changed to %dx%d)",
+                    ev->window.windowID, ev->window.data1,
+                    ev->window.data2));
+            break;
+        case SDL_WINDOWEVENT_MINIMIZED:
+            INFOF(("Event: SDL_WINDOWEVENT_MINIMIZED (Window %d minimized)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_MAXIMIZED:
+            INFOF(("Event: SDL_WINDOWEVENT_MAXIMIZED (Window %d maximized)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_RESTORED:
+            INFOF(("Event: SDL_WINDOWEVENT_RESTORED (Window %d restored)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_ENTER:
+            INFOF(("Event: SDL_WINDOWEVENT_ENTER (Mouse entered window %d)",
+                    ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_LEAVE:
+            INFOF(("Event: SDL_WINDOWEVENT_LEAVE (Mouse left window %d)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+            INFOF(("Event: SDL_WINDOWEVENT_FOCUS_GAINED (Window %d gained focus)",
+                    ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            INFOF(("Event: SDL_WINDOWEVENT_FOCUS_LOST (Window %d lost keyboard focus)",
+                    ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_CLOSE:
+            INFOF(("Event: SDL_WINDOWEVENT_CLOSE (Window %d closed)", ev->window.windowID));
+            break;
+#if SDL_VERSION_ATLEAST(2, 0, 5)
+        case SDL_WINDOWEVENT_TAKE_FOCUS:
+            INFOF(("Event: SDL_WINDOWEVENT_TAKE_FOCUS (Window %d is offered a focus)", ev->window.windowID));
+            break;
+        case SDL_WINDOWEVENT_HIT_TEST:
+            INFOF(("Event: SDL_WINDOWEVENT_HIT_TEST (Window %d has a special hit test)", ev->window.windowID));
+            break;
+#endif
+        default:
+            INFOF(("Event: SDL_WINDOWEVENT (Window %d got unknown event %d)",
+                    ev->window.windowID, ev->window.event));
+            break;
+        }
+      break;
+
     default:
       INFOF(("Event: SDL_... (type = %i)", ev->type));
       //printf ("Event %i, WINDOWEVENT = %i\n", ev.type, (int) ev.window.event);
@@ -128,12 +196,13 @@ void UiIterate (bool noWait) {
   CScreen *activeScreen = CScreen::ActiveScreen ();
   void (*func) (void *);
   ESystemMode newMode, lastMode;
-  TTicks t, t1;
   bool haveEvent;
   //~ int events;
 
   // Wait for an event...
   //~ INFO ("### Wait for event...");
+  haveEvent = SDL_WaitEventTimeout (&ev, TimerGetDelay ()) == 1;
+/*
   if (sdlPaused || SDL_HasEvent(SDL_APP_WILLENTERBACKGROUND) || SDL_HasEvent(SDL_APP_DIDENTERBACKGROUND)) {
     //~ INFO ("### Wait for event (Android/background mode) ...");
     // In Android, if the app is paused (-> sdlPaused == true), the function
@@ -155,7 +224,7 @@ void UiIterate (bool noWait) {
     else {
       t = TicksNowMonotonic ();               // WORKAROUND (see below)
       haveEvent = SDL_WaitEventTimeout (&ev, t1 = TimerGetDelay ()) == 1;
-      if (TicksNowMonotonic () - t > 2000) {  // WORKAROUND (see below)
+      if (ANDROID && TicksNowMonotonic () - t > 2000) {  // WORKAROUND (see below)
         WARNINGF (("### SDL_WaitEventTimeout () returned late after %i ms: TimerGetDelay () = %i ms",
                  TicksNowMonotonic () - t, t1));
         // WORKAROUND (2019-05-20, SDL 2.07 on Android):
@@ -167,11 +236,13 @@ void UiIterate (bool noWait) {
       }
     }
   }
+*/
 
   // Handle all available events...
   //~ events = 0;
   while (haveEvent) {
     //~ INFOF (("### Have event (#%i, sdlPaused = %i): handle it...", events++, (int) sdlPaused));
+    //~ INFOF (("### Have event (sdlPaused = %i): handling it ...", (int) sdlPaused));
     //~ PrintSDL_Event (&ev);
 
     // Handle system-level events...
@@ -212,9 +283,13 @@ void UiIterate (bool noWait) {
         }
         break;
 
+      // Window events ...
       case SDL_WINDOWEVENT:
-        if (ev.window.event == SDL_WINDOWEVENT_EXPOSED)    // we need to redraw now
-          if (activeScreen) activeScreen->Changed ();
+        switch (ev.window.event) {
+          case SDL_WINDOWEVENT_EXPOSED:    // we need to redraw now
+            if (activeScreen) activeScreen->Changed ();
+            break;
+        }
         break;
 
       // Moving to background/foreground (Android) ...
@@ -230,6 +305,10 @@ void UiIterate (bool noWait) {
         CScreen::Refresh ();
         SystemReportUiVisibility (true);
         SystemWakeupStandby ();
+        break;
+      case SDL_RENDER_DEVICE_RESET:
+        INFO ("###   ... SDL_RENDER_DEVICE_RESET");
+        ASSERTF (false, ("SDL_RENDER_DEVICE_RESET not implemented"));
         break;
 #endif // ANDROID == 1
 
@@ -1028,16 +1107,19 @@ SDL_Surface *IconGet (const char *name, TColor color, TColor bgColor, int scaleD
     }
   }
 
-  // Cache miss: Get an appropriate base image (must be transparent, no scaling, uüpright orientation) ...
+  // Cache miss: Get an appropriate base image (must be transparent, no scaling, upright orientation) ...
   if (!baseCacheItem) {
 
     // Load bitmap file ...
-    snprintf (fileName, sizeof (fileName) - 1, "%s/share/icons/%s.bmp", EnvHome2lRoot (), name);
-    DEBUGF (2, ("Loading icon '%s'", fileName));
+    snprintf (fileName, sizeof (fileName) - 1, "%s/icons/%s.bmp", EnvHome2lEtc (), name);
     surfBase = SDL_LoadBMP (fileName);
+    if (!surfBase)  {
+      snprintf (fileName, sizeof (fileName) - 1, "%s/share/icons/%s.bmp", EnvHome2lRoot (), name);
+      surfBase = SDL_LoadBMP (fileName);
+    }
     if (!surfBase)
       ERRORF (("Unable to load bitmap '%s': %s", fileName, SDL_GetError ()));
-    DEBUGF (2, ("  bitmap '%s' loaded, pixel format: %s", fileName, SDL_GetPixelFormatName (surfBase->format->format)));
+    DEBUGF (2, ("Loaded icon '%s', pixel format: %s .", fileName, SDL_GetPixelFormatName (surfBase->format->format)));
     palette = surfBase->format->palette;
     if (palette) {
       // We have a palette -> adopt it to the correct color efficiently...
@@ -1475,6 +1557,10 @@ void UiInit (const char *windowTitle) {
   bool accelerated;
 
   // Init SDL and SDL_TTF...
+#if ANDROID
+  if (!SDL_SetHint (SDL_HINT_ANDROID_BLOCK_ON_PAUSE, "0"))
+    WARNING ("Failed to set SDL_HINT_ANDROID_BLOCK_ON_PAUSE to non-blocking: Background activities (music, phone) may not work properly.");
+#endif
   if (SDL_Init (SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_AUDIO))
     ERROR ("'SDL_Init' failed");
   SDL_SetHint (SDL_HINT_NO_SIGNAL_HANDLERS, "1");

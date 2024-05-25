@@ -1,4 +1,4 @@
 <map id="Service Management" name="Service Management">
-<area shape="rect" id="node1" title="Helper class(es) for managing services." alt="" coords="128,5,273,31"/>
-<area shape="rect" id="node2" href="$group__common.html" title="Common definitions and classes for all Home2L components." alt="" coords="5,5,80,31"/>
+<area shape="rect" id="node1" href="$group__common.html" title="Common definitions and classes for all Home2L components." alt="" coords="5,5,80,31"/>
+<area shape="rect" id="node2" title="Helper class(es) for managing services." alt="" coords="128,5,273,31"/>
 </map>

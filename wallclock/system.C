@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,11 @@
 
 #include "system.H"
 
+
+#define ANDROID_UPDATE_DIR "/sdcard/home2l-update"
+  // Place on Android devices, where /etc updates are searched for and
+  // installed on startup. This directory must match the directory
+  // created by 'home2l-rollout'.
 
 
 #if !ANDROID
@@ -57,21 +62,27 @@ ENV_PARA_INT ("ui.offDelay", envOffDelay, 3600000);
   /* Time (ms) until the screen is switched off
    */
 
-ENV_PARA_BOOL ("sync2l", envSync2lEnable, false);
-  /* Enable a Sync2l interface to the device's address book via a named pipe
+#if ANDROID
+
+ENV_PARA_STRING ("android.autostart", envAndroidAutostart, NULL);
+  /* Shell script to be executed on startup of the app
    *
-   * If enabled, a named pipe special file 'HOME2L\_ROOT/tmp/sync2l' is created
-   * via which the device's address book can be accessed by the "sync2l" PIM
-   * synchronisation tool. If you do not know that tool (or do not use it), you
-   * should not set this parameter.
+   * If defined, the named shell script is started and executed in the background
+   * on each start of the app. The path name may either be absolute or relative to
+   * HOME2L\_ROOT. If the name starts with '!', the script is started with root
+   * privileges using 'su'.
    *
-   * The pipe is created automatically, and it is made user and group readable
-   * and writable (mode 0660, ignoring an eventual umask). It is recommended
-   * to set the SGID bit of the parent directory and let it be owned be group
-   * 'home2l', so that a Debian or other chroot'ed Linux installation can
-   * access the pipe.
+   * It is allowed to append command line arguments.
+   */
+ENV_PARA_BOOL ("android.allowAdbSwitching", envAllowAdbSwitching, false);
+  /* Allow to turn on/off ADB debugging (Android only, requires root)
+   *
+   * If set (true), the resource 'ui.adbTcp' is writable and can be used to turn
+   * on ADB debugging over TCP. This may exhibit a security hole, so this option
+   * should be used with care.
    */
 
+#endif
 
 
 
@@ -82,6 +93,10 @@ ENV_PARA_BOOL ("sync2l", envSync2lEnable, false);
 static CResource *rcModeStandby = NULL;
 static CResource *rcModeActive = NULL;
 static bool valModeStandby = false, valModeActive = false;  // cached mode settings in resources
+
+#if ANDROID
+static CResource *rcAdbTcp = NULL;
+#endif
 
 static CResource *rcDispLight = NULL;
 static CResource *rcLuxSensor = NULL;
@@ -97,6 +112,9 @@ static CResource *rcPhoneState = NULL;
 
 // Some forward declarations...
 static void SystemModeUpdate (bool inForeground);
+#if ANDROID
+static void AdbTcpDriveValue (CRcValueState *vs);
+#endif
 static void BluetoothDriveValue (CRcValueState *vs);
 
 
@@ -135,6 +153,18 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
          * If 'true', the screen is on at full brightness (as during interaction).
          */
 
+#if ANDROID
+      if (envAllowAdbSwitching) {
+        rcAdbTcp = drv->RegisterResource ("adbTcp", rctInt, true);
+        rcAdbTcp->SetDefault (0);
+          /* [RC:ui] TCP port for ADB over TCP
+           *
+           * If set to a value from 1024 to 65535, ADB over TCP is activated and
+           * made available over this port.
+           */
+      }
+#endif
+
       rcDispLight = drv->RegisterResource ("dispLight", rctPercent, false);
         /* [RC:ui] Display brightness
          */
@@ -164,7 +194,7 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
          */
 #endif
 
-#if ANDROID == 0
+#if !ANDROID
       rcBluetooth->ReportValue (false);
       rcBluetoothAudio->ReportValue (false);
 #endif
@@ -174,6 +204,12 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
       break;
 
     case rcdOpDriveValue: // according to the pending requests, a new value has to be applied
+#if ANDROID
+      if (rc == rcAdbTcp) {
+        AdbTcpDriveValue (vs);
+      }
+      else
+#endif
       if (rc == rcMute) {
         if (vs->IsValid ()) valMute = vs->Bool ();      // cache the value
       }
@@ -199,13 +235,11 @@ static void RcDriverFunc_ui (ERcDriverOperation op, CRcDriver *drv, CResource *r
 // *************************** Debian/PC-specific part *************************
 
 
-#if ANDROID == 0
+#if !ANDROID
 
 
 static inline void DebianInit () {}
 
-
-//~ void SystemSetImmersiveMode () {}
 
 void SystemSetAudioNormal () { DEBUG (1, "SystemSetAudioNormal ()"); }
 void SystemSetAudioPhone () { DEBUG (1, "SystemSetAudioPhone ()"); }
@@ -236,30 +270,18 @@ static inline void BackgroundForegroundDrive (void *data) {}
 #include <string.h>
 
 
-ENV_PARA_STRING ("android.autostart", envAndroidAutostart, NULL);
-  /* Shell script to be executed on startup of the app
-   *
-   * If defined, the named shell script is started and executed in the background
-   * on each start of the app. The path name may either be absolute or relative to
-   * HOME2L\_ROOT. If the name starts with '!', the script is started with root
-   * privileges using 'su'.
-   *
-   * It is allowed to append command line arguments.
-   */
-
-
-
 static JavaVM *javaVM = NULL;
 static JNIEnv *jniEnv = NULL;
 static jclass jniClass = NULL;
 
 static jmethodID midAboutToExit = NULL;
 
-static jmethodID midShowMessage = NULL;
+static jmethodID midShowDialog = NULL;
 static jmethodID midShowToast = NULL;
 
 static jmethodID midAssetLoadTextFile = NULL;
 static jmethodID midAssetCopyFileToInternal = NULL;
+static jmethodID midExternalCopyFileToInternal = NULL;
 
 static jmethodID midSetKeepScreenOn = NULL;
 static jmethodID midSetDisplayBrightness = NULL;
@@ -268,13 +290,9 @@ static jmethodID midGoForeground = NULL;
 static jmethodID midGoBackground = NULL;
 static jmethodID midLaunchApp = NULL;
 
-//~ static jmethodID midSetImmersiveMode = NULL;
-
 static jmethodID midSetAudioNormal = NULL;    // deprecated
 static jmethodID midSetAudioPhone = NULL;     // deprecated
 //~ static jmethodID midSetAudioRinging = NULL;
-
-static jmethodID midEnableSync2l = NULL;
 
 static jmethodID midBluetoothSet = NULL;
 static jmethodID midBluetoothPoll = NULL;
@@ -307,15 +325,54 @@ static void AndroidExceptionCheck () {
 
 
 
+
+// ***** Android Dialogs and Toasts *****
+
+
+static int AndroidShowDialog (const char *title, const char *msg, int buttons) {
+  // 'buttons':
+  //   1: only "OK"
+  //   2: "OK" and "Cancel"
+  //   3: "Yes", "No", "Cancel"
+  // return value:
+  //   0: Cancel
+  //   1: "OK" or "Yes"
+  //   2: "No"
+  jstring jTitle = jniEnv->NewStringUTF (title),
+          jMsg = jniEnv->NewStringUTF (msg);
+  jint ret = jniEnv->CallStaticIntMethod (jniClass, midShowDialog, jTitle, jMsg, jint (buttons));
+  AndroidExceptionCheck ();
+  jniEnv->DeleteLocalRef (jTitle);
+  jniEnv->DeleteLocalRef (jMsg);
+  return int (ret);
+}
+
+
+static void AndroidShowMessage (const char *title, const char *msg) {
+  AndroidShowDialog (title, msg, 1);
+}
+
+
+static void AndroidShowToast (const char *msg, bool showLonger) {
+  jstring jMsg = jniEnv->NewStringUTF (msg);
+  jniEnv->CallStaticVoidMethod (jniClass, midShowToast, jMsg, showLonger ? JNI_TRUE : JNI_FALSE);
+  AndroidExceptionCheck ();
+  jniEnv->DeleteLocalRef (jMsg);
+}
+
+
+
+
 // ***** Android storage preparation *****
 
 
 static bool AndroidAssetLoadTextFile (const char *relPath, CString *ret) {
   // Load a text file from asset
-  jstring jRet, jRelPath = jniEnv->NewStringUTF (relPath);
+  jstring jRet, jRelPath;
   const char *buf;
 
   //~ INFOF (("### (before) ExceptionOccurred () = %i", (int) jniEnv->ExceptionCheck ()));
+  jRelPath = jniEnv->NewStringUTF (relPath);
   jRet = (jstring) (jniEnv->CallStaticObjectMethod (jniClass, midAssetLoadTextFile, jRelPath));
   //~ INFOF (("### (after ) ExceptionOccurred () = %i", (int) jniEnv->ExceptionCheck ()));
   AndroidExceptionCheck ();
@@ -350,6 +407,28 @@ static bool AndroidAssetCopyFileToInternal (const char *relPath) {
   // Done ...
   if (jOk != JNI_TRUE) {
     WARNINGF(("Failed to copy asset '%s'.", relPath));
+    return false;
+  }
+  return true;
+}
+
+
+static bool AndroidExternalCopyFileToInternal (const char *relPath) {
+  jstring jExtPath, jRelPath;
+  jboolean jOk;
+
+  //~ INFOF (("### Copying '%s'...", relPath));
+
+  // Copy the file ...
+  jExtPath = jniEnv->NewStringUTF (ANDROID_UPDATE_DIR);
+  jRelPath = jniEnv->NewStringUTF (relPath);
+  jOk = jniEnv->CallStaticBooleanMethod (jniClass, midExternalCopyFileToInternal, jExtPath, jRelPath);
+  jniEnv->DeleteLocalRef (jRelPath);
+  AndroidExceptionCheck ();
+
+  // Done ...
+  if (jOk != JNI_TRUE) {
+    WARNINGF(("Failed to copy external file '%s/%s'.", ANDROID_UPDATE_DIR, relPath));
     return false;
   }
   return true;
@@ -404,16 +483,26 @@ static bool AndroidAssetLoadTextFile (const char *relPath, CString *ret) {
 
 
 static inline void AndroidPrepareHome2lRoot () {
-  CString s, installedVersion, myVersion;
+  CString s, installedVersion, myVersion, updateFiles;
   CSplitString fileList;
   struct stat fileStat;
   int n;
   const char *p;
-  bool ok, newEtc;
+  bool ok, newEtc, newVar;
 
   //~ INFO ("######### AndroidPrepareHome2lRoot #########");
 
-  // a) Check blob ...
+  // a) Check if an update /etc is avaliable in external storage ...
+  if (updateFiles.ReadFile (ANDROID_UPDATE_DIR "/FILES")) {
+    // There is an update available: Ask user to confirm ...
+    if (AndroidShowDialog (
+          "Configuration update",
+          "An update has been placed in:\n\n  " ANDROID_UPDATE_DIR "\n\nInstall it?", 2) != 1)
+      updateFiles.Clear ();
+  }
+  else updateFiles.Clear ();
+
+  // b) Check blob ...
   ok = false;
   if (!installedVersion.ReadFile (EnvGetHome2lRootPath (&s, "VERSION")))
     INFO ("No installed blob found.");
@@ -428,16 +517,20 @@ static inline void AndroidPrepareHome2lRoot () {
     }
   }
 
-  // b) Check for an 'etc' dir ...
-  newEtc = true;
+  // c) Check for existing 'etc' and 'var' dirs ...
+  newEtc = newVar = true;
   if (stat (EnvGetHome2lRootPath (&s, "etc"), &fileStat) == 0)  // Does 'etc' exist ...
     if (fileStat.st_mode & S_IFDIR)     // ... and is a directory? ...
       newEtc = false;                   // => Do NOT install a new one.
   if (newEtc) INFO ("No /etc directory found: Will install a default one.");
+  if (stat (EnvGetHome2lRootPath (&s, "var"), &fileStat) == 0)  // Does 'var' exist ...
+    if (fileStat.st_mode & S_IFDIR)     // ... and is a directory? ...
+      newVar = false;                   // => Do NOT install a new one.
+  if (newVar) INFO ("No /var directory found: Will install some sample files.");
 
-  // c) Remove and install new files ...
+  // d) Remove and install new files ...
   if (!ok) {
-    INFO (newEtc ? "-T- Installing new configuration and updating asset cache..." : "-T- Updating asset cache...");
+    INFO (newEtc ? "-T- Installing initial configuration and updating app data ..." : "-T- Updating app data ...");
     DEBUGF (1, ("Installing new blob %s at '%s'...",
             newEtc ? "and 'etc' template" : "",
             EnvHome2lRoot ()));
@@ -451,7 +544,8 @@ static inline void AndroidPrepareHome2lRoot () {
     fileList.Set (s.Get ());
     for (n = 0; n < fileList.Entries (); n++) {
       p = fileList.Get (n);
-      if (newEtc || !(p[0] == 'e' && p[1] == 't' && p[2] == 'c' && p[3] == '/')) {
+      if ((newEtc || !(p[0] == 'e' && p[1] == 't' && p[2] == 'c' && p[3] == '/')) &&
+          (newVar || !(p[0] == 'v' && p[1] == 'a' && p[2] == 'r' && p[3] == '/'))) {
         DEBUGF (2, ("Installing '%s'...", p));
         AndroidAssetCopyFileToInternal (p);
 
@@ -464,34 +558,33 @@ static inline void AndroidPrepareHome2lRoot () {
       // The VERSION file must be copied last for the case that the App crashes during the update.
   }
 
-  // d) Set permissions to make 'var' and 'tmp' accessible from outside ...
-  chmod (EnvHome2lRoot (), S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH);
-  chmod (EnvGetHome2lRootPath (&s, "var"), S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH);
-  chmod (EnvGetHome2lRootPath (&s, "tmp"), S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH);
-}
+  // e) Update /etc if requested ...
+  if (!updateFiles.IsEmpty ()) {
+    INFO ("-T- Updating configuration from '" ANDROID_UPDATE_DIR "' ...");
 
+    // Remove etc dir ...
+    ASSERT (UnlinkTree (EnvGetHome2lRootPath (&s, "etc")));
 
+    // Copy all files ...
+    fileList.Set (updateFiles.Get ());
+    for (n = 0; n < fileList.Entries (); n++) {
+      p = fileList.Get (n);
+      if (!(p[0] == 'e' && p[1] == 't' && p[2] == 'c' && p[3] == '/'))
+        WARNINGF (("Update contains non-etc file '" ANDROID_UPDATE_DIR "/%s' - ignoring!", p));
+      else
+        ASSERT (AndroidExternalCopyFileToInternal (p));
+    }
 
+    // Make executables executable ...
+    if (updateFiles.ReadFile (ANDROID_UPDATE_DIR "/EXECUTABLE")) {
+      fileList.Set (updateFiles.Get ());
+      for (n = 0; n < fileList.Entries (); n++)
+        chmod (EnvGetHome2lRootPath (&s, fileList.Get (n)), S_IRUSR | S_IWUSR | S_IXUSR);
+    }
 
-
-// ***** Logging *****
-
-
-static void AndroidShowMessage (const char *title, const char *msg) {
-  jstring jTitle = jniEnv->NewStringUTF (title),
-          jMsg = jniEnv->NewStringUTF (msg);
-  jniEnv->CallStaticVoidMethod (jniClass, midShowMessage, jTitle, jMsg);
-  AndroidExceptionCheck ();
-  jniEnv->DeleteLocalRef (jTitle);
-  jniEnv->DeleteLocalRef (jMsg);
-}
-
-
-static void AndroidShowToast (const char *msg, bool showLonger) {
-  jstring jMsg = jniEnv->NewStringUTF (msg);
-  jniEnv->CallStaticVoidMethod (jniClass, midShowToast, jMsg, showLonger ? JNI_TRUE : JNI_FALSE);
-  AndroidExceptionCheck ();
-  jniEnv->DeleteLocalRef (jMsg);
+    // Success: Remove update directory ...
+    ASSERT (UnlinkTree (ANDROID_UPDATE_DIR));
+  }
 }
 
 
@@ -544,8 +637,8 @@ static inline void AndroidPreInit () {
   midAboutToExit = jniEnv->GetStaticMethodID (jniClass, "aboutToExit", "()V");
   ASSERT(midAboutToExit != NULL);
 
-  midShowMessage = jniEnv->GetStaticMethodID (jniClass, "showMessage", "(Ljava/lang/String;Ljava/lang/String;)V");
-  ASSERT(midShowMessage != NULL);
+  midShowDialog = jniEnv->GetStaticMethodID (jniClass, "showDialog", "(Ljava/lang/String;Ljava/lang/String;I)I");
+  ASSERT(midShowDialog != NULL);
   midShowToast = jniEnv->GetStaticMethodID (jniClass, "showToast", "(Ljava/lang/String;Z)V");
   ASSERT(midShowToast != NULL);
 
@@ -553,6 +646,8 @@ static inline void AndroidPreInit () {
   ASSERT(midAssetLoadTextFile != NULL);
   midAssetCopyFileToInternal = jniEnv->GetStaticMethodID (jniClass, "assetCopyFileToInternal", "(Ljava/lang/String;)Z");;
   ASSERT(midAssetCopyFileToInternal != NULL);
+  midExternalCopyFileToInternal = jniEnv->GetStaticMethodID (jniClass, "externalCopyFileToInternal", "(Ljava/lang/String;Ljava/lang/String;)Z");;
+  ASSERT(midExternalCopyFileToInternal != NULL);
 
   midSetKeepScreenOn = jniEnv->GetStaticMethodID (jniClass, "setKeepScreenOn", "(Z)V");
   ASSERT(midSetKeepScreenOn != NULL);
@@ -566,18 +661,12 @@ static inline void AndroidPreInit () {
   midLaunchApp = jniEnv->GetStaticMethodID (jniClass, "launchApp", "(Ljava/lang/String;)V");
   ASSERT(midLaunchApp != NULL);
 
-  //~ midSetImmersiveMode = jniEnv->GetStaticMethodID (jniClass, "setImmersiveMode", "()V");
-  //~ ASSERT(midSetImmersiveMode != NULL);
-
   midSetAudioNormal = jniEnv->GetStaticMethodID (jniClass, "setAudioNormal", "()V");
   ASSERT(midSetAudioNormal != NULL);
   midSetAudioPhone = jniEnv->GetStaticMethodID (jniClass, "setAudioPhone", "()V");
   ASSERT(midSetAudioPhone != NULL);
   //~ midSetAudioRinging = jniEnv->GetStaticMethodID (jniClass, "setAudioRinging", "()V");
   //~ ASSERT(midSetAudioRinging != NULL);
-
-  midEnableSync2l = jniEnv->GetStaticMethodID (jniClass, "enableSync2l", "(Ljava/lang/String;)V");
-  ASSERT(midEnableSync2l != NULL);
 
   midBluetoothSet = jniEnv->GetStaticMethodID (jniClass, "bluetoothSet", "(Z)V");
   ASSERT(midBluetoothSet != NULL);
@@ -659,6 +748,35 @@ static inline void AndroidGoForeground () {
   //~ ABORT ("### AndroidGoForeground () called");
   jniEnv->CallStaticVoidMethod (jniClass, midGoForeground);
   AndroidExceptionCheck ();
+}
+
+
+
+// ***** ADB over TCP *****
+
+
+static void AdbTcpDriveValue (CRcValueState *vs) {
+  CShellBare shell;
+  CString cmd, output;
+  int port, ret;
+
+  port = vs->ValidInt (-1);
+  if (port < 1024 || port > 65535) port = -1;
+  cmd.SetF ("/system/bin/su -c '%s/bin/android-setadb.sh %i'", EnvHome2lRoot (), port);
+  INFOF (("### Running '%s'...", cmd.Get ()));
+  ret = shell.Run (cmd.Get (), NULL, &output);
+  if (ret == 0) {
+
+    // Success ...
+    vs->SetInt (port < 0 ? 0 : port);
+  }
+  else {
+
+    // Failure ...
+    vs->Clear ();
+    INFOF (("### Running '%s' failed with exit code %i:", cmd.Get (), ret));
+    INFO (output.Get ());
+  }
 }
 
 
@@ -840,16 +958,6 @@ static inline void SensorDone () {
 
 
 
-//~ // ***** Immersive Mode *****
-//~
-//~
-//~ void SystemSetImmersiveMode () {
-  //~ jniEnv->CallStaticVoidMethod (jniClass, midSetImmersiveMode);
-  //~ AndroidExceptionCheck ();
-//~ }
-
-
-
 // ***** Audio Manager *****
 
 
@@ -872,41 +980,6 @@ void SystemSetAudioPhone () {
 
 
 
-// ***** Sync2l interface *****
-
-
-bool EnableSync2l () {
-  CString sync2lPipeName;
-  jstring jPipeName;
-  bool ok;
-
-  // Check if we want the Sync2l adapter...
-  if (!envSync2lEnable) return true;
-
-  // Create the pipe and set its permissions...
-  EnvGetHome2lTmpPath (&sync2lPipeName, "sync2l");
-  EnvMkTmpDir (NULL);
-  INFOF (("### sync2lPipeName = %s", sync2lPipeName.Get ()));
-  unlink (sync2lPipeName.Get ());    // try to unlink previous entry first (no matter if it fails)
-  ok =         ( mkfifo (sync2lPipeName.Get (), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0 );                  // create the pipe
-  if (ok) ok = ( chmod (sync2lPipeName.Get (), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == 0);   // set permissions to allow read/write access to owner and group
-  if (!ok) {
-    WARNINGF (("Failed to create Sync2l pipe: %s", strerror (errno)));
-    return false;
-  }
-
-  // Launch the Java thread serving the pipe...
-  jPipeName = jniEnv->NewStringUTF (sync2lPipeName);
-  jniEnv->CallStaticVoidMethod (jniClass, midEnableSync2l, jPipeName);
-  AndroidExceptionCheck ();
-  jniEnv->DeleteLocalRef (jPipeName);
-
-  // Done...
-  return true;
-}
-
-
-
 // ***** Bluetooth *****
 
 
@@ -914,7 +987,7 @@ bool EnableSync2l () {
 
 static CTimer bluetoothTimer;
 static bool valBluetooth = false, valBluetoothReq = true, valBluetoothDrv = false, valBluetoothAudio = false;
-  // valBluetooth, valBluetoothAudio   : actual values last reported by Android ('1' == connection esablished)
+  // valBluetooth, valBluetoothAudio   : actual values last reported by Android ('1' == connection established)
   // valBluetoothReq   : Value last requested to Android
   // valBluetoothDrv   : Value last driven by resource
   //
@@ -1061,6 +1134,7 @@ static inline void AndroidInit () {
 
 
 
+
 // *************************** Common routines *********************************
 
 
@@ -1074,7 +1148,6 @@ void SystemPreInit () {
 void SystemInit () {
 #if ANDROID
   AndroidInit ();
-  EnableSync2l ();
 #else
   DebianInit ();
 #endif

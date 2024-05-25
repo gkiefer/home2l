@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,13 +17,12 @@
 
 
 LOCAL_PATH := $(DIR_SRC)
-#~ LOCAL_PATH := $(call my-dir)/../..
 
 
 
 #################### Define static and shared libs #############################
 
-EXT_STATIC_LIBS := SDL2_static SDL2_ttf_static
+EXT_STATIC_LIBS := SDL2_static SDL2_ttf_static freetype harfbuzz cpufeatures
 EXT_SHARED_LIBS :=
 
 ifeq ($(WITH_PHONE),1)
@@ -47,7 +46,6 @@ endif
 
 
 ########## Make lists of libs available to the Home2l build system #############
-
 
 # Print shared libraries...
 home2l_print_shlibs:

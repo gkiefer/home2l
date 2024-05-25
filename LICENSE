@@ -4,6 +4,7 @@ sources, which are NOT part of the Home2L project:
   wallclock/icons
   wallclock/sounds
   wallclock/fonts
+  drivers/fingerprint
 
 To these files, the terms and conditions of their respective original license
 apply.

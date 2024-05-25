@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,29 +35,26 @@
 
 
 ENV_PARA_NOVAR ("calendar.enable", bool, envCalendarEnable, false);
-  /* Enable calendar applet
+  /* Enable the calendar applet
    */
 ENV_PARA_STRING ("calendar.host", envCalendarHost, NULL);
   /* Host with calendar files (local if unset)
    *
-   * On the storage host, the tools \texttt{GNU patch}, \texttt{cat}, and
-   * \texttt{remind} must be installed. The latter is not needed if
-   * \refenv{calendar.nearbyHost} is defined.
+   * On the storage host, the tool \texttt{cat} must be installed.
+   * On the local host, \texttt{GNU patch} and \texttt{remind} are required
+   * (and included in the Android app).
    *
    * If a host is set, the application will use \texttt{ssh} to run any commands
    * on the host as user \texttt{'home2l'}. Hence, to access the calendars
    * as a unified user on the local machine, it is advisable to enter
-   * \texttt{'localhost'} here.
+   * \texttt{'localhost'} here. To run all commands directly without using
+   * \texttt{ssh}, leave this unset or empty.
    */
-ENV_PARA_STRING ("calendar.nearbyHost", envCalendarNearbyHost, NULL);
-  /* (Optional) Nearby host to accelerate calendar browsing
+ENV_PARA_BOOL ("calendar.remindRemote", envCalendarRemindRemote, false);
+  /* Run 'remind' on the remote host and not locally.
    *
-   * If set, calendar files are cached locally (in RAM), and for processing,
-   * \texttt{remind} is invoked on the machine passed here.
-   * This improves the UI responsiveness if the network connection to the storage
-   * host or the storage host itself is slow.
-   *
-   * On the nearby machine, \texttt{remind} must be installed.
+   * If set, \texttt{remind} and \texttt{patch} are executed on the remote host
+   * and not locally. On a very slow network connection, this may improve speed.
    */
 
 ENV_PARA_PATH ("calendar.dir", envCalendarDir, "calendars");
@@ -206,7 +203,7 @@ protected:
   CCalFile calFileArr[MAX_CALS];
   CCalEntry *firstEntry;
 
-  CShellSession shellRemote, *shellNearby;
+  CShellSession shellRemote, shellLocal;
 
   int errorFile, errorLine;
   CString errorMsg;
@@ -279,7 +276,7 @@ bool CCalFile::Load (CShellSession *shell) {
   // Complete...
   shell->Wait ();
   if (shell->ExitCode ()) {
-    WARNINGF (("Command '%s' exited with error (%i)", cmd.Get (), shell->ExitCode ()));
+    WARNINGF (("Command '%s' on '%s' exited with error (%i)", cmd.Get (), shell->Host (), shell->ExitCode ()));
     StringF (&s, _("Failed to load calendar file '%s/%s.rem':\n"),
                    envCalendarDir, name.Get ());
     if (!lines) s.AppendF ("\n(no output)");
@@ -313,22 +310,11 @@ CCalViewData::CCalViewData () {
     EnvNetResolve (envCalendarHost, &s);
     shellRemote.SetHost (s.Get ());
   }
-  if (!envCalendarNearbyHost) shellNearby = NULL;
-  else if (!envCalendarNearbyHost[0]) shellNearby = NULL;
-  else {
-    DEBUGF (1, ("Enabling nearby session on '%s'...", envCalendarNearbyHost));
-    shellNearby = new CShellSession ();
-    if (ANDROID || strcmp (envCalendarNearbyHost, "localhost") != 0) {    // On Linux, skip ssh if 'localhost' is entered.
-      EnvNetResolve (envCalendarNearbyHost, &s);
-      shellNearby->SetHost (s.Get ());
-    }
-  }
 }
 
 
 CCalViewData::~CCalViewData () {
   Clear ();
-  FREEO(shellNearby);
 }
 
 
@@ -354,7 +340,10 @@ bool CCalViewData::PatchFiles (CString *patch, CString *ret) {
   CString s;
   int exitCode;
 
-  exitCode = shellRemote.Run (StringF (&s, "cd %s; patch -ubNp1", envCalendarDir), patch->Get (), ret);
+  if (!ANDROID || shellRemote.HasHost ())
+    exitCode = shellRemote.Run (StringF (&s, "cd %s; patch -ubNp1", envCalendarDir), patch->Get (), ret);
+  else
+    exitCode = shellRemote.Run (StringF (&s, "cd %s; %s/bin/patch -ubNp1", envCalendarDir, EnvHome2lRoot ()), patch->Get (), ret);
   return (exitCode == 0);
 }
 
@@ -426,25 +415,33 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
   CCalEntry *first, **pLast, *ce;
   CString cmd, line;
   CShellSession *shell;
-  char strTime[8], strDur[8], *p;
+  char strTime[32], strDur[32], *p;
   int sendLine, lineNo, n, msgPos, year, mon, day;
   bool canSend, canReceive;
 
   // Build command line for remind & start ...
-  shell = shellNearby ? shellNearby : &shellRemote;
-  if (shellNearby) {
-    // Nearby shell: Load file locally and pipe it through remind ...
+  if (!envCalendarRemindRemote) {
+    // Normal case: Load file locally and pipe it through a local remind instance ...
     if (!LoadFile (fileNo)) return NULL;
+#if !ANDROID
     cmd.SetF ("remind -l -ms+%i -b2 -gaaad - %i-%02i-%02i",
               weeks,
               YEAR_OF(firstDate), MONTH_OF(firstDate), DAY_OF(firstDate));
+#else
+    cmd.SetF ("%s/bin/remind -l -ms+%i -b2 -gaaad - %i-%02i-%02i",
+              EnvHome2lRoot (),
+              weeks,
+              YEAR_OF(firstDate), MONTH_OF(firstDate), DAY_OF(firstDate));
+#endif
+    shell = &shellLocal;
   }
   else {
-    // Remote shell: Let remind load the file on the remote machine ...
+    // Remote processing: Let remind load the file on the remote machine ...
     cmd.SetF ("remind -l -ms+%i -b2 -gaaad %s/%s.rem %i-%02i-%02i",
               weeks,
               envCalendarDir, calFileArr[fileNo].GetName (),
               YEAR_OF(firstDate), MONTH_OF(firstDate), DAY_OF(firstDate));
+    shell = &shellRemote;
   }
   DEBUGF (1, ("For calendar #%i, running '%s' on '%s'...", fileNo, cmd.Get (), shell->Host () ? shell->Host () : "<localhost>"));
   shell->Start (cmd.Get (), true);
@@ -456,20 +453,21 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
   canSend = false;      // will remain 'false' in remote mode
   lineNo = -1;
   if (errorFile == fileNo) ClearError ();
-  if (!shellNearby) shell->WriteClose ();     // we won't send input in remote mode
+  if (envCalendarRemindRemote) shell->WriteClose ();     // we won't send input in remote mode
   while (!shell->ReadClosed ()) {
-    shell->CheckIO (shellNearby ? &canSend : NULL, &canReceive);
+    shell->CheckIO (envCalendarRemindRemote ? NULL : &canSend, &canReceive);
     if (canSend) {      // only effective in "nearby" mode
       if (sendLine >= calFileArr[fileNo].GetLines ()) shell->WriteClose ();
       else shell->WriteLine (calFileArr[fileNo].GetLine (sendLine++));
     }
     if (canReceive) if (shell->ReadLine (&line)) {
+      strTime[31] = strDur[31] = '\0';
 
       // Check for file/line number information...
       if (sscanf (line.Get (), "# fileinfo %d", &lineNo) == 1) { lineNo--; }
 
       // Check for calendar entry...
-      else if (sscanf (line.Get (), "%d/%d/%d * * %s %s %n", &year, &mon, &day, strDur, strTime, &msgPos) >= 5) {
+      else if (sscanf (line.Get (), "%d/%d/%d * * %31s %31s %n", &year, &mon, &day, strDur, strTime, &msgPos) >= 5) {
 
         //~ INFOF(("### Got: %s", line.Get ()));
         ce = new CCalEntry ();
@@ -500,6 +498,7 @@ CCalEntry *CCalViewData::RunRemind (int fileNo) {
           errorFile = fileNo;
           errorLine = n - 1;
           p = strchr (line, ':');
+          if (p) do  { p++; } while (*p != ' ');
           errorMsg.Set (p ? p : line.Get ());
         }
       }
@@ -618,13 +617,16 @@ class CScreenCalEdit: public CInputScreen {
 
 class CScreenCalMain: public CScreen {
   public:
-    CScreenCalMain () { surfCalendar = NULL; fingerOnCalendar = false; }
+    CScreenCalMain () { surfCalendar = NULL; setRefDateRunning = false; lastUpdateAllFiles = NEVER; }
     ~CScreenCalMain () {}
 
     void Setup ();
 
     void UpdateFile (int fileNo);   // (re-)load a calendar file
     void UpdateAllFiles ();         // (re-)load all calendar files
+    void UpdateAllOutdatedFiles (); // (re-)load all calendar files if last loaded >5 minutes ago
+    void HandleFileErrors ();       // let user correct errors during past 'Update*File' calls
+                                    // and update the respective files again
 
     void SetRefDate (TDate d, bool scrollEventList = true);
     TDate GetRefDate () { return viewData.GetRefDate (); }
@@ -640,8 +642,9 @@ class CScreenCalMain: public CScreen {
     CButton btnMonth;             // button above calendar
     CCursorWidget wdgCalendar;    // month calendar view...
     SDL_Surface *surfCalendar;
-    bool fingerOnCalendar;
+    bool setRefDateRunning;       // flag to break recursion in 'SetRefDate()'
     CEventsBox wdgEvents;         // event list
+    TTicks lastUpdateAllFiles;
 
     CCalViewData viewData;
 
@@ -1027,11 +1030,6 @@ void CScreenCalMain::DoUpdateFile (int fileNo) {
 
   // Load entries...
   viewData.LoadCalEntries (fileNo);
-  while (viewData.HaveError ()) {
-    RunErrorBox (viewData.GetErrorMsg (), NULL, -1, FontGet (fntMono, 20));
-    RunEditScreen (viewData.GetErrorFile (), viewData.GetErrorLine ());
-    viewData.LoadCalEntries (fileNo);
-  }
   DrawCalendar ();
   UiIterateNoWait ();
 }
@@ -1053,6 +1051,28 @@ void CScreenCalMain::UpdateAllFiles () {
   for (int n = 0; n < MAX_CALS; n++) DoUpdateFile (n);
   EventListUpdate ();
   EventListSetRefDate (viewData.GetRefDate ());
+  lastUpdateAllFiles = TicksNow ();
+}
+
+
+void CScreenCalMain::UpdateAllOutdatedFiles () {
+  if (lastUpdateAllFiles == NEVER || (TicksNow () > lastUpdateAllFiles + TICKS_FROM_SECONDS (5*60)))
+    UpdateAllFiles ();
+}
+
+
+void CScreenCalMain::HandleFileErrors () {
+  int ret, fileNo, lineNo;
+
+  while (viewData.HaveError ()) {
+    fileNo = viewData.GetErrorFile ();
+    lineNo = viewData.GetErrorLine ();
+    //~ RunErrorBox (viewData.GetErrorMsg (), NULL, -1, FontGet (fntMono, 20));
+    ret = RunSureBox (_("Please correct:"), viewData.GetErrorMsg (), NULL, -1, FontGet (fntMono, 20));
+    if (ret <= 0) return;
+    RunEditScreen (fileNo, lineNo);
+    viewData.LoadCalEntries (fileNo);
+  }
 }
 
 
@@ -1062,11 +1082,17 @@ void CScreenCalMain::SetRefDate (TDate d, bool scrollEventList) {
   int n;
   bool otherMonth;
 
+  // Check for recursion due to UI interactions ...
+  if (setRefDateRunning) return;
+  setRefDateRunning = true;
+    // UiIterateNoWait () calls below may contain a recursive call of this function.
+    // If this happens, we stop here. UI events will be ignored.
+
   //~ INFOF(("### SetRefDate (%i-%02i-%02i)", YEAR_OF(d), MONTH_OF(d), DAY_OF(d)));
 
   _d = viewData.GetRefDate ();
 
-  // Set ref date in data and determine if a month switch is necessery...
+  // Set ref date in data and determine if a month switch is necessary...
   otherMonth = viewData.SetRefDate (d, WEEKS);
 
   // Update month and year button...
@@ -1083,15 +1109,18 @@ void CScreenCalMain::SetRefDate (TDate d, bool scrollEventList) {
 
   // Eventually reload cal entries...
   if (otherMonth) {
+
     // Early visual feedback...
     viewData.Clear ();
     DrawCalendar ();
     EventListUpdate ();
     UiIterateNoWait ();
+
     // Load the data...
     for (int n = 0; n < MAX_CALS; n++) if (viewData.GetFile (n)->IsDefined ()) {
       viewData.LoadCalEntries (n);
       DrawCalendar ();
+      //~ usleep (500000);
       UiIterateNoWait ();
     }
     EventListUpdate ();
@@ -1099,6 +1128,9 @@ void CScreenCalMain::SetRefDate (TDate d, bool scrollEventList) {
 
   // Scroll list view to right position & highlight the current day...
   EventListSetRefDate (d, _d, scrollEventList || otherMonth);
+
+  // Done ...
+  setRefDateRunning = false;
 }
 
 
@@ -1107,7 +1139,7 @@ void CScreenCalMain::SetRefDate (TDate d, bool scrollEventList) {
 
 
 void CScreenCalMain::DrawCalendar () {
-  char buf[5];
+  char buf[16];
   CCalEntry *calEntry;
   TDate d;
   TTime t0, t1;
@@ -1319,9 +1351,11 @@ void CScreenCalMain::OnButtonPushed (CButton *b) {
   }
   else if (b == &btnReload) {
     UpdateAllFiles ();
+    HandleFileErrors ();
   }
   else if (b == &btnNew) {
     RunEditScreen ();
+    HandleFileErrors ();
   }
   else if (b == &btnMonth) {
     RunMonthMenu ();
@@ -1331,8 +1365,10 @@ void CScreenCalMain::OnButtonPushed (CButton *b) {
 
 void CScreenCalMain::OnEventPushed (int idx, CCalEntry *calEntry) {
   wdgEvents.ScrollIn (idx);
-  if (!wdgEvents.GetItem (idx)->isSpecial)
+  if (!wdgEvents.GetItem (idx)->isSpecial) {
     RunEditScreen (calEntry->GetFile ()->GetIdx (), calEntry->GetLineNo ());
+    HandleFileErrors ();
+  }
   else
     SetRefDate (calEntry->GetDate (), false);
 }
@@ -1458,12 +1494,11 @@ void *AppFuncCalendar (int appOp, void *data) {
       if (!scrCalMain) {
         scrCalMain = new CScreenCalMain ();
         scrCalMain->Setup ();
-        scrCalMain->Activate ();
-        scrCalMain->SetRefDate (Today ());
       }
-      else
-        scrCalMain->Activate ();
+      scrCalMain->Activate ();
+      scrCalMain->UpdateAllOutdatedFiles ();
       scrCalMain->SetRefDate (Today ());
+      scrCalMain->HandleFileErrors ();
       break;
   }
   return NULL;

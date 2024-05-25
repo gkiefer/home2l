@@ -32,12 +32,14 @@ endif
 
 GSTREAMER_NDK_BUILD_PATH  := $(GSTREAMER_ROOT)/share/gst-android/ndk-build/
 
+GSTREAMER_EXTRA_LIBS      := -liconv
+
 include $(GSTREAMER_NDK_BUILD_PATH)/plugins.mk
 
 PLUGINS_CORE       := coreelements coretracers adder app audioconvert audiorate audioresample audiotestsrc gio rawparse typefindfunctions volume autodetect
 PLUGINS_PLAYBACK   := $(GSTREAMER_PLUGINS_PLAYBACK)   # playback
 PLUGINS_CODECS     := ogg vorbis ivorbisdec alaw audioparsers auparse flac icydemux id3demux mulaw speex wavpack wavparse midi androidmedia
-PLUGINS_NET        := $(GSTREAMER_PLUGINS_NET)   # tcp rtsp rtp rtpmanager soup udp sdpelem srtp rtspclientsink
+PLUGINS_NET        := tcp udp soup   # $(GSTREAMER_PLUGINS_NET)
 PLUGINS_SYS        := opensles
 
 PLUGINS_EXTRA	     := level

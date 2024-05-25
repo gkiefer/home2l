@@ -33,15 +33,17 @@ The *Home2L `[houmtu:l]`* suite is a collection of tools and libraries for autom
 What is New?
 ============
 
-* Several improvements and cleanups in the **Resources** library:
-    - Support for MQTT-like and shell-like wildcards ('+', '#', '*', '?')
-    - Default URI prefix is now always */alias*, allowing for smaller scripts
-    - New event type *rceRequestChanged* and improved API for querying requests
-    - Shell improvements
+* WallClock: Power meter for votovoltaic systems
 
-* Updated **Tutorial**
+* WallClock: User-configurable floorplan icons
 
-* Several minor improvements and fixes
+* WallClock: Improved and more self-contained Android app
+
+* MQTT bridge: Support for JSON payloads
+
+* New drivers: Fingerprint, Fronius
+
+* Many small improvements and some bug fixes
 
 
 
@@ -61,7 +63,7 @@ The [*Home2L Book*](home2l-book.pdf) contains a **a step-by-step tutorial demons
     $ docker run -ti --rm \
       --name home2l-showcase --hostname home2l-showcase \
       -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-      --device /dev/snd \
+      --ipc=host --device /dev/snd \
       gkiefer/home2l
 
 

@@ -1,4 +1,4 @@
 <map id="Directory Services" name="Directory Services">
-<area shape="rect" id="node1" title="Querying local metadata directories (for shells or service tools)" alt="" coords="139,5,269,31"/>
-<area shape="rect" id="node2" href="$group__resources.html" title="The Home2L Resources library." alt="" coords="5,5,91,31"/>
+<area shape="rect" id="node1" href="$group__resources.html" title="The Home2L Resources library." alt="" coords="5,5,91,31"/>
+<area shape="rect" id="node2" title="Querying local metadata directories (for shells or service tools)" alt="" coords="139,5,269,31"/>
 </map>

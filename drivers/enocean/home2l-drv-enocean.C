@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2024 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -160,7 +160,7 @@ class CEnoDevice {
     virtual void OnLinkLost () = 0;
       ///< @brief Called whenever the link device has failed.
       ///
-      /// This method must invoke invalidate all resources, usually by calling
+      /// This method must invalidate all resources, usually by calling
       /// @ref CResource::ReportUnknown() for them.
       ///
     virtual void OnTelegram (CEnoTelegram *telegram) = 0;
@@ -172,6 +172,18 @@ class CEnoDevice {
       /// The telegram integrity, the device ID and the correctness of the RORG value
       /// have been checked in advance and do not need to be checked here.
       /// On any other error, a warning should be logged and the telegram should be ignored.
+      ///
+    virtual void OnDriveValue (CResource *_rc, CRcValueState *_vs) {}
+      ///< @brief Called whenever some value is driven to any resource.
+      ///
+      /// Device resources may optionally be writable, e.g. to set them into a certain
+      /// state by means of user interactions. In this case this method is called for
+      /// whenever a value is driven. The passed resource `rc` is not necessarily
+      /// owned by this object. The implementation must check this before reporting
+      /// a driven value.
+      ///
+      /// Usually, this method does not need to do anything. The driven
+      /// value will be reported back automatically.
       ///
     /// @}
 
@@ -345,7 +357,7 @@ ENO_DEVICE_CLASS_BEGIN (CEnoDeviceWindowHandle, 0xf61000)
   public:
 
     virtual void Init (const char *arg = NULL) {
-      rc = RcRegisterResource (RcDriver (), id, rctWindowState, false);
+      rc = RcRegisterResource (RcDriver (), id, rctWindowState, true);
       if (envEnoWindowHandleInit) {
         CRcValueState vs (rctWindowState, envEnoWindowHandleInit);
         if (vs.IsValid ()) rc->ReportValueState (&vs);
@@ -503,6 +515,8 @@ static void DriverDone () {
 
 
 HOME2L_DRIVER(enocean) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcValueState *vs) {
+  //~ CString s;
+
   switch (op) {
 
     case rcdOpInit:
@@ -513,6 +527,12 @@ HOME2L_DRIVER(enocean) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CR
     case rcdOpStop:
       DriverDone ();
       enoRcDrv = NULL;
+      break;
+
+    case rcdOpDriveValue:
+      //~ INFOF (("### enocean: rcdOpDriveValue (%s <- %s)", rc->Lid (), vs->ToStr (&s)));
+      for (int i = 0; i < devices; i++)
+        deviceList[i]->OnDriveValue (rc, vs);
       break;
 
     default:

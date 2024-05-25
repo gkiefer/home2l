@@ -1,0 +1,240 @@
+#!/usr/bin/python3
+
+# This file is part of the Home2L project.
+#
+# (C) 2023 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+# "fronius" driver for the Home2l suite.
+#
+# This driver is under development and has some limitations:
+#
+# * The following data fields are read and exported as resources:
+#   - Inverter: '/solar_api/v1/GetInverterRealtimeData.cgi?Scope=System'
+#   - Meter: '/solar_api/v1/GetMeterRealtimeData.cgi?Scope=System'
+#
+# * Only one inverter device (with ID = 1) is supported and exported.
+#   Only one meter device (with ID = 0) is supported and exported.
+
+
+import time
+import requests
+import home2l
+
+
+
+
+#################### Configuration #########################
+
+
+# a) Init 'home2l' ...
+
+home2l.Home2lInit()
+
+
+# b) User-definable parameters ...
+
+#   URL of the Fronius device ...
+optUrl = home2l.EnvGet ("fronius.url")
+  # ENV_PARA_STRING("fronius.url", none, NULL);
+  #  /* URL to access the Fronius Solar API
+  #   */
+
+#   Refresh interval ...
+optInterval = 5
+s = home2l.EnvGet ("fronius.interval")
+  # ENV_PARA_INT("fronius.interval", none, 5);
+  #  /* Polling interval in seconds for the Fronius Solar API
+  #   */
+if s: optInterval = int (s)
+
+# Dump extra data ...
+debug = home2l.EnvGet ("fronius.debug")
+  # ENV_PARA_BOOL("fronius.debug", none, false);
+  #  /* Dump extra data when running
+  #   *
+  #   * In debug mode, extra data is written as comments to stdout
+  #   * which can be used to setup/validate the 'inverterFields'
+  #   * and 'meterFields' settings.
+  #   */
+if debug == '1': debug = True
+else: debug = False
+
+
+# c) Exported fields ...
+#
+#   Run this script with 'fronius.debug=1' to get a list of possible
+#   values for the following settings.
+
+inverterFields = {
+#   'inverter/DAY_ENERGY': 'float',
+   'inverter/PAC': 'power',
+#   'inverter/TOTAL_ENERGY': 'float',
+#   'inverter/YEAR_ENERGY': 'float',
+}
+
+meterFields = {
+#   'meter/Current_AC_Phase_1': 'float',
+#   'meter/Current_AC_Phase_2': 'float',
+#   'meter/Current_AC_Phase_3': 'float',
+#   'meter/Current_AC_Sum': 'float',
+#   'meter/EnergyReactive_VArAC_Sum_Consumed': 'float',
+#   'meter/EnergyReactive_VArAC_Sum_Produced': 'float',
+#   'meter/EnergyReal_WAC_Minus_Absolute': 'float',
+#   'meter/EnergyReal_WAC_Plus_Absolute': 'float',
+#   'meter/EnergyReal_WAC_Sum_Consumed': 'float',
+#   'meter/EnergyReal_WAC_Sum_Produced': 'float',
+#   'meter/PowerApparent_S_Phase_1': 'power',
+#   'meter/PowerApparent_S_Phase_2': 'power',
+#   'meter/PowerApparent_S_Phase_3': 'power',
+#   'meter/PowerApparent_S_Sum': 'power',
+#   'meter/PowerFactor_Phase_1': 'power',
+#   'meter/PowerFactor_Phase_2': 'power',
+#   'meter/PowerFactor_Phase_3': 'power',
+#   'meter/PowerFactor_Sum': 'power',
+#   'meter/PowerReactive_Q_Phase_1': 'power',
+#   'meter/PowerReactive_Q_Phase_2': 'power',
+#   'meter/PowerReactive_Q_Phase_3': 'power',
+#   'meter/PowerReactive_Q_Sum': 'power',
+#   'meter/PowerReal_P_Phase_1': 'power',
+#   'meter/PowerReal_P_Phase_2': 'power',
+#   'meter/PowerReal_P_Phase_3': 'power',
+   'meter/PowerReal_P_Sum': 'power',
+#   'meter/Voltage_AC_PhaseToPhase_12': 'float',
+#   'meter/Voltage_AC_PhaseToPhase_23': 'float',
+#   'meter/Voltage_AC_PhaseToPhase_31': 'float',
+#   'meter/Voltage_AC_Phase_1': 'float',
+#   'meter/Voltage_AC_Phase_2': 'float',
+#   'meter/Voltage_AC_Phase_3': 'float',
+
+}
+
+
+
+
+
+######################### Helpers ##############################################
+
+
+def ReadJson (localPath):
+  ok = False
+  uri = optUrl + localPath
+  try:
+    req = requests.get (uri)
+    # ~ if req.status_code == 200: ok = True
+  except Exception as e:
+    print ("WARNING: Failed to access Fronius device at '{}': {}".format (uri, e.args))
+    return {}
+  try:
+    data = req.json ()['Body']['Data']
+  except IndexError:
+    print ("WARNING: Fronius device ('{}') returned invalid data: {}".format (uri, req.text))
+    return {}
+  except:
+    print ("WARNING: Failed to access Fronius device as '{}': {} {}".format (uri, req.status_code, req.reason))
+    return {}
+  return data
+
+
+def ReadInverterRealtimeData ():
+  ret = {}
+  data = ReadJson ("/solar_api/v1/GetInverterRealtimeData.cgi?Scope=System")
+  for key, value in data.items ():
+    retType = "power" if value['Unit'] == "W" else "float"
+      # TBD: Support more unit types here.
+    retValue = value['Values']['1']
+    ret["inverter/" + key] = (retType, retValue)
+  return ret
+
+
+def ReadMeterRealtimeData ():
+  ret = {}
+  data = ReadJson ("/solar_api/v1/GetMeterRealtimeData.cgi?Scope=System")
+  if not '0' in data: return ret
+  data = data['0']
+  for key, value in data.items ():
+    retType = "float"
+    retValue = None
+    if key.startswith ("Power"):
+      retType = "power"
+      retValue = value
+    elif key.startswith ("Voltage") or key.startswith ("Current") or key.startswith ("Energy"):
+      retValue = value
+      # TBD: Support more unit types here.
+    if retValue != None:
+      ret["meter/" + key] = (retType, retValue)
+  return ret
+
+
+def DumpDeclarations (fields):
+  for key, rcType in fields.items ():
+    print ("d {} {} r".format (key, rcType))
+    # ~ print ("d {:30} {:5} r".format (key, typeValue[0]))
+
+
+def DumpValues (data, fields):
+  for key in fields.keys ():
+    if key in data:
+      print ("v {} {}".format (key, data[key][1]))
+    else:
+      print ("v {} ?".format (key))
+
+
+
+
+
+######################### Main program #########################################
+
+
+# Read and dump available fields if requested ...
+if debug:
+
+  # Read and dump available inverter fields ...
+  print ("# inverterFields = {")
+  data = ReadInverterRealtimeData ()
+  for key, typeValue in data.items ():
+    print ("#   '{}': '{}',".format (key, typeValue[0]))
+  print ("# }")
+
+  # Read and dump available meter fields ...
+  print ("# meterFields = {")
+  data = ReadMeterRealtimeData ()
+  for key, typeValue in data.items ():
+    print ("#   '{}': '{}',".format (key, typeValue[0]))
+  print ("# }\n")
+
+
+# Initialization ...
+DumpDeclarations (inverterFields)
+DumpDeclarations (meterFields)
+print (":", flush = True)
+
+
+# Main loop...
+while True:
+
+  # Read and dump inverter data ...
+  inverterData = ReadInverterRealtimeData ()
+  DumpValues (inverterData, inverterFields)
+  print (end = "", flush = True)
+
+  # Read and dump meter data ...
+  meterData = ReadMeterRealtimeData ()
+  DumpValues (meterData, meterFields)
+  print (end = "", flush = True)
+
+  # Sleep to wait for next interval ...
+  time.sleep (optInterval)

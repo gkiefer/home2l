@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# This file is part of the Home2L project.
+#
+# (C) 2024 Gundolf Kiefer
+#
+# Home2L is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Home2L is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Home2L. If not, see <https://www.gnu.org/licenses/>.
+
+
+
+
+
+######################### Icon preparation #####################################
+
+
+do_prepare () {
+  SRC="$1"
+  DST_DIR="$2"
+
+  SRC_FILE=${SRC##*/}
+  EXT=${SRC#*.}
+  BASE=${SRC_FILE%%.*}
+
+  echo -n "ICON $SRC:"
+  mkdir -p $DST_DIR
+
+  # Create temporary png file ...
+  TMP_PNG=$DST_DIR/${BASE}.png
+  if [[ "$EXT" == "svg" || "$EXT" == "SVG" ]]; then
+    inkscape $SRC -w 96 -h 96 -o $TMP_PNG >/dev/null 2>&1 || exit 3
+      # FIXME [2019-12-22]: All stderr output is redirected to /dev/null here
+      #   because otherwise inkscape produces a lot of dbus-related
+      #   warnings. With a later version inkscape, the "2>&1" clause may and
+      #   should be removed again.
+  else
+    convert $SRC $TMP_PNG
+  fi
+
+  # Create bitmap files ...
+  for S in 24 48 96; do
+    #convert $TMP_PNG -geometry ${S}x${S} ${DST_DIR}/${BASE}-${S}.bmp # -negate
+    convert $TMP_PNG -geometry ${S}x${S} -channel A -separate -colors 256 -compress None BMP3:${DST_DIR}/${BASE}-${S}.bmp
+    echo -n " $S"
+  done
+
+  # Remove temporary png file ...
+  rm $TMP_PNG
+  echo
+}
+
+
+
+
+
+######################### Main #################################################
+
+
+usage () {
+  echo "Usage: ${0##*/} [-d <destination dir>] [<image files>]"
+  echo
+  echo "Generate optimized bitmap file(s) to use by the Home2L Wallclock."
+  echo "The input file should be a .svg file and have an alpha channel."
+  echo "Colors are ignored, and the shape is taken from the alpha channel only."
+  echo "The output icons may be placed into 'etc/icons' and will be found by"
+  echo "'home2l-wallclock'."
+}
+
+
+error () {
+  echo "$1"
+  echo
+  usage
+  exit
+}
+
+
+# Parse arguments ...
+DST_DIR="."
+if [[ "$1" == "-d" ]]; then
+  DST_DIR="$2"
+  shift
+  shift
+fi
+LIST="$@"
+if [[ "$LIST" == "" ]]; then
+  usage
+  exit
+fi
+
+# Go ahead ...
+for F in $LIST; do
+  do_prepare $F $DST_DIR
+done

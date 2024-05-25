@@ -3,12 +3,16 @@
 
 ##### Obtaining sources #####
 
-# 1. Download sources:
-#     install> wget https://gstreamer.freedesktop.org/data/pkg/android/1.12.4/gstreamer-1.0-android-universal-1.12.4.tar.bz2.asc \
-#                   https://gstreamer.freedesktop.org/data/pkg/android/1.12.4/gstreamer-1.0-android-universal-1.12.4.tar.bz2.sha256sum \
-#                   https://gstreamer.freedesktop.org/data/pkg/android/1.12.4/gstreamer-1.0-android-universal-1.12.4.tar.bz2
+# 1. Download sources [2024]:
+#     install> VERSION=1.20.7    # last version supporting API level 19 (see https://gstreamer.freedesktop.org/download/#android)
+#     install> wget https://gstreamer.freedesktop.org/data/pkg/android/$VERSION/gstreamer-1.0-android-universal-$VERSION.tar.xz.asc \
+#                   https://gstreamer.freedesktop.org/data/pkg/android/$VERSION/gstreamer-1.0-android-universal-$VERSION.tar.xz.sha256sum \
+#                   https://gstreamer.freedesktop.org/data/pkg/android/$VERSION/gstreamer-1.0-android-universal-$VERSION.tar.xz
+#     install> sha256sum -c gstreamer-1.0-android-universal-$VERSION.tar.xz.sha256sum
 #
-#     src> tar xjf ../install/gstreamer-1.0-android-universal-1.12.4.tar.bz2 android-universal/armv7
+#     src> mkdir android-universal-$VERSION
+#     src> rm android-universal; ln -s android-universal-$VERSION android-universal
+#     src/android-universal-$VERSION> tar xJf ../../install/gstreamer-1.0-android-universal-$VERSION.tar.xz armv7
 #
 # 2. Documentation:
 #     https://gstreamer.freedesktop.org/documentation/installing/for-android-development.html
@@ -23,12 +27,26 @@
 
 
 
+##### Configuration #####
+
+# Set Android NDK to use ...
+ANDROID_NDK=/opt/android/sdk/ndk/21.4.7075529   # last known version working with GStreamer 1.20.7
+#~ ANDROID_NDK=/opt/android-ndk-r12b               # last known version working with GStreamer 1.12.4
+
+
+
+
+
+######################################################################
+##### Preamble                                                   #####
+######################################################################
 
 
 set -e  # stop this script on error
 
-MAKEFLAGS="-j 8"     # use parallel threads when building
 MAINDIR=`realpath ${0%/*}`
+
+export GSTREAMER_ROOT_ANDROID=$MAINDIR/src/android-universal
 
 
 
@@ -38,7 +56,6 @@ MAINDIR=`realpath ${0%/*}`
 #####   Build Android SDK                                                  #####
 ################################################################################
 
-export GSTREAMER_ROOT_ANDROID=$MAINDIR/src/android-universal
 
 echo "#####################################################################"
 echo "##### Pre-building for Android SDK ...                          #####"
@@ -48,22 +65,19 @@ echo
 cd $MAINDIR/dummy_app/jni
 
 echo "#############################################################"
-echo "# Cleaning Android SDK ...                                  #"
+echo "# Cleaning with Android NDK ...                             #"
 echo "#############################################################"
 echo
 
-ndk-build clean
+$ANDROID_NDK/ndk-build clean
 
 echo
 echo "#############################################################"
-echo "# Building Android SDK ...                                  #"
+echo "# Building with Android NDK ...                             #"
 echo "#############################################################"
 echo
 
-ndk-build -j 1
-  # sometimes 'ndk-build' stops with a strange error; seems to happen less likely without "-j 8" option
-  # NDK r12d appears to contain a buggy '/opt/android-ndk/prebuilt/linux-x86/bin/make'!!
-  # Workaround: Replace that with '/usr/bin/make' (Debian 9.1, 2018-01-15)
+$ANDROID_NDK/ndk-build
 
 echo
 echo "#############################################################"
@@ -91,4 +105,5 @@ echo "#############################################################"
 echo
 
 cd $MAINDIR/dummy_app/jni
-ndk-build clean
+$ANDROID_NDK/ndk-build clean
+rm -fr gst-android-build src   # remove generated artefacts in tutorial/dummy project

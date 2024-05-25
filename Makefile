@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2024 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,14 +31,14 @@
 #   In all other cases, the build is performed for the current native architecture.
 ifeq ($(CFG),minimal)
   # Minimal set ...
-  MODS ?= tools resources
+  MODS ?= tools showcase resources
   DRVS ?=
   ARCHS ?= $(shell dpkg --print-architecture)
   export WITH_PYTHON ?= 0
   export WITH_READLINE ?= 0
 else ifeq ($(CFG),basic)
   # Basic set ...
-  MODS ?= tools resources brownies
+  MODS ?= tools showcase resources brownies
   DRVS ?= gpio mqtt brownies weather
   ARCHS ?= $(shell dpkg --print-architecture)
   # (the following WallClock settings presently have no effect, since WallClock is excluded from the basic build)
@@ -49,15 +49,15 @@ else ifeq ($(CFG),basic)
   export WITH_GSTREAMER ?= 0
 else ifeq ($(CFG),demo)
   # Modules for the demo image ...
-  MODS ?= tools resources brownies wallclock locales
-  DRVS ?= demo gpio mqtt brownies weather
+  MODS ?= tools showcase resources brownies wallclock locales
+  DRVS ?= demo gpio mqtt brownies weather mpd
   ARCHS ?= $(shell dpkg --print-architecture)
   export WITH_ANDROID ?= 0
   export WITH_PHONE ?= 0
   export WITH_GSTREAMER ?= 0
 else
   # Default: All modules, drivers and architectures ...
-  MODS ?= tools resources brownies wallclock locales doorman doc
+  MODS ?= tools showcase resources brownies wallclock locales doorman doc
   DRVS ?= $(shell ls drivers)
   ARCHS ?= amd64 armhf i386
 endif
@@ -205,12 +205,27 @@ docker-master:
 
 
 # Run the container (latest) ...
+#   NOTE [2024-05-24]: The option '--ipc=host' is required to avoid WallClock crashes
+#     but it reduces container isolation. See also:
+#     - https://github.com/jessfraz/dockerfiles/issues/359
+#     - https://github.com/libsdl-org/SDL/issues/4078
 .PHONY: docker-run
 docker-run:
 	@xhost +local: && \
 	docker run -ti --rm --tmpfs /tmp --name home2l-showcase --hostname home2l-showcase \
-	  -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --device /dev/snd \
+	  -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --ipc=host --device /dev/snd \
 	  gkiefer/home2l
+
+
+
+
+
+######################### Update Copyright Notices #############################
+
+
+.PHONY: update-copyright
+update-copyright: clean
+	tools/update-copyright.sh
 
 
 
