@@ -1,8 +1,9 @@
 Circuit:  roothubs
 Author:   Axel Rau <Axel.Rau+home2l@Chaos1.DE>
 Date:     2022-07-29
+Updated:  2024-05-26
 
 Description:
   Design and layout for a card with 11 root hubs.
   Each of the 11 hubs may be separated and used standalone.
-  Project structured as KiCad 6 flat hierarchy.
+  Project structured as KiCad 8 flat hierarchy.

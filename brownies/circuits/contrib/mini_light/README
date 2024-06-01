@@ -1,0 +1,28 @@
+Circuit:  mini_light
+Author:   Axel Rau <Axel.Rau+home2l@Chaos1.DE>
+Date:     2022-07-29
+Updated:  2024-05-26
+
+Description:
+  Tiny Room Light Control Board suited for Spelsberg
+  connection box Q 4-L (33490401).
+  It drives up to 3 bistable relais (J2 10-12) with
+  pulse control and control contact (like those from Eltako or ABB).I use
+  24V coils.
+  mini_light reads signal from control contact via Optp-
+  coupler (J2 1-3) to allow long wires.
+  Lights are controlled via push buttons with control LED
+  like GIRA 0151. Operation is failsafe (works w/o home2l).
+  led_carrier board provides the 2 color control LED.
+  Control LEDS are connected via J2 5-7(red) and J2 8 (green).
+  
+  Suitable pin config in Family.mk:
+  # minilight: Room Light master for 4 Lights with LEDs and Relais with feedback
+  # contact; contacts: PA_0...PA_3, LEDs: PA4...PA7 and 3 coils: PB3...PB5),
+  # (PB_2) an t861
+  #   - circuit: 'minilight'
+    ifeq ($(BROWNIE_VARIANT),minilight)
+	   BROWNIE_CFG ?= GPIO_OUT_PRESENCE=0x7f0 GPIO_OUT_PRESET=0x0f0 GPIO_IN_PRESENCE=0x00f GPIO_IN_PULLUP=0x00f
+    endif
+
+KiCad version: 8

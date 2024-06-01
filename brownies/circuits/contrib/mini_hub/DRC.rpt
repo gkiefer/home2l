@@ -1,0 +1,13 @@
+** Drc report for /Users/ajr/Projects/HW/HCS/Hom2L/circuits/circuits/MiniHub/MiniHub.kicad_pcb **
+** Created on 2022-08-03 18:45:05 **
+
+** Found 1 DRC violations **
+[invalid_outline]: Board has malformed outline (no edges found on Edge.Cuts layer)
+    Local override; Severity: error
+    @(0.0000 mm, 0.0000 mm): PCB
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** End of Report **

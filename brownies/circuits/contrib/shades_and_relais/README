@@ -1,0 +1,24 @@
+Circuit:  shades_and_relais/README
+Author:   Axel Rau <Axel.Rau+home2l@Chaos1.DE>
+Date:     2022-07-29
+Updated:  2024-05-27
+
+Description:
+  Window Control Board suited for housing CAMDENBOSS CBEAC-03-WH.
+  https://www.reichelt.de/elektronikgehaeuse-130x80x45-mm-weiss-cb-eac-03-wh-p317686.html
+  It drives one shade with its relais (J1) and has sensors for "window closed"
+  (J1 9), "window locked" (J1 8), sun sensor (J1 11) and "shade down and
+  "shade up" (J1 6,7), with both wires optional terminated by opto couplers,
+  to allow long wirings.
+  
+  A suitable firmware definition in Family.mk is winl:
+  
+  # winl: Window brownie; supports temperature sensor and single shade with lock,
+  # close and sun sensors (PA3, PA7 and PB2)
+  #   - circuit: 'minishades' and 'shades_and_relais'
+  ifeq ($(BROWNIE_VARIANT),winl)
+  	BROWNIE_CFG ?= WITH_TEMP_ZACWIRE=1 SHADES_PORTS=1 GPIO_IN_PRESENCE=0xc8 GPIO_IN_PULLUP=0xc8 
+  	# SHADES_TIMEOUT=0 TWI_SL_NOTIFY=0
+  endif
+
+KiCad version: 8

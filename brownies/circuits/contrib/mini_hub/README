@@ -1,0 +1,9 @@
+Circuit:  mini_hub
+Author:   Axel Rau <Axel.Rau+home2l@Chaos1.DE>
+Date:     2022-07-29
+Updated:  2024-05-26
+
+Description:
+  Tiny B-hub Board suited for Spelsberg connection box Q 4-L (33490401).
+  
+KiCad version: 8

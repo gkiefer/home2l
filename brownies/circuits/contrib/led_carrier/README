@@ -1,0 +1,15 @@
+Circuit:  led_carrier
+Author:   Axel Rau <Axel.Rau+home2l@Chaos1.DE>
+Date:     2022-07-29
+Updated:  2024-05-26
+
+Description:
+  Design and layout for a small board with multi color LED
+  showing green (ready) or green+red=orange (active) for
+  1 roomlight. Board mechanically attaches to Gira 0151
+  push button. Works together with mini_light 1.2 board, 
+  which drives up to 3 groups of led_carrier boards for up
+  to 3 room lights. led_carrier boards of one group are wired
+  in parallel.
+
+KiCad Version: 8
