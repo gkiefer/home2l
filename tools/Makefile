@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2024 Gundolf Kiefer
+# (C) 2015-2025 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ $(DAEMON_BIN): $(DEP_CONFIG) $(OBJ_DAEMON)
 ############################## Misc. Scripts ###################################
 
 
-SCRIPTS := home2l home2l-adb home2l-install home2l-rollout home2l-sudo home2l-usbtree
+SCRIPTS := home2l home2l-adb home2l-install home2l-rollout home2l-sudo home2l-usbtree home2l-pimd
 INITD := initd-home2l
 
 

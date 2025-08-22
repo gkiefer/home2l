@@ -1,10 +1,10 @@
 <map id="Resources" name="Resources">
-<area shape="rect" id="node1" title="The Home2L Resources library." alt="" coords="5,153,91,179"/>
-<area shape="rect" id="node2" href="$group__resources__directory.html" title="Querying local metadata directories (for shells or service tools)" alt="" coords="159,5,289,31"/>
-<area shape="rect" id="node3" href="$group__resources__drivers.html" title="Defining custom drivers." alt="" coords="192,55,256,80"/>
-<area shape="rect" id="node4" href="$group__resources__general.html" title="Top&#45;level functionality of this library &#45; most commonly used functions can be found here." alt="" coords="187,104,261,129"/>
-<area shape="rect" id="node5" href="$group__resources__rc.html" title="Accessing resource objects." alt="" coords="161,153,287,179"/>
-<area shape="rect" id="node6" href="$group__resources__requests.html" title="Placing requests to change resource values." alt="" coords="185,203,263,228"/>
-<area shape="rect" id="node7" href="$group__resources__subscribe.html" title="Subscribing to resources to read their values." alt="" coords="173,252,275,277"/>
-<area shape="rect" id="node8" href="$group__resources__values.html" title="Basic definitions for values and their types and state." alt="" coords="139,301,309,327"/>
+<area shape="rect" id="Node000001" title="The Home2L Resources library." alt="" coords="5,153,91,179"/>
+<area shape="rect" id="Node000008" href="$group__resources__directory.html" title="Querying local metadata directories (for shells or service tools)" alt="" coords="159,5,289,31"/>
+<area shape="rect" id="Node000007" href="$group__resources__drivers.html" title="Defining custom drivers." alt="" coords="192,55,256,80"/>
+<area shape="rect" id="Node000002" href="$group__resources__general.html" title="Top&#45;level functionality of this library &#45; most commonly used functions can be found here." alt="" coords="187,104,261,129"/>
+<area shape="rect" id="Node000004" href="$group__resources__rc.html" title="Accessing resource objects." alt="" coords="161,153,287,179"/>
+<area shape="rect" id="Node000006" href="$group__resources__requests.html" title="Placing requests to change resource values." alt="" coords="185,203,263,228"/>
+<area shape="rect" id="Node000005" href="$group__resources__subscribe.html" title="Subscribing to resources to read their values." alt="" coords="173,252,275,277"/>
+<area shape="rect" id="Node000003" href="$group__resources__values.html" title="Basic definitions for values and their types and state." alt="" coords="139,301,309,327"/>
 </map>

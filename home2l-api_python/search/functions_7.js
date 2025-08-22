@@ -1,10 +1,15 @@
 var searchData=
 [
-  ['home2ldone_0',['Home2lDone',['../group__home2l__general.html#gada9d087549bd17b8e26388a38db74cf8',1,'home2l']]],
-  ['home2linit_1',['Home2lInit',['../group__home2l__general.html#ga63343a8805c5e5b9fe0055c2bb36bdd1',1,'home2l']]],
-  ['home2literate_2',['Home2lIterate',['../group__home2l__general.html#ga4e3f6bebe8041266cf883f9aa4571cdb',1,'home2l']]],
-  ['home2lrun_3',['Home2lRun',['../group__home2l__general.html#gaa019a1a9ea0a2504b62adc159eab128b',1,'home2l']]],
-  ['home2lstart_4',['Home2lStart',['../group__home2l__general.html#gad44a5a29086141037db5dd5af3d680a7',1,'home2l']]],
-  ['home2lstop_5',['Home2lStop',['../group__home2l__general.html#ga6fb17c8cfae4ae63084084d3163aa727',1,'home2l']]],
-  ['hysteresis_6',['Hysteresis',['../classhome2l_1_1CRcRequest.html#accc19c2fa52f80018953d6bf1926304d',1,'home2l::CRcRequest']]]
+  ['garbagecollection_0',['GarbageCollection',['../classhome2l_1_1CResource.html#aa76cce079c92e8f4edeece9e7aad5309',1,'home2l::CResource']]],
+  ['gate_1',['gate',['../group__home2l__resources.html#ga67f9edb395ceb536b139095cc04df562',1,'home2l']]],
+  ['genericfloat_2',['GenericFloat',['../classhome2l_1_1CRcValueState.html#ae675da30f130e55749d1026be5dbcf40',1,'home2l::CRcValueState']]],
+  ['genericint_3',['GenericInt',['../classhome2l_1_1CRcValueState.html#a997c8e72e7de7477c951e2b693f64a24',1,'home2l::CRcValueState']]],
+  ['genericstring_4',['GenericString',['../classhome2l_1_1CRcValueState.html#a7dc8f0a0a67640fb8549e0eaa17be3f9',1,'home2l::CRcValueState']]],
+  ['get_5',['Get',['../classhome2l_1_1CResource.html#a2914eaf0c303f61c4714d93babc3f047',1,'home2l::CResource']]],
+  ['getlocalrc_6',['GetLocalRc',['../group__home2l__resources.html#ga236566c5144c26ab1853be0c5373ee95',1,'home2l']]],
+  ['getlocalrequest_7',['GetLocalRequest',['../classhome2l_1_1CResource.html#adab0ef2ebaea3500110632e7f2a1e747',1,'home2l::CResource']]],
+  ['getlocalsubscriber_8',['GetLocalSubscriber',['../classhome2l_1_1CResource.html#a11f8f3ab6294756af15f3120d580ad07',1,'home2l::CResource']]],
+  ['getrequest_9',['GetRequest',['../classhome2l_1_1CResource.html#af096fac23569b781ee4fd4a87cfdec2e',1,'home2l::CResource']]],
+  ['getrequestset_10',['GetRequestSet',['../classhome2l_1_1CResource.html#ae799de614c0e456897106de6ea733ed2',1,'home2l::CResource']]],
+  ['gid_11',['gid',['../classhome2l_1_1CResource.html#a250c33e57c54444faed8c1aeaf51ca67',1,'home2l.CResource.Gid()'],['../classhome2l_1_1CRcSubscriber.html#a250c33e57c54444faed8c1aeaf51ca67',1,'home2l.CRcSubscriber.Gid()'],['../classhome2l_1_1CRcRequest.html#a250c33e57c54444faed8c1aeaf51ca67',1,'home2l.CRcRequest.Gid()']]]
 ];

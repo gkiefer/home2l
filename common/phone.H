@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -395,6 +395,8 @@ class CPhone {
     virtual void OnInfo (const char *msg);
     void SetCbInfo (void (*_cbInfo) (void *, const char *), void *data = NULL) { cbInfo = _cbInfo; cbInfoData = data; }
       ///< @brief Callback on the receipt of a new info message (should be displayed on the UI).
+    const char *LastInfo () { return lastInfo; }
+      ///< @brief retrieve last info (may return NULL).
 
     virtual void OnDtmfReceived (char dtmf);
     void SetCbDtmfReceived (void (*_cbDtmfReceived) (void *, char), void *data = NULL) { cbDtmfReceived = _cbDtmfReceived; cbDtmfReceivedData = data; }
@@ -448,6 +450,7 @@ class CPhone {
     EPhoneState state;
     int mediaSelected;
     EPhoneState incomingAction;
+    char *lastInfo;
 
     // Callbacks...
     void *cbPhoneStateChangedData, *cbInfoData, *cbDtmfReceivedData;

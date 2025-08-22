@@ -483,7 +483,7 @@ static bool AndroidAssetLoadTextFile (const char *relPath, CString *ret) {
 
 
 static inline void AndroidPrepareHome2lRoot () {
-  CString s, installedVersion, myVersion, updateFiles;
+  CString s, trust, installedVersion, myVersion, updateFiles;
   CSplitString fileList;
   struct stat fileStat;
   int n;
@@ -494,11 +494,17 @@ static inline void AndroidPrepareHome2lRoot () {
 
   // a) Check if an update /etc is avaliable in external storage ...
   if (updateFiles.ReadFile (ANDROID_UPDATE_DIR "/FILES")) {
-    // There is an update available: Ask user to confirm ...
-    if (AndroidShowDialog (
-          "Configuration update",
-          "An update has been placed in:\n\n  " ANDROID_UPDATE_DIR "\n\nInstall it?", 2) != 1)
-      updateFiles.Clear ();
+
+    // There is an update available: Check if we trust unattended updates ...
+    trust.ReadFile (EnvGetHome2lRootPath (&s, "etc/home2l.trust"));
+    if (strstr (trust.Get (), "YES") == NULL) {
+
+      // Ask user to confirm, else dismiss ...
+      if (AndroidShowDialog (
+            "Configuration update",
+            "An update has been placed in:\n\n  " ANDROID_UPDATE_DIR "\n\nInstall it?", 2) != 1)
+        updateFiles.Clear ();
+    }
   }
   else updateFiles.Clear ();
 

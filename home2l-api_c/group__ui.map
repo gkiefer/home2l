@@ -1,6 +1,6 @@
 <map id="UI Toolkit" name="UI Toolkit">
-<area shape="rect" id="node1" title="Lightweight UI toolkit based on SDL2." alt="" coords="5,55,84,80"/>
-<area shape="rect" id="node2" href="$group__ui__base.html" title="Basic types and functionalities." alt="" coords="141,5,193,31"/>
-<area shape="rect" id="node3" href="$group__ui__screen.html" title="Screen and widget management." alt="" coords="136,55,199,80"/>
-<area shape="rect" id="node4" href="$group__ui__widgets.html" title="Collection of UI widgets." alt="" coords="132,104,203,129"/>
+<area shape="rect" id="Node000001" title="Lightweight UI toolkit based on SDL2." alt="" coords="5,55,84,80"/>
+<area shape="rect" id="Node000002" href="$group__ui__base.html" title="Basic types and functionalities." alt="" coords="141,5,193,31"/>
+<area shape="rect" id="Node000003" href="$group__ui__screen.html" title="Screen and widget management." alt="" coords="136,55,199,80"/>
+<area shape="rect" id="Node000004" href="$group__ui__widgets.html" title="Collection of UI widgets." alt="" coords="132,104,203,129"/>
 </map>

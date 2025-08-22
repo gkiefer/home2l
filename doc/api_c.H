@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
  * [*Home2L Book*](../home2l-book.pdf). Automation rules are best written
  * using the [*Python API*](../home2l-api_python/index.html).
  *
- * To get started, navigate to the [Modules](modules.html) page.
+ * To get started, navigate to the [Topics](topics.html) page.
  *
  * Notes
  * -----

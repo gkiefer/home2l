@@ -1,12 +1,12 @@
 # German translations for Home2L package
 # German translation for Home2L.
-# Copyright (C) 2015-2024 Gundolf Kiefer
+# Copyright (C) 2015-2025 Gundolf Kiefer
 # This file is distributed under the same license as the Home2L package.
 #
 msgid   ""
 msgstr  "Project-Id-Version: Home2L\n"
         "Report-Msgid-Bugs-To: Gundolf Kiefer\n"
-        "POT-Creation-Date: 2024-05-24 19:34+0200\n"
+        "POT-Creation-Date: 2025-08-18 18:07+0200\n"
         "PO-Revision-Date: 2018-06-02 03:24+0200\n"
         "Last-Translator: Gundolf Kiefer\n"
         "Language-Team: German\n"
@@ -169,59 +169,59 @@ msgstr  "Sa"
 msgid   "Sun"
 msgstr  "So"
 
-#: ../common/phone-pjsip.C:1426
+#: ../common/phone-pjsip.C:1422
 msgid   "Inviting..."
 msgstr  "Rufe an..."
 
-#: ../common/phone-pjsip.C:1483
+#: ../common/phone-pjsip.C:1479
 msgid   "Resuming paused call."
 msgstr  "Gehe zurück zum geparkten Anruf."
 
-#: ../common/phone-pjsip.C:1559
+#: ../common/phone-pjsip.C:1555
 msgid   "Call is paused. Please dial the number to transfer to."
 msgstr  "Anruf ist geparkt. Bitte wähle jetzt die Ziel-Nummer."
 
-#: ../common/phone-pjsip.C:1572
+#: ../common/phone-pjsip.C:1568
 msgid   "Pick up destination phone to complete the transfer."
 msgstr  "Gehe jetzt zum Ziel-Telefon und nimm einfach ab."
 
-#: ../common/phone-pjsip.C:1695
+#: ../common/phone-pjsip.C:1691
 #, c-format
 msgid   "Registration: %.*s (%i)"
 msgstr  "Registrierung: %.*s (%i)"
 
-#: ../common/phone-pjsip.C:1788
+#: ../common/phone-pjsip.C:1784
 #, c-format
 msgid   "Paused call ended: %.*s (%i)"
 msgstr  "Geparkter Anruf beendet: %.*s (%i)"
 
-#: ../common/phone-pjsip.C:1790
+#: ../common/phone-pjsip.C:1786
 msgid   "Paused call ended."
 msgstr  "Geparkter Anruf beendet."
 
-#: ../common/phone-pjsip.C:1795
+#: ../common/phone-pjsip.C:1791
 msgid   "Ready."
 msgstr  "Bereit."
 
-#: ../common/phone-pjsip.C:1801
+#: ../common/phone-pjsip.C:1797
 #, c-format
 msgid   "Call ended: %.*s (%i)"
 msgstr  "Anruf beendet: %.*s (%i)"
 
-#: ../common/phone-pjsip.C:1803
+#: ../common/phone-pjsip.C:1799
 msgid   "Call ended."
 msgstr  "Anruf beendet."
 
-#: ../common/phone-pjsip.C:1808
+#: ../common/phone-pjsip.C:1804
 msgid   "Connected."
 msgstr  "Verbunden."
 
-#: ../common/phone-pjsip.C:1867
+#: ../common/phone-pjsip.C:1863
 #, c-format
 msgid   "%.*s is calling!"
 msgstr  "Anruf von: %.*s"
 
-#: ../common/phone-pjsip.C:2255
+#: ../common/phone-pjsip.C:2252
 #, c-format
 msgid   "Registration in progress (%.*s@%.*s) ..."
 msgstr  "Registrierung läuft (%.*s@%.*s) ..."
@@ -234,91 +234,116 @@ msgstr  "Ein"
 msgid   "Disabled"
 msgstr  "Aus"
 
-#: ../wallclock/app_calendar.C:280
+#: ../wallclock/app_calendar.C:489
 #, c-format
 msgid   "Failed to load calendar file '%s/%s.rem':\n"
 msgstr  "Kann die Kalenderdatei '%s/%s.rem' nicht laden:\n"
 
+#: ../wallclock/app_calendar.C:492
+msgid   "\n"
+        "(no output)"
+msgstr  "\n"
+        "(keine Ausgabe)"
+
+#: ../wallclock/app_calendar.C:691
+#, c-format
+msgid   "Failed to contact 'home2l-pimd', command failed:\n"
+        "%s"
+msgstr  "Kann 'home2l-pimd' nicht erreichen, fehlgeschlagenes Kommando:\n"
+        "%s"
+
+#: ../wallclock/app_calendar.C:762
+#, c-format
+msgid   "Failed to contact 'home2l-pimd' on %s:%i:\n"
+        "%s"
+msgstr  "Kann 'home2l-pimd' auf %s:%i nicht erreichen:\n"
+        "%s"
+
+#: ../wallclock/app_calendar.C:917
+#, c-format
+msgid   "Missing event ID: %s"
+msgstr  "Fehlende Event-ID: %s"
+
 #. TRANSLATORS: Format string for the day header in the calendar event list (de_DE: "%s   %i.%i.%i")
 #. Arguments are: <week day name>, <day>, <month>, <year>
-#: ../wallclock/app_calendar.C:704
+#: ../wallclock/app_calendar.C:1125
 #, c-format
 msgid   "%1$s   %3$i/%2$i/%4$i"
 msgstr  "%s   %i.%i.%i"
 
-#: ../wallclock/app_calendar.C:794
+#: ../wallclock/app_calendar.C:1205
 msgid   "Really remove the current entry?"
 msgstr  "Bist Du sicher, dass Du\n"
         "den Eintrag löschen möchtest?"
 
-#: ../wallclock/app_calendar.C:952
+#: ../wallclock/app_calendar.C:1334
 msgid   "Today"
 msgstr  "Heute"
 
-#: ../wallclock/app_calendar.C:1071
+#: ../wallclock/app_calendar.C:1455
 msgid   "Please correct:"
 msgstr  "Bitte korrigieren:"
 
-#: ../wallclock/app_calendar.C:1490
+#: ../wallclock/app_calendar.C:1876
 msgid   "Calendar"
 msgstr  "Kalender"
 
-#: ../wallclock/app_home.C:657 ../wallclock/floorplan.C:781
+#: ../wallclock/app_home.C:666 ../wallclock/floorplan.C:781
 msgid   "Mail"
 msgstr  "Mail"
 
-#: ../wallclock/app_home.C:662
+#: ../wallclock/app_home.C:671
 msgid   "WWW"
 msgstr  "WWW"
 
-#: ../wallclock/app_home.C:667
+#: ../wallclock/app_home.C:676
 msgid   "Android"
 msgstr  "Android"
 
 #. TRANSLATORS: Format string for the "<weekday>, <full date>" display on the home screen (de_DE: "%s, %i. %s %i")
 #. Arguments are: <week day name>, <day>, <month name>, <year>
-#: ../wallclock/app_home.C:816
+#: ../wallclock/app_home.C:823
 #, c-format
 msgid   "%1$s, %3$s %2$i, %4$i"
 msgstr  "%s, %i. %s %i"
 
-#: ../wallclock/app_home.C:1050
+#: ../wallclock/app_home.C:1057
 msgid   "Quit Home2L"
 msgstr  "Home2l beenden"
 
-#: ../wallclock/app_music.C:1001
+#: ../wallclock/app_music.C:1060
 msgid   "Connecting ..."
 msgstr  "Verbinde ..."
 
-#: ../wallclock/app_music.C:1301
+#: ../wallclock/app_music.C:1362
 msgid   "* Music Collection *"
 msgstr  "* Musik-Sammlung *"
 
-#: ../wallclock/app_music.C:1305
+#: ../wallclock/app_music.C:1366
 msgid   "* Current Queue *"
 msgstr  "* Aktuelle Liste *"
 
-#: ../wallclock/app_music.C:1306
+#: ../wallclock/app_music.C:1367
 msgid   "* Playlists *"
 msgstr  "* Abspiellisten *"
 
-#: ../wallclock/app_music.C:1307
+#: ../wallclock/app_music.C:1368
 msgid   "* Main *"
 msgstr  "* Hauptmenü *"
 
-#: ../wallclock/app_music.C:1458
+#: ../wallclock/app_music.C:1519
 msgid   "Music Collection"
 msgstr  "Musik-Sammlung"
 
-#: ../wallclock/app_music.C:1982 ../wallclock/floorplan.C:783
+#: ../wallclock/app_music.C:2043 ../wallclock/floorplan.C:783
 msgid   "Music"
 msgstr  "Musik"
 
-#: ../wallclock/app_music.C:2272
+#: ../wallclock/app_music.C:2333
 msgid   "Request server to update its database?"
 msgstr  "Soll der Server seine Datenbank aktualisieren?"
 
-#: ../wallclock/app_music.C:2275
+#: ../wallclock/app_music.C:2336
 #, c-format
 msgid   "Database update is started, job ID is %u."
 msgstr  "Das Datenbank-Update läuft, die Job-ID ist %u."
@@ -367,7 +392,7 @@ msgstr  "Bluetooth"
 msgid   "Service"
 msgstr  "Service"
 
-#: ../wallclock/floorplan.C:787 ../wallclock/ui_widgets.C:1233
+#: ../wallclock/floorplan.C:787 ../wallclock/ui_widgets.C:1238
 msgid   "Warning"
 msgstr  "Warnung"
 
@@ -446,39 +471,39 @@ msgstr  "Home2L %s ist installiert und funktioniert, wurde aber auf\n"
         "bitte den Eintrag 'home2l.unconfigured = 1' in 'etc/home2l.conf'.\n"
 
 #. TRANSLATORS: Standard buttons for message boxes
-#: ../wallclock/ui_widgets.C:1124
+#: ../wallclock/ui_widgets.C:1129
 msgid   "Cancel"
 msgstr  "Abbrechen"
 
-#: ../wallclock/ui_widgets.C:1124
+#: ../wallclock/ui_widgets.C:1129
 msgid   "OK"
 msgstr  "OK"
 
-#: ../wallclock/ui_widgets.C:1124
+#: ../wallclock/ui_widgets.C:1129
 msgid   "No"
 msgstr  "Nein"
 
-#: ../wallclock/ui_widgets.C:1124
+#: ../wallclock/ui_widgets.C:1129
 msgid   "Yes"
 msgstr  "Ja"
 
-#: ../wallclock/ui_widgets.C:1223
+#: ../wallclock/ui_widgets.C:1228
 msgid   "Information"
 msgstr  "Information"
 
-#: ../wallclock/ui_widgets.C:1243
+#: ../wallclock/ui_widgets.C:1248
 msgid   "Error"
 msgstr  "Fehler"
 
-#: ../wallclock/ui_widgets.C:1253
+#: ../wallclock/ui_widgets.C:1258
 msgid   "Sure?"
 msgstr  "Sicher?"
 
-#: ../wallclock/ui_widgets.C:1263
+#: ../wallclock/ui_widgets.C:1268
 msgid   "Question"
 msgstr  "Frage"
 
-#: ../wallclock/ui_widgets.C:1324
+#: ../wallclock/ui_widgets.C:1329
 msgid   "Caution: The input string\n"
         "contained unsupported characters\n"
         "and has been modified!"
@@ -486,14 +511,22 @@ msgstr  "Achtung: Der Text\n"
         "enthielt ungültige Zeichen\n"
         "und wurde angepasst!"
 
-#: ../wallclock/ui_widgets.C:1326
+#: ../wallclock/ui_widgets.C:1331
 msgid   "Caution: The input string\n"
         "is too long\n"
         "and has been truncated!"
 msgstr  "Achtung: Der Text war zu lang\n"
         "und wurde gekürzt!"
 
-#: ../wallclock/ui_widgets.C:1857
+#: ../wallclock/ui_widgets.C:1862
 msgid   "Discard changes?"
 msgstr  "Sollen die Änderungen im Eintrag\n"
         "verworfen werden?"
+
+#, c-format
+#~ msgid        "Failed to load iCal calendar '%s'."
+#~ msgstr       "Fehler beim Laden von iCal-Kalender '%s'."
+
+#, c-format
+#~ msgid        "Failed to change iCal calendar '%s'."
+#~ msgstr       "Fehler beim Schreiben von iCal-Kalender '%s'."

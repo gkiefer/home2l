@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2024 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1071,7 +1071,7 @@ template <typename T> class CListCompact: public CListRaw {
       /// Complexity is O(n).
     void Append (T *value) { InsertRaw (INT_MAX, value); }
       ///< @brief Append a new value.
-      /// Complexity is O(1) if no resizing is necessary, else O(1).
+      /// Complexity is O(1) if no resizing is necessary, else O(n).
     /// @}
 
   protected:
@@ -1941,7 +1941,7 @@ class CShell {
       ///< @brief Non-Blocking read, returns 'true' on success.
       /// `str` can be NULL, in which case the line is ignored, given the reading was successul.
     virtual bool ReadClosed () = 0;
-      ///< @brief Close the read channel.
+      ///< @brief Return whether the read channel has been closed.
     /// @}
 
   protected:

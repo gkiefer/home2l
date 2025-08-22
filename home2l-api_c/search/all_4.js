@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['data_0',['data',['../structSBrRequest.html#aacccff1ade335508ef0dd65bbac074dc',1,'SBrRequest::data()'],['../structSBrReply.html#a83600982b68422f54a4a12d519acb5c5',1,'SBrReply::data()'],['../classCListboxItem.html#a911481690e6bf833ff83e43d8faabe99',1,'CListboxItem::data()'],['../structTPhoneVideoFrame.html#a95676865688cc3d09cc9e8ffd1ba1158',1,'TPhoneVideoFrame::data()']]],
+  ['data_0',['data',['../structSBrRequest.html#aacccff1ade335508ef0dd65bbac074dc',1,'SBrRequest::data'],['../structSBrReply.html#a83600982b68422f54a4a12d519acb5c5',1,'SBrReply::data'],['../classCListboxItem.html#a911481690e6bf833ff83e43d8faabe99',1,'CListboxItem::data'],['../structTPhoneVideoFrame.html#a95676865688cc3d09cc9e8ffd1ba1158',1,'TPhoneVideoFrame::data']]],
   ['databasestring_1',['DatabaseString',['../classCBrownie.html#ae359f16b0050269fcc95ddb2686adc6c',1,'CBrownie']]],
   ['datacheck_2',['dataCheck',['../structSBrReply.html#ad68f05fd455a44acb539ce491108a336',1,'SBrReply']]],
   ['date_20and_20time_3',['Date and Time',['../group__common__datetime.html',1,'']]],
@@ -10,18 +10,18 @@ var searchData=
   ['debug_7',['DEBUG',['../group__common__logging.html#ga6ed6df5c92e2efc8c289fecf289ee382',1,'base.H']]],
   ['debugf_8',['DEBUGF',['../group__common__logging.html#ga0574d1a6648679b0bd4e77e24396779e',1,'base.H']]],
   ['declaration_9',['Declaration',['../group__env__declaration.html',1,'']]],
-  ['del_10',['Del',['../classCDictRaw.html#a168a8d128e82158b4181c32b96b4e2f2',1,'CDictRaw::Del()'],['../classCBrownieSet.html#a0d35adb1cf54718ad0332c08c0c6bba3',1,'CBrownieSet::Del()'],['../classCDictRaw.html#af490c32a77c1f80afbc19d2a7cb86295',1,'CDictRaw::Del()'],['../classCListRaw.html#ab2fba17ff00f4027311323644d6881be',1,'CListRaw::Del()']]],
+  ['del_10',['del',['../classCDictRaw.html#a168a8d128e82158b4181c32b96b4e2f2',1,'CDictRaw::Del()'],['../classCBrownieSet.html#a0d35adb1cf54718ad0332c08c0c6bba3',1,'CBrownieSet::Del()'],['../classCDictRaw.html#af490c32a77c1f80afbc19d2a7cb86295',1,'CDictRaw::Del()'],['../classCListRaw.html#ab2fba17ff00f4027311323644d6881be',1,'CListRaw::Del()']]],
   ['delbycreator_11',['DelByCreator',['../classCTimer.html#a196fcc4b9e6b2c799d6815277486089b',1,'CTimer']]],
   ['delrequest_12',['DelRequest',['../classCResource.html#a2a6cc0671d1c694adfb0b108a3046d73',1,'CResource']]],
   ['delresources_13',['DelResources',['../classCRcSubscriber.html#a7f3a83c9cde574fce78b7a99966ab091',1,'CRcSubscriber']]],
   ['dial_14',['Dial',['../classCPhone.html#adcb16c1f3f0cc0e1ad2bd039d8c9c3c7',1,'CPhone']]],
   ['directory_20services_15',['Directory Services',['../group__resources__directory.html',1,'']]],
-  ['disown_16',['Disown',['../classCList.html#aa30821cd98159f1125274eaf1c4e6fde',1,'CList::Disown()'],['../classCString.html#a2538912855c9cb563040f35e61964fc4',1,'CString::Disown()']]],
-  ['disownvalue_17',['DisownValue',['../classCDict.html#a7b3ed23cde7af8b0abfab28313aa22d4',1,'CDict::DisownValue(const char *key)'],['../classCDict.html#a925bb767d7cfe3361f0f71078aecebb3',1,'CDict::DisownValue(int idx)']]],
+  ['disown_16',['disown',['../classCList.html#aa30821cd98159f1125274eaf1c4e6fde',1,'CList::Disown()'],['../classCString.html#a2538912855c9cb563040f35e61964fc4',1,'CString::Disown()']]],
+  ['disownvalue_17',['disownvalue',['../classCDict.html#a7b3ed23cde7af8b0abfab28313aa22d4',1,'CDict::DisownValue(const char *key)'],['../classCDict.html#a925bb767d7cfe3361f0f71078aecebb3',1,'CDict::DisownValue(int idx)']]],
   ['doclose_18',['DoClose',['../classCServiceKeeper.html#ac4c377b626580bc6084097a15a030028',1,'CServiceKeeper']]],
   ['doopen_19',['DoOpen',['../classCServiceKeeper.html#a2955e2ad88596cbbb66f75702ceaf438',1,'CServiceKeeper']]],
   ['drivers_20',['Drivers',['../group__resources__drivers.html',1,'']]],
-  ['drivevalue_21',['DriveValue',['../classCRcEventDriver.html#a20a39acbd142e14a0c0a36dfe3227ab1',1,'CRcEventDriver::DriveValue()'],['../classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2',1,'CRcDriver::DriveValue()']]],
-  ['dump_22',['Dump',['../classCListRaw.html#a24f0cdea53a94f8b318094a8488ac07f',1,'CListRaw::Dump()'],['../classCDictRaw.html#a27b5b6cfe63e81becc5e467344a56195',1,'CDictRaw::Dump()'],['../classCKeySet.html#a016c79e8592c6d09a26057842bc5338e',1,'CKeySet::Dump()']]],
+  ['drivevalue_21',['drivevalue',['../classCRcEventDriver.html#a20a39acbd142e14a0c0a36dfe3227ab1',1,'CRcEventDriver::DriveValue()'],['../classCRcDriver.html#a1dcb5393ad4edab1b415bab6c2c654c2',1,'CRcDriver::DriveValue()']]],
+  ['dump_22',['dump',['../classCListRaw.html#a24f0cdea53a94f8b318094a8488ac07f',1,'CListRaw::Dump()'],['../classCDictRaw.html#a27b5b6cfe63e81becc5e467344a56195',1,'CDictRaw::Dump()'],['../classCKeySet.html#a016c79e8592c6d09a26057842bc5338e',1,'CKeySet::Dump()']]],
   ['dynamic_20settings_23',['Dynamic Settings',['../group__env__dictionary.html',1,'']]]
 ];

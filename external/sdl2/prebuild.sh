@@ -61,8 +61,8 @@ build_linux () {
     ARCH="$LOCAL_ARCH"
   fi
 
-  if [[ "$LOCAL_ARCH" != "i386" && "$LOCAL_ARCH" != "amd64" ]]; then
-    echo "ERROR: This script only works on a 'i386' or 'amd64' architecture (but not '$LOCAL_ARCH')!"
+  if [[ "$LOCAL_ARCH" != "amd64" ]]; then
+    echo "ERROR: This script only works on the 'amd64' architecture (but not '$LOCAL_ARCH')!"
     exit 3
   fi
 
@@ -72,16 +72,6 @@ build_linux () {
   LDFLAGS=""
   if [[ "$ARCH" != "$LOCAL_ARCH" ]]; then
     case "$ARCH" in
-      i386)   # untested!
-        TARGET_FLAGS="--host i686-pc-linux-gnu"     # just to enable cross-compile mode
-        CFLAGS="$CFLAGS -m32"
-        LDFLAGS="$LDLAGS -m32"
-        ;;
-      amd64)
-        TARGET_FLAGS="--host x86_64-pc-linux-gnu"   # just to enable cross-compile mode
-        CFLAGS="$CFLAGS -m64"
-        LDFLAGS="$LDLAGS -m64"
-        ;;
       armhf)
         TARGET_FLAGS="--host arm-linux-gnueabihf"
         ;;
@@ -225,7 +215,6 @@ rm -fr include usr.new
 
 build_linux amd64
 build_linux armhf
-#~ build_linux i386     # [2024-01-04] build errors in SDL_ttf -> unsupported/obsolete
 
 
 ##### Build for Android SDK #####

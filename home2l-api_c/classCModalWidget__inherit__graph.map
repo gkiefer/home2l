@@ -1,6 +1,9 @@
 <map id="CModalWidget" name="CModalWidget">
-<area shape="rect" id="node1" title="Widget that can pop up on a screen, such as a menu or a message box." alt="" coords="38,80,146,107"/>
-<area shape="rect" id="node3" href="$classCMenu.html" title="Menu widget." alt="" coords="5,155,69,181"/>
-<area shape="rect" id="node4" href="$classCMessageBox.html" title="Message box widget." alt="" coords="94,155,202,181"/>
-<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="55,5,129,32"/>
+<area shape="rect" id="Node000001" title="Widget that can pop up on a screen, such as a menu or a message box." alt="" coords="38,79,146,104"/>
+<area shape="rect" id="Node000003" href="$classCMenu.html" title="Menu widget." alt="" coords="5,152,69,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="77,117,48,154,44,150,73,113"/>
+<area shape="rect" id="Node000004" href="$classCMessageBox.html" title="Message box widget." alt="" coords="94,152,202,177"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="112,113,141,150,137,154,108,117"/>
+<area shape="rect" id="Node000002" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="55,5,129,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,44,95,79,89,79,89,44"/>
 </map>

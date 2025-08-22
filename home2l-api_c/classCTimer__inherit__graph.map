@@ -1,5 +1,7 @@
 <map id="CTimer" name="CTimer">
-<area shape="rect" id="node1" title="Timer class." alt="" coords="103,5,168,32"/>
-<area shape="rect" id="node2" href="$classCRcEventTimer.html" title="Timer that sends &#39;rceTimer&#39; events over the event system." alt="" coords="5,80,121,107"/>
-<area shape="rect" id="node3" href="$classCWidgetFloorplan.html" title="Floorplan widget." alt="" coords="145,80,272,107"/>
+<area shape="rect" id="Node000001" title="Timer class." alt="" coords="103,5,168,31"/>
+<area shape="rect" id="Node000002" href="$classCRcEventTimer.html" title="Timer that sends &#39;rceTimer&#39; events over the event system." alt="" coords="5,79,121,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,43,77,80,73,77,112,39"/>
+<area shape="rect" id="Node000003" href="$classCWidgetFloorplan.html" title="Floorplan widget." alt="" coords="145,79,272,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="159,38,199,77,195,80,155,42"/>
 </map>

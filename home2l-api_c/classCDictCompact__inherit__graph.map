@@ -1,5 +1,7 @@
 <map id="CDictCompact&lt; T &gt;" name="CDictCompact&lt; T &gt;">
-<area shape="rect" id="node1" title="Compact dictionary." alt="" coords="5,155,147,181"/>
-<area shape="rect" id="node2" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="35,80,117,107"/>
-<area shape="rect" id="node3" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="36,5,116,32"/>
+<area shape="rect" id="Node000001" title="Compact dictionary." alt="" coords="5,152,147,177"/>
+<area shape="rect" id="Node000002" href="$classCDictRaw.html" title="Raw dictionary (base class for other dictionary variants)." alt="" coords="35,79,117,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,118,79,152,73,152,73,118"/>
+<area shape="rect" id="Node000003" href="$classCListRaw.html" title="Raw list (base class for other list variants)." alt="" coords="36,5,116,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="79,44,79,79,73,79,73,44"/>
 </map>

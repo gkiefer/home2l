@@ -50,53 +50,38 @@
 // *************************** Environment options *****************************
 
 
-ENV_PARA_SPECIAL ("music.<MPD>.host", const char *, NULL);
-  /* Network host name and optionally port of the given MPD instance.
-   *
-   * This variable implicitly declares the server with its symbolic name <MPD>.
-   * If no port is given, the default port is assumed.
-   */
-
 ENV_PARA_INT ("music.port", envMpdDefaultPort, 6600);
   /* Default port for MPD servers
    */
 
-ENV_PARA_SPECIAL ("music.<MPD>.password", const char *, NULL);
-  /* Password of the MPD instance (optional, NOT IMPLEMENTED YET)
-   */
-
-ENV_PARA_SPECIAL ("music.(<MPD>|any)[.<OUTPUT>].name", const char *, NULL);
-  /* Define a display name for an MPD server or an output
+ENV_PARA_STRING ("music.streamOutput", envMpdDefaultStreamOutput, "stream");
+  /* Name of outputs delivering an HTTP stream to the local device
    *
-   * The output ID is normalized to lower case, and all characters except
-   * letters ('a'..'z'), digits ('0'..'9') and '--' are replaced by underscores
-   * ('\_').
+   * If the output name is equal to this, it is recogized as an
+   * output for HTTP streaming, which can be listened to locally.
+   *
+   * The setting for a particular player can be overriden by the variable keyed
+   * \refenv{music.player.<player>.streamOutput}.
    */
 
 ENV_PARA_INT ("music.streamPort", envMpdDefaultStreamPort, 8000);
   /* Default port for HTTP streams coming from MPD servers
    *
-   * The setting for a particular server <MPD> can be given by variable keyed
-   * "music.<MPD>.streamPort".
+   * The setting for a particular player can be overriden by the variable keyed
+   * \refenv{music.player.<player>.streamPort}.
    */
 
 ENV_PARA_INT ("music.streamBufferDuration", envStreamerBufferDuration, 1000);
-  /* Buffer length [ms] for HTTP streaming.
+  /* Buffer length [ms] for HTTP streaming to the device
    */
 
-ENV_PARA_FLOAT ("music.volumeGamma", envDefaultVolumeGamma, 1.0);
-  /* Gamma value for the volume controller (default and always used for local outputs)
+ENV_PARA_BOOL ("music.autoUnmute", envAutoUnmute, false);
+  /* Automatically continue playing if the reason for muting is gone
    *
-   * The setting for a particular server <MPD> and optionally  output <OUTPUT> can be
-   * given by variable keyed "music.<MPD>.[<OUTPUT>].volumeGamma".
-   */
-
-ENV_PARA_STRING ("music.streamOutPrefix", envMpdStreamOutPrefix, "stream");
-  /* Name prefix for an output
-   *
-   * If the output name has the format "<prefix>[<port>]", it is recogized as a
-   * output for HTTP streaming, which can be listened to locally. For concenience,
-   * the port number can be appended to the stream prefix.
+   * If 'true', the music player resumes playing if the 'mute' resource
+   * changes from 1 to 0. If 'false', the player stays paused. The latter may be
+   * useful if there are multiple phones in the room, and the user answers with
+   * a phone other than that controlling the player.
    */
 
 ENV_PARA_STRING ("music.recordOut", envMpdRecordOut, "record");
@@ -107,7 +92,7 @@ ENV_PARA_STRING ("music.recordOut", envMpdRecordOut, "record");
    * functionality, but activated if and only if a streaming source is played.
    */
 
-ENV_PARA_STRING ("music.streamDirHint", envMpdStreamDirHint, NULL);
+ENV_PARA_STRING ("music.radioDirHint", envMpdRadioDirHint, NULL);
   /* MPD directory in which radio streams can probably be found
    *
    * The "go to current" button navigates to the parent directory of the currently playing
@@ -116,24 +101,95 @@ ENV_PARA_STRING ("music.streamDirHint", envMpdStreamDirHint, NULL);
    */
 
 ENV_PARA_INT ("music.recoveryInterval", envRecoveryInterval, 2000);
-  /* Retry interval time if something (presently local streaming) fails.
+  /* Retry interval time if something (presently local streaming) fails
    */
 
 ENV_PARA_INT ("music.recoveryMaxTime", envRecoveryMaxTime, 10000);
-  /* Maximum time to retry if something (presently local streaming) fails.
+  /* Maximum time to retry if something (presently local streaming) fails
    */
 
-ENV_PARA_BOOL ("music.autoUnmute", envAutoUnmute, false);
-  /* Automatically continue playing if the reason for muting is gone.
+ENV_PARA_FLOAT ("music.volumeGamma", envDefaultVolumeGamma, 1.0);
+  /* Gamma value for volume controllers (default and always used for local outputs)
    *
-   * If 'true', the music player resumes playing if the 'mute' resource
-   * changes from 1 to 0. If 'false', the player stays paused. The latter may be
-   * useful if there are multiple phones in the room, and the user answers with
-   * a phone other than that controlling the player.
+   * The setting for a particular player <player> or a particular output <output>
+   * can be given by variables \refenv{music.player.<player>.volumeGamma} or
+   * \refenv{music.output.(<player>|any).<output>.volumeGamma}.
    */
 
-ENV_PARA_NOVAR ("var.music.server", const char *, envMpdServer, NULL);
-  /* MPD server to connect to first
+
+
+ENV_PARA_SPECIAL ("music.player.<player>.name", const char *, NULL);
+  /* Define a display name for a player (MPD instance or partition)
+   *
+   * This variable implicitly declares the server with its symbolic name <player>.
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.host", const char *, NULL);
+  /* Network host name and optionally port of the given MPD instance (player)
+   *
+   * If no port is given, the default port is assumed.
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.password", const char *, NULL);
+  /* Password of the MPD instance (optional, NOT IMPLEMENTED YET)
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.partition", const char *, NULL);
+  /* (Optional) Partition of the given MPD instance (player) to use
+   *
+   * If set, the player automatically creates the named partion and switches
+   * to it.
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.outputs", const char *, NULL);
+  /* (Optional) Partition of the given MPD instance (player) to use
+   *
+   * If set, the player automatically creates the named partion and switches
+   * to it.
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.streamOutput", const char *, NULL);
+  /* Output delivering an HTTP stream to the local device
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.streamPort", const char *, NULL);  // TBD
+  /* Port for streaming to the local device
+   *
+   * Defines the port of a HTTP stream to be played back on the local device
+   * if the output matches \refenv{music.streamOutput} or \refenv{music.player.<player>.streamOutput}.
+   */
+
+ENV_PARA_SPECIAL ("music.player.<player>.volumeGamma", float, NULL);
+  /* Gamma value for the volume controllers of a given player
+   */
+
+
+
+ENV_PARA_SPECIAL ("music.output.(<player>|any).<output>.name", const char *, NULL);
+  /* Define a display name for an output
+   *
+   * The output ID is normalized to lower case, and all characters except
+   * letters ('a'..'z'), digits ('0'..'9') and '--' are replaced by underscores
+   * ('\_').
+   */
+
+ENV_PARA_SPECIAL ("music.output.(<player>|any).<output>.streamPort", const char *, NULL);
+  /* Stream port for streaming to the local device
+   *
+   * States that the generates a HTTP stream over the given port to be played
+   * back on the local device if the output is selected.
+   */
+
+ENV_PARA_SPECIAL ("music.output.(<player>|any).<output>.volumeGamma", float, NULL);
+  /* Gamma value for the volume controller of a given output
+   */
+
+
+
+ENV_PARA_NOVAR ("var.music.player", const char *, envMpdServer, NULL);
+  /* Player to connect to first
+   *
+   * This is to make the player selection persistent.
    */
 
 
@@ -143,9 +199,9 @@ static const char *MakeEnvKeyPath (const char *base, const char *serverKey, cons
   const char *para = base + 6;    // skip "music."
 
   ret.SetF ("music.%s", para);
-  if (serverKey) ret.InsertF (0, "music.%s.%s:", serverKey, para);
-  if (outputKey) ret.InsertF (0, "music.any.%s.%s:", outputKey, para);
-  if (serverKey && outputKey) ret.InsertF (0, "music.%s.%s.%s:", serverKey, outputKey, para);
+  if (serverKey) ret.InsertF (0, "music.player.%s.%s:", serverKey, para);
+  if (outputKey) ret.InsertF (0, "music.output.any.%s.%s:", outputKey, para);
+  if (serverKey && outputKey) ret.InsertF (0, "music.output.%s.%s.%s:", serverKey, outputKey, para);
   return ret.Get ();
 }
 
@@ -562,22 +618,25 @@ void CMusicPlayer::ClassInit () {
   const char *serverId, *dispName, *hostName;
   int n, idx0, idx1;
 
-  // Discover MPD servers...
-  EnvGetPrefixInterval ("music.", &idx0, &idx1);
+  // Discover MPD servers ...
+  EnvGetPrefixInterval ("music.player.", &idx0, &idx1);
   for (n = idx0; n < idx1; n++) {
-    splitVarName.Set (EnvGetKey (n), 4, ".");
-    if (splitVarName.Entries () == 3) if (strcmp (splitVarName.Get (2), "host") == 0) {
-      serverId = splitVarName.Get (1);
+    splitVarName.Set (EnvGetKey (n), 5, ".");
+    if (splitVarName.Entries () == 4) if (strcmp (splitVarName.Get (3), "name") == 0) {
+      serverId = splitVarName.Get (2);
 
-      // Add server entry...
-      dispName = EnvGet (StringF (&s, "music.%s.name", serverId));
+      // Add server entry ...
+      dispName = EnvGet (StringF (&s, "music.player.%s.name", serverId));
       if (!dispName) dispName = serverId; // WARNINGF (("Missing environment setting '%s'", s.Get ()));
-      hostName = EnvGet (StringF (&s, "music.%s.host", serverId));    // only for sanity checking
+      hostName = EnvGet (StringF (&s, "music.player.%s.host", serverId));    // only for sanity checking
       if (!hostName) WARNINGF (("Missing environment setting '%s'", s.Get ()));
       if (dispName && hostName) {
         s.SetC (dispName);
         serverDict.Set (serverId, &s);
       }
+
+      // Add partition settings ...
+      // TBD
     }
   }
 
@@ -989,11 +1048,11 @@ void CMusicPlayer::SetServer (int idx) {
     // Store the new server...
     EnvPut (envMpdServerKey, mpdId);
 
-    if (!EnvGetHostAndPort (StringF (&s, "music.%s.host", mpdId), &mpdHost, &mpdPort, envMpdDefaultPort)) {
+    if (!EnvGetHostAndPort (StringF (&s, "music.player.%s.host", mpdId), &mpdHost, &mpdPort, envMpdDefaultPort)) {
       mpdHost.SetC ("localhost");
       mpdPort = envMpdDefaultPort;
     }
-    //~ TBD: ENV_PARA_SPECIAL ("music.password.<MPD>");
+    //~ TBD: ENV_PARA_SPECIAL ("music.player.%s.password");
 
     // Try to connect...
     popup = NULL;
@@ -1127,8 +1186,8 @@ bool CMusicPlayer::SetRepeatMode (bool on) {
 void CMusicPlayer::ReadOutputs () {
   struct mpd_output *mpdOutput = NULL;
   CString s;
-  const char *name;
-  int n, i, mpdPort, firstEnabledIdx;
+  const char *name, *streamOutput;
+  int n, i, firstEnabledIdx;
   char c;
   bool mpdOk;
 
@@ -1154,7 +1213,7 @@ void CMusicPlayer::ReadOutputs () {
 
       // Normal output...
       name = EnvGet (
-          StringF (&s, "music.%s.%s.name:music.any.%s.name",
+          StringF (&s, "music.output.%s.%s.name:music.output.any.%s.name",
                         ServerKey (serverIdx), outputKey[n].Get (), outputKey[n].Get ())
         );
       outputName[n].SetC (name ? name : outputKey[n].Get ());
@@ -1163,14 +1222,16 @@ void CMusicPlayer::ReadOutputs () {
       if (firstEnabledIdx < 0) if (mpd_output_get_enabled (mpdOutput)) firstEnabledIdx = n;
 
       // Stream? ...
-      //~ INFOF (("### Output #%i: %s", n, outputKey[n].Get ()));
-      if (strncmp (outputKey[n].Get (), envMpdStreamOutPrefix, strlen (envMpdStreamOutPrefix)) == 0) {
+      INFOF (("### Output #%i: %s", n, outputKey[n].Get ()));
+      streamOutput = envMpdDefaultStreamOutput;
+      EnvGetString (MakeEnvKeyPath (envMpdDefaultStreamOutputKey, ServerKey (serverIdx), NULL),
+                    &streamOutput);
+      if (strcmp (outputKey[n].Get (), streamOutput) == 0) {
         // Yes...
         outputStreamPort[n] = envMpdDefaultStreamPort;
-        EnvGetInt (MakeEnvKeyPath (envMpdDefaultStreamPortKey, ServerKey (serverIdx), outputKey[n].Get ()), &outputStreamPort[n]);
-        if (sscanf ("%i", outputKey[n] + strlen (envMpdStreamOutPrefix), &mpdPort) == 1)
-          outputStreamPort[n] = mpdPort;
-        //~ INFOF (("###    Stream output (%i): Port %i", n, outputStreamPort[n]));
+        EnvGetInt (MakeEnvKeyPath (envMpdDefaultStreamPortKey, ServerKey (serverIdx), outputKey[n].Get ()),
+                   &outputStreamPort[n]);
+        INFOF (("###    Stream output (%i): Port %i", n, outputStreamPort[n]));
       }
       else outputStreamPort[n] = 0;   // No.
 
@@ -1507,7 +1568,7 @@ bool CMusicPlayer::DirLoadParent (const char *uri) {
   // External URL? ...
   if (MpdUriIsStream (uri)) {
     success = false;
-    if (envMpdStreamDirHint) success = DirLoad (envMpdStreamDirHint);
+    if (envMpdRadioDirHint) success = DirLoad (envMpdRadioDirHint);
     if (!success) success = DirLoadQueue ();
   }
 

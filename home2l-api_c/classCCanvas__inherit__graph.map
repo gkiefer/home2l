@@ -1,7 +1,11 @@
 <map id="CCanvas" name="CCanvas">
-<area shape="rect" id="node1" title="Canvas widget." alt="" coords="61,80,139,107"/>
-<area shape="rect" id="node3" href="$classCInputLine.html" title="Input line widget." alt="" coords="5,155,91,181"/>
-<area shape="rect" id="node4" href="$classCListbox.html" title="Listbox widget." alt="" coords="115,155,189,181"/>
-<area shape="rect" id="node2" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="63,5,137,32"/>
-<area shape="rect" id="node5" href="$classCMenu.html" title="Menu widget." alt="" coords="120,229,184,256"/>
+<area shape="rect" id="Node000001" title="Canvas widget." alt="" coords="61,79,139,104"/>
+<area shape="rect" id="Node000003" href="$classCInputLine.html" title="Input line widget." alt="" coords="5,152,91,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="86,117,59,153,54,150,81,114"/>
+<area shape="rect" id="Node000004" href="$classCListbox.html" title="Listbox widget." alt="" coords="115,152,189,177"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="119,114,146,150,141,153,114,117"/>
+<area shape="rect" id="Node000002" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="63,5,137,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,44,103,79,97,79,97,44"/>
+<area shape="rect" id="Node000005" href="$classCMenu.html" title="Menu widget." alt="" coords="120,225,184,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="155,191,155,225,149,225,149,191"/>
 </map>

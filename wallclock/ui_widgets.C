@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2024 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -375,7 +375,12 @@ CButton *CreateMainButtonBar (int buttons, TButtonDescriptor *descTable, CScreen
 
   layoutDef = MALLOC (int, buttons);
   for (n = 0; n < buttons; n++) layoutDef[n] = descTable[n].layoutWidth;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  // WORKAROUND [2025-08-18]:
+  //   GCC emits "warning: ‘layoutDef’ may be used uninitialized [-Wmaybe-uninitialized]" without these pragmas.
   layout = LayoutRow (UI_BUTTONS_RECT, layoutDef, buttons);
+#pragma GCC diagnostic pop
   free (layoutDef);
 
   ret = new CButton [buttons];

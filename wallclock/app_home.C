@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2024 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ ENV_PARA_STRING ("ui.meterExtPower", envMeterExtPower, "/alias/electrical/extPow
   /* Resource (power) representing the externally delivered power for the energy meter)
    *
    * The value may be negative if the house is delivering electrical power.
-   * Usually, the sum of \refenv{ui.solarPower} and \refenv{ui.extPower} is
+   * Usually, the sum of \refenv{ui.meterSolarPower} and \refenv{ui.meterExtPower} is
    * the power consumed inside the house.
    */
 ENV_PARA_FLOAT ("ui.meterMin", envMeterMin, -2930.0);
@@ -307,14 +307,14 @@ void CWidgetMultiData::OnPushed (bool longPushed) {
 
 
 
-// *************************** CWidgetEnergyMeter ******************************
+// *************************** CWidgetPowerMeter *******************************
 
 
-class CWidgetEnergyMeter: public CWidget {
+class CWidgetPowerMeter: public CWidget {
   // Widget for the (solar) energy meter.
   public:
-    CWidgetEnergyMeter ();
-    ~CWidgetEnergyMeter ();
+    CWidgetPowerMeter ();
+    ~CWidgetPowerMeter ();
 
     void SetArea (SDL_Rect _area);
     void SetResources (CResource *_rcSolarPower, CResource *_rcExtPower);
@@ -330,42 +330,42 @@ class CWidgetEnergyMeter: public CWidget {
 };
 
 
-CWidgetEnergyMeter::CWidgetEnergyMeter () {
+CWidgetPowerMeter::CWidgetPowerMeter () {
   rcSolarPower = rcExtPower = NULL;
   surf = NULL;
   rcChanged = true;
 }
 
 
-CWidgetEnergyMeter::~CWidgetEnergyMeter () {
+CWidgetPowerMeter::~CWidgetPowerMeter () {
   SurfaceFree (&surf);
 }
 
 
-void CWidgetEnergyMeter::SetArea (SDL_Rect _area) {
+void CWidgetPowerMeter::SetArea (SDL_Rect _area) {
   SurfaceFree (&surf);
   CWidget::SetArea (_area);
 }
 
 
-void CWidgetEnergyMeter::SetResources (CResource *_rcSolarPower, CResource *_rcExtPower) {
+void CWidgetPowerMeter::SetResources (CResource *_rcSolarPower, CResource *_rcExtPower) {
   rcSolarPower = _rcSolarPower;
   rcExtPower = _rcExtPower;
 }
 
 
-void CWidgetEnergyMeter::SubscribeAll (CRcSubscriber *subscr) {
+void CWidgetPowerMeter::SubscribeAll (CRcSubscriber *subscr) {
   subscr->AddResource (rcSolarPower);
   subscr->AddResource (rcExtPower);
 }
 
 
-void CWidgetEnergyMeter::OnRcEvent (CResource *rc) {
+void CWidgetPowerMeter::OnRcEvent (CResource *rc) {
   if (rc == rcSolarPower || rc == rcExtPower) rcChanged = true;
 }
 
 
-void CWidgetEnergyMeter::Iterate () {
+void CWidgetPowerMeter::Iterate () {
   float scaleMin = envMeterMin, scaleMax = envMeterMax;
   SDL_Rect r;
   float valSolarPower, valExtPower;
@@ -465,26 +465,35 @@ void CWidgetEnergyMeter::Iterate () {
 
 // *************************** CScreenHome *************************************
 
+#define POWER_METER_H 12
+
 #define INFO_H 128    // must match height of radar eye and floorplan (FP_HEIGHT)
 #define INFO_Y (UI_RES_Y - UI_BUTTONS_HEIGHT - INFO_H - 16)
 
-#define CLOCK_Y 0
-#define CLOCK_H (INFO_Y - 32 - CLOCK_Y)
+#define CLOCK_Y (POWER_METER_H + 16)
+#define CLOCK_H (INFO_Y - 16 - CLOCK_Y)
 #define CLOCK_W 1024        // clock is centered (so there is no parameter 'CLOCK_X')
+
+// Clock: Date, time and related gadgets ...
+#define TIME_Y (CLOCK_Y + CLOCK_H * 1/4)
+#define TIME_H (CLOCK_H * 3/4)
+#define TIME_W CLOCK_W
+
+#define DATE_Y (CLOCK_Y)
+#define DATE_H (CLOCK_H * 1/4)
+#define DATE_W CLOCK_W
 
 #define ALARM_H 160
 #define ALARM_W 160
 #define ALARM_X (UI_RES_X - ALARM_W - 16)
-#define ALARM_Y 32
+#define ALARM_Y TIME_Y
 
 #define RADIOS_X 16
-#define RADIOS_Y 16
+#define RADIOS_Y 16 + POWER_METER_H
 #define RADIO_W 72
 #define RADIO_H 72
 
-#define METER_H 12
-
-
+// Info area ...
 #define RADAR_W 128             // must match INFO_H!
 #define RADAR_H 128
 #define RADAR_Y INFO_Y
@@ -501,7 +510,7 @@ void CWidgetEnergyMeter::Iterate () {
 #define INDOOR_H INFO_H
 #define INDOOR_Y INFO_Y
 
-// Layout: outdoor - radar - indoor - floorplan ...
+// Info area - layout: outdoor - radar - indoor - floorplan ...
 #define OUTDOOR_X 0
 #define RADAR_X (OUTDOOR_X + OUTDOOR_W)
 #define FLOORPLAN_X (RADAR_X + RADAR_W + 32)
@@ -553,7 +562,7 @@ class CScreenHome: public CScreen {
     CResource *rcAccessPoint;
 
     // Energy meter ...
-    CWidgetEnergyMeter wdgEnergyMeter;
+    CWidgetPowerMeter wdgPowerMeter;
 
     // Data displays (outdoor/left, indoor/right)...
     CWidgetMultiData wdgDataOutdoor, wdgDataIndoor;
@@ -624,7 +633,7 @@ CScreenHome::~CScreenHome () {
 
 
 void CScreenHome::SubscribeAll () {
-  wdgEnergyMeter.SubscribeAll (&subscr);
+  wdgPowerMeter.SubscribeAll (&subscr);
   wdgDataOutdoor.SubscribeAll (&subscr);
   wdgDataIndoor.SubscribeAll (&subscr);
   subscr.Subscribe (rcRadarEye);
@@ -703,9 +712,9 @@ void CScreenHome::Setup () {
   btnBluetooth.SetCbPushed (CbScreenHomeOnButtonPushed, this);
 
   // Energy meter ...
-  wdgEnergyMeter.SetArea (Rect (0, 0, UI_RES_X, METER_H));
-  wdgEnergyMeter.SetResources (RcGet (envMeterSolarPower), RcGet (envMeterExtPower));
-  AddWidget (&wdgEnergyMeter);
+  wdgPowerMeter.SetArea (Rect (0, 0, UI_RES_X, POWER_METER_H));
+  wdgPowerMeter.SetResources (RcGet (envMeterSolarPower), RcGet (envMeterExtPower));
+  AddWidget (&wdgPowerMeter);
 
   // Data displays ...
   wdgDataOutdoor.SetArea (Rect (OUTDOOR_X, OUTDOOR_Y, OUTDOOR_W, OUTDOOR_H));
@@ -748,7 +757,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   TTicks now;
   TDate dt;
   TTime tm;
-  SDL_Rect frame, r;
+  SDL_Rect r;
   TTF_Font *font;
   TColor col;
   CRcEvent ev;
@@ -778,8 +787,6 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   btnDroid.SetLabel (surfDroidsGrey, srcRect);
 
   // Time & date area ...
-  frame = Rect (0, CLOCK_Y, UI_RES_X, CLOCK_H);
-
   now = TicksNow ();
   TicksToDateTime (now, &dt, &tm);
 
@@ -790,9 +797,9 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     snprintf (buf, sizeof (buf), "%i:%02i", HOUR_OF (tm), MINUTE_OF (tm));
     SurfaceSet (&surfTime, FontRenderText (font, buf, WHITE)); // , BLACK));
     r = Rect (surfTime);
-    RectAlign (&r, Rect (frame.x, frame.y + CLOCK_H * 1/8, CLOCK_W * 13/16, CLOCK_H * 6/8), 1, 1);
-    r.y += (r.h - CLOCK_H * 6/8) / 2;
-    r.h = CLOCK_H * 6/8;
+    RectAlign (&r, Rect (0, TIME_Y, TIME_W * 13/16, TIME_H), 1, 1);
+    r.y += (r.h - TIME_H);
+    r.h = TIME_H;
     btnTime.SetArea (r);
     btnTime.SetLabel (surfTime);
   }
@@ -803,7 +810,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     snprintf (buf, sizeof (buf), ":%02i", SECOND_OF (tm));
     SurfaceSet (&surfSecs, FontRenderText (font, buf, WHITE, BLACK));
     r = Rect (surfSecs);
-    RectAlign (&r, Rect (frame.x + CLOCK_W * 13/16, frame.y, CLOCK_W * 2/16, CLOCK_H * 6/8 - 4), -1, 1);
+    RectAlign (&r, Rect (TIME_W * 13/16, TIME_Y, TIME_W * 2/16, TIME_H * 57/64), -1, 1);
     wdgSecs.SetArea (r);
     wdgSecs.SetSurface (surfSecs);
   }
@@ -816,7 +823,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
     snprintf (buf, sizeof (buf), _("%1$s, %3$s %2$i, %4$i"), DayName (GetWeekDay (dt)), DAY_OF (dt), MonthName (MONTH_OF (dt)), YEAR_OF (dt));
     SurfaceSet (&surfDate, FontRenderText (font, buf, WHITE, BLACK));
     r = Rect (surfDate);
-    RectAlign (&r, Rect (frame.x, frame.y + CLOCK_H * 6/8, CLOCK_W, CLOCK_H * 2/8), 0, 1);
+    RectAlign (&r, Rect (0, DATE_Y, DATE_W, DATE_H), 0, 0);
     wdgDate.SetArea (r);
     wdgDate.SetSurface (surfDate);
   }
@@ -837,7 +844,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
       vs = ev.ValueState ();
 
       // Notify sub-objects...
-      wdgEnergyMeter.OnRcEvent (rc);
+      wdgPowerMeter.OnRcEvent (rc);
       wdgDataOutdoor.OnRcEvent (rc);
       wdgDataIndoor.OnRcEvent (rc);
 
@@ -872,7 +879,7 @@ void CScreenHome::Iterate (SDL_Surface *surfDroids, SDL_Rect *srcRect) {
   }
 
   // Deferred processing: Update energy meter and data displays ...
-  wdgEnergyMeter.Iterate ();
+  wdgPowerMeter.Iterate ();
   wdgDataOutdoor.Iterate ();
   wdgDataIndoor.Iterate ();
 

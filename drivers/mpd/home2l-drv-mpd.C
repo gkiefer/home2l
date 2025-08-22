@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,18 +42,21 @@ ENV_PARA_INT ("music.maxPaused", envDrvMpdMaxPaused, 1800);
 // ***** Shared with 'wallclock/app_music.C' (copied identically) *****
 
 
+// TBD: Adapt to new interface with partitions
+
+
 ENV_PARA_INT ("music.port", envDrvMpdDefaultPort, 6600);
   /* Default port for MPD servers
    */
 
-ENV_PARA_SPECIAL ("music.<MPD>.host", const char *, NULL);
-  /* Network host name and optionally port of the given MPD instance.
+ENV_PARA_SPECIAL ("music.player.<player>.host", const char *, NULL);
+  /* Network host name and optionally port of the given MPD instance or partition (player)
    *
    * This variable implicitly declares the server with its symbolic name <MPD>.
    * If no port is given, the default port is assumed.
    */
 
-ENV_PARA_SPECIAL ("music.<MPD>.password", const char *, NULL);
+ENV_PARA_SPECIAL ("music.player.<player>.password", const char *, NULL);
   /* Password of the MPD instance (optional, NOT IMPLEMENTED YET)
    */
 
@@ -96,7 +99,7 @@ CMpdMonitor::CMpdMonitor (CRcDriver *drv, const char *_id) {
   mpdConnection = NULL;
   tStopPause = NEVER;
   keeper.Setup (TICKS_FROM_SECONDS (1), TICKS_FROM_SECONDS (300), TICKS_FROM_SECONDS (10));
-  if (EnvGetHostAndPort (StringF (&s, "music.%s.host", _id), &mpdHost, &mpdPort, envDrvMpdDefaultPort, true))
+  if (EnvGetHostAndPort (StringF (&s, "music.player.%s.host", _id), &mpdHost, &mpdPort, envDrvMpdDefaultPort, true))
     keeper.Open ();
   DEBUGF (1, ("MPD: Registering '%s'... %s", _id, keeper.ShouldBeOpen () ? "success" : "failed!"));
 }
@@ -218,11 +221,11 @@ static inline void DrvMpdInit (CRcDriver *drv) {
   int n, idx0, idx1;
 
   // Discover MPD servers ...
-  EnvGetPrefixInterval ("music.", &idx0, &idx1);
+  EnvGetPrefixInterval ("music.player.", &idx0, &idx1);
   for (n = idx0; n < idx1; n++) {
-    splitVarName.Set (EnvGetKey (n), 4, ".");
-    if (splitVarName.Entries () == 3) if (strcmp (splitVarName.Get (2), "host") == 0) {
-      id = splitVarName.Get (1);
+    splitVarName.Set (EnvGetKey (n), 5, ".");
+    if (splitVarName.Entries () == 4) if (strcmp (splitVarName.Get (3), "host") == 0) {
+      id = splitVarName.Get (2);
       mpdDict.Set (id, new CMpdMonitor (drv, id));
     }
   }

@@ -16,7 +16,7 @@ var searchData=
   ['alarmclockrunsetdialog_13',['AlarmClockRunSetDialog',['../group__wallclock__alarmclock.html#gacec2b457d133c4572147991f33da22aa',1,'alarmclock.H']]],
   ['alarmclocksetbutton_14',['AlarmClockSetButton',['../group__wallclock__alarmclock.html#ga38ffb0df7c879fc55d385fc1cc48e9de',1,'alarmclock.H']]],
   ['alarmclocksnooze_15',['AlarmClockSnooze',['../group__wallclock__alarmclock.html#ga622b63c785a7b3868dc0f06fe21c83cf',1,'alarmclock.H']]],
-  ['append_16',['Append',['../classCListCompact.html#a73a802838fca5e002e192bfac162d45c',1,'CListCompact::Append()'],['../classCList.html#a3b92e381ad3723ea9b24a62477f8f87c',1,'CList::Append()']]],
+  ['append_16',['append',['../classCListCompact.html#a73a802838fca5e002e192bfac162d45c',1,'CListCompact::Append()'],['../classCList.html#a3b92e381ad3723ea9b24a62477f8f87c',1,'CList::Append()']]],
   ['appendescaped_17',['AppendEscaped',['../classCString.html#a33ce26f7b6a4a6351ef008cda4ef3c11',1,'CString']]],
   ['appendfbyline_18',['AppendFByLine',['../classCString.html#abb90ef8d7703708f29c269cc9d2bc3e8',1,'CString']]],
   ['appendfromfile_19',['AppendFromFile',['../classCString.html#af0a2d27679b93574eb164e21fe1ff0a1',1,'CString']]],

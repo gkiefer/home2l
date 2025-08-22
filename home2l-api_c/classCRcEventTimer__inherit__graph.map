@@ -1,5 +1,7 @@
 <map id="CRcEventTimer" name="CRcEventTimer">
-<area shape="rect" id="node1" title="Timer that sends &#39;rceTimer&#39; events over the event system." alt="" coords="44,80,160,107"/>
-<area shape="rect" id="node2" href="$classCTimer.html" title="Timer class." alt="" coords="5,5,71,32"/>
-<area shape="rect" id="node3" href="$classCRcEventProcessor.html" title="Event processor." alt="" coords="95,5,237,32"/>
+<area shape="rect" id="Node000001" title="Timer that sends &#39;rceTimer&#39; events over the event system." alt="" coords="44,79,160,104"/>
+<area shape="rect" id="Node000002" href="$classCTimer.html" title="Timer class." alt="" coords="5,5,71,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="60,39,94,77,90,80,56,43"/>
+<area shape="rect" id="Node000003" href="$classCRcEventProcessor.html" title="Event processor." alt="" coords="95,5,237,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="148,43,114,80,110,77,144,39"/>
 </map>

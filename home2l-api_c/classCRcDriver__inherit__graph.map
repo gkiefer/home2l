@@ -1,4 +1,5 @@
 <map id="CRcDriver" name="CRcDriver">
-<area shape="rect" id="node1" title="Driver for local resources." alt="" coords="23,5,107,32"/>
-<area shape="rect" id="node2" href="$classCRcEventDriver.html" title="Local driver using the event processor mechanism for the &#39;DriveValue()&#39; functionality." alt="" coords="5,80,124,107"/>
+<area shape="rect" id="Node000001" title="Driver for local resources." alt="" coords="23,5,107,31"/>
+<area shape="rect" id="Node000002" href="$classCRcEventDriver.html" title="Local driver using the event processor mechanism for the &#39;DriveValue()&#39; functionality." alt="" coords="5,79,124,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="67,44,67,79,62,79,62,44"/>
 </map>

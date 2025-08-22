@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# NOTE: Building last working version on Android requires NDK r10d !!
+# NOTE: Linphone is currently unsupported!
+#       Building last working version on Android requires NDK r10d !!
 
 
 

@@ -542,7 +542,6 @@ void CScreenPhone::Setup () {
   // Info widget...
   wdgInfo.SetArea (Rect (0, UI_RES_Y-UI_BUTTONS_HEIGHT-INFO_HEIGHT, UI_RES_X, INFO_HEIGHT));
   surfInfo = CreateSurface (*wdgInfo.GetArea ());
-  ShowInfo (NULL);
 
   // Idle view: dial pad + input line...
   fontNorm = FontGet (fntNormal, PADSMALL_FONTSIZE);
@@ -588,6 +587,7 @@ void CScreenPhone::Setup () {
   // Set phone callbacks...
   phone.SetCbPhoneStateChanged (CbPhoneStateChanged, &phone);
   phone.SetCbInfo (CbShowInfo);
+  ShowInfo (phone.LastInfo ());
 
   // Draw Screen...
   OnPhoneStateChanged (psIdle);
@@ -926,7 +926,7 @@ void CScreenPhone::OnActionButton (EPhoneAction action) {
       break;
 
     case paBack:
-      phone.Hangup ();
+      if (state != psIdle) phone.Hangup ();
       AppEscape ();
       break;
 

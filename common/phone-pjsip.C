@@ -23,6 +23,8 @@
 
 #include "env.H"
 
+#define PJ_HAS_LIMITS_H 1       // WORKAROUND [2024-06-01]: PJSIP 1.14.1 emits a warning otherwise
+#  include <limits.h>           // WORKAROUND [2024-06-01]: just to ensure that <limits.h> really exists
 #include <pjsua.h>
 
 #include <sys/stat.h>           // for 'open'
@@ -93,28 +95,22 @@ static inline void AndroidInit () {}
 #else // !ANDROID
 
 
-/* The following code replaces the code around 'JNI_OnLoad()' in PJSIP, file 'pjsip/pjlib/src/pj/os_core_unix.c',
- * which had to be disabled by setting 'PJ_JNI_HAS_JNI_ONLOAD=0' in the prebuild script, since PJSIP is built as
- * a static library.
- */
-
-
 #include <jni.h>
 
 #include "system.H"
 
 
-JavaVM *pj_jni_jvm = NULL;
-
-
 static inline void AndroidInit () {
-  pj_jni_jvm = AndroidGetJavaVM ();
+  /* Tell PJSIP about the Java VM.
+   *   'JNI_OnLoad()' (PJSIP, file 'pjsip/pjlib/src/pj/os_core_unix.c') had to be
+   *   disabled by setting 'PJ_JNI_HAS_JNI_ONLOAD=0' in the prebuild script, since
+   *   PJSIP is built as a static library.
+   */
+  pj_jni_set_jvm (AndroidGetJavaVM ());
 }
 
 
 static inline void AlsaInit () {}
-
-
 
 
 #endif // !ANDROID
@@ -535,12 +531,12 @@ pj_status_t VideoStreamPutFrame (pjmedia_vid_dev_stream *strm, const pjmedia_fra
   //     PJ_SUCCESS on successful operation or the appropriate error code.
   TVideoStream *videoStream = CastVideoStream (strm);
 
-  //~ INFOF (("### VideoStreamPutFrame (videoStream=%08x, frame=%08x, window=%i)", videoStream, frame, WindowOfStream (strm)));
-  //~ if (frame) INFOF (("###   frame = (win = %i, type = %i, buf = %08x, size = %i, timestamp = %i)", WindowOfStream (strm), frame->type, frame->buf, frame->size, frame->timestamp));
-
   // Sanity, ignore empty frames ...
   if (!videoStream->running) return PJ_SUCCESS;
   if (frame->size == 0 || frame->buf == NULL) return PJ_SUCCESS;
+
+  //~ INFOF (("### VideoStreamPutFrame (videoStream=%08x, frame=%08x, window=%i)", videoStream, frame, WindowOfStream (strm)));
+  //~ if (frame) INFOF (("###   frame = (win = %i, type = %i, buf = %08x, size = %i, timestamp = %i)", WindowOfStream (strm), frame->type, frame->buf, frame->size, frame->timestamp));
 
   // Lock windows...
   pthread_mutex_lock (&windowsMutex);
@@ -1022,11 +1018,11 @@ static void MediaDumpDevicesAndCodecs () {
             StrMediaDir (vidDevInfo.dir),
             vidDevInfo.fmt_cnt));
     for (k = 0; k < (int) vidDevInfo.fmt_cnt; k++) {
-      DEBUGF(1, ("          format %i: %ix%i, %i/%i fps, %i bps, %s", k,
-            (int) vidDevInfo.fmt[k].det.vid.size.w, (int) vidDevInfo.fmt[k].det.vid.size.h,
-            (int) vidDevInfo.fmt[k].det.vid.fps.num, (int) vidDevInfo.fmt[k].det.vid.fps.denum,
-            (int) vidDevInfo.fmt[k].det.vid.avg_bps,
-            StrPhoneVideoFormat (PhoneVideoFormatOf (vidDevInfo.fmt[k].id))));
+      INFOF (("          format %i: %ix%i, %i/%i fps, %i bps, %s", k,
+              (int) vidDevInfo.fmt[k].det.vid.size.w, (int) vidDevInfo.fmt[k].det.vid.size.h,
+              (int) vidDevInfo.fmt[k].det.vid.fps.num, (int) vidDevInfo.fmt[k].det.vid.fps.denum,
+              (int) vidDevInfo.fmt[k].det.vid.avg_bps,
+              StrPhoneVideoFormat (PhoneVideoFormatOf (vidDevInfo.fmt[k].id))));
     }
   }
 
@@ -2021,10 +2017,10 @@ void CPhone::ReportInfo (const char *fmt, ...) {
   vasprintf (&buf, fmt, ap);
   va_end (ap);
 
-  //~ INFOF (("(PJSIP-Info) %s", buf));
+  INFOF (("(PJSIP-Info) %s", buf));
   OnInfo (buf);
 
-  free (buf);
+  SETP (lastInfo, buf);
 }
 
 
@@ -2165,10 +2161,11 @@ static inline void PjsuaInit (const char *agentName) {
   ASSERT (PJ_SUCCESS == pjmedia_vid_register_factory (VideoFactoryCreateFunc, NULL));
     // Video devices must be selected in the account settings.
 
-  // Add UDP transport...
+  // Add SIP transport (UDP) ...
   pjsua_transport_config_default (&transportCfg);
   transportCfg.port = envPhoneSipPort;
   ASSERT (PJ_SUCCESS == pjsua_transport_create (PJSIP_TRANSPORT_UDP, &transportCfg, NULL));
+  //~ ASSERT (PJ_SUCCESS == pjsua_transport_create (PJSIP_TRANSPORT_TCP, &transportCfg, NULL));
 
   // Initialization is done, now start PJSUA...
   ASSERT (PJ_SUCCESS == pjsua_start ());
@@ -2297,6 +2294,7 @@ void CPhone::Init () {
   // Set fail-safe fields...
   state = psNone;
   incomingAction = psRinging;
+  lastInfo = NULL;
 
   cbPhoneStateChanged = NULL;
   cbInfo = NULL;
@@ -2331,6 +2329,7 @@ void CPhone::Done () {
     }
     else MgmtUnlock ();
   }
+  FREEP (lastInfo);
 }
 
 

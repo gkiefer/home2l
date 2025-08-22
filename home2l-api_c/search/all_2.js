@@ -1,11 +1,11 @@
 var searchData=
 [
   ['base_0',['Base',['../group__ui__base.html',1,'']]],
-  ['base_2eh_1',['base.h',['../base_8h.html',1,'']]],
-  ['base_2eh_2',['base.H',['../base_8H.html',1,'']]],
-  ['basics_3',['Basics',['../group__common__basics.html',1,'']]],
-  ['bgcolor_4',['bgColor',['../classCTextFormat.html#a22ad3bdcb8151ce20b263729c8cc8cf1',1,'CTextFormat']]],
-  ['boolfromstring_5',['BoolFromString',['../group__common__strings.html#ga64fd14280479b0e9975c9c11b66e3835',1,'base.H']]],
+  ['base_2eh_1',['base.h',['../base_8H.html',1,'(Global Namespace)'],['../base_8h.html',1,'(Global Namespace)']]],
+  ['basics_2',['Basics',['../group__common__basics.html',1,'']]],
+  ['bgcolor_3',['bgColor',['../classCTextFormat.html#a22ad3bdcb8151ce20b263729c8cc8cf1',1,'CTextFormat']]],
+  ['boolfromstring_4',['BoolFromString',['../group__common__strings.html#ga64fd14280479b0e9975c9c11b66e3835',1,'base.H']]],
+  ['box_5',['Message Box',['../group__ui__widgets__messagebox.html',1,'']]],
   ['br_5fchanged_5fadc_6',['BR_CHANGED_ADC',['../group__brownies__interface__registers.html#ga30eb9e115fc775c0df6168b9b4132895',1,'interface.h']]],
   ['br_5fchanged_5fchild_7',['BR_CHANGED_CHILD',['../group__brownies__interface__registers.html#gac106668ed9fe3680297c9b43ba3ccf74',1,'interface.h']]],
   ['br_5fchanged_5fgpio_8',['BR_CHANGED_GPIO',['../group__brownies__interface__registers.html#ga052aad85c49e62ee20ab3a27dd6512d7',1,'interface.h']]],
@@ -147,6 +147,5 @@ var searchData=
   ['brversiongetasstr_144',['BrVersionGetAsStr',['../group__brownies__linux.html#ga2820fc9bfcd1c60139852131b597f419',1,'brownies.H']]],
   ['button_145',['Button',['../group__ui__widgets__button.html',1,'']]],
   ['button_5fdefault_5ffont_146',['BUTTON_DEFAULT_FONT',['../group__ui__widgets__button.html#ga4b7c02ab265b4a46b5edc2ac25202728',1,'ui_widgets.H']]],
-  ['button_5flabel_5fborder_147',['BUTTON_LABEL_BORDER',['../group__ui__widgets__button.html#ga81f78512eaa2bb94f3021008477e25ec',1,'ui_widgets.H']]],
-  ['button_5ftrampoline_148',['BUTTON_TRAMPOLINE',['../group__ui__widgets__button.html#ga1d8bab39475a5f338d32cfcdb641b064',1,'ui_widgets.H']]]
+  ['button_5flabel_5fborder_147',['BUTTON_LABEL_BORDER',['../group__ui__widgets__button.html#ga81f78512eaa2bb94f3021008477e25ec',1,'ui_widgets.H']]]
 ];

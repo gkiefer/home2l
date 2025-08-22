@@ -1,34 +1,81 @@
 #!/bin/bash
 
 
-########## Obtaining sources ##########
-
-# $ mkdir -p src
-# $ cd src
-# $ git clone -b 2.11 https://github.com/pjsip/pjproject.git pjsip
-# $ git clone -b v1.10.0 https://chromium.googlesource.com/webm/libvpx
-
-
-########## Information ##########
-
 # Notes
 # -----
 #
-# - Compilation is only supported on amd64 host,
-
+# - Compilation is only supported on amd64 host.
+#
+#
+#
+# Obtaining sources
+# -----------------
+#
+#   $ mkdir -p src
+#   $ cd src
+#   $ git clone -b 2.14.1 https://github.com/pjsip/pjproject.git pjsip
+#   $ git clone -b v1.14.1 https://chromium.googlesource.com/webm/libvpx
+#
+#
+#
 # Configuration
 # -------------
 #
-# Video codecs (Debian 10):
-# - libvpx v.1.7 (packaged), requires 'libvpx-dev'; forced for all architectures (amd64, armhf, i386)
+# PJSIP:
+# - 2.14.1 (with some patches, see below)
+#
+# Video codecs (Debian 12):
+# - libvpx v.1.12.0 (packaged as libvpx7), requires 'libvpx-dev'; forced for all architectures (amd64, armhf)
 #
 # Video codecs (Android):
-# - libvpx v1.10.0
+# - libvpx v1.14.1
 #
 # OpenSSL:
 # - relies on PJSIPs auto-detection: presently only on 'amd64' host (no cross-compilation),
 #   requires 'libssl-dev'
 #
+
+
+
+# Re-enabling old Camera API on Android [2024-06-01]
+# --------------------------------------------------
+#
+# Since PJSIP 2.12, the capture device uses Camera2 API, which requires
+# API level 21 (or Android 5.0), see
+# - https://docs.pjsip.org/en/latest/get-started/android/build_instructions.html
+# - https://github.com/pjsip/pjproject/pull/2797
+#
+# To remain compatible with API level 19, the old API is re-activated setting
+# an internal parameter. The old code is still present.
+#
+#
+# .../home2l/src/external/pjsip/src/pjsip $ git format-patch HEAD~1 --stdout
+# From 338908bbc346151324cf22b7ef934583776d727c Mon Sep 17 00:00:00 2001
+# From: Gundolf Kiefer <gundolf.kiefer@web.de>
+# Date: Sat, 1 Jun 2024 16:01:26 +0200
+# Subject: [PATCH] Re-activate old Camera API for Android
+#
+# ---
+#  pjmedia/src/pjmedia-videodev/android_dev.c | 2 +-
+#  1 file changed, 1 insertion(+), 1 deletion(-)
+#
+# diff --git a/pjmedia/src/pjmedia-videodev/android_dev.c b/pjmedia/src/pjmedia-videodev/android_dev.c
+# index 6d014817a..ef5cddc02 100644
+# --- a/pjmedia/src/pjmedia-videodev/android_dev.c
+# +++ b/pjmedia/src/pjmedia-videodev/android_dev.c
+# @@ -197,7 +197,7 @@ static pjmedia_vid_dev_stream_op stream_op =
+#  extern JavaVM *pj_jni_jvm;
+#
+#  /* Use camera2 (since Android API level 21) */
+# -#define USE_CAMERA2     1
+# +#define USE_CAMERA2     0
+#
+#  #if USE_CAMERA2
+#  #define PJ_CAMERA                       "PjCamera2"
+# --
+# 2.39.2
+
+
 
 # Increasing number of ALSA devices [2021-06-06]
 # ----------------------------------------------
@@ -37,7 +84,7 @@
 # The following patch increases it to PJMEDIA_AUD_MAX_DEVS, which is presently 64.
 #
 #
-# .../home2l/src/external/pjsip/src/pjsip> git format-patch HEAD~1 --stdout
+# .../home2l/src/external/pjsip/src/pjsip $ git format-patch HEAD~1 --stdout
 # From b3341c589a74ac093a74f1c5cb1329c90b5f163e Mon Sep 17 00:00:00 2001
 # From: Gundolf Kiefer <gundolf.kiefer@web.de>
 # Date: Sun, 6 Jun 2021 00:04:05 +0200
@@ -62,7 +109,6 @@
 #  /* Set to 1 to enable tracing */
 # --
 # 2.20.1
-
 
 
 
@@ -126,10 +172,7 @@ MAKEFLAGS="-j8"     # use parallel threads when building
 MAINDIR=`realpath ${0%/*}`
 
 # Android settings ...
-export ANDROID_NDK_ROOT=/opt/android-ndk/
-export TARGET_ABI=armeabi-v7a
-export APP_PLATFORM=android-19
-
+ANDROID_NDK=/opt/android/sdk/ndk/25.2.9519653
 
 
 # Initialization ...
@@ -155,8 +198,8 @@ build_linux () {
     ARCH="$LOCAL_ARCH"
   fi
 
-  if [[ "$LOCAL_ARCH" != "i386" && "$LOCAL_ARCH" != "amd64" ]]; then
-    echo "ERROR: This script only works on a 'i386' or 'amd64' architecture (but not '$LOCAL_ARCH')!"
+  if [[ "$LOCAL_ARCH" != "amd64" ]]; then
+    echo "ERROR: This script only works on the 'amd64' architecture (but not '$LOCAL_ARCH')!"
     exit 3
   fi
 
@@ -166,16 +209,6 @@ build_linux () {
   TARGET_LDFLAGS=""
   if [[ "$ARCH" != "$LOCAL_ARCH" ]]; then
     case "$ARCH" in
-      i386)   # untested!
-        TARGET_FLAGS="--host i686-pc-linux-gnu"     # just to enable cross-compile mode
-        TARGET_CFLAGS="$CFLAGS -m32"
-        TARGET_LDFLAGS="$LDLAGS -m32"
-        ;;
-      amd64)
-        TARGET_FLAGS="--host x86_64-pc-linux-gnu"   # just to enable cross-compile mode
-        TARGET_CFLAGS="$CFLAGS -m64"
-        TARGET_LDFLAGS="$LDLAGS -m64"
-        ;;
       armhf)
         TARGET_FLAGS="--host arm-linux-gnueabihf"
         ;;
@@ -306,14 +339,14 @@ build_android () {
   echo 'include $(CLEAR_VARS)'                >> Android.mk
   echo 'include libvpx/build/make/Android.mk' >> Android.mk
   cp -a $MAINDIR/../../wallclock/android/jni/Application.mk .
-  ndk-build $MAKEFLAGS
+  $ANDROID_NDK/ndk-build $MAKEFLAGS
   mv ../obj/local/armeabi-v7a/libvpx.a $MAINDIR/build/lib
   VPX_INCLUDE=$MAINDIR/src/libvpx
 
   echo
-  echo "########################"
-  echo "#     Configure...     #"
-  echo "########################"
+  echo "#################################"
+  echo "#     Configuring PJSIP ...     #"
+  echo "#################################"
   echo
 
   cd $MAINDIR/src/pjsip
@@ -322,13 +355,16 @@ build_android () {
   #       header of this file.
 
   # Manually set CFLAGS for external codec(s) ...
-  #   To date, the PJSIP configure script does not provide options to force enabling certain codecs.
+  #   To date [2021-06-07], the PJSIP configure script does not provide options to force enabling certain codecs.
   #   Instead, it tries to autodetect them by compiling and *linking* some test program.
   #   This often fails unnecessarily, since we only build a static library (no need for linking)
   #   or due to the cross-compilation setup.
   export CFLAGS="-I$VPX_INCLUDE -DPJMEDIA_HAS_VPX_CODEC=1"
 
   # Run configure script ...
+  export ANDROID_NDK_ROOT=$ANDROID_NDK
+  export TARGET_ABI=armeabi-v7a
+  export APP_PLATFORM=android-19
   find . -name '.*.depend' -exec rm \{\} \;    # Workaround [2021-05-18]
   ./configure-android --use-ndk-cflags --prefix=$MAINDIR/build --disable-pjsua2 \
     --disable-silk --disable-libwebrtc --disable-openh264 \
@@ -337,10 +373,10 @@ build_android () {
 
   # Create config file ...
   echo "#define PJ_CONFIG_ANDROID 1"          > pjlib/include/pj/config_site.h
+  echo "#define PJ_JNI_HAS_JNI_ONLOAD 0"      >> pjlib/include/pj/config_site.h
   echo "#include <pj/config_site_sample.h>"   >> pjlib/include/pj/config_site.h
   echo "#define PJMEDIA_HAS_VIDEO 1"          >> pjlib/include/pj/config_site.h
   #   disable 'JNI_OnLoad()' function, see comment in 'phone-pjsip.c' ...
-  echo "#define PJ_JNI_HAS_JNI_ONLOAD 0"      >> pjlib/include/pj/config_site.h
   #   set audio device latency to realistic values Android ...
   #     [2021-06-07] 1. It is not clear if this has any effect - perhaps, these settings must go into CFLAGS.
   #                  2. To date, Speex AEC is the most appropriate AEC, and it does not use any latency argument.
@@ -380,10 +416,19 @@ build_android () {
 
   # Merge all generated .a files into a single one at the destination ...
   mkdir -p usr.new/$ARCH/lib
-  `ndk-which ar` -rcT build/libpjproject-thin.a build/lib/*.a
-  cd usr.new/$ARCH/lib
-  echo -e "create libpjproject.a\naddlib ../../../build/libpjproject-thin.a\nsave\nend" | `ndk-which ar` -M
-  `ndk-which ranlib` libpjproject.a
+  rm -f usr.new/$ARCH/lib/libpjproject.a
+  `$ANDROID_NDK/ndk-which ar` -qcLs usr.new/$ARCH/lib/libpjproject.a build/lib/*.a
+    # ar (NDK 25.2.9519653):
+    #   Operation:
+    #     q - quick append [files] to the archive
+    #   Modifiers:
+    #     [c] - do not warn if archive had to be created
+    #     [L] - add archive's contents
+    #     [s] - create an archive index (cf. ranlib)
+  #~ `$ANDROID_NDK/ndk-which ar` -rcT build/libpjproject-thin.a build/lib/*.a
+  #~ cd usr.new/$ARCH/lib
+  #~ echo -e "create libpjproject.a\naddlib ../../../build/libpjproject-thin.a\nsave\nend" | `$ANDROID_NDK/ndk-which ar` -M
+  #~ `$ANDROID_NDK/ndk-which ranlib` libpjproject.a
 
   # Cleanup ...
   rm -fr $MAINDIR/build
@@ -409,4 +454,3 @@ build_android
 #~ exit
 build_linux amd64
 build_linux armhf
-build_linux i386

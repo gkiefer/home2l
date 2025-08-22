@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2024 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -2405,44 +2405,44 @@ typedef void FRcDriverFunc (ERcDriverOperation, CRcDriver *, CResource *, CRcVal
   /// @endcode
 
 
+/// @brief Define the entry point of a binary driver.
+///
+///  **Example 1:** Function-Based Driver
+///  @code
+///    HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcValueState *vs) {
+///      switch (op) {
+///        case rcdOpInit:
+///          ...
+///          break;
+///        case rcdOpStop:
+///          ...
+///          break;
+///        case rcdOpDriveValue:
+///          ...
+///          break;
+///      }
+///    }
+///  @endcode
+///
+///  **Example 2:** Class-Based Driver
+///
+///  This pattern allows loadable drives to use a different @ref CRcDriver class than the base class,
+///  for example, @ref CRcEventDriver or an own derived class.
+///  @code
+///    HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *, CRcValueState *) {
+///      ASSERT(op == rcdOpInit);            // just in case you do not trust the Home2Ls ...
+///      drv->Unregister ();                 // ... this function will never be called again after this.
+///      drv = new CRcMyOwnDriver ("foo");   // Create a new driver object (must pass the driver ID "foo" to ...
+///                                          // ... the constructor of @ref CRcDriver).
+///      drv->Register ();                   // Register the driver.
+///
+///      ...                                 // Register all resources, then we are done.
+///
+///    }
+///  @endcode
 #define HOME2L_DRIVER(NAME) \
   extern "C" { void Home2lRcDriverFunc_##NAME (ERcDriverOperation, CRcDriver *, CResource *, CRcValueState *); } \
   void Home2lRcDriverFunc_##NAME
-  ///< @brief Define the entry point of a binary driver.
-  ///
-  ///  **Example 1:** Function-Based Driver
-  ///  @code
-  ///    HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *rc, CRcValueState *vs) {
-  ///      switch (op) {
-  ///        case rcdOpInit:
-  ///          ...
-  ///          break;
-  ///        case rcdOpStop:
-  ///          ...
-  ///          break;
-  ///        case rcdOpDriveValue:
-  ///          ...
-  ///          break;
-  ///      }
-  ///    }
-  ///  @endcode
-  ///
-  ///  **Example 2:** Class-Based Driver
-  ///
-  ///  This pattern allows loadable drives to use a different @ref CRcDriver class than the base class,
-  ///  for example, @ref CRcEventDriver or an own derived class.
-  ///  @code
-  ///    HOME2L_DRIVER(foo) (ERcDriverOperation op, CRcDriver *drv, CResource *, CRcValueState *) {
-  ///      ASSERT(op == rcdOpInit);            // just in case you do not trust the Home2Ls ...
-  ///      drv->Unregister ();                 // ... this function will never be called again after this.
-  ///      drv = new CRcMyOwnDriver ("foo");   // Create a new driver object (must pass the driver ID "foo" to ...
-  ///                                          // ... the constructor of @ref CRcDriver).
-  ///      drv->Register ();                   // Register the driver.
-  ///
-  ///      ...                                 // Register all resources, then we are done.
-  ///
-  ///    }
-  ///  @endcode
 
 
 /** @brief Driver for local resources.

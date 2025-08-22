@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['addresource_0',['AddResource',['../classhome2l_1_1CRcSubscriber.html#a63f54f5e7a42aaa55e4f8ac9e79575e5',1,'home2l::CRcSubscriber']]],
-  ['addresources_1',['AddResources',['../classhome2l_1_1CRcSubscriber.html#ad8715d8c4c0e639dc55c9cda62266be9',1,'home2l::CRcSubscriber']]],
-  ['at_2',['at',['../group__home2l__rules.html#gae85c29a4ede570b5e6a1f368fcc3035d',1,'home2l']]]
+  ['addresource_0',['AddResource',['../classhome2l_1_1CRcSubscriber.html#aae7980e2ba8ce27dca5f541a7a3d2f8d',1,'home2l::CRcSubscriber']]],
+  ['addresources_1',['AddResources',['../classhome2l_1_1CRcSubscriber.html#ac65a4ef5ce21c323c5e5c9c493b5bfa3',1,'home2l::CRcSubscriber']]],
+  ['and_20states_2',['Values, Types and States',['../group__resources__values.html',1,'']]],
+  ['api_3',['api',['../index.html',1,'Home2L - Python API'],['../group__resources__general.html',1,'Main API']]],
+  ['at_4',['at',['../group__home2l__rules.html#ga26d466bce4de511d0d410c24d5684845',1,'home2l']]]
 ];

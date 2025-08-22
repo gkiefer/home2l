@@ -18,7 +18,7 @@ var searchData=
   ['timerstop_15',['TimerStop',['../group__common__timers.html#gaf54dbe87cfe61ae25cc47bcba6b725c0',1,'base.H']]],
   ['tohuman_16',['ToHuman',['../classCRcValueState.html#a6c004e0ced796e85f7a5b0a62411c607',1,'CRcValueState']]],
   ['toiso8859_17',['ToIso8859',['../group__common__strings.html#gaad52bf78730a741a6393fd16723eac49',1,'base.H']]],
-  ['tostr_18',['ToStr',['../classCRcValueState.html#ad2671dc45a80bd0e4198b16799d011a7',1,'CRcValueState::ToStr()'],['../classCBrownie.html#a42e99fecb4828876c23d86c3e0e49ee4',1,'CBrownie::ToStr()'],['../classCRcRequest.html#a0a52de684eeeb6d5206760c37a465cc9',1,'CRcRequest::ToStr()'],['../classCRcEvent.html#a8954000d3338a9e582c23022499ccadc',1,'CRcEvent::ToStr()']]],
+  ['tostr_18',['tostr',['../classCRcValueState.html#ad2671dc45a80bd0e4198b16799d011a7',1,'CRcValueState::ToStr()'],['../classCBrownie.html#a42e99fecb4828876c23d86c3e0e49ee4',1,'CBrownie::ToStr()'],['../classCRcRequest.html#a0a52de684eeeb6d5206760c37a465cc9',1,'CRcRequest::ToStr()'],['../classCRcEvent.html#a8954000d3338a9e582c23022499ccadc',1,'CRcEvent::ToStr()']]],
   ['toutf8_19',['ToUtf8',['../group__common__strings.html#ga51b7fc2a1b98fd2bbaeda86143b3be9b',1,'base.H']]],
   ['twimainit_20',['TwiMaInit',['../group__brownies__firmware.html#gadef4fdce4d74d225bfcfe5fecf3f7f4b',1,'twi.h']]],
   ['twimareceivebyte_21',['TwiMaReceiveByte',['../group__brownies__firmware.html#gaf3582b741bbe3df8ec9b2cbf5d89303a',1,'twi.h']]],
@@ -26,5 +26,5 @@ var searchData=
   ['twimasendbyte_23',['TwiMaSendByte',['../group__brownies__firmware.html#gadf8fdb8f05d3a7078fd05235574d31f2',1,'twi.h']]],
   ['twimasendstart_24',['TwiMaSendStart',['../group__brownies__firmware.html#ga3d911505fe7d9fec698940713927d3ea',1,'twi.h']]],
   ['twimasendstop_25',['TwiMaSendStop',['../group__brownies__firmware.html#ga63524053d3db671ef07614b8cef24f05',1,'twi.h']]],
-  ['typeid_26',['TypeId',['../classCRcEventDriver.html#a4b8e4d5fe158c6a89dc2aaa2ccf6a3ac',1,'CRcEventDriver::TypeId()'],['../classCRcSubscriber.html#a61681d720c4d2e8475d16263e78aceff',1,'CRcSubscriber::TypeId()'],['../classCRcEventTimer.html#a9964e5bb75e407a244c1a02ba6c81b43',1,'CRcEventTimer::TypeId()'],['../classCRcEventProcessor.html#a1e52a27b8a9ff8a299a7bc17f78bbc70',1,'CRcEventProcessor::TypeId()']]]
+  ['typeid_26',['typeid',['../classCRcEventDriver.html#a4b8e4d5fe158c6a89dc2aaa2ccf6a3ac',1,'CRcEventDriver::TypeId()'],['../classCRcSubscriber.html#a61681d720c4d2e8475d16263e78aceff',1,'CRcSubscriber::TypeId()'],['../classCRcEventTimer.html#a9964e5bb75e407a244c1a02ba6c81b43',1,'CRcEventTimer::TypeId()'],['../classCRcEventProcessor.html#a1e52a27b8a9ff8a299a7bc17f78bbc70',1,'CRcEventProcessor::TypeId()']]]
 ];

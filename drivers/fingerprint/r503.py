@@ -1,5 +1,5 @@
 # This file is derived from https://github.com/rshcs/Grow-R503-Finger-Print/
-# with minor modifications for the Home2L project.
+# with some modifications for the Home2L project.
 #
 # MIT License
 #
@@ -24,13 +24,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Modifications by Gundolf Kiefer:
-# - add license header
-# - eliminate 'confirmation_codes.json' to avoid file search issues
-# - __init__: allow to pass a device file name as a 'port' (e.g. 'dev/ttyUSB0' on Linux)
-# - ser_send: Add checksum verification
-# - ser_send: receive exact mumber of bytes indicated by 'len' instead of waiting for a timeout each time
 
+# Modifications by Gundolf Kiefer:
+#
+# - add license header
+#
+# - eliminate 'confirmation_codes.json' to avoid file search issues
+#
+# - __init__: allow to pass a device file name as a 'port' (e.g. 'dev/ttyUSB0' on Linux)
+#
+# - ser_send: Add checksum verification
+#
+# - ser_send: considerably improve performance by receiving the exact mumber of
+#   bytes indicated by 'len' instead of waiting for a timeout each time;
+#   eliminate 'R503.rcv _size'
 
 
 import serial
@@ -40,6 +47,9 @@ from platform import system
 
 
 def to_hex (packet):
+  """
+  Helper to convert a packed byte array to a readable hex string (for debugging only).
+  """
   s = ""
   for b in packet: s += " {:02x}".format (b)
   return s.strip ()
@@ -56,7 +66,7 @@ class R503:
         """
         Initialize the R503 class instance.
         Parameters:
-          port (int): The COM port number
+          port (int): The COM port number (Windows) or device file name (Linux)
           baud (int): The baud rate, default 57600
           pw (int): The password, default 0
           addr (int): The module address, default 0xFFFFFFFF

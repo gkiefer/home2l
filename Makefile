@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2024 Gundolf Kiefer
+# (C) 2015-2025 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ else
   # Default: All modules, drivers and architectures ...
   MODS ?= tools showcase resources brownies wallclock locales doorman doc
   DRVS ?= $(shell ls drivers)
-  ARCHS ?= amd64 armhf i386
+  ARCHS ?= amd64 armhf
 endif
 
 
@@ -151,7 +151,7 @@ help:
 	@echo "  docker-run:    Run the docker showcase image (latest)"
 	@echo
 	@echo "Variables:"
-	@echo "  ARCHS:   List of architectures to build for (available: amd64 armhf i386) [ all ]"
+	@echo "  ARCHS:   List of architectures to build for (available: amd64 armhf) [ all ]"
 	@echo "  MODS:    Modules (sub-projects) to build (space-separated list of directory names) [ all ]"
 	@echo "  MOD:     If set, build only the given module (overrides MODS, DRVS)."
 	@echo "  DRVS:    Drivers to build [ all integrated ]"

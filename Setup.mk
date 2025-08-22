@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2024 Gundolf Kiefer
+# (C) 2015-2025 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +72,13 @@ SHELL := /bin/bash
 
 
 # Python (used in 'resources') ...
+#   Default: Debian stable version ...
+PYTHON_INCLUDE := /usr/include/python3.13
+
+ifeq ("$(wildcard $(PYTHON_INCLUDE)/Python.h)","")
+#   Fallback: Debian oldstable version ...
 PYTHON_INCLUDE := /usr/include/python3.11
+endif
 
 
 # C/C++ Compiler & strip option for 'install'...
@@ -90,24 +96,6 @@ ifeq ($(ARCH),$(HOST_ARCH))
   CC := g++ -no-pie
   STRIP := -s
 else
-  ifeq ($(ARCH),amd64)
-    # Note: Cross-building for 'i386' on 'amd64' under Debian Bookworm (12) requires
-    #       the package 'gcc-multilib' (and dependencies). However, 'gcc-multilib'
-    #       conflicts with the 'armhf' cross-building tools (see below).
-    #       The workaround is to install 'g++-12-multilib' instead.
-    ifeq ($(HOST_ARCH),i386)
-      CC := g++ -m64 -no-pie
-      STRIP := -s
-    endif
-  endif
-  ifeq ($(ARCH),i386)
-    # Note: Cross-building for 'i386' on 'amd64' works after installing
-    #       'g++-*-multilib' (see comments above).
-    ifeq ($(HOST_ARCH),amd64)
-      CC := g++ -m32 -no-pie
-      STRIP := -s
-    endif
-  endif
   ifeq ($(ARCH),armhf)
     # Note: Crossbuilding for 'armhf' under Debian Jessie (8.0) requires the
     #       package 'crossbuild-essential-armhf' from

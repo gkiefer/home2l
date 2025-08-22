@@ -1,8 +1,13 @@
 <map id="brownies/avr/interface.h" name="brownies/avr/interface.h">
-<area shape="rect" id="node1" title=" " alt="" coords="89,5,251,32"/>
-<area shape="rect" id="node2" href="$base_8h.html" title=" " alt="" coords="18,80,157,107"/>
-<area shape="rect" id="node6" href="$brownies_8H.html" title=" " alt="" coords="181,80,325,107"/>
-<area shape="rect" id="node3" href="$configure_8h.html" title=" " alt="" coords="5,155,169,181"/>
-<area shape="rect" id="node4" href="$core_8h.html" title=" " alt="" coords="19,229,155,256"/>
-<area shape="rect" id="node5" href="$twi_8h.html" title=" " alt="" coords="23,304,151,331"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="89,5,251,31"/>
+<area shape="rect" id="Node000002" href="$base_8h.html" title=" " alt="" coords="18,79,157,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="148,42,103,80,99,76,145,38"/>
+<area shape="rect" id="Node000006" href="$brownies_8H.html" title=" " alt="" coords="181,79,325,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="195,38,241,76,237,80,192,42"/>
+<area shape="rect" id="Node000003" href="$configure_8h.html" title=" " alt="" coords="5,152,169,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="90,118,90,152,85,152,85,118"/>
+<area shape="rect" id="Node000004" href="$core_8h.html" title=" " alt="" coords="19,225,155,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="90,191,90,225,85,225,85,191"/>
+<area shape="rect" id="Node000005" href="$twi_8h.html" title=" " alt="" coords="23,299,151,324"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="90,264,90,299,85,299,85,264"/>
 </map>

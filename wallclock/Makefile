@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2024 Gundolf Kiefer
+# (C) 2015-2025 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -75,21 +75,23 @@ include ../external/sdl2/Debian.mk
 SRC += app_home.C
 
 ifeq ($(WITH_PHONE),1)
-	include ../external/$(PHONE_LIB)/Debian.mk
-	SRC += app_phone.C ../common/phone.C ../common/phone-$(PHONE_LIB).C
+  include ../external/$(PHONE_LIB)/Debian.mk
+  SRC += app_phone.C ../common/phone.C ../common/phone-$(PHONE_LIB).C
 endif
 
 ifeq ($(WITH_CALENDAR),1)
-	SRC += app_calendar.C
+  SRC += app_calendar.C
 endif
 
 ifeq ($(WITH_MUSIC),1)
-	include ../external/mpdclient/Debian.mk
-	SRC += ../common/streamer.C app_music.C
+  include ../external/mpdclient/Debian.mk
+  SRC += ../common/streamer.C app_music.C
 endif
 
 ifeq ($(WITH_GSTREAMER),1)
-	include ../external/gstreamer/Debian.mk
+  ifeq ($(ARCH),amd64)   # presently, only amd64 is unsupported: Avoid warnings in external make fragment
+  include ../external/gstreamer/Debian.mk
+  endif
 endif
 
 
@@ -99,13 +101,14 @@ endif
 ############################## WallClock / Main part ###########################
 
 
-CFLAGS += "-pg"
-
-
 WALLCLOCK := home2l-wallclock
 WALLCLOCK_BIN := $(DIR_OBJ)/$(WALLCLOCK)
 SRC := $(SRC) ui_base.C ui_screen.C ui_widgets.C system.C apps.C alarmclock.C floorplan.C $(WALLCLOCK).C
 OBJ := $(SRC:%.C=$(DIR_OBJ)/%.o)
+
+
+.PHONY: all
+all: $(WALLCLOCK_BIN)
 
 
 $(WALLCLOCK_BIN): $(DEP_CONFIG) $(OBJ) icons.build
@@ -113,9 +116,7 @@ $(WALLCLOCK_BIN): $(DEP_CONFIG) $(OBJ) icons.build
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
 
-all: $(WALLCLOCK_BIN)
-
-
+.PHONY: run
 run: $(WALLCLOCK_BIN)
 	HOME2L_ROOT=$(abspath $(HOME2L_INSTALL)) $(WALLCLOCK_BIN)
 
@@ -179,16 +180,17 @@ APK_NDK_FLAGS := -C $(APK_BUILD)/jni \
 
 # Building...
 
-.PHONY: print-sources print-config
-
+.PHONY: print-sources
 print-sources:
 	@echo $(APK_BUILD)/config.C $(SRC)
 
+
+.PHONY: print-config
 print-config:
 	@echo -I$(APK_BUILD)
 
 
-.PHONY: apk-ndk apk-javaconfig apk apk-ndk-clean apk-clean
+.PHONY: apk-ndk apk-javaconfig apk
 apk-ndk: $(APK_NDK_SO)
 apk-javaconfig: $(APK_JAVA_CONFIG)
 apk: $(APK)
@@ -247,7 +249,7 @@ $(APK_JAVA_CONFIG): $(APK_NDK_SO)
 	echo "  public static final boolean withGstreamer = ( $(WITH_GSTREAMER) != 0 );" >> $(APK_JAVA_CONFIG); \
 	echo "  public static final String[] nativeLibraries = {" >> $(APK_JAVA_CONFIG); \
 	FILES="\"$(WALLCLOCK)\""; \
-	SHLIBS=`$(ANDROID_NDK)/ndk-build -s $(APK_NDK_FLAGS) home2l_print_shlibs | grep -v ^make`; \
+	SHLIBS=`$(ANDROID_NDK)/ndk-build -s -j1 $(APK_NDK_FLAGS) home2l_print_shlibs | grep -v ^make`; \
 	echo "#### SHLIBS = '$$SHLIBS' ####" > /dev/null; \
 	if [[ "$$SHLIBS" != "" ]]; then \
 		for L in $$SHLIBS; do FILES="\"$$L\", $$FILES"; done; \
@@ -255,6 +257,13 @@ $(APK_JAVA_CONFIG): $(APK_NDK_SO)
 	echo "      $$FILES" >> $(APK_JAVA_CONFIG); \
 	echo "    };" >> $(APK_JAVA_CONFIG); \
 	echo "}" >> $(APK_JAVA_CONFIG)
+
+# WORKAROUND [2025-08-18]: The currently used NDK version of GNU make (4.3) is incompatible with
+#   the job server of the Debian 13 (Trixie) version (4.4.1). To avoid errors like
+#   "make[2]: *** internal error: invalid --jobserver-auth string 'fifo:/tmp/GMfifo31583'",
+#   a job argument like "-j1" is *always* passed to any invocation of $(ANDROID_NDK)/ndk-build.
+#   In the above call to determine SHLIBS, this leads to the followin warning, which is ok for now:
+#   "make[2]: warning: -j1 forced in submake: resetting jobserver mode."
 
 
 $(APK): $(APK_NDK_SO) $(APK_JAVA_SRC) $(APK_JAVA_CONFIG)
@@ -265,14 +274,17 @@ $(APK): $(APK_NDK_SO) $(APK_JAVA_SRC) $(APK_JAVA_CONFIG)
 	$(APK_BUILD)/gradlew -p $(APK_BUILD) build
 
 
+.PHONY: apk-ndk-clean
 apk-ndk-clean:
 	$(ANDROID_NDK)/ndk-build $(APK_NDK_FLAGS) clean
 
 
+.PHONY: apk-clean
 apk-clean:
 	rm -fr $(APK_BUILD)
 
 
+.PHONY: apk-stack
 apk-stack: $(APK)
 	home2l adb $(MACHINE) logcat | $(ANDROID_NDK)/ndk-stack -sym $(APK_BUILD)/obj/local/armeabi-v7a/
 
@@ -286,42 +298,17 @@ apk-stack: $(APK)
 #   This section is used by the developer as a scratch area for various debugging tasks.
 
 ID001=$(shell grep 001 /opt/home2l/etc/androidb.conf | grep -v '^ *#' | tr -s ' ' '\t' | cut -f3)
-HOST001=inf001wlan  # change this to debug another influence device
+HOST001=inf001  # change this to debug another influence device
 
 
 001-install: 001-install-apk 001-install-etc
 
-001-install-etc:
-	@HOME2L_ROOT=/data/data/org.home2l.app/files/home2l; \
-	HOME2L_UID=`adb -s $(ID001) shell stat -t $$HOME2L_ROOT/VERSION | awk '{print $$5}'`; \
-	#echo HOME2L_ROOT=$$HOME2L_ROOT HOME2L_UID=$$HOME2L_UID; \
-	adb -s $(ID001) root; \
-	adb -s $(ID001) shell rm -fr $$HOME2L_ROOT/etc; \
-	adb -s $(ID001) push `realpath /opt/home2l/etc` $$HOME2L_ROOT/etc; \
-	adb -s $(ID001) shell $$HOME2L_ROOT/bin/android-fixattrs.sh $$HOME2L_ROOT/etc $$HOME2L_UID; \
-	adb -s $(ID001) unroot || true
-
-#~ 	adb -s $(ID001) root; \
-#~ 	adb -s $(ID001) shell su $$HOME2L_UID mkdir -p $$HOME2L_ROOT/.update; \
-#~ 	adb -s $(ID001) shell su $$HOME2L_UID chmod 777 $$HOME2L_ROOT/.update; \
-#~ 	adb -s $(ID001) shell rm -fr $$HOME2L_ROOT/.update/etc; \
-#~ 	adb -s $(ID001) push `realpath /opt/home2l/etc` $$HOME2L_ROOT/.update; \
-#~ 	adb -s $(ID001) shell su $$HOME2L_UID rm -fr $$HOME2L_ROOT/etc; \
-#~ 	adb -s $(ID001) shell su $$HOME2L_UID cp -r $$HOME2L_ROOT/.update/etc $$HOME2L_ROOT/ | grep -v 'etc/gpio\.'; \
-#~ 	adb -s $(ID001) shell rm -fr $$HOME2L_ROOT/.update/etc; \
-#~ 	adb -s $(ID001) shell su $$HOME2L_UID rmdir $$HOME2L_ROOT/.update; \
-#~ 	adb -s $(ID001) shell su $$HOME2L_UID chmod -R 700 $$HOME2L_ROOT/etc; \
-#~ 	adb -s $(ID001) unroot || true
-
-#~ 	HOME2L_UID=`adb -s $(ID001) shell su $$HOME2L_UID ls -l $$HOME2L_ROOT/VERSION | awk '{print $$3}'`; \
-#~ 	adb -s $(ID001) shell su chown -R $$HOME2L_UID.$$HOME2L_UID $$HOME2L_ROOT/etc; \
-
-
-#	home2l rollout -y $(HOST001) -b -e
-
 001-install-apk:
 	adb -s $(ID001) install -r $(APK)
 	adb -s $(ID001) logcat -c
+
+001-install-etc:
+	../tools/home2l-rollout -y -m -e $(HOST001)
 
 001-logcat:
 	adb -s $(ID001) logcat -v time home2l:D SDL:V *:E *:W *:I
@@ -400,7 +387,7 @@ veryclean: clean
 	rm -fr icons.build
 
 
-ifeq ($(ARCH),amd64)   # presently, armhf and i386 are unsupported (not needed, not tested, may work anyway)
+ifeq ($(ARCH),amd64)   # presently, only amd64 is unsupported (armhf is not needed, not tested, may work anyway)
 
 
 build-arch: $(WALLCLOCK_BIN)

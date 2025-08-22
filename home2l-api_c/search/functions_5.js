@@ -11,5 +11,5 @@ var searchData=
   ['flush_8',['Flush',['../classCBrownieLink.html#aedb7d5611706b9059c8553b18f52aac4',1,'CBrownieLink']]],
   ['flushevents_9',['FlushEvents',['../classCRcEventProcessor.html#a948f9ee0f2f3984d9a13a06f3ce18924',1,'CRcEventProcessor']]],
   ['fontget_10',['FontGet',['../group__ui__base.html#gaf6e1dba8a0abfd22791ad1eeaf027eed',1,'ui_base.H']]],
-  ['fontrendertext_11',['FontRenderText',['../group__ui__base.html#ga96e84e23c8accf7dde20a7cf4e4eb335',1,'FontRenderText(TTF_Font *font, const char *text, TColor color):&#160;ui_base.H'],['../group__ui__base.html#ga68d187f2381ee628017aad68ef82a3fc',1,'FontRenderText(TTF_Font *font, const char *text, TColor color, TColor bgColor):&#160;ui_base.H']]]
+  ['fontrendertext_11',['fontrendertext',['../group__ui__base.html#ga96e84e23c8accf7dde20a7cf4e4eb335',1,'FontRenderText(TTF_Font *font, const char *text, TColor color):&#160;ui_base.H'],['../group__ui__base.html#ga68d187f2381ee628017aad68ef82a3fc',1,'FontRenderText(TTF_Font *font, const char *text, TColor color, TColor bgColor):&#160;ui_base.H']]]
 ];

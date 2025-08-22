@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2024 Gundolf Kiefer
+# (C) 2015-2025 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -292,11 +292,11 @@ draft:
 
 
 API_C_SRC = $(wildcard api_c.H \
-							../common/*.H \
-							../resources/resources.H \
-							../brownies/brownies.H ../brownies/avr/interface.h  ../brownies/avr/configure.h ../brownies/avr/base.h ../brownies/avr/core.h ../brownies/avr/twi.h \
-							../wallclock/*.H \
-						)
+	../common/*.H \
+	../resources/resources.H \
+	../brownies/brownies.H ../brownies/avr/interface.h  ../brownies/avr/configure.h ../brownies/avr/base.h ../brownies/avr/core.h ../brownies/avr/twi.h \
+	../wallclock/*.H \
+	)
 
 $(API_C): api_c.doxygen ../home2l-figs/home2l-icon-web.png $(API_C_SRC)
 	@echo DOXY $@

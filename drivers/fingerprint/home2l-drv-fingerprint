@@ -131,7 +131,7 @@ def SleepAndCheckInput (delay = optInterval):
     if select.select ([sys.stdin,],[],[], delay / 1000.0)[0]:
       line = sys.stdin.readline ()    # returns "" on EOF and "\n" for an empty line
       args = line.split ()
-      Print ("INFO: Received '{}'".format (line.strip ()))
+      # ~ Print ("INFO: ### Received '{}'".format (line.strip ()))
       inputKey = args[0].strip ()
       inputValue = args[1].strip ()
     else:
@@ -294,6 +294,7 @@ matchLastIdx = None
 
 def MatchInit (fp):
   LedOff (fp)
+  Print ("INFO: Entering matching mode.")
 
 
 def MatchIterate (fp, driverMode):
@@ -362,6 +363,7 @@ def EnrollInit (fp):
 
   enrollChars = 0
   LedSetBreathing (fp)
+  Print ("INFO: Entering enrollment mode.")
 
 
 def EnrollIterate (fp, driverMode):

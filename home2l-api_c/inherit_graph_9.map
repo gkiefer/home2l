@@ -1,20 +1,38 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classCRcDriver.html" title="Driver for local resources." alt="" coords="316,5,400,32"/>
-<area shape="rect" id="node2" href="$classCRcEventDriver.html" title="Local driver using the event processor mechanism for the &#39;DriveValue()&#39; functionality." alt="" coords="481,5,600,32"/>
-<area shape="rect" id="node3" href="$classCRcEventProcessor.html" title="Event processor." alt="" coords="287,56,429,83"/>
-<area shape="rect" id="node4" href="$classCRcEventTimer.html" title="Timer that sends &#39;rceTimer&#39; events over the event system." alt="" coords="483,107,599,133"/>
-<area shape="rect" id="node5" href="$classCRcSubscriber.html" title="Subscriber to follow an arbitrary set of resources." alt="" coords="485,56,596,83"/>
-<area shape="rect" id="node6" href="$classCTimer.html" title="Timer class." alt="" coords="325,107,391,133"/>
-<area shape="rect" id="node7" href="$classCWidgetFloorplan.html" title="Floorplan widget." alt="" coords="477,157,604,184"/>
-<area shape="rect" id="node8" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="5,259,79,285"/>
-<area shape="rect" id="node9" href="$classCButton.html" title="Push&#45;button widget." alt="" coords="147,157,218,184"/>
-<area shape="rect" id="node11" href="$classCCanvas.html" title="Canvas widget." alt="" coords="144,208,221,235"/>
-<area shape="rect" id="node15" href="$classCCursorWidget.html" title="Widget with an additional rectangular cursor." alt="" coords="127,259,239,285"/>
-<area shape="rect" id="node16" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box." alt="" coords="129,309,237,336"/>
-<area shape="rect" id="node18" href="$classCSlider.html" title="Slider widget." alt="" coords="150,360,215,387"/>
-<area shape="rect" id="node10" href="$classCFlatButton.html" title="Flat Push&#45;button widget." alt="" coords="312,157,404,184"/>
-<area shape="rect" id="node12" href="$classCInputLine.html" title="Input line widget." alt="" coords="315,208,401,235"/>
-<area shape="rect" id="node13" href="$classCListbox.html" title="Listbox widget." alt="" coords="321,259,395,285"/>
-<area shape="rect" id="node14" href="$classCMenu.html" title="Menu widget." alt="" coords="509,284,573,311"/>
-<area shape="rect" id="node17" href="$classCMessageBox.html" title="Message box widget." alt="" coords="304,360,412,387"/>
+<area shape="rect" id="Node000000" href="$classCRcDriver.html" title="Driver for local resources." alt="" coords="316,5,400,31"/>
+<area shape="rect" id="Node000001" href="$classCRcEventDriver.html" title="Local driver using the event processor mechanism for the &#39;DriveValue()&#39; functionality." alt="" coords="481,5,600,31"/>
+<area shape="poly" id="edge12_Node000000_Node000001" title=" " alt="" coords="414,15,481,15,481,21,414,21"/>
+<area shape="rect" id="Node000002" href="$classCRcEventProcessor.html" title="Event processor." alt="" coords="287,55,429,80"/>
+<area shape="poly" id="edge13_Node000002_Node000001" title=" " alt="" coords="418,49,492,28,493,33,419,54"/>
+<area shape="rect" id="Node000003" href="$classCRcEventTimer.html" title="Timer that sends &#39;rceTimer&#39; events over the event system." alt="" coords="483,104,599,129"/>
+<area shape="poly" id="edge14_Node000002_Node000003" title=" " alt="" coords="419,81,493,101,492,106,418,86"/>
+<area shape="rect" id="Node000017" href="$classCRcSubscriber.html" title="Subscriber to follow an arbitrary set of resources." alt="" coords="485,55,596,80"/>
+<area shape="poly" id="edge15_Node000002_Node000017" title=" " alt="" coords="443,65,485,65,485,70,443,70"/>
+<area shape="rect" id="Node000004" href="$classCTimer.html" title="Timer class." alt="" coords="325,104,391,129"/>
+<area shape="poly" id="edge16_Node000004_Node000003" title=" " alt="" coords="404,114,483,114,483,119,404,119"/>
+<area shape="rect" id="Node000005" href="$classCWidgetFloorplan.html" title="Floorplan widget." alt="" coords="477,153,604,179"/>
+<area shape="poly" id="edge17_Node000004_Node000005" title=" " alt="" coords="404,126,494,151,492,156,403,131"/>
+<area shape="rect" id="Node000008" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="5,253,79,279"/>
+<area shape="rect" id="Node000007" href="$classCButton.html" title="Push&#45;button widget." alt="" coords="147,155,218,180"/>
+<area shape="poly" id="edge18_Node000008_Node000007" title=" " alt="" coords="63,241,91,215,125,189,146,178,149,183,128,194,95,219,67,245"/>
+<area shape="rect" id="Node000009" href="$classCCanvas.html" title="Canvas widget." alt="" coords="144,204,221,229"/>
+<area shape="poly" id="edge21_Node000008_Node000009" title=" " alt="" coords="91,246,145,227,146,232,93,251"/>
+<area shape="rect" id="Node000015" href="$classCCursorWidget.html" title="Widget with an additional rectangular cursor." alt="" coords="127,253,239,279"/>
+<area shape="poly" id="edge25_Node000008_Node000015" title=" " alt="" coords="92,263,127,263,127,269,92,269"/>
+<area shape="rect" id="Node000013" href="$classCModalWidget.html" title="Widget that can pop up on a screen, such as a menu or a message box." alt="" coords="129,303,237,328"/>
+<area shape="poly" id="edge26_Node000008_Node000013" title=" " alt="" coords="93,281,146,300,145,305,91,286"/>
+<area shape="rect" id="Node000016" href="$classCSlider.html" title="Macro to define a trampoline to another class." alt="" coords="150,352,215,377"/>
+<area shape="poly" id="edge29_Node000008_Node000016" title=" " alt="" coords="67,287,95,312,128,337,151,350,149,354,125,342,92,316,64,291"/>
+<area shape="rect" id="Node000006" href="$classCFlatButton.html" title="Flat Push&#45;button widget." alt="" coords="312,153,404,179"/>
+<area shape="poly" id="edge19_Node000007_Node000006" title=" " alt="" coords="232,164,311,164,312,169,232,170"/>
+<area shape="poly" id="edge20_Node000006_Node000005" title=" " alt="" coords="418,163,477,163,477,169,418,169"/>
+<area shape="rect" id="Node000010" href="$classCInputLine.html" title="Input line widget." alt="" coords="315,203,401,228"/>
+<area shape="poly" id="edge22_Node000009_Node000010" title=" " alt="" coords="235,214,315,213,315,218,235,219"/>
+<area shape="rect" id="Node000011" href="$classCListbox.html" title="Listbox widget." alt="" coords="321,252,395,277"/>
+<area shape="poly" id="edge23_Node000009_Node000011" title=" " alt="" coords="235,228,321,252,320,257,234,233"/>
+<area shape="rect" id="Node000012" href="$classCMenu.html" title="Menu widget." alt="" coords="509,277,573,303"/>
+<area shape="poly" id="edge24_Node000011_Node000012" title=" " alt="" coords="410,269,509,283,508,288,409,274"/>
+<area shape="poly" id="edge27_Node000013_Node000012" title=" " alt="" coords="250,308,508,290,509,295,250,313"/>
+<area shape="rect" id="Node000014" href="$classCMessageBox.html" title="Message box widget." alt="" coords="304,353,412,379"/>
+<area shape="poly" id="edge28_Node000013_Node000014" title=" " alt="" coords="242,329,314,351,312,356,240,335"/>
 </map>

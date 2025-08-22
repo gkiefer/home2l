@@ -1,5 +1,7 @@
 <map id="CInputLine" name="CInputLine">
-<area shape="rect" id="node1" title="Input line widget." alt="" coords="5,155,91,181"/>
-<area shape="rect" id="node2" href="$classCCanvas.html" title="Canvas widget." alt="" coords="9,80,87,107"/>
-<area shape="rect" id="node3" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="11,5,85,32"/>
+<area shape="rect" id="Node000001" title="Input line widget." alt="" coords="5,152,91,177"/>
+<area shape="rect" id="Node000002" href="$classCCanvas.html" title="Canvas widget." alt="" coords="9,79,87,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,118,51,152,45,152,45,118"/>
+<area shape="rect" id="Node000003" href="$classCWidget.html" title="Base class for all widgets." alt="" coords="11,5,85,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="51,44,51,79,45,79,45,44"/>
 </map>

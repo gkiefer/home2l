@@ -1,6 +1,6 @@
 # This file is part of the Home2L project.
 #
-# (C) 2015-2021 Gundolf Kiefer
+# (C) 2015-2025 Gundolf Kiefer
 #
 # Home2L is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,4 +35,4 @@
 ## Most of the information presented here is also available as *Python docstrings*
 ## (avaliable via `help(<name>)` in a *Python* shell).
 ##
-## To get started, navigate to the [Modules](modules.html) page.
+## To get started, navigate to the [Topics](topics.html) page.

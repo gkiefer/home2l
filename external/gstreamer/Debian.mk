@@ -28,8 +28,6 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 ifeq ($(ARCH),amd64)
 	PKG_ENV := PKG_CONFIG_LIBDIR=/usr/lib/x86_64-linux-gnu/pkgconfig
-else ifeq ($(ARCH),i386)
-	PKG_ENV := PKG_CONFIG_LIBDIR=/usr/lib/i386-linux-gnu/pkgconfig
 else ifeq ($(ARCH),armhf)
 	PKG_ENV := PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabihf/pkgconfig
 else

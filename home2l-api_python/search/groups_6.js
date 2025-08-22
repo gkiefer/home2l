@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['subscriptions_0',['Subscriptions',['../group__resources__subscribe.html',1,'']]]
+  ['objects_0',['Resource Objects',['../group__resources__rc.html',1,'']]]
 ];

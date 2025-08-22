@@ -14,7 +14,7 @@ var searchData=
   ['validunitfloat_11',['ValidUnitFloat',['../classCResource.html#a63d35307f0976c25db150c2d206bed73',1,'CResource']]],
   ['validunitint_12',['ValidUnitInt',['../classCResource.html#a79554af5eb73c589359b33b42264684d',1,'CResource']]],
   ['validunsignedfromstring_13',['ValidUnsignedFromString',['../group__common__strings.html#ga215e4aa805691299b7427cc7768e1947',1,'base.H']]],
-  ['valueequals_14',['ValueEquals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState::ValueEquals()'],['../classCResource.html#a8972d48e3188ca557be26a299c69c3aa',1,'CResource::ValueEquals()']]],
+  ['valueequals_14',['valueequals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState::ValueEquals()'],['../classCResource.html#a8972d48e3188ca557be26a299c69c3aa',1,'CResource::ValueEquals()']]],
   ['valuestate_15',['ValueState',['../classCRcEvent.html#a95dc84d3ab74f23ec9a03270c66c3b33',1,'CRcEvent']]],
   ['versioncompose_16',['VersionCompose',['../group__common__version.html#ga19b03c3b434e79798ce7cd2b09501f62',1,'base.H']]],
   ['versiondirty_17',['VersionDirty',['../group__common__version.html#ga19155e10bcbbd11bdfd79900bd6900e4',1,'base.H']]],

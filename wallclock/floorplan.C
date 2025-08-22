@@ -1081,7 +1081,7 @@ void CResourceDialog::SetLayout (bool _withInfo) {
   }
   else {
     // General case ...
-    layout = LayoutRow (r, UI_BUTTONS_SPACE, -3, -6, -1, -2, 0);
+    layout = LayoutRow (r, UI_BUTTONS_SPACE, -3, -5, -2, -2, 0);
     btnBack.SetArea (layout[0]);
     btnAuto.SetArea (layout[1]);
     btnDefault.SetArea (layout[2]);
@@ -1179,7 +1179,7 @@ void CResourceDialog::UpdateView () {
 
   // Set color of "Default" button ...
   if (rcType != rctTrigger)
-    btnDefault.SetLabel (reqDefault.Value ()->IsValid () ? YELLOW : WHITE, withInfo ? "ic-ground-48" : "ic-ground-24");
+    btnDefault.SetLabel (reqDefault.Value ()->IsValid () ? YELLOW : WHITE, "ic-ground-48");
 
   // Highlight current value or its neighbors ...
   rcVal = vs.ValidFloat (NAN);

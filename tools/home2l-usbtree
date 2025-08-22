@@ -327,9 +327,9 @@ class InfDevice (UsbDevice):
     UsbDevice.__init__ (self, host, serial = serial)
 
     # Init local attributes ...
-    self._tInState = 0      # time of last state change
-    self._tLastSense = 0    # time of last state check (when device is not driven to be on)
-    self._tLastReboot = 0   # time of last reboot (for battery recovery)
+    self._tInState = 0              # time of last state change
+    self._tLastSense = TicksNow ()  # time of last state check (when device is not driven to be on)
+    self._tLastReboot = 0           # time of last reboot (for battery recovery)
 
     # Init resources ...
     self._rcPower = NewResource ("inf/{}/power".format (self.id), rctBool, self.DriveRcPower, self)
@@ -340,8 +340,8 @@ class InfDevice (UsbDevice):
 
     # Check and report current device state ...
     self._state = None
-    sense = self.SensePowerState ()
-    self.SetState (sense if sense != self.ST_ON else self.ST_BOOTING)
+    # ~ sense = self.SensePowerState ()
+    # ~ self.SetState (sense if sense != self.ST_ON else self.ST_BOOTING)
 
 
   ##### Helpers and Actions ... #####
@@ -366,12 +366,13 @@ class InfDevice (UsbDevice):
 
   def SensePowerState (self):
     """Check the device for its state, returns either 'ST_OFF', 'ST_ON' or 'ST_FAIL'."""
-    p = subprocess.run (("/bin/bash", "-c", "home2l adb " + self.id + " shell 'ps | grep charger'"), capture_output=True, text=True)
-    # ~ print ("### SensePowerState () = {}: {}".format (p.returncode, p.stdout))
+    # ~ p = subprocess.run (("/bin/bash", "-c", "home2l adb " + self.id + " shell 'ps | grep charger'"), capture_output=True, text=True)
+    p = subprocess.run (("/bin/bash", "-c", "home2l adb " + self.id + " shell ps"), capture_output=True, text=True)
+    # ~ print ("### SensePowerState ({}) = {}: {}".format (self.id, p.returncode, "off" if "charger" in p.stdout else "on" if "org.home2l.app"  in p.stdout else "fail" ))
     if p.returncode == 0:
       if "charger" in p.stdout: return self.ST_OFF
-      else: return self.ST_ON
-    else: return self.ST_FAIL
+      if "org.home2l.app" in p.stdout: return self.ST_ON
+    return self.ST_FAIL
 
 
   def SwitchOnOff (self, on, force = False):
@@ -433,7 +434,7 @@ class InfDevice (UsbDevice):
     if ok:
       ok = SystemAdb (self.id, "x-start", timeout = 10)
     if ok:
-      print ("OK", flush = True)
+      print ("done", flush = True)
     return ok
 
 
@@ -472,8 +473,12 @@ class InfDevice (UsbDevice):
 
     # ~ print ("### {}: CheckAndRecoverState () ...".format (self.id), flush = True)
 
-    # Handle all cases where the device is NOT driven to be on ...
+    # Initialize state if still unkown ...
+    if self._state == None:
+      sense = self.SensePowerState ()
+      self.SetState (sense if sense != self.ST_ON else self.ST_BOOTING)
 
+    # Handle all cases where the device is NOT driven to be on ...
     if self._valPowerDriven != True:
       if self._valPowerDriven == False and self._state != self.ST_OFF:
         # Keep it switched off if driven to be off ...
@@ -482,9 +487,22 @@ class InfDevice (UsbDevice):
       # Sense and report the actual state (but not more frequent than once per minute) ...
       tNow = TicksNow ()
       if tNow >= self._tLastSense + 60000 and self._state != self.ST_ON:
+
+        # Previous state was not 'ST_ON' ...
         sense = self.SensePowerState ()
-        self.SetState (self.ST_BOOTING if sense == self.ST_ON else sense if sense == self.ST_OFF else None)
-        self._tLastSense = TicksNow ()
+        # ~ print ("### {}: Sense and report the actual state; sense = {}".format (self.id, str (sense)), flush = True)
+        if sense == self.ST_ON:
+          # Device switched on: Switch to 'ST_BOOTING' to give the device time to boot ...
+          self.SetState (self.ST_BOOTING)
+        elif sense == self.ST_OFF:
+          # Device is off: Report 'ST_OFF' ...
+          self.SetState (self.ST_OFF)
+        else:
+          # Device is not reachable: Report failure, but do not try to recover ...
+          self.SetState (self.ST_LOST)
+        # ~ self.SetState (self.ST_BOOTING if sense == self.ST_ON else sense if (sense == self.ST_OFF or self._state == self.ST_BOOTING) else None)
+
+        self._tLastSense = tNow
 
     # All following cases imply 'self._valPowerDriven == True' ...
 
@@ -784,7 +802,6 @@ class WlanDevice (UsbDevice):
       # Sense and report the actual state ...
       sense = self.SensePowerState ()
       self.SetState (sense if sense != self.ST_FAIL else self.ST_LOST)
-      self._tLastSense = TicksNow ()
 
     # All following cases imply 'self._valPowerDriven == True' ...
 
@@ -865,26 +882,7 @@ WlanDevice.ClassInit ()
 # global control flow and eventual interferences.
 
 
-@at(0, "10s")
-def CheckStates ():
-
-  # Update USB bus notion ...
-  UsbDevice.ScanAll ()
-
-  # Check all influence devices ...
-  for dev in InfDevice.allInfDevices.values ():
-    dev.CheckAndRecoverState ()
-
-  # Check all WLAN adapters ...
-  for dev in WlanDevice.allWlanDevices.values ():
-    dev.CheckAndRecoverState ()
-
-  # Perform (semi-)global operations if requested ...
-  UsbDevice.ResetHubsAsRequested ()
-  UsbDevice.RestartUsbAsRequested ()
-
-
-@at(0, "5m")
+@at("10s", "5m")
 def CheckBatteries ():
   for dev in InfDevice.allInfDevices.values ():
     dev.CheckAndRecoverBattery ()
@@ -893,7 +891,7 @@ def CheckBatteries ():
 @onEvent (list (map (lambda h: "/host/" + h + "/timer/daily", InfDevice.allInfDevices.keys ())))
 def OnHostEvent (ev, rc, vs, data):
   """Rule to monitor if an influence device is fully functional."""
-  # ~ print ("###", ev, "#", rc, "#", vs.ToStr (True), "#", data, flush = True)
+  # ~ print ("###", ev, "#", rc, "#", str (vs), "#", data, flush = True)
   # ~ print ("# type = ", vs.Type (), flush = True)
   # ~ print ("# value = ", vs.Value (), flush = True)
   host = rc.Uri ().split('/')[2]
@@ -917,4 +915,39 @@ def OnHostEvent (ev, rc, vs, data):
 print ("Detected influence devices: " + str (list (InfDevice.allInfDevices.keys ())), flush = True)
 print ("Detected WLAN devices: " + str (list (WlanDevice.allWlanDevices.keys ())), flush = True)
 
-Home2lRun ()
+
+# ~ print ("### Home2lRun ()", flush = True)
+# ~ Home2lRun ()
+
+
+# ~ print ("### Home2lStart ()", flush = True)
+Home2lStart ()
+
+
+# Main loop ...
+tNext = TicksNow () + 30000    # first iteration to start in 10 seconds
+while True:
+
+  # Wait for check iteration to start ...
+  tWait  = tNext - TicksNow ()
+  while tWait > 0:
+    Home2lIterate (tWait)
+    tWait  = tNext - TicksNow ()
+  tNext = TicksNow () + 10000  # next iteration in (at least) 10 seconds
+
+  # Update USB bus notion ...
+  UsbDevice.ScanAll ()
+
+  # Check all influence devices ...
+  for dev in InfDevice.allInfDevices.values ():
+    dev.CheckAndRecoverState ()
+    Home2lIterate ()
+
+  # Check all WLAN adapters ...
+  for dev in WlanDevice.allWlanDevices.values ():
+    dev.CheckAndRecoverState ()
+    Home2lIterate ()
+
+  # Perform (semi-)global operations if requested ...
+  UsbDevice.ResetHubsAsRequested ()
+  UsbDevice.RestartUsbAsRequested ()

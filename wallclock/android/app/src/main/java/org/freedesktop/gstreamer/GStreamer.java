@@ -17,9 +17,9 @@ public class GStreamer {
     public static void init(Context context) throws Exception {
         Log.i ("home2l", "### GStreamer::init (): nativeInit ()...");
         nativeInit(context);
-        Log.i ("home2l", "### GStreamer::init (): copyFonts ()...");
+        //~ Log.i ("home2l", "### GStreamer::init (): copyFonts ()...");
         copyFonts(context);
-        Log.i ("home2l", "### GStreamer::init (): copyCaCertificates ()...");
+        //~ Log.i ("home2l", "### GStreamer::init (): copyCaCertificates ()...");
         copyCaCertificates(context);
     }
 
@@ -41,7 +41,8 @@ public class GStreamer {
                 copyFile (assetManager, "fontconfig/fonts/truetype/" + filename, font);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.i ("home2l", "No fonts in 'fontconfig/': none installed.");
+            //~ e.printStackTrace();
         }
     }
 
@@ -58,7 +59,8 @@ public class GStreamer {
             /* Copy the certificates file */
             copyFile (assetManager, "ssl/certs/ca-certificates.crt", certs);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.i ("home2l", "No certificates in 'ssl/certs/ca-certificates.crt': none installed.");
+            //~ e.printStackTrace();
         }
     }
 

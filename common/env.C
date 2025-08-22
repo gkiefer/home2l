@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2021 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ ENV_PARA_VAR ("home2l.os", static const char *, buildOS, ANDROID ? "Android" : B
    * This setting is determined by the build process.
    */
 ENV_PARA_VAR ("home2l.arch", static const char *, buildArch, ANDROID ? NULL : BUILD_ARCH);
-  /* Processor architecture (i386 / amd64 / armhf / <undefined>) (read-only)
+  /* Processor architecture (amd64 / armhf / <undefined>) (read-only)
    *
    * This setting is generated during the build process and taken from the processor
    * architecture reported by 'dpkg --print-architecture' in Debian.
@@ -309,10 +309,18 @@ bool EnvNetResolve (const char *hostAndPort, CString *retHost, int *retPort, int
 
   // Done...
   if (ok) {
-    if (retPort) *retPort = port ? port : defaultPort;
+    if (retPort) {
+      *retPort = port ? port : defaultPort;
+      if (*retPort <= 0) ok = false;
+    }
   }
-  else {
-    if (warn) WARNINGF (("Illegal network host/port specification (must be <host[:port]>): %s", hostAndPort));
+  if (!ok) {
+    if (warn) {
+      if (retPort && *retPort > 0)
+        WARNINGF (("Illegal network host/port specification (must be <host[:port]>): %s", hostAndPort));
+      else
+        WARNINGF (("Missing port in host/port specification (must be <host:port>): %s", hostAndPort));
+    }
     retHost->Clear ();
   }
   return ok;

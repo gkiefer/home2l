@@ -2,7 +2,7 @@
 %%
 %% This file is part of the Home2L project.
 %%
-%% (C) 2015-2023 Gundolf Kiefer
+%% (C) 2015-2025 Gundolf Kiefer
 %%
 %% Home2L is free software: you can redistribute it and/or modify
 %% it under the terms of the GNU General Public License as published by
@@ -1940,12 +1940,7 @@ At your choice, it possible to use either your own MQTT broker or the MQTT broke
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\textit{Home2L} automation rules are normal Python scripts.
-They can be tested separately from already existing rules files and later be merged into them.
-Section~\ref{sec:tutorial-rules-example} describes this process for an example.
-Section~\ref{sec:tutorial-rules-python} gives an in-depth introduction to the
-\theapipython{} by means of an interactive Python session.
-Finally, the supplied \reftool{rules-showhouse} file will be inspected and extended in Section~\ref{sec:tutorial-rules-showhouse}.
+\textit{Home2L} automation rules are normal Python scripts. They can be tested separately from already existing rules files and later be merged into them. Section~\ref{sec:tutorial-rules-example} describes this process for an example. Section~\ref{sec:tutorial-rules-python} gives an in-depth introduction to the \theapipython{} by means of an interactive Python session. Finally, the supplied \reftool{rules-showhouse} file will be inspected and extended in Section~\ref{sec:tutorial-rules-showhouse}.
 
 
 
@@ -1957,9 +1952,7 @@ Finally, the supplied \reftool{rules-showhouse} file will be inspected and exten
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-In this section, we will deactivate the provided \reftool{rules-showhouse} script and write
-an own rules file to control the front light of the show house.
-The \textit{Home2L} Python package offers a number of different techniques to implement automation rules (see Section~\ref{sec:rules-events}). In this section, some of them are demonstrated and sometimes compared to alternative solutions for the same problem.
+In this section, we will deactivate the provided \reftool{rules-showhouse} script and write an own rules file to control the front light of the show house. The \textit{Home2L} Python package offers a number of different techniques to implement automation rules (see Chapter~\ref{ch:rules}). In this section, some of them are demonstrated and sometimes compared to alternative solutions for the same problem.
 
 
 \begin{itemize}[$\blacktriangleright$]
@@ -2327,9 +2320,9 @@ The rule monitors the current time and whenever the time changes, the value is p
   >>> rcNow = RcGet ("/host/showhouse/timer/now")
   >>>
   >>> @onUpdate (rcNow)
-  §... def OnTimerUpdate ():
-  §...   print (str (rcNow.ValueState ()))
-  §...
+  ... def OnTimerUpdate ():
+  ...   print (str (rcNow.ValueState ()))
+  ...
   >>>
   \end{lstlisting}
 
@@ -2928,7 +2921,18 @@ The \textit{WallClock}'s music player is a \href{https://www.musicpd.org/}{Music
 
 \begin{itemize}[$\blacktriangleright$]
 \item
-  Copy some of your favorite music files into the Docker container:
+  Push the \textit{''Music''} button in the \textit{WallClock} window.
+
+\item
+  In the navigation pane (right half of the screen), push the title
+  bar, then select ''Radio'' and one of the radio broadcasting channels.
+
+\item
+  Push the play button and enjoy!
+
+\item
+  Optionally, you can copy some of your favorite music files into the
+  Docker container:
   \begin{lstlisting}[language=bash]
     $ docker cp /your/favorite/album/ home2l-showcase:/var/opt/home2l/mpd/music/
   \end{lstlisting}
@@ -2936,15 +2940,11 @@ The \textit{WallClock}'s music player is a \href{https://www.musicpd.org/}{Music
   It should contain about $1 - 50$ \textit{mp3} or \textit{flac} files.
   % Alternatively, you can download some free music from \url{https://freemusicarchive.org}, for example.
 
-\item
-  Push the \textit{''Music''} button in the \textit{WallClock} window.
+  To navigate to your own songs, push the title bar in the navigations
+  pane twice, then navigate to your favorite song. In general,
+  pushing the title bar will navigate up or switch between the local
+  database and playlists.
 
-\item
-  In the navigation pane (right half of the screen), navigate to your
-  favorite song. Pushing the title bar of the navigation pane will
-  navigate up or switch between the local database and playlists.
-
-\item
   Select your favorite song, push the play button and enjoy!
 
 \end{itemize}
@@ -3018,7 +3018,7 @@ supports its syntax for specifying events.
   Select a day in the left pane and add a new one-time appointment for
   Julian, for example (enter/keep your own date at the beginning):
   \begin{lstlisting}
-    2020-12-23 at 19:00 dur 2:00 MSG Meet Henry; Murphy's Pub
+    REM 2020-12-23 at 19:00 duration 2:00 MSG Meet Henry; Murphy's Pub
   \end{lstlisting}
 \end{itemize}
 
@@ -3108,10 +3108,13 @@ After installing the \textit{Home2L} suite, the demo environment as presented in
 \subsection{Using a VirtualBox VM}
 \label{sec:tutorial-nodocker-vbox}
 
+
 It is also possible to run the demo in a VirtualBox VM. The project provides a
 \refdoc{home2l-showcase-vbox.tar.gz}{preconfigured VM image} to facilitate this.
 
-The following instructions have last been tested with \textit{VirtualBox 5.2.10} and \textit{Debian 9.6 (Stretch)}.
+The following instructions have last been tested with \textit{VirtualBox 5.2.10} and
+\textit{Debian 9.6 (Stretch)} using the \textit{i386} architecture, but should still
+work with little modifications.
 
 \begin{itemize}[$\blacktriangleright$]
 
@@ -3126,8 +3129,8 @@ The following instructions have last been tested with \textit{VirtualBox 5.2.10}
 \item
   Download and provide a Debian installation image as 'install.iso' in the same directory:
   \begin{lstlisting}[language=bash]
-    $ wget https://cdimage.debian.org/debian-cd/current/i386/iso-cd/debian-9.6.0-i386-netinst.iso
-        # Adapt the path as necessary. We need an i386 "netinst" image.
+    $ wget https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.0.0-amd64-netinst.iso
+        # Adapt the path as necessary. We need an amd64 "netinst" image.
         # More information can be found on the Debian download page at
         # https://cdimage.debian.org.
     $ ln -s debian-*.iso install.iso
@@ -3335,14 +3338,14 @@ home2l> l /local/brownies/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-Cross-compilation is supported by the \textit{Home2L} build system based on the Debian cross-building capabilities for the architectures \textit{i386}, \textit{amd64}, and \textit{armhf}. The development machine must have \textit{i386} or \textit{amd64} set as its primary architecture. The other architectures must be entered as additional architectures to the \textit{dpkg(1)} package manager.
+Cross-compilation is supported by the \textit{Home2L} build system based on the Debian cross-building capabilities for the architectures \textit{amd64} and \textit{armhf}. The development machine must have \textit{amd64} set as its primary architecture. The other architecture(s) must be entered as additional architectures to the \textit{dpkg(1)} package manager.
 
-To cross-build \textit{armhf} binaries on an \textit{i386} or \textit{amd64} machine, as of Debian 10 (''Buster''), the following packages must be installed:
+To cross-build \textit{armhf} binaries on an \textit{amd64} machine, as of Debian 13 (''Trixie''), the following package(s) must be installed:
 \begin{lstlisting}
-crossbuild-essential-armhf g++-8-multilib
+crossbuild-essential-armhf
 \end{lstlisting}
 
-For all desired target architectures, the respective development packages mentioned above must be installed.
+For all desired target architectures, additional development packages must be installed, according to the dependencies of the respective \textit{Home2L} modules and configurations. An indication of the required libraries for a demo setup is given in the main \textit{Dockerfile}, which install all requirements for the main (\textit{amd64}) architecture.
 
 
 
@@ -4506,10 +4509,7 @@ D /alias/door/light  ! 0             # set default and make the resource persist
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-Subscriptions are handled by the class \refapic{CRcSubscriber} (see C/C++
-API). A subscriber object can subscribe to any number of resources,
-eventually selected by wildcards. Resources do not need to exist yet at
-the time they are subscribed to.
+Subscriptions are handled by the class \refapic{CRcSubscriber} (see C/C++ API). A subscriber object can subscribe to any number of resources, eventually selected by wildcards. Resources do not need to exist yet at the time they are subscribed to.
 
 Subscriber events can be received in multiple ways (see class \refapic{CRcEventProcessor}):
 
@@ -5098,7 +5098,7 @@ For a quick start, it is recommended to read the tutorial (Section~\ref{sec:tuto
 
 Typically, a rules script performs some initialization (\refapipython{Home2lInit()}), declares some triggered functions, and finally calls \refapipython{Home2lRun()} to enter the main event loop of the \textit{Home2L} library/package. While the native \textit{Home2L} library makes use of multi-threading, all Python functions besides \refapipython{CResource.Report...()} (see Section~\ref{sec:resources-drvdev-app-python}) must be called from the main thread.
 
-The following subsections give an overview on accessing resource values and states (Section~\ref{sec:rules-values}), on placing requests (Section~\ref{sec:rules-requests}), on the various kinds of triggered functions (Section~\ref{sec:rules-events}), and on comfortable ways to define local resources (Section~\ref{sec:rules-resources}). Details can be found in the \theapipython{} documentation, which serves as a reference manual for rules writing.
+The following subsections give an overview on accessing resource values and states (Section~\ref{sec:rules-values}), on placing requests (Section~\ref{sec:rules-requests}), on the various kinds of triggered functions (Section~\ref{sec:rules-actions}), and on comfortable ways to define local resources (Section~\ref{sec:rules-resources}). Details can be found in the \theapipython{} documentation, which serves as a reference manual for rules writing.
 
 
 
@@ -5205,13 +5205,15 @@ Please consult the Python API documentation of \refapipython{RcSetRequest()} and
 
 
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Triggered Actions}
 \label{sec:rules-actions}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 The \textit{Home2L} package defines a number of Python decorators allowing to execute functions at certain occasions.
+
 
 
 \subsection{Update Functions}
@@ -6579,7 +6581,11 @@ members (see Figure~\ref{fig:wallclock-calendar}).
   \label{fig:wallclock-calendar}
 \end{figure}
 
-As its backend and storage format, \textit{remind(1)} is used.
+To store the calendar events, two different backends are available.
+
+
+\subsection{The \textit{Remind} Backend}
+
 \textit{remind(1)} is a mature and powerful command line tool
 supporting single events with and without times as well as
 many sorts of recurring events. The main advantage is the fact that a
@@ -6601,7 +6607,28 @@ This method for accessing calendar files allows a high degree of flexibility
 for where and how they are stored, and the use of \textit{patch(1)} supports
 concurrent editing operations from multiple \textit{WallClock} instances.
 
-To use the \textit{Calendar} applet, the \textit{remind(1)} command line tool must be installed on some computer reachable by \textit{ssh(1)} by the \textit{WallClock}.
+To use the \textit{Remind} backend, the \textit{remind(1)} command line tool
+must be installed on some computer reachable by \textit{ssh(1)} by the \textit{WallClock}.
+
+
+\subsection{The \textit{iCal} Backend}
+\labeltool{home2l-pimd}
+
+The \textit{iCal} backend supports calendars stored as \textit{iCalendar} files
+(\textit{.ics}) in the \href{https://vdirsyncer.pimutils.org/en/stable/vdir.html}{Vdir storage format}.
+The external tool \href{https://vdirsyncer.pimutils.org/}{vdirsyncer} can then be used to
+synchronize the calendar with external \textit{CalDAV} repositories.
+
+The storage directory is maintained by the \textit{Home2L} PIM daemon \reftool{home2l-pimd},
+which must be running on some host (typically as a daemon controlled by \reftool{home2l-daemon}).
+The \textit{WallClock} instances communicate with the PIM daemon.
+
+\reftool{home2l-pimd} automatically executes \textit{vdirsyncer} in the background.
+
+On the host running \reftool{home2l-pimd}, \textit{vdirsyncer(1)} and \textit{nc(1)},
+the OpenBSD variant of \textit{netcat}, must be installed. The host must be reachable by
+\textit{ssh(1)} by the \textit{WallClock}.
+
 
 
 
@@ -6626,7 +6653,7 @@ he moves to another room.
 
 Technically, a ''virtual stereo system'' is an installed \textit{MPD}
 instance running on some computer in the household. It has to be
-declared in \reftool{home2l.conf} using \refenv{music.<MPD>.host}
+declared in \reftool{home2l.conf} using \refenv{music.player.<player>.host}
 and related parameters.
 
 If the \textit{MPDs} are configured with an http streaming output, the

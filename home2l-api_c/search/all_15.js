@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['val_0',['val',['../structSBrReply.html#ae9cb77e6daa4b8c245b874ead5bc11f8',1,'SBrReply::val()'],['../structSBrRequest.html#a1be60051051f602f2a9e12225001a88a',1,'SBrRequest::val()']]],
+  ['val_0',['val',['../structSBrReply.html#ae9cb77e6daa4b8c245b874ead5bc11f8',1,'SBrReply::val'],['../structSBrRequest.html#a1be60051051f602f2a9e12225001a88a',1,'SBrRequest::val']]],
   ['validbool_1',['ValidBool',['../classCResource.html#a5bf12a15a1bef17d2f065466f84d86c0',1,'CResource']]],
   ['validboolfromstring_2',['ValidBoolFromString',['../group__common__strings.html#gaa9577bb8af7283602da10ce5d4d7b432',1,'base.H']]],
   ['validenumidx_3',['ValidEnumIdx',['../classCResource.html#adadfae375e6461870cad1122bdc7dcaa',1,'CResource']]],
@@ -16,8 +16,8 @@ var searchData=
   ['validunitint_13',['ValidUnitInt',['../classCResource.html#a79554af5eb73c589359b33b42264684d',1,'CResource']]],
   ['validunsignedfromstring_14',['ValidUnsignedFromString',['../group__common__strings.html#ga215e4aa805691299b7427cc7768e1947',1,'base.H']]],
   ['valign_15',['vAlign',['../classCTextFormat.html#a6dd0419627a68767367f66a274a07283',1,'CTextFormat']]],
-  ['valueequals_16',['ValueEquals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState::ValueEquals()'],['../classCResource.html#a8972d48e3188ca557be26a299c69c3aa',1,'CResource::ValueEquals()']]],
-  ['values_2c_20types_20and_20states_17',['Values, Types and States',['../group__resources__values.html',1,'']]],
+  ['valueequals_16',['valueequals',['../classCRcValueState.html#a1a13e419bd5fd6abce2b44b303ec08ee',1,'CRcValueState::ValueEquals()'],['../classCResource.html#a8972d48e3188ca557be26a299c69c3aa',1,'CResource::ValueEquals()']]],
+  ['values_20types_20and_20states_17',['Values, Types and States',['../group__resources__values.html',1,'']]],
   ['valuestate_18',['ValueState',['../classCRcEvent.html#a95dc84d3ab74f23ec9a03270c66c3b33',1,'CRcEvent']]],
   ['version_19',['Version',['../group__common__version.html',1,'']]],
   ['versioncompose_20',['VersionCompose',['../group__common__version.html#ga19b03c3b434e79798ce7cd2b09501f62',1,'base.H']]],
@@ -25,11 +25,10 @@ var searchData=
   ['versionfromstr_22',['VersionFromStr',['../group__common__version.html#ga7ac2259a87b82595ca0581d206f51809',1,'base.H']]],
   ['versiongetown_23',['VersionGetOwn',['../group__common__version.html#gac34123152c84f96213ee70248b1beb17',1,'base.H']]],
   ['versiongetownasstr_24',['VersionGetOwnAsStr',['../group__common__version.html#ga153f6f6476e0a07abf5fa18938dda185',1,'base.H']]],
-  ['versionmajor_25',['versionMajor',['../structSBrFeatureRecord.html#a6028a7fae8b8d19c88c0882b7898c4df',1,'SBrFeatureRecord']]],
-  ['versionmajor_26',['VersionMajor',['../group__common__version.html#gaf11f5bfd281d75e860a7a31b64e26236',1,'base.H']]],
-  ['versionminor_27',['VersionMinor',['../group__common__version.html#ga615e48cb6b3e377b327a814450675df2',1,'base.H']]],
-  ['versionrevision_28',['VersionRevision',['../group__common__version.html#ga63e5a876dd77669efe82a6be06707dfb',1,'base.H']]],
-  ['versiontostr_29',['VersionToStr',['../group__common__version.html#gaace2081cd395ec0ec2c14c4350ca76eb',1,'base.H']]],
-  ['videolockframe_30',['VideoLockFrame',['../classCPhone.html#a0a2fb8c83f82f312d3d60b69f31a886e',1,'CPhone']]],
-  ['videounlock_31',['VideoUnlock',['../classCPhone.html#a2eb6d9fb405200625ba72503a1f819a7',1,'CPhone']]]
+  ['versionmajor_25',['versionmajor',['../structSBrFeatureRecord.html#a6028a7fae8b8d19c88c0882b7898c4df',1,'SBrFeatureRecord::versionMajor'],['../group__common__version.html#gaf11f5bfd281d75e860a7a31b64e26236',1,'VersionMajor(uint32_t ver):&#160;base.H']]],
+  ['versionminor_26',['VersionMinor',['../group__common__version.html#ga615e48cb6b3e377b327a814450675df2',1,'base.H']]],
+  ['versionrevision_27',['VersionRevision',['../group__common__version.html#ga63e5a876dd77669efe82a6be06707dfb',1,'base.H']]],
+  ['versiontostr_28',['VersionToStr',['../group__common__version.html#gaace2081cd395ec0ec2c14c4350ca76eb',1,'base.H']]],
+  ['videolockframe_29',['VideoLockFrame',['../classCPhone.html#a0a2fb8c83f82f312d3d60b69f31a886e',1,'CPhone']]],
+  ['videounlock_30',['VideoUnlock',['../classCPhone.html#a2eb6d9fb405200625ba72503a1f819a7',1,'CPhone']]]
 ];

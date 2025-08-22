@@ -1,7 +1,7 @@
 /*
  *  This file is part of the Home2L project.
  *
- *  (C) 2015-2024 Gundolf Kiefer
+ *  (C) 2015-2025 Gundolf Kiefer
  *
  *  Home2L is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -698,7 +698,6 @@ void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel) {
   ASSERT (COL_MASK_R == 0x00ff0000 && COL_MASK_A == 0xff000000);
   ASSERT (surf->format->format == SELECTED_SDL_PIXELFORMAT);
 
-
   // Go ahead ...
   ASSERT (SDL_LockSurface (surf) == 0);
   pixels = (Uint32 *) surf->pixels;
@@ -711,7 +710,7 @@ void SurfaceMakeTransparentMono (SDL_Surface *surf, Uint8 opaqueLevel) {
     }
   }
   else {
-    ASSERT (opaqueLevel != 0);
+    ASSERT (opaqueLevel > 0);
     factor = 0x10000 / ((Uint32) opaqueLevel);   // factor is in range 0x100..0x10000 -> 8 fractional bits
     color = (Uint32) opaqueLevel;
     color = color | (color << 8) | (color << 16);

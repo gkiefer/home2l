@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['directory_20services_0',['Directory Services',['../group__resources__directory.html',1,'']]],
-  ['drivers_1',['Drivers',['../group__resources__drivers.html',1,'']]]
+  ['and_20states_0',['Values, Types and States',['../group__resources__values.html',1,'']]],
+  ['api_1',['Main API',['../group__resources__general.html',1,'']]]
 ];

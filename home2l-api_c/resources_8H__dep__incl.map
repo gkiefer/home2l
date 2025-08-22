@@ -1,5 +1,7 @@
 <map id="resources/resources.H" name="resources/resources.H">
-<area shape="rect" id="node1" title=" " alt="" coords="83,5,237,32"/>
-<area shape="rect" id="node2" href="$brownies_8H.html" title=" " alt="" coords="5,80,149,107"/>
-<area shape="rect" id="node3" href="$system_8H.html" title=" " alt="" coords="174,80,311,107"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="83,5,237,31"/>
+<area shape="rect" id="Node000002" href="$brownies_8H.html" title=" " alt="" coords="5,79,149,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,42,93,80,89,76,135,38"/>
+<area shape="rect" id="Node000003" href="$system_8H.html" title=" " alt="" coords="174,79,311,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="185,38,231,76,227,80,182,42"/>
 </map>
