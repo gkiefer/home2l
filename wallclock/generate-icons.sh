@@ -22,7 +22,7 @@
 # Setup ...
 cd icons
 DST_DIR=../icons.build
-FLOORPLAN_SVG=../floorplan-template.svg    # floorplan template
+FLOORPLAN_SVG=../../showcase/etc/floorplan.svg    # floorplan template
 rm -fr $DST_DIR
 mkdir -p $DST_DIR
 
